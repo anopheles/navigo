@@ -5,6 +5,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,8 +16,23 @@ import (
 // Config is the content of config.yaml. Keys it doesn't know yet are
 // ignored.
 type Config struct {
+	Server Server `yaml:"server"`
 	Player Player `yaml:"player"`
+	// Hints shows the hint line; on unless set to false.
+	Hints *bool `yaml:"hints"`
 }
+
+// Server is the one server navigo connects to. The password comes from
+// PasswordCommand, then Password, then the OS keyring.
+type Server struct {
+	URL             string `yaml:"url"`
+	User            string `yaml:"user"`
+	Password        string `yaml:"password"`
+	PasswordCommand string `yaml:"password_command"`
+}
+
+// HintsOn reports whether the hint line is shown.
+func (c Config) HintsOn() bool { return c.Hints == nil || *c.Hints }
 
 // Player configures playback.
 type Player struct {
@@ -74,4 +90,89 @@ func Parse(b []byte) (Config, error) {
 		}
 	}
 	return c, nil
+}
+
+// SaveServer writes the server block into the config at path, keeping
+// everything else in the file. An empty password removes server.password.
+// The file is created with mode 0600 and its directory with 0700.
+func SaveServer(path string, url, user, password string) error {
+	var doc yaml.Node
+	b, err := os.ReadFile(path)
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+	case err != nil:
+		return err
+	default:
+		if err := yaml.Unmarshal(b, &doc); err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
+	}
+	if doc.Kind == 0 {
+		doc = yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{{Kind: yaml.MappingNode}}}
+	}
+	root := doc.Content[0]
+	if root.Kind != yaml.MappingNode {
+		return fmt.Errorf("%s: not a YAML mapping", path)
+	}
+	server := child(root, "server")
+	set(server, "url", url)
+	set(server, "user", user)
+	if password != "" {
+		set(server, "password", password)
+	} else {
+		remove(server, "password")
+	}
+	out, err := yaml.Marshal(&doc)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, out, 0o600)
+}
+
+// LooseWithPassword reports whether the config at path holds a password
+// and can be read by group or others. Windows has no such mode bits.
+func LooseWithPassword(path string, c Config) bool {
+	if c.Server.Password == "" {
+		return false
+	}
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().Perm()&fs.FileMode(0o077) != 0 && !isWindows
+}
+
+// child returns the mapping under key in m, adding it if missing.
+func child(m *yaml.Node, key string) *yaml.Node {
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		if m.Content[i].Value == key {
+			v := m.Content[i+1]
+			if v.Kind != yaml.MappingNode {
+				*v = yaml.Node{Kind: yaml.MappingNode}
+			}
+			return v
+		}
+	}
+	v := &yaml.Node{Kind: yaml.MappingNode}
+	m.Content = append(m.Content, &yaml.Node{Kind: yaml.ScalarNode, Value: key}, v)
+	return v
+}
+
+func set(m *yaml.Node, key, value string) {
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		if m.Content[i].Value == key {
+			m.Content[i+1] = &yaml.Node{Kind: yaml.ScalarNode, Value: value}
+			return
+		}
+	}
+	m.Content = append(m.Content, &yaml.Node{Kind: yaml.ScalarNode, Value: key}, &yaml.Node{Kind: yaml.ScalarNode, Value: value})
+}
+
+func remove(m *yaml.Node, key string) {
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		if m.Content[i].Value == key {
+			m.Content = append(m.Content[:i], m.Content[i+2:]...)
+			return
+		}
+	}
 }

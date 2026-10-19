@@ -1,0 +1,468 @@
+// Package ui is navigo's Bubble Tea front end: the login form, the library
+// and queue windows, the hint line and the now-playing bar. It wraps the
+// core (internal/app), whose Apply is called only from Update, and runs
+// the core's effects as tea.Cmds. Keys go through the keymap engine to
+// commands in the registry, so every key does something typeable at ":".
+package ui
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/anopheles/navigo/internal/app"
+	"github.com/anopheles/navigo/internal/command"
+	"github.com/anopheles/navigo/internal/config"
+	"github.com/anopheles/navigo/internal/creds"
+	"github.com/anopheles/navigo/internal/keymap"
+	"github.com/anopheles/navigo/internal/library"
+	"github.com/anopheles/navigo/internal/player"
+	"github.com/anopheles/navigo/internal/subsonic"
+)
+
+// ambiguousTimeout is how long an ambiguous prefix waits (keys.timeout).
+const ambiguousTimeout = time.Second
+
+// Deps is what the UI needs from outside.
+type Deps struct {
+	Config     config.Config
+	ConfigPath string
+	Player     player.Player
+	Keyring    creds.Keyring
+	// OnLogin is called with the client once the server accepted the
+	// credentials, so the player can sign stream URLs with it.
+	OnLogin func(*subsonic.Client)
+}
+
+// PlayerMsg wraps a Player event for Program.Send.
+func PlayerMsg(e player.Event) tea.Msg { return eventMsg{app.FromPlayer{Event: e}} }
+
+type (
+	eventMsg    struct{ app.Event }
+	passwordMsg struct {
+		password string
+		err      error
+	}
+	loginMsg struct {
+		client *subsonic.Client
+		url    string
+		err    error
+	}
+	savedMsg   struct{ err error }
+	timeoutMsg struct{ seq int }
+)
+
+type screen int
+
+const (
+	screenMain screen = iota
+	screenLogin
+)
+
+type window int
+
+const (
+	libraryWindow window = iota
+	queueWindow
+)
+
+type listKind int
+
+const (
+	sectionList listKind = iota
+	albumList
+	albumTracks
+)
+
+// frame is one level of the library window's drill-down.
+type frame struct {
+	kind        listKind
+	album       library.AlbumID
+	title       string
+	cur, offset int
+}
+
+// Model is the root Bubble Tea model. It is used by pointer.
+type Model struct {
+	deps   Deps
+	state  app.State
+	client *subsonic.Client
+	ctx    context.Context
+
+	screen screen
+	login  loginForm
+	w, h   int
+
+	focus    window
+	lib      []frame
+	queueCur int
+	queueOff int
+
+	mode     keymap.Mode
+	engine   *keymap.Engine
+	registry *command.Registry[*Model]
+	line     textinput.Model
+	seq      int // bumps on every key, to drop stale timeouts
+
+	msg    string
+	msgErr bool
+	hints  bool
+
+	player sequencer
+	// pendingCmd collects what a command handler wants run next.
+	pendingCmd tea.Cmd
+}
+
+// New returns the model; Init starts logging in.
+func New(deps Deps) *Model {
+	line := newInput()
+	line.Prompt = ":"
+	m := &Model{
+		deps:     deps,
+		state:    app.New(),
+		ctx:      context.Background(),
+		lib:      []frame{{kind: sectionList, title: "Library"}, {kind: albumList, title: "Albums"}},
+		mode:     keymap.Normal,
+		engine:   keymap.NewEngine(defaultTable()),
+		registry: commands(),
+		line:     line,
+		hints:    deps.Config.HintsOn(),
+	}
+	m.player.init()
+	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
+		m.setMsg(fmt.Sprintf("%s holds a password and others can read it · chmod 600 it", deps.ConfigPath), true)
+	}
+	return m
+}
+
+func (m *Model) Init() tea.Cmd {
+	s := m.deps.Config.Server
+	if s.URL == "" {
+		m.openLogin(s.URL, s.User, "")
+		return nil
+	}
+	m.setMsg("connecting to "+s.URL+"…", false)
+	return func() tea.Msg {
+		p, err := creds.Password(m.ctx, s, m.deps.Keyring)
+		return passwordMsg{p, err}
+	}
+}
+
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.w, m.h = msg.Width, msg.Height
+		m.line.SetWidth(max(m.w-2, 1))
+		return m, nil
+	case passwordMsg:
+		s := m.deps.Config.Server
+		if msg.err != nil {
+			text := ""
+			if !errors.Is(msg.err, creds.ErrNoPassword) {
+				text = msg.err.Error()
+			}
+			m.openLogin(s.URL, s.User, text)
+			return m, nil
+		}
+		return m, m.connect(s.URL, s.User, msg.password)
+	case loginMsg:
+		return m, m.loggedIn(msg)
+	case savedMsg:
+		return m, m.saved(msg)
+	case eventMsg:
+		return m, m.dispatch(msg.Event)
+	case timeoutMsg:
+		if msg.seq == m.seq {
+			return m, m.result(m.engine.Timeout(m.mode, m.scopes()))
+		}
+		return m, nil
+	case tea.KeyPressMsg:
+		m.seq++
+		if m.screen == screenLogin {
+			return m, m.loginKey(msg)
+		}
+		return m, m.key(msg)
+	}
+	if m.mode == keymap.Cmdline {
+		var cmd tea.Cmd
+		m.line, cmd = m.line.Update(msg)
+		return m, cmd
+	}
+	return m, nil
+}
+
+// connect logs in with credentials from the config.
+func (m *Model) connect(url, user, password string) tea.Cmd {
+	return func() tea.Msg {
+		c := subsonic.New(subsonic.Credentials{URL: url, Username: user, Password: password})
+		return loginMsg{client: c, url: url, err: c.Login(m.ctx)}
+	}
+}
+
+func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
+	if m.screen == screenLogin {
+		return m.loginResult(msg)
+	}
+	if subsonic.IsCode(msg.err, subsonic.CodeWrongCredentials) {
+		s := m.deps.Config.Server
+		m.openLogin(s.URL, s.User, "the server rejected the saved username or password")
+		return nil
+	}
+	if msg.err != nil {
+		m.setMsg("can't reach the server: "+msg.err.Error(), true)
+		return nil
+	}
+	return m.ready(msg.client)
+}
+
+// ready starts the session once the server accepted the credentials. A
+// new login mid-session starts over: nothing from the old server stays.
+func (m *Model) ready(c *subsonic.Client) tea.Cmd {
+	var stop tea.Cmd
+	if m.client != nil {
+		stop = m.dispatch(app.StopPlayback{})
+		m.state = app.New()
+		m.lib = []frame{{kind: sectionList, title: "Library"}, {kind: albumList, title: "Albums"}}
+		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
+	}
+	m.client = c
+	m.screen = screenMain
+	if m.deps.OnLogin != nil {
+		m.deps.OnLogin(c)
+	}
+	if !m.msgErr {
+		m.setMsg("", false)
+	}
+	return tea.Batch(stop, m.dispatch(app.LoadAlbums{}))
+}
+
+// dispatch runs an event through the core and the resulting effects.
+func (m *Model) dispatch(e app.Event) tea.Cmd {
+	var effects []app.Effect
+	m.state, effects = app.Apply(m.state, e)
+	m.clamp()
+	var cmds []tea.Cmd
+	for _, eff := range effects {
+		if cmd := m.run(eff); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+	}
+	return tea.Batch(cmds...)
+}
+
+// run turns one effect into a command. Player effects keep their order
+// even though Bubble Tea runs commands concurrently.
+func (m *Model) run(e app.Effect) tea.Cmd {
+	ctx, c, p := m.ctx, m.client, m.deps.Player
+	switch e := e.(type) {
+	case app.Notice:
+		m.notice(e)
+		return nil
+	case app.FetchAlbums:
+		return func() tea.Msg {
+			if c == nil {
+				return eventMsg{app.AlbumsLoaded{Err: errors.New("not logged in")}}
+			}
+			as, err := c.Albums(ctx, subsonic.ByName)
+			out := make([]library.Album, len(as))
+			for i, a := range as {
+				out[i] = library.AlbumFrom(a)
+			}
+			return eventMsg{app.AlbumsLoaded{Albums: out, Err: err}}
+		}
+	case app.FetchAlbum:
+		return func() tea.Msg {
+			if c == nil {
+				return eventMsg{app.AlbumLoaded{ID: e.ID, Err: errors.New("not logged in")}}
+			}
+			a, err := c.Album(ctx, string(e.ID))
+			out := make([]library.Track, len(a.Songs))
+			for i, s := range a.Songs {
+				out[i] = library.TrackFrom(s)
+			}
+			return eventMsg{app.AlbumLoaded{ID: e.ID, Tracks: out, Err: err}}
+		}
+	case app.Scrobble:
+		return func() tea.Msg {
+			if c != nil {
+				_ = c.Scrobble(ctx, string(e.Track), e.Submission) // fire and forget
+			}
+			return nil
+		}
+	}
+
+	var call func() error
+	switch e := e.(type) {
+	case app.Play:
+		call = func() error { return p.Play(ctx, e.Span) }
+	case app.SetNeighbours:
+		call = func() error { return p.SetNeighbours(ctx, e.Prev, e.Next) }
+	case app.Pause:
+		call = func() error { return p.Pause(ctx) }
+	case app.Resume:
+		call = func() error { return p.Resume(ctx) }
+	case app.Seek:
+		call = func() error { return p.SeekBy(ctx, e.By) }
+	case app.SeekTo:
+		call = func() error { return p.SeekTo(ctx, e.Pos) }
+	case app.Stop:
+		call = func() error { return p.Stop(ctx) }
+	default:
+		return nil
+	}
+	ticket := m.player.ticket()
+	return func() tea.Msg {
+		var err error
+		m.player.run(ticket, func() { err = call() })
+		if err != nil {
+			return eventMsg{app.PlayerFailed{Err: err}}
+		}
+		return nil
+	}
+}
+
+// notice shows a core message, with the key for its command if it has one.
+func (m *Model) notice(n app.Notice) {
+	text := n.Text
+	if n.Command != "" {
+		key := ":" + n.Command
+		if ks := m.engine.Table().Keys(keymap.Normal, m.scopes(), n.Command); len(ks) > 0 {
+			key = ks[0]
+		}
+		text += " · " + key + " " + n.Hint
+	}
+	m.setMsg(text, n.Err)
+}
+
+func (m *Model) setMsg(text string, isErr bool) { m.msg, m.msgErr = text, isErr }
+
+// key handles a key press on the main screen.
+func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
+	if m.mode == keymap.Cmdline {
+		return m.lineKey(k)
+	}
+	token := keymap.FromTerminal(k.String(), k.Text)
+	if token == "\x00" { // Ctrl on Windows conhost arrives as NUL
+		return nil
+	}
+	return m.result(m.engine.Feed(m.mode, m.scopes(), token))
+}
+
+func (m *Model) result(r keymap.Result) tea.Cmd {
+	switch r.Kind {
+	case keymap.Run:
+		return m.exec(r.Command, r.Count)
+	case keymap.Pending:
+		if r.Ambiguous {
+			seq := m.seq
+			return tea.Tick(ambiguousTimeout, func(time.Time) tea.Msg { return timeoutMsg{seq} })
+		}
+	}
+	return nil
+}
+
+// exec runs a command line from a binding or the ":" line.
+func (m *Model) exec(line string, count int) tea.Cmd {
+	m.pendingCmd = nil
+	if err := m.registry.Run(m, line, count); err != nil {
+		m.setMsg(err.Error(), true)
+		return nil
+	}
+	cmd := m.pendingCmd
+	m.pendingCmd = nil
+	return cmd
+}
+
+func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
+	switch k.String() {
+	case "esc", "ctrl+c":
+		m.leaveLine()
+		return nil
+	case "enter":
+		text := m.line.Value()
+		m.leaveLine()
+		if strings.TrimSpace(text) == "" {
+			return nil
+		}
+		return m.exec(text, 0)
+	case "backspace":
+		if m.line.Value() == "" {
+			m.leaveLine()
+			return nil
+		}
+	}
+	var cmd tea.Cmd
+	m.line, cmd = m.line.Update(k)
+	return cmd
+}
+
+func (m *Model) leaveLine() {
+	m.mode = keymap.Normal
+	m.line.Reset()
+	m.line.Blur()
+}
+
+// scopes is the scope chain for where the cursor is.
+func (m *Model) scopes() []string {
+	if m.focus == queueWindow {
+		return []string{"queue", "global"}
+	}
+	switch m.top().kind {
+	case albumTracks:
+		return []string{"album-tracks", "tracks", "global"}
+	case albumList:
+		return []string{"albums", "containers", "global"}
+	}
+	return []string{"sections", "containers", "global"}
+}
+
+func (m *Model) top() *frame { return &m.lib[len(m.lib)-1] }
+
+// rows is the number of rows in the focused list.
+func (m *Model) rows(f *frame) int {
+	switch f.kind {
+	case sectionList:
+		return len(sections)
+	case albumList:
+		return len(m.state.Albums)
+	case albumTracks:
+		return len(m.state.Tracks[f.album])
+	}
+	return 0
+}
+
+// sections are the library window's top-level entries. The skeleton has
+// Albums only; Home, Artists, Playlists, Search and Help come later.
+var sections = []string{"Albums"}
+
+// clamp keeps cursors inside lists that changed length.
+func (m *Model) clamp() {
+	for i := range m.lib {
+		f := &m.lib[i]
+		f.cur = min(f.cur, max(m.rows(f)-1, 0))
+	}
+	m.queueCur = min(m.queueCur, max(len(m.state.Queue)-1, 0))
+}
+
+// bodyHeight is the number of list rows each window shows.
+func (m *Model) bodyHeight() int {
+	h := m.h - 4 // title row, now-playing bar (2), status line
+	if m.hints {
+		h--
+	}
+	return max(h, 1)
+}
+
+func seconds(arg string) (time.Duration, error) {
+	n, err := strconv.Atoi(strings.TrimPrefix(arg, "+"))
+	if err != nil {
+		return 0, fmt.Errorf("seek: %q is not a number of seconds", arg)
+	}
+	return time.Duration(n) * time.Second, nil
+}

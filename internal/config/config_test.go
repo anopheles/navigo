@@ -56,3 +56,66 @@ func TestPath(t *testing.T) {
 		t.Errorf("Path = %s, want .../navigo/config.yaml", p)
 	}
 }
+
+func TestSaveServerKeepsTheRest(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "navigo", "config.yaml")
+	if err := SaveServer(p, "https://music.example", "ann", ""); err != nil {
+		t.Fatal(err)
+	}
+	if info, _ := os.Stat(p); info.Mode().Perm() != 0o600 {
+		t.Errorf("mode = %v, want 0600", info.Mode().Perm())
+	}
+	orig := "# my config\nplayer:\n  mpv_args: [--ao=null] # quiet\nserver:\n  url: old\n  password_command: pass show navidrome\n"
+	if err := os.WriteFile(p, []byte(orig), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveServer(p, "https://music.example", "ann", "s3cret"); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(p)
+	for _, want := range []string{"# my config", "# quiet", "password_command: pass show navidrome", "password: s3cret"} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("saved config lacks %q:\n%s", want, b)
+		}
+	}
+	c, err := Load(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Server{URL: "https://music.example", User: "ann", Password: "s3cret", PasswordCommand: "pass show navidrome"}
+	if c.Server != want || len(c.Player.MPVArgs) != 1 {
+		t.Errorf("loaded %+v", c)
+	}
+	if err := SaveServer(p, "https://music.example", "ann", ""); err != nil {
+		t.Fatal(err)
+	}
+	if c, _ := Load(p); c.Server.Password != "" {
+		t.Error("empty password didn't remove server.password")
+	}
+}
+
+func TestLooseWithPassword(t *testing.T) {
+	if isWindows {
+		t.Skip("no mode bits")
+	}
+	p := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(p, []byte("server: {password: x}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, _ := Load(p)
+	if !LooseWithPassword(p, c) {
+		t.Error("0644 with a password should be loose")
+	}
+	_ = os.Chmod(p, 0o600)
+	if LooseWithPassword(p, c) {
+		t.Error("0600 is not loose")
+	}
+}
+
+func TestHints(t *testing.T) {
+	c, _ := Parse([]byte("{}"))
+	off, _ := Parse([]byte("hints: false"))
+	if !c.HintsOn() || off.HintsOn() {
+		t.Error("hints default on, false turns them off")
+	}
+}

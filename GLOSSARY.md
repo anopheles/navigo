@@ -66,3 +66,25 @@ _Avoid_: playlist (a playlist lives on the server), now playing list
 
 **Group**:
 A run of consecutive tracks from the same album in a track list or the queue; `{`/`}` jump between groups.
+
+## Screen
+
+**Window**:
+One of the two side-by-side panes of the main screen: the library window, which shows one list at a time, and the queue window, which always shows the queue.
+_Avoid_: pane, panel, split, tab
+
+**Section**:
+A top-level entry of the library window (Home, Artists, Albums, Playlists, Search, Help); together they form the section list.
+_Avoid_: tab, view, screen, page
+
+**Mark**:
+A named place you jump to with `'` followed by a key, such as `'a` for Artists.
+_Avoid_: bookmark, hotkey
+
+**Now-playing bar**:
+The two lines at the bottom of the screen showing the current track and its progress; it is never focused.
+_Avoid_: status bar, player bar
+
+**Popup**:
+A box drawn over both windows for a short interruption, such as a Confirmation or track details.
+_Avoid_: modal, dialog, overlay

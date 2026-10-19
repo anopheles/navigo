@@ -9,8 +9,10 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/zalando/go-keyring"
 
+	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/config"
 	"github.com/anopheles/navigo/internal/keymap"
+	"github.com/anopheles/navigo/internal/library"
 	"github.com/anopheles/navigo/internal/player"
 	"github.com/anopheles/navigo/internal/subsonic"
 	"github.com/anopheles/navigo/internal/subsonic/subsonictest"
@@ -28,6 +30,11 @@ type harness struct {
 	path   string
 	quit   bool
 	logins int
+	cache  string
+	// queued holds messages sent from inside a command (sync progress);
+	// they are delivered once that command returns.
+	queued   []tea.Msg
+	progress []string // the empty-list text seen while syncing
 }
 
 type memKeyring map[string]string
@@ -54,10 +61,35 @@ func newHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.
 		edit(&cfg, srv)
 	}
 	hs := &harness{t: t, srv: srv, fake: player.NewFake(), kr: memKeyring{}, path: filepath.Join(t.TempDir(), "navigo", "config.yaml")}
-	hs.m = New(Deps{Config: cfg, ConfigPath: hs.path, Player: hs.fake, Keyring: hs.kr, OnLogin: func(*subsonic.Client) { hs.logins++ }})
+	hs.cache = filepath.Join(filepath.Dir(hs.path), "cache")
+	hs.m = New(Deps{Config: cfg, ConfigPath: hs.path, Player: hs.fake, Keyring: hs.kr, CacheDir: hs.cache, OnLogin: func(*subsonic.Client) { hs.logins++ }})
+	hs.m.SetSend(func(msg tea.Msg) { hs.queued = append(hs.queued, msg) })
 	hs.send(tea.WindowSizeMsg{Width: w, Height: h})
 	hs.run(hs.m.Init())
 	return hs
+}
+
+// restart starts navigo again on the same server, config and cache, as a
+// second launch would.
+func (h *harness) restart() *harness {
+	h.t.Helper()
+	n := &harness{t: h.t, srv: h.srv, fake: player.NewFake(), kr: h.kr, path: h.path, cache: h.cache}
+	n.m = New(Deps{Config: h.m.deps.Config, ConfigPath: h.path, Player: n.fake, Keyring: n.kr, CacheDir: n.cache, OnLogin: func(*subsonic.Client) { n.logins++ }})
+	n.m.SetSend(func(msg tea.Msg) { n.queued = append(n.queued, msg) })
+	n.send(tea.WindowSizeMsg{Width: h.m.w, Height: h.m.h})
+	n.run(n.m.Init())
+	return n
+}
+
+// requests counts the fake server's requests to endpoint so far.
+func (h *harness) requests(endpoint string) int {
+	n := 0
+	for _, r := range h.srv.Requests() {
+		if r.Endpoint == endpoint {
+			n++
+		}
+	}
+	return n
 }
 
 func (h *harness) send(msg tea.Msg) {
@@ -73,7 +105,14 @@ func (h *harness) run(cmd tea.Cmd) {
 	if cmd == nil {
 		return
 	}
-	switch msg := cmd().(type) {
+	msg := cmd()
+	for len(h.queued) > 0 {
+		q := h.queued[0]
+		h.queued = h.queued[1:]
+		h.send(q)
+		h.progress = append(h.progress, h.m.emptyList())
+	}
+	switch msg := msg.(type) {
 	case nil:
 	case tea.BatchMsg:
 		for _, c := range msg {
@@ -178,3 +217,5 @@ func (h *harness) cursorRow() string {
 	}
 	return ansi.Strip(h.m.libraryRow(f, f.cur, 200))
 }
+
+func appSynced(s *library.Snapshot) app.Event { return app.Synced{Library: s} }

@@ -44,32 +44,60 @@ func only[T Effect](effects []Effect) []T {
 	return out
 }
 
-func TestLoadAlbumsOnce(t *testing.T) {
-	s, out := run(New(), LoadAlbums{}, LoadAlbums{})
-	if !reflect.DeepEqual(out, []Effect{FetchAlbums{}}) {
-		t.Fatalf("effects = %#v, want one FetchAlbums", out)
+func snap(name string) *library.Snapshot {
+	return library.Build("https://m.example", "ann", time.Time{}, nil, []library.Album{{ID: "al", Name: name}}, nil, nil, nil)
+}
+
+func TestStartupSync(t *testing.T) {
+	cached := snap("cached")
+	// Logging in before the cache is checked waits for it.
+	s, out := run(New(), Start{}, LoggedIn{})
+	if !reflect.DeepEqual(out, []Effect{LoadCache{}}) {
+		t.Fatalf("effects = %#v, want only LoadCache", out)
 	}
-	s, _ = run(s, AlbumsLoaded{Albums: []library.Album{{ID: "a"}}})
-	if _, out = run(s, LoadAlbums{}); out != nil {
-		t.Errorf("loaded albums fetched again: %#v", out)
+	s, out = run(s, CacheLoaded{Library: cached})
+	if s.Library != cached || !reflect.DeepEqual(out, []Effect{StartSync{Old: cached}}) || !s.Sync.Running {
+		t.Fatalf("after the cache: library %v, effects %#v", s.Library, out)
 	}
-	s, out = run(New(), LoadAlbums{}, AlbumsLoaded{Err: errors.New("offline")})
-	if n := only[Notice](out); len(n) != 1 || !n[0].Err || s.AlbumsLoading {
-		t.Errorf("failed load: %#v, loading=%v", out, s.AlbumsLoading)
+	s, _ = run(s, SyncProgress{Done: 500, Total: 547})
+	if s.Sync.Done != 500 || s.Sync.Total != 547 {
+		t.Errorf("progress = %+v", s.Sync)
 	}
-	if _, out = run(s, LoadAlbums{}); len(out) != 1 {
-		t.Error("a failed load can't be retried")
+	fresh := snap("fresh")
+	s, out = run(s, Synced{Library: fresh})
+	if s.Library != fresh || s.Sync.Running || !reflect.DeepEqual(out, []Effect{SaveCache{Library: fresh}}) {
+		t.Errorf("after the sync: %v, %#v", s.Sync, out)
+	}
+	// A cache that loads late never replaces a synced library.
+	if s, _ = run(s, CacheLoaded{Library: cached}); s.Library != fresh {
+		t.Error("a late cache replaced the synced library")
 	}
 }
 
-func TestLoadAlbum(t *testing.T) {
-	s, out := run(New(), LoadAlbum{ID: "al"}, LoadAlbum{ID: "al"})
-	if !reflect.DeepEqual(out, []Effect{FetchAlbum{ID: "al"}}) {
-		t.Fatalf("effects = %#v", out)
+func TestSyncFailureKeepsTheLibrary(t *testing.T) {
+	cached := snap("cached")
+	s, _ := run(New(), Start{}, CacheLoaded{Library: cached}, LoggedIn{})
+	s, out := run(s, Synced{Err: errors.New("offline")})
+	if s.Library != cached || s.Sync.Running {
+		t.Error("a failed sync dropped the cached library")
 	}
-	s, _ = run(s, AlbumLoaded{ID: "al", Tracks: tracks(2)})
-	if len(s.Tracks["al"]) != 2 || s.Loading["al"] {
-		t.Errorf("tracks = %v, loading = %v", s.Tracks["al"], s.Loading["al"])
+	if n := only[Notice](out); len(n) != 1 || !n[0].Err {
+		t.Errorf("effects = %#v", out)
+	}
+}
+
+func TestSyncNow(t *testing.T) {
+	if _, out := run(New(), SyncNow{}); !only[Notice](out)[0].Err {
+		t.Error(":sync before login should say so")
+	}
+	s, _ := run(New(), Start{}, CacheLoaded{}, LoggedIn{})
+	if _, out := run(s, SyncNow{}); only[Notice](out)[0].Text != "already syncing" {
+		t.Error(":sync during a sync")
+	}
+	s, _ = run(s, Synced{Library: snap("x")})
+	s, out := run(s, SyncNow{})
+	if st := only[StartSync](out); len(st) != 1 || !st[0].Full || !s.Sync.Running {
+		t.Errorf(":sync = %#v", out)
 	}
 }
 

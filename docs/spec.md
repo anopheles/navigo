@@ -454,6 +454,7 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **Server and fixtures:** the subsonic client, the fixture library and the fake server.
 - **Playback:** the mpv IPC client and Player (window of three, sequenced effects).
 - **Core:** queue, undo/redo, play now / add / play next, transport, scrobbling.
+- **Library:** the snapshot, the gob cache file, startup and `:sync` sync with progress, and lists read from the cache ([#31](https://github.com/anopheles/navigo/issues/31)).
 - **Input:** the keymap engine (counts, prefixes, scopes, notation) and the command registry.
 - **Session:** the login form, keyring and config saving.
 - **Screen:** the two windows and narrow layout, the hint line, the empty-queue message, the now-playing bar and the `:` line.
@@ -465,7 +466,7 @@ Still to build for v1:
 - **Keys:** Visual mode, the `d`/`y` operators and the register, `p`/`P`, `J`/`K`, `x`, marks other than `'b`/`'q`, `/` with `n`/`N`, the jump list, the remaining motions, `gp`/`ga`/`gr`, volume, shuffle, repeat, info and stars.
 - **Discoverability:** the key menu, prefix menus, `:` fuzzy matching and tips, the `/`-to-search offer, and the full message model with `:messages`.
 - **Rebinding:** the `keys:` block, its validation popup, `:map` and friends, `:reload-config` and `navigo check-config`.
-- **Cache and offline:** the snapshot, sync and progress, the offline state with backoff and countdown, `:reconnect`, the 10/60 s timeouts, the stream-failure ping, and the 3-skip and 3-crash caps.
+- **Offline:** the offline state with backoff and countdown, `:reconnect`, the 10/60 s timeouts, the stream-failure ping, and the 3-skip and 3-crash caps.
 - **mpv:** the startup check with install hints, `player.mpv_path`, and resuming after a crash.
 - **Media controls:** MPRIS on Linux, and `force-media-title` for macOS and Windows.
 - **Colours:** the 16-colour palette and `NO_COLOR`; the skeleton still uses fixed 256-colour values.

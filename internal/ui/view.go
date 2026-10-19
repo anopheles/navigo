@@ -109,11 +109,7 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	f.offset = scroll(f.cur, f.offset, h, n)
 	var out []string
 	if n == 0 {
-		text := " loading…"
-		if f.kind == albumList && m.state.AlbumsLoaded || f.kind == albumTracks && !m.state.Loading[f.album] && m.state.Tracks[f.album] != nil {
-			text = " nothing here"
-		}
-		out = append(out, dimStyle.Render(fit(text, w)))
+		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
 		out = append(out, m.styleRow(m.libraryRow(f, i, w), i == f.cur, focused, false))
@@ -121,12 +117,25 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	return pad(out, w, h)
 }
 
+// emptyList says why a list has no rows.
+func (m *Model) emptyList() string {
+	switch sy := m.state.Sync; {
+	case m.state.Library != nil:
+		return " nothing here"
+	case sy.Running && sy.Total > 0:
+		return fmt.Sprintf(" Syncing library… %d / %d tracks", sy.Done, sy.Total)
+	case sy.Running:
+		return " Syncing library…"
+	}
+	return " loading…"
+}
+
 func (m *Model) libraryRow(f *frame, i, w int) string {
 	switch f.kind {
 	case sectionList:
 		return fit(" "+sections[i], w)
 	case albumList:
-		a := m.state.Albums[i]
+		a := m.state.Library.Albums[i]
 		year := ""
 		if a.Year > 0 {
 			year = fmt.Sprint(a.Year)
@@ -135,7 +144,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 		nw := rest * 3 / 5
 		return " " + fit(a.Name, nw) + fit("  "+a.Artist, rest-nw) + fmt.Sprintf("%6s", year)
 	}
-	ts := m.state.Tracks[f.album]
+	ts := m.state.Library.AlbumTracks(f.album)
 	return trackRow("  ", trackNumber(ts, i), ts[i], w)
 }
 
@@ -280,8 +289,13 @@ func hint(key, label string) string { return keyStyle.Render(key) + " " + dimSty
 // nowPlaying is the two-line bar: the track, then its progress.
 func (m *Model) nowPlaying() []string {
 	s := m.state
+	syncing := ""
+	if s.Sync.Running {
+		syncing = "⟳ syncing · "
+	}
 	if !s.Player.Playing || s.Current < 0 || s.Current >= len(s.Queue) {
-		return []string{barStyle.Render(fit(" ■ nothing playing", m.w)), barStyle.Render(fit("", m.w))}
+		right := strings.TrimSuffix(syncing, " · ") + " "
+		return []string{barStyle.Render(fit(" ■ nothing playing", m.w-lipgloss.Width(right)) + right), barStyle.Render(fit("", m.w))}
 	}
 	t := s.Queue[s.Current].Track
 	icon := "▶"
@@ -289,7 +303,7 @@ func (m *Model) nowPlaying() []string {
 		icon = "⏸"
 	}
 	l1 := fmt.Sprintf(" %s %s — %s · %s", icon, t.Title, t.Artist, t.Album)
-	right := fmt.Sprintf("%d/%d in queue ", s.Current+1, len(s.Queue))
+	right := syncing + fmt.Sprintf("%d/%d in queue ", s.Current+1, len(s.Queue))
 	if s.Player.Buffering {
 		right = "buffering · " + right
 	}

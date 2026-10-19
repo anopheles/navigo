@@ -118,7 +118,23 @@ type Album struct {
 	Duration      int    `json:"duration"`
 	IsCompilation bool   `json:"isCompilation"`
 	CoverArt      string `json:"coverArt"`
+	SortName      string `json:"sortName"`
+	PlayCount     int    `json:"playCount"`
 	Songs         []Song `json:"song"`
+}
+
+// ArtistRef names one artist credited on a song (OpenSubsonic).
+type ArtistRef struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// Artist is an artist as search3 and getStarred2 list them.
+type Artist struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	SortName   string `json:"sortName"`
+	AlbumCount int    `json:"albumCount"`
 }
 
 // Song is one track as the server returns it. Durations are in seconds.
@@ -136,6 +152,10 @@ type Song struct {
 	Genre       string `json:"genre"`
 	Duration    int    `json:"duration"`
 	CoverArt    string `json:"coverArt"`
+	PlayCount   int    `json:"playCount"`
+	// Artists is every artist credited on the song, as the server splits
+	// them (OpenSubsonic); empty on plain Subsonic servers.
+	Artists []ArtistRef `json:"artists"`
 }
 
 // ListType orders an album list.
@@ -174,6 +194,99 @@ func (c *Client) Album(ctx context.Context, id string) (Album, error) {
 	}
 	err := c.call(ctx, "getAlbum", url.Values{"id": {id}}, &r)
 	return r.Album, err
+}
+
+// SearchCounts says how many of each kind search3 returns, from where.
+// A count of 0 asks for none of that kind.
+type SearchCounts struct {
+	ArtistCount, ArtistOffset int
+	AlbumCount, AlbumOffset   int
+	SongCount, SongOffset     int
+}
+
+// SearchResult is one page of search3.
+type SearchResult struct {
+	Artists []Artist `json:"artist"`
+	Albums  []Album  `json:"album"`
+	Songs   []Song   `json:"song"`
+}
+
+// Search3 runs search3. On Navidrome an empty query lists the whole
+// library, which is how navigo syncs.
+func (c *Client) Search3(ctx context.Context, query string, n SearchCounts) (SearchResult, error) {
+	var r struct {
+		SearchResult3 SearchResult `json:"searchResult3"`
+	}
+	params := url.Values{
+		"query":       {query},
+		"artistCount": {strconv.Itoa(n.ArtistCount)}, "artistOffset": {strconv.Itoa(n.ArtistOffset)},
+		"albumCount": {strconv.Itoa(n.AlbumCount)}, "albumOffset": {strconv.Itoa(n.AlbumOffset)},
+		"songCount": {strconv.Itoa(n.SongCount)}, "songOffset": {strconv.Itoa(n.SongOffset)},
+	}
+	err := c.call(ctx, "search3", params, &r)
+	return r.SearchResult3, err
+}
+
+// Playlist is a playlist; Songs is filled only by Playlist.
+type Playlist struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Owner     string `json:"owner"`
+	SongCount int    `json:"songCount"`
+	Songs     []Song `json:"entry"`
+}
+
+// Playlists lists the playlists the user can see.
+func (c *Client) Playlists(ctx context.Context) ([]Playlist, error) {
+	var r struct {
+		Playlists struct {
+			Playlist []Playlist `json:"playlist"`
+		} `json:"playlists"`
+	}
+	err := c.call(ctx, "getPlaylists", nil, &r)
+	return r.Playlists.Playlist, err
+}
+
+// Playlist returns one playlist with its songs, in order.
+func (c *Client) Playlist(ctx context.Context, id string) (Playlist, error) {
+	var r struct {
+		Playlist Playlist `json:"playlist"`
+	}
+	err := c.call(ctx, "getPlaylist", url.Values{"id": {id}}, &r)
+	return r.Playlist, err
+}
+
+// Starred is what the user has starred.
+type Starred struct {
+	Artists []Artist `json:"artist"`
+	Albums  []Album  `json:"album"`
+	Songs   []Song   `json:"song"`
+}
+
+// Starred returns the user's starred artists, albums and songs.
+func (c *Client) Starred(ctx context.Context) (Starred, error) {
+	var r struct {
+		Starred2 Starred `json:"starred2"`
+	}
+	err := c.call(ctx, "getStarred2", nil, &r)
+	return r.Starred2, err
+}
+
+// ScanStatus is the server's library scan state.
+type ScanStatus struct {
+	Scanning bool      `json:"scanning"`
+	Count    int       `json:"count"`
+	LastScan time.Time `json:"lastScan"`
+}
+
+// ScanStatus returns when the server last scanned its library and how many
+// tracks it found.
+func (c *Client) ScanStatus(ctx context.Context) (ScanStatus, error) {
+	var r struct {
+		ScanStatus ScanStatus `json:"scanStatus"`
+	}
+	err := c.call(ctx, "getScanStatus", nil, &r)
+	return r.ScanStatus, err
 }
 
 // Scrobble reports a song as started (submission false) or as played

@@ -162,3 +162,54 @@ func TestHTTPError(t *testing.T) {
 		t.Fatalf("Login = %v, want an HTTP 502 error", err)
 	}
 }
+
+func TestSearch3FullLibrary(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+	first, err := c.Search3(ctx, "", SearchCounts{ArtistCount: 500, AlbumCount: 500, SongCount: 500})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(first.Artists) != 7 || len(first.Albums) != 8 || len(first.Songs) != 500 {
+		t.Fatalf("first page: %d artists, %d albums, %d songs", len(first.Artists), len(first.Albums), len(first.Songs))
+	}
+	second, err := c.Search3(ctx, "", SearchCounts{SongCount: 500, SongOffset: 500})
+	if err != nil || len(second.Songs) != 47 || len(second.Artists) != 0 {
+		t.Fatalf("second page: %d songs, %d artists, %v", len(second.Songs), len(second.Artists), err)
+	}
+	var guest bool
+	for _, s := range append(first.Songs, second.Songs...) {
+		for _, a := range s.Artists {
+			guest = guest || a.Name == "Pell Mell"
+		}
+	}
+	if !guest {
+		t.Error("no song credits Pell Mell in its artists list")
+	}
+}
+
+func TestPlaylistsStarredScanStatus(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+	pls, err := c.Playlists(ctx)
+	if err != nil || len(pls) != 2 {
+		t.Fatalf("playlists = %v, %v", pls, err)
+	}
+	for _, p := range pls {
+		full, err := c.Playlist(ctx, p.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if p.Name == "Morning Mix" && (len(full.Songs) != 5 || full.Songs[0].ID != full.Songs[4].ID) {
+			t.Errorf("Morning Mix = %d songs, want 5 with the first one twice", len(full.Songs))
+		}
+	}
+	st, err := c.Starred(ctx)
+	if err != nil || len(st.Artists) != 1 || len(st.Albums) != 1 || len(st.Songs) != 2 {
+		t.Errorf("starred = %+v, %v", st, err)
+	}
+	scan, err := c.ScanStatus(ctx)
+	if err != nil || scan.Count != 547 || scan.LastScan.IsZero() {
+		t.Errorf("scan status = %+v, %v", scan, err)
+	}
+}

@@ -7,7 +7,6 @@ package app
 
 import (
 	"fmt"
-	"maps"
 	"slices"
 	"time"
 
@@ -31,15 +30,22 @@ type PlayerState struct {
 	Volume    int
 }
 
+// SyncStatus is the state of a sync with the server.
+type SyncStatus struct {
+	Running     bool
+	Done, Total int // tracks fetched so far, and how many the server has
+}
+
 // State is the session. Treat it as immutable: Apply never changes the
 // slices or maps of a State it was given.
 type State struct {
-	Albums        []library.Album
-	AlbumsLoaded  bool
-	AlbumsLoading bool
-	// Tracks holds the tracks of albums opened so far.
-	Tracks  map[library.AlbumID][]library.Track
-	Loading map[library.AlbumID]bool
+	// Library is the snapshot every list reads; nil until the cache is
+	// loaded or the first sync is done.
+	Library *library.Snapshot
+	Sync    SyncStatus
+
+	cacheChecked bool // the cache file has been tried
+	loggedIn     bool
 
 	Queue []QueueEntry
 	// Current is the queue row that is playing, or last played; -1 if none.
@@ -62,9 +68,7 @@ type snapshot struct {
 }
 
 // New returns the state navigo starts with: nothing loaded, empty queue.
-func New() State {
-	return State{Current: -1, Tracks: map[library.AlbumID][]library.Track{}, Loading: map[library.AlbumID]bool{}}
-}
+func New() State { return State{Current: -1} }
 
 // CanUndo and CanRedo report whether Undo and Redo would change the queue.
 func (s State) CanUndo() bool { return len(s.undo) > 0 }
@@ -75,10 +79,12 @@ type Event interface{ isEvent() }
 
 // Events from the UI.
 type (
-	// LoadAlbums asks for the album list, unless it is loaded or loading.
-	LoadAlbums struct{}
-	// LoadAlbum asks for an album's tracks, unless they are loaded.
-	LoadAlbum struct{ ID library.AlbumID }
+	// Start loads the library cache; sent once when navigo starts.
+	Start struct{}
+	// LoggedIn: the server accepted the credentials, so syncing can start.
+	LoggedIn struct{}
+	// SyncNow forces a full sync (:sync).
+	SyncNow struct{}
 	// PlayNow replaces the queue with Tracks and plays Tracks[Start].
 	PlayNow struct {
 		Tracks []library.Track
@@ -101,14 +107,12 @@ type (
 
 // Events from the runner.
 type (
-	AlbumsLoaded struct {
-		Albums []library.Album
-		Err    error
-	}
-	AlbumLoaded struct {
-		ID     library.AlbumID
-		Tracks []library.Track
-		Err    error
+	// CacheLoaded carries the cached snapshot, or nil if there is none.
+	CacheLoaded  struct{ Library *library.Snapshot }
+	SyncProgress struct{ Done, Total int }
+	Synced       struct {
+		Library *library.Snapshot
+		Err     error
 	}
 	// FromPlayer wraps an event from the Player.
 	FromPlayer struct{ Event player.Event }
@@ -120,8 +124,14 @@ type (
 type Effect interface{ isEffect() }
 
 type (
-	FetchAlbums   struct{}
-	FetchAlbum    struct{ ID library.AlbumID }
+	LoadCache struct{}
+	// StartSync syncs onto Old: in full when Full is set or the server has
+	// scanned since, else only playlists and stars.
+	StartSync struct {
+		Old  *library.Snapshot
+		Full bool
+	}
+	SaveCache     struct{ Library *library.Snapshot }
 	Play          struct{ Span player.Span }
 	SetNeighbours struct{ Prev, Next player.Entry }
 	Pause         struct{}
@@ -150,32 +160,44 @@ const scrobbleAfter = 4 * time.Minute
 // Apply returns the state after e and the effects it calls for.
 func Apply(s State, e Event) (State, []Effect) {
 	switch e := e.(type) {
-	case LoadAlbums:
-		if s.AlbumsLoaded || s.AlbumsLoading {
-			return s, nil
+	case Start:
+		return s, []Effect{LoadCache{}}
+	case CacheLoaded:
+		s.cacheChecked = true
+		if s.Library == nil {
+			s.Library = e.Library
 		}
-		s.AlbumsLoading = true
-		return s, []Effect{FetchAlbums{}}
-	case AlbumsLoaded:
-		s.AlbumsLoading = false
-		if e.Err != nil {
-			return s, []Effect{Notice{Text: "couldn't load albums: " + e.Err.Error(), Err: true}}
+		if s.loggedIn {
+			return s.startSync(false)
 		}
-		s.Albums, s.AlbumsLoaded = e.Albums, true
 		return s, nil
-	case LoadAlbum:
-		if _, ok := s.Tracks[e.ID]; ok || s.Loading[e.ID] {
-			return s, nil
+	case LoggedIn:
+		s.loggedIn = true
+		if s.cacheChecked {
+			return s.startSync(false)
 		}
-		s.Loading = with(s.Loading, e.ID, true)
-		return s, []Effect{FetchAlbum{ID: e.ID}}
-	case AlbumLoaded:
-		s.Loading = without(s.Loading, e.ID)
-		if e.Err != nil {
-			return s, []Effect{Notice{Text: "couldn't load the album: " + e.Err.Error(), Err: true}}
-		}
-		s.Tracks = with(s.Tracks, e.ID, e.Tracks)
 		return s, nil
+	case SyncNow:
+		switch {
+		case !s.loggedIn:
+			return s, []Effect{Notice{Text: "not connected to the server yet", Err: true}}
+		case s.Sync.Running:
+			return s, []Effect{Notice{Text: "already syncing"}}
+		}
+		s, out := s.startSync(true)
+		return s, append(out, Notice{Text: "syncing the whole library…"})
+	case SyncProgress:
+		if s.Sync.Running {
+			s.Sync.Done, s.Sync.Total = e.Done, e.Total
+		}
+		return s, nil
+	case Synced:
+		s.Sync = SyncStatus{}
+		if e.Err != nil {
+			return s, []Effect{Notice{Text: "couldn't sync the library: " + e.Err.Error(), Err: true}}
+		}
+		s.Library = e.Library
+		return s, []Effect{SaveCache{Library: e.Library}}
 
 	case PlayNow:
 		if e.Start < 0 || e.Start >= len(e.Tracks) {
@@ -352,6 +374,14 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 	return s, nil
 }
 
+func (s State) startSync(full bool) (State, []Effect) {
+	if s.Sync.Running {
+		return s, nil
+	}
+	s.Sync = SyncStatus{Running: true}
+	return s, []Effect{StartSync{Old: s.Library, Full: full}}
+}
+
 // edit records an undo point and applies f to the queue. f returns the
 // new queue and current row.
 func (s State) edit(f func([]QueueEntry) ([]QueueEntry, int)) State {
@@ -418,23 +448,12 @@ func count(n int) string {
 	return fmt.Sprintf("%d tracks", n)
 }
 
-func with[K comparable, V any](m map[K]V, k K, v V) map[K]V {
-	m = maps.Clone(m)
-	if m == nil {
-		m = map[K]V{}
-	}
-	m[k] = v
-	return m
-}
-
-func without[K comparable, V any](m map[K]V, k K) map[K]V {
-	m = maps.Clone(m)
-	delete(m, k)
-	return m
-}
-
-func (LoadAlbums) isEvent()   {}
-func (LoadAlbum) isEvent()    {}
+func (Start) isEvent()        {}
+func (LoggedIn) isEvent()     {}
+func (SyncNow) isEvent()      {}
+func (CacheLoaded) isEvent()  {}
+func (SyncProgress) isEvent() {}
+func (Synced) isEvent()       {}
 func (PlayNow) isEvent()      {}
 func (AddEnd) isEvent()       {}
 func (AddNext) isEvent()      {}
@@ -446,13 +465,12 @@ func (SeekBy) isEvent()       {}
 func (StopPlayback) isEvent() {}
 func (Undo) isEvent()         {}
 func (Redo) isEvent()         {}
-func (AlbumsLoaded) isEvent() {}
-func (AlbumLoaded) isEvent()  {}
 func (FromPlayer) isEvent()   {}
 func (PlayerFailed) isEvent() {}
 
-func (FetchAlbums) isEffect()   {}
-func (FetchAlbum) isEffect()    {}
+func (LoadCache) isEffect()     {}
+func (StartSync) isEffect()     {}
+func (SaveCache) isEffect()     {}
 func (Play) isEffect()          {}
 func (SetNeighbours) isEffect() {}
 func (Pause) isEffect()         {}

@@ -64,14 +64,20 @@ func run() error {
 	})
 	defer mpv.Close()
 
+	cacheDir := ""
+	if dir, err := os.UserCacheDir(); err == nil {
+		cacheDir = filepath.Join(dir, "navigo")
+	}
 	m := ui.New(ui.Deps{
 		Config:     cfg,
 		ConfigPath: path,
 		Player:     mpv,
 		Keyring:    creds.OS,
+		CacheDir:   cacheDir,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})
 	p := tea.NewProgram(m)
+	m.SetSend(p.Send)
 	go func() {
 		for e := range mpv.Events() {
 			if d, ok := e.(player.Died); ok {

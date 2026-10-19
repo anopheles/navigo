@@ -26,8 +26,9 @@ func TestBrowseOpenPlay(t *testing.T) {
 	s := start(t, srv)
 
 	s.waitText("<CR> open", 30*time.Second)
-	s.waitFor("albums to load", 30*time.Second, func(scr string) bool {
-		return !strings.Contains(scr, "loading…") && !strings.Contains(scr, "connecting")
+	// A first run syncs the whole library before the lists fill.
+	s.waitFor("the library to sync", 3*time.Minute, func(scr string) bool {
+		return !strings.Contains(scr, "loading…") && !strings.Contains(scr, "connecting") && !strings.Contains(scr, "Syncing library")
 	})
 	s.keys("\r") // open the album under the cursor
 	s.waitFor("the album's tracks", 30*time.Second, func(scr string) bool {

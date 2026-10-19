@@ -40,6 +40,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "next-track", Label: "next track", Desc: "Play the next track in the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.NextTrack{}); return nil }},
 		{Name: "prev-track", Label: "previous track", Desc: "Play the previous track, or restart this one after 3 seconds.", Run: func(m *Model, _ command.Call) error { m.event(app.PrevTrack{}); return nil }},
 		{Name: "seek", Label: "seek", Desc: "Seek by a number of seconds, such as seek +10; a count multiplies it.", Run: seek},
+		{Name: "sync", Label: "sync", Desc: "Sync the whole library from the server.", Run: func(m *Model, _ command.Call) error { m.event(app.SyncNow{}); return nil }},
 		{Name: "stop", Label: "stop", Desc: "Stop playback.", Run: func(m *Model, _ command.Call) error { m.event(app.StopPlayback{}); return nil }},
 		{Name: "undo", Label: "undo", Desc: "Undo the last change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Undo{}); return nil }},
 		{Name: "redo", Label: "redo", Desc: "Redo the last undone change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Redo{}); return nil }},
@@ -101,15 +102,14 @@ func (m *Model) open(command.Call) error {
 	case sectionList:
 		if f.cur == 0 {
 			m.lib = append(m.lib, frame{kind: albumList, title: "Albums"})
-			m.event(app.LoadAlbums{})
 		}
 	case albumList:
-		if f.cur >= len(m.state.Albums) {
+		lib := m.state.Library
+		if lib == nil || f.cur >= len(lib.Albums) {
 			return nil
 		}
-		a := m.state.Albums[f.cur]
+		a := lib.Albums[f.cur]
 		m.lib = append(m.lib, frame{kind: albumTracks, album: a.ID, title: a.Name})
-		m.event(app.LoadAlbum{ID: a.ID})
 	}
 	return nil
 }
@@ -129,7 +129,6 @@ func (m *Model) showAlbums() {
 		}
 	}
 	m.lib = append(m.lib[:1], frame{kind: albumList, title: "Albums"})
-	m.event(app.LoadAlbums{})
 }
 
 // trackRow returns the album tracks shown and the cursor row, if the
@@ -140,7 +139,10 @@ func (m *Model) trackRow() ([]library.Track, int, error) {
 	if m.focus != libraryWindow || f.kind != albumTracks {
 		return nil, 0, errNotOnTrack
 	}
-	ts := m.state.Tracks[f.album]
+	var ts []library.Track
+	if m.state.Library != nil {
+		ts = m.state.Library.AlbumTracks(f.album)
+	}
 	if f.cur >= len(ts) {
 		return nil, 0, errNoRows
 	}

@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +36,8 @@ type Deps struct {
 	ConfigPath string
 	Player     player.Player
 	Keyring    creds.Keyring
+	// CacheDir holds the library cache files; empty means no cache.
+	CacheDir string
 	// OnLogin is called with the client once the server accepted the
 	// credentials, so the player can sign stream URLs with it.
 	OnLogin func(*subsonic.Client)
@@ -115,6 +118,9 @@ type Model struct {
 	hints  bool
 
 	player sequencer
+	// send delivers messages from long-running work, such as sync
+	// progress; Program.Send in navigo, a queue in tests.
+	send func(tea.Msg)
 	// pendingCmd collects what a command handler wants run next.
 	pendingCmd tea.Cmd
 }
@@ -141,6 +147,10 @@ func New(deps Deps) *Model {
 	return m
 }
 
+// SetSend gives the model a way to deliver messages from work that runs
+// longer than one command, such as sync progress.
+func (m *Model) SetSend(send func(tea.Msg)) { m.send = send }
+
 func (m *Model) Init() tea.Cmd {
 	s := m.deps.Config.Server
 	if s.URL == "" {
@@ -148,10 +158,10 @@ func (m *Model) Init() tea.Cmd {
 		return nil
 	}
 	m.setMsg("connecting to "+s.URL+"…", false)
-	return func() tea.Msg {
+	return tea.Batch(m.dispatch(app.Start{}), func() tea.Msg {
 		p, err := creds.Password(m.ctx, s, m.deps.Keyring)
 		return passwordMsg{p, err}
-	}
+	})
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -176,6 +186,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case savedMsg:
 		return m, m.saved(msg)
 	case eventMsg:
+		switch msg.Event.(type) {
+		case app.Synced, app.CacheLoaded:
+			keep := m.cursorIDs()
+			cmd := m.dispatch(msg.Event)
+			m.restoreCursors(keep)
+			return m, cmd
+		}
 		return m, m.dispatch(msg.Event)
 	case timeoutMsg:
 		if msg.seq == m.seq {
@@ -226,10 +243,14 @@ func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
 func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 	var stop tea.Cmd
 	if m.client != nil {
-		stop = m.dispatch(app.StopPlayback{})
+		stop = tea.Batch(m.dispatch(app.StopPlayback{}))
 		m.state = app.New()
 		m.lib = []frame{{kind: sectionList, title: "Library"}, {kind: albumList, title: "Albums"}}
 		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
+		stop = tea.Batch(stop, m.dispatch(app.Start{}))
+	} else if m.screen == screenLogin && !m.state.Sync.Running && m.state.Library == nil {
+		// First run: the cache wasn't tried before the login form.
+		stop = m.dispatch(app.Start{})
 	}
 	m.client = c
 	m.screen = screenMain
@@ -239,7 +260,7 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 	if !m.msgErr {
 		m.setMsg("", false)
 	}
-	return tea.Batch(stop, m.dispatch(app.LoadAlbums{}))
+	return tea.Batch(stop, m.dispatch(app.LoggedIn{}))
 }
 
 // dispatch runs an event through the core and the resulting effects.
@@ -264,29 +285,47 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 	case app.Notice:
 		m.notice(e)
 		return nil
-	case app.FetchAlbums:
+	case app.LoadCache:
+		dir, srv := m.deps.CacheDir, m.deps.Config.Server
 		return func() tea.Msg {
-			if c == nil {
-				return eventMsg{app.AlbumsLoaded{Err: errors.New("not logged in")}}
+			if dir == "" {
+				return eventMsg{app.CacheLoaded{}}
 			}
-			as, err := c.Albums(ctx, subsonic.ByName)
-			out := make([]library.Album, len(as))
-			for i, a := range as {
-				out[i] = library.AlbumFrom(a)
-			}
-			return eventMsg{app.AlbumsLoaded{Albums: out, Err: err}}
+			snap, _ := library.Load(dir, srv.URL, srv.User) // none or unusable: sync from scratch
+			return eventMsg{app.CacheLoaded{Library: snap}}
 		}
-	case app.FetchAlbum:
+	case app.StartSync:
+		srv, send := m.deps.Config.Server, m.send
+		progress := func(done, total int) {
+			if send != nil {
+				send(eventMsg{app.SyncProgress{Done: done, Total: total}})
+			}
+		}
 		return func() tea.Msg {
 			if c == nil {
-				return eventMsg{app.AlbumLoaded{ID: e.ID, Err: errors.New("not logged in")}}
+				return eventMsg{app.Synced{Err: errors.New("not logged in")}}
 			}
-			a, err := c.Album(ctx, string(e.ID))
-			out := make([]library.Track, len(a.Songs))
-			for i, s := range a.Songs {
-				out[i] = library.TrackFrom(s)
+			due, st, err := library.Due(ctx, c, e.Old, srv.URL, srv.User)
+			if err != nil {
+				return eventMsg{app.Synced{Err: err}}
 			}
-			return eventMsg{app.AlbumLoaded{ID: e.ID, Tracks: out, Err: err}}
+			var snap *library.Snapshot
+			if due || e.Full {
+				snap, err = library.Sync(ctx, c, srv.URL, srv.User, st, progress)
+			} else {
+				snap, err = library.Refresh(ctx, c, e.Old)
+			}
+			return eventMsg{app.Synced{Library: snap, Err: err}}
+		}
+	case app.SaveCache:
+		dir := m.deps.CacheDir
+		return func() tea.Msg {
+			if dir != "" {
+				if err := library.Save(dir, e.Library); err != nil {
+					return eventMsg{app.PlayerFailed{Err: err}}
+				}
+			}
+			return nil
 		}
 	case app.Scrobble:
 		return func() tea.Msg {
@@ -424,17 +463,67 @@ func (m *Model) scopes() []string {
 
 func (m *Model) top() *frame { return &m.lib[len(m.lib)-1] }
 
-// rows is the number of rows in the focused list.
+// rows is the number of rows in a list.
 func (m *Model) rows(f *frame) int {
-	switch f.kind {
-	case sectionList:
+	lib := m.state.Library
+	switch {
+	case f.kind == sectionList:
 		return len(sections)
-	case albumList:
-		return len(m.state.Albums)
-	case albumTracks:
-		return len(m.state.Tracks[f.album])
+	case lib == nil:
+		return 0
+	case f.kind == albumList:
+		return len(lib.Albums)
+	case f.kind == albumTracks:
+		return len(lib.AlbumTracks(f.album))
 	}
 	return 0
+}
+
+// cursorIDs remembers what each list's cursor is on, so a new snapshot
+// can put the cursors back on the same items.
+func (m *Model) cursorIDs() []string {
+	ids := make([]string, len(m.lib))
+	lib := m.state.Library
+	if lib == nil {
+		return ids
+	}
+	for i, f := range m.lib {
+		switch f.kind {
+		case albumList:
+			if f.cur < len(lib.Albums) {
+				ids[i] = string(lib.Albums[f.cur].ID)
+			}
+		case albumTracks:
+			if ts := lib.AlbumTracks(f.album); f.cur < len(ts) {
+				ids[i] = string(ts[f.cur].ID)
+			}
+		}
+	}
+	return ids
+}
+
+func (m *Model) restoreCursors(ids []string) {
+	lib := m.state.Library
+	if lib == nil {
+		return
+	}
+	for i := range m.lib {
+		f := &m.lib[i]
+		if i >= len(ids) || ids[i] == "" {
+			continue
+		}
+		switch f.kind {
+		case albumList:
+			if j := slices.IndexFunc(lib.Albums, func(a library.Album) bool { return string(a.ID) == ids[i] }); j >= 0 {
+				f.cur = j
+			}
+		case albumTracks:
+			if j := slices.IndexFunc(lib.AlbumTracks(f.album), func(t library.Track) bool { return string(t.ID) == ids[i] }); j >= 0 {
+				f.cur = j
+			}
+		}
+	}
+	m.clamp()
 }
 
 // sections are the library window's top-level entries. The skeleton has

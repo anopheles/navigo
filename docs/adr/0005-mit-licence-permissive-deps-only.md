@@ -1,0 +1,3 @@
+# navigo is MIT-licensed and links only permissive dependencies
+
+navigo is released under MIT, the norm for Go and for the TUI libraries it builds on. Linked Go modules must be MIT, BSD-2/3-Clause, Apache-2.0, ISC or MPL-2.0; GPL, LGPL and AGPL libraries are excluded, which is why navigo writes its own Subsonic client. External programs navigo spawns and talks to over IPC (mpv) are not linked and may carry any licence. No code is derived from GPL-licensed clients: they may be used to observe behaviour only, never as source to translate or copy. Once CI exists, `go-licenses check` enforces the allowlist.

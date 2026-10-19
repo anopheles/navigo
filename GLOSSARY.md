@@ -36,7 +36,7 @@ A command that acts on the rows a motion covers, or on the current row when doub
 A number typed before a motion or command that repeats or scales it, such as `5j` or `3.`.
 
 **Scope**:
-Where a binding applies: a popup, a view, or the whole mode. The narrowest scope that matches wins.
+Where a binding applies: a popup, a kind of list, or the whole mode. Scopes form a chain from narrow to wide (a playlist's tracks, then any track list, then global), and the narrowest scope that matches wins.
 
 **Leader**:
 A user-configurable prefix key (`\` by default) that is free for the user's own bindings.
@@ -44,6 +44,9 @@ A user-configurable prefix key (`\` by default) that is free for the user's own 
 **Register**:
 The single clipboard that `y` and `d` fill and `p`/`P` paste from, shared by every view.
 _Avoid_: clipboard, buffer
+
+**Confirmation**:
+A y/n question asked before a destructive server change; its keys are fixed and cannot be rebound.
 
 **Jump list**:
 The history of where the user has navigated, walked back and forth with `<C-o>`/`<C-i>`.

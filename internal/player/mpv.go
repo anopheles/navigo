@@ -1,0 +1,466 @@
+package player
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"math"
+	"regexp"
+	"strconv"
+	"sync"
+	"time"
+
+	"github.com/anopheles/navigo/internal/library"
+	"github.com/anopheles/navigo/internal/mpv"
+)
+
+// ErrMPVTooOld is returned when mpv is older than 0.38, the first version
+// with the named-argument loadfile navigo relies on.
+var ErrMPVTooOld = errors.New("mpv 0.38 or newer is needed")
+
+// MPVOptions configure the mpv adapter.
+type MPVOptions struct {
+	// Path and Args are passed to mpv.Start; Args is player.mpv_args.
+	Path string
+	Args []string
+	// StreamURL signs a stream URL for a track, with a fresh salt each
+	// call. It is called whenever an entry is loaded into mpv.
+	StreamURL func(library.TrackID) string
+}
+
+// Observer IDs for the properties MPV follows.
+const (
+	obsPause int64 = iota + 1
+	obsTimePos
+	obsDuration
+	obsVolume
+	obsCoreIdle
+)
+
+var observed = map[int64]string{
+	obsPause:    "pause",
+	obsTimePos:  "time-pos",
+	obsDuration: "duration",
+	obsVolume:   "volume",
+	obsCoreIdle: "core-idle",
+}
+
+// MPV is the Player backed by an mpv process. mpv is started on the first
+// Play and again on the Play after it died.
+type MPV struct {
+	opts    MPVOptions
+	events  chan Event
+	closing chan struct{}
+	loops   sync.WaitGroup
+	once    sync.Once
+
+	op sync.Mutex // serialises changes to mpv's playlist
+
+	mu        sync.Mutex
+	proc      *mpv.Process
+	entries   map[int64]Entry // mpv playlist_entry_id → entry
+	current   int64           // mpv ID of the playing entry, 0 if none
+	paused    bool
+	coreIdle  bool
+	buffering bool
+	pos       time.Duration
+	duration  time.Duration
+	lastSec   int64
+	volume    int
+}
+
+var _ Player = (*MPV)(nil)
+
+// NewMPV returns an mpv-backed Player. It starts no process yet.
+func NewMPV(opts MPVOptions) *MPV {
+	return &MPV{
+		opts:    opts,
+		events:  make(chan Event, 64),
+		closing: make(chan struct{}),
+		entries: map[int64]Entry{},
+		volume:  -1,
+	}
+}
+
+func (m *MPV) Events() <-chan Event { return m.events }
+
+func (m *MPV) Play(ctx context.Context, w Span) error {
+	m.op.Lock()
+	defer m.op.Unlock()
+	p, err := m.ensure(ctx)
+	if err != nil {
+		return err
+	}
+	if err := p.Set(ctx, "pause", false); err != nil {
+		return err
+	}
+	if _, err := m.load(ctx, p, w.Current, "replace", nil); err != nil {
+		return err
+	}
+	if w.Next.ID != 0 {
+		if _, err := m.load(ctx, p, w.Next, "append", nil); err != nil {
+			return err
+		}
+	}
+	if w.Prev.ID != 0 {
+		if _, err := m.load(ctx, p, w.Prev, "insert-at", 0); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *MPV) SetNeighbours(ctx context.Context, prev, next Entry) error {
+	m.op.Lock()
+	defer m.op.Unlock()
+	p := m.process()
+	if p == nil {
+		return nil
+	}
+	return m.reconcile(ctx, p, &prev, &next)
+}
+
+func (m *MPV) Pause(ctx context.Context) error  { return m.set(ctx, "pause", true) }
+func (m *MPV) Resume(ctx context.Context) error { return m.set(ctx, "pause", false) }
+
+func (m *MPV) SetVolume(ctx context.Context, percent int) error {
+	return m.set(ctx, "volume", min(max(percent, 0), 100))
+}
+
+func (m *MPV) SeekTo(ctx context.Context, pos time.Duration) error {
+	return m.command(ctx, "seek", pos.Seconds(), "absolute")
+}
+
+func (m *MPV) SeekBy(ctx context.Context, d time.Duration) error {
+	return m.command(ctx, "seek", d.Seconds(), "relative")
+}
+
+func (m *MPV) Stop(ctx context.Context) error {
+	m.op.Lock()
+	defer m.op.Unlock()
+	return m.command(ctx, "stop")
+}
+
+// Close quits mpv and closes Events.
+func (m *MPV) Close() error {
+	var err error
+	m.once.Do(func() {
+		close(m.closing)
+		if p := m.process(); p != nil {
+			err = p.Close()
+		}
+		m.loops.Wait()
+		close(m.events)
+	})
+	return err
+}
+
+func (m *MPV) process() *mpv.Process {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.proc
+}
+
+func (m *MPV) set(ctx context.Context, property string, value any) error {
+	p := m.process()
+	if p == nil {
+		return nil
+	}
+	return p.Set(ctx, property, value)
+}
+
+func (m *MPV) command(ctx context.Context, args ...any) error {
+	p := m.process()
+	if p == nil {
+		return nil
+	}
+	_, err := p.Command(ctx, args...)
+	return err
+}
+
+// ensure returns the running mpv, starting it if needed.
+func (m *MPV) ensure(ctx context.Context) (*mpv.Process, error) {
+	if p := m.process(); p != nil {
+		return p, nil
+	}
+	select {
+	case <-m.closing:
+		return nil, errors.New("player: closed")
+	default:
+	}
+	p, err := mpv.Start(ctx, mpv.Options{Path: m.opts.Path, Args: m.opts.Args})
+	if err != nil {
+		return nil, err
+	}
+	var version string
+	if err := p.Get(ctx, "mpv-version", &version); err != nil {
+		_ = p.Close()
+		return nil, err
+	}
+	if !versionOK(version) {
+		_ = p.Close()
+		return nil, fmt.Errorf("%w, found %s", ErrMPVTooOld, version)
+	}
+	for id, name := range observed {
+		if err := p.Observe(ctx, id, name); err != nil {
+			_ = p.Close()
+			return nil, err
+		}
+	}
+	m.mu.Lock()
+	m.proc = p
+	m.mu.Unlock()
+	m.loops.Add(1)
+	go m.loop(p)
+	return p, nil
+}
+
+var versionRE = regexp.MustCompile(`(\d+)\.(\d+)`)
+
+// versionOK reports whether an mpv-version such as "mpv v0.41.0" or
+// "mpv 0.38.0-45-g1234abc" is at least 0.38. Unknown formats pass.
+func versionOK(v string) bool {
+	m := versionRE.FindStringSubmatch(v)
+	if m == nil {
+		return true
+	}
+	major, _ := strconv.Atoi(m[1])
+	minor, _ := strconv.Atoi(m[2])
+	return major > 0 || minor >= 38
+}
+
+// load appends e's stream to mpv's playlist with the given loadfile flags
+// and returns its mpv ID.
+func (m *MPV) load(ctx context.Context, p *mpv.Process, e Entry, flags string, index any) (int64, error) {
+	args := map[string]any{"url": m.opts.StreamURL(e.Track), "flags": flags}
+	if index != nil {
+		args["index"] = index
+	}
+	data, err := p.Named(ctx, "loadfile", args)
+	if err != nil {
+		return 0, fmt.Errorf("player: load %s: %w", e.Track, err)
+	}
+	var r struct {
+		ID int64 `json:"playlist_entry_id"`
+	}
+	if err := json.Unmarshal(data, &r); err != nil || r.ID == 0 {
+		return 0, fmt.Errorf("player: load %s: no playlist entry ID in %s", e.Track, data)
+	}
+	m.mu.Lock()
+	m.entries[r.ID] = e
+	m.mu.Unlock()
+	return r.ID, nil
+}
+
+// reconcile makes mpv's playlist the span around the playing entry.
+// prev and next are the wanted neighbours (a zero Entry for none); nil
+// keeps whatever neighbour is there. Entries outside the span are always
+// removed. A neighbour that is already the wanted entry stays, so its
+// prefetched stream isn't thrown away.
+func (m *MPV) reconcile(ctx context.Context, p *mpv.Process, prev, next *Entry) error {
+	var list []struct {
+		ID      int64 `json:"id"`
+		Current bool  `json:"current"`
+	}
+	if err := p.Get(ctx, "playlist", &list); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	cur := m.current
+	entries := m.entries
+	pos := -1
+	for i, e := range list {
+		if (cur != 0 && e.ID == cur) || (cur == 0 && e.Current) {
+			pos = i
+		}
+	}
+	m.mu.Unlock()
+	if pos < 0 {
+		return nil
+	}
+
+	wanted := func(i int, want *Entry) bool {
+		if want == nil {
+			return true
+		}
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		return want.ID != 0 && entries[list[i].ID].ID == want.ID
+	}
+	keepPrev := pos > 0 && wanted(pos-1, prev)
+	keepNext := pos+1 < len(list) && wanted(pos+1, next)
+	for i := len(list) - 1; i >= 0; i-- {
+		keep := i == pos || (i == pos-1 && keepPrev) || (i == pos+1 && keepNext)
+		if keep {
+			continue
+		}
+		if _, err := p.Command(ctx, "playlist-remove", i); err != nil {
+			return err
+		}
+	}
+	if next != nil && next.ID != 0 && !keepNext {
+		if _, err := m.load(ctx, p, *next, "append", nil); err != nil {
+			return err
+		}
+	}
+	if prev != nil && prev.ID != 0 && !keepPrev {
+		if _, err := m.load(ctx, p, *prev, "insert-at", 0); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// loop turns one mpv process's events into Player events until it ends.
+func (m *MPV) loop(p *mpv.Process) {
+	defer m.loops.Done()
+	for ev := range p.Events() {
+		m.handle(p, ev)
+	}
+	select {
+	case <-m.closing:
+		return
+	default:
+	}
+	_ = p.Close()
+	// A new mpv numbers its entries from 1 again.
+	m.mu.Lock()
+	m.proc = nil
+	m.current = 0
+	m.entries = map[int64]Entry{}
+	m.paused, m.coreIdle, m.buffering, m.volume = false, false, false, -1
+	m.mu.Unlock()
+	err := p.Err()
+	if errors.Is(err, mpv.ErrClosed) {
+		err = nil
+	}
+	m.emit(Died{Err: fmt.Errorf("mpv stopped: %v", err)})
+}
+
+func (m *MPV) handle(p *mpv.Process, ev mpv.Event) {
+	switch ev.Name {
+	case "start-file":
+		m.settle()
+		m.mu.Lock()
+		e, ok := m.entries[ev.PlaylistEntryID]
+		if ok {
+			// duration stays: mpv reports it only when it changes, so
+			// the next track of the same length sends nothing.
+			m.current = ev.PlaylistEntryID
+			m.pos = 0
+			m.lastSec = -1
+		}
+		m.mu.Unlock()
+		if !ok {
+			return
+		}
+		m.emit(TrackStarted{Entry: e.ID})
+		// Drop what fell out of the span; the core sends new
+		// neighbours in reply to TrackStarted.
+		m.op.Lock()
+		_ = m.reconcile(context.Background(), p, nil, nil)
+		m.op.Unlock()
+
+	case "end-file":
+		m.settle()
+		m.mu.Lock()
+		e, ok := m.entries[ev.PlaylistEntryID]
+		if ev.PlaylistEntryID == m.current {
+			m.current = 0
+		}
+		m.mu.Unlock()
+		if !ok {
+			return
+		}
+		ended := TrackEnded{Entry: e.ID, Reason: Stopped}
+		switch ev.Reason {
+		case "eof":
+			ended.Reason = Finished
+		case "error":
+			ended.Reason, ended.Err = Failed, ev.FileError
+		}
+		m.emit(ended)
+
+	case "seek", "playback-restart":
+		m.mu.Lock()
+		m.lastSec = -1
+		m.mu.Unlock()
+
+	case "property-change":
+		m.property(ev)
+	}
+}
+
+// settle waits for a playlist change in progress to finish: mpv can send
+// start-file before the loadfile reply that tells us the entry's ID.
+func (m *MPV) settle() {
+	m.op.Lock()
+	m.op.Unlock()
+}
+
+func (m *MPV) property(ev mpv.Event) {
+	var num float64
+	var flag bool
+	switch ev.ID {
+	case obsPause, obsCoreIdle:
+		if json.Unmarshal(ev.Data, &flag) != nil {
+			return
+		}
+	default:
+		if ev.Data == nil || json.Unmarshal(ev.Data, &num) != nil {
+			num = math.NaN()
+		}
+	}
+
+	var out []Event
+	m.mu.Lock()
+	switch ev.ID {
+	case obsPause:
+		m.paused = flag
+		out = append(out, Paused{Paused: flag})
+	case obsCoreIdle:
+		m.coreIdle = flag
+	case obsDuration:
+		m.duration = 0
+		if !math.IsNaN(num) {
+			m.duration = seconds(num)
+			// Positions sent before the duration was known lack it.
+			if e, ok := m.entries[m.current]; ok && m.current != 0 {
+				out = append(out, Position{Entry: e.ID, Position: m.pos, Duration: m.duration})
+			}
+		}
+	case obsVolume:
+		if v := int(math.Round(num)); !math.IsNaN(num) && v != m.volume {
+			m.volume = v
+			out = append(out, Volume{Percent: v})
+		}
+	case obsTimePos:
+		if e, ok := m.entries[m.current]; ok && m.current != 0 && !math.IsNaN(num) {
+			m.pos = seconds(num)
+			if sec := int64(num); sec != m.lastSec {
+				m.lastSec = sec
+				out = append(out, Position{Entry: e.ID, Position: m.pos, Duration: m.duration})
+			}
+		}
+	}
+	if b := m.coreIdle && !m.paused && m.current != 0; b != m.buffering {
+		m.buffering = b
+		out = append(out, Buffering{Buffering: b})
+	}
+	m.mu.Unlock()
+	for _, e := range out {
+		m.emit(e)
+	}
+}
+
+func (m *MPV) emit(e Event) {
+	select {
+	case m.events <- e:
+	case <-m.closing:
+	}
+}
+
+func seconds(s float64) time.Duration {
+	return time.Duration(s * float64(time.Second))
+}

@@ -66,6 +66,7 @@ func FixtureName(endpoint string, params url.Values) string {
 
 // Request is one request the server received, without its auth parameters.
 type Request struct {
+	Method   string
 	Endpoint string
 	Params   url.Values
 }
@@ -128,7 +129,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	s.mu.Lock()
-	s.reqs = append(s.reqs, Request{Endpoint: endpoint, Params: clean})
+	s.reqs = append(s.reqs, Request{Method: r.Method, Endpoint: endpoint, Params: clean})
 	s.mu.Unlock()
 
 	body, err := fixtures.ReadFile("testdata/" + name)

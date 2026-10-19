@@ -11,11 +11,13 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Debian's mpv (0.40) meets navigo's 0.38 minimum; Ubuntu 24.04's (0.37)
+    # doesn't, and without mpv the player tests skip.
+    container: golang:1.26
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: go.mod
+      - name: mpv for the player tests
+        run: apt-get update && apt-get install -y --no-install-recommends mpv
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
       - run: go vet ./...

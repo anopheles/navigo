@@ -1408,7 +1408,7 @@ func (m *model) whichKey() string {
 		ls = append(ls, keySt.Render(fmt.Sprintf("%-3s", f.key))+" "+f.desc)
 	}
 	ls = append(ls, dim.Render("<Esc> cancel"))
-	return box.Render(dim.Render(vim(m.pend)+" …")+"\n"+strings.Join(ls, "\n"))
+	return box.Render(dim.Render(vim(m.pend)+" …") + "\n" + strings.Join(ls, "\n"))
 }
 
 func (m *model) keysPopup() string {
@@ -1436,7 +1436,7 @@ func (m *model) keysPopup() string {
 			for _, s := range cm.seqs {
 				ks = append(ks, vim(s))
 			}
-			ls = append(ls, keySt.Render(fmt.Sprintf("%-14s", strings.Join(ks, " "))) + cm.desc)
+			ls = append(ls, keySt.Render(fmt.Sprintf("%-14s", strings.Join(ks, " ")))+cm.desc)
 		}
 		if len(ls) > 0 {
 			out = append(out, "", dim.Render(g))

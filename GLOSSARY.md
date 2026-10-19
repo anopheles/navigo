@@ -101,6 +101,18 @@ _Avoid_: status bar, player bar
 A box drawn over both windows for a short interruption, such as a Confirmation or track details.
 _Avoid_: modal, dialog, overlay
 
+**Hint line**:
+The row above the now-playing bar that lists the keys that matter for the row under the cursor and the current mode, drawn from the bindings in effect; on by default.
+_Avoid_: status bar, footer, cheat sheet
+
+**Key menu**:
+The popup `?` opens, listing the keys for what's under the cursor; pressing one of them runs it.
+_Avoid_: help (Help is the section with every key), cheat sheet
+
+**Prefix menu**:
+The small popup that lists what can follow a pure prefix once it has waited 500 ms.
+_Avoid_: which-key, hint popup
+
 ## Data
 
 **Library**:

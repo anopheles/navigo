@@ -31,6 +31,23 @@ const (
 // pageSize is Navidrome's cap on list endpoints.
 const pageSize = 500
 
+// Timeout is how long a request may take unless the caller's context
+// sets its own deadline (sync pages do).
+const Timeout = 10 * time.Second
+
+// ErrUnreachable wraps every failure to reach the server: network errors,
+// timeouts, TLS, HTTP 5xx, and replies that aren't from a Subsonic server.
+// A Subsonic error from the server (*Error) is not one: the server is there.
+var ErrUnreachable = errors.New("can't reach the server")
+
+// IsUnreachable reports whether err means the server couldn't be reached.
+func IsUnreachable(err error) bool { return errors.Is(err, ErrUnreachable) }
+
+type unreachable struct{ err error }
+
+func (u unreachable) Error() string   { return u.err.Error() }
+func (u unreachable) Unwrap() []error { return []error{ErrUnreachable, u.err} }
+
 // Credentials are what navigo logs in with.
 type Credentials struct {
 	URL      string
@@ -79,9 +96,12 @@ func New(creds Credentials) *Client {
 	return &Client{
 		creds: creds,
 		base:  strings.TrimRight(creds.URL, "/") + "/rest/",
-		http:  &http.Client{Timeout: 30 * time.Second},
+		http:  &http.Client{},
 	}
 }
+
+// Ping checks that the server answers and accepts the credentials.
+func (c *Client) Ping(ctx context.Context) error { return c.call(ctx, "ping", nil, nil) }
 
 // Login checks the credentials with ping and reads the server's
 // OpenSubsonic extensions. A wrong user or password returns an Error with
@@ -96,6 +116,9 @@ func (c *Client) Login(ctx context.Context) error {
 	// Servers without OpenSubsonic don't know the endpoint; they get the
 	// plain Subsonic behaviour.
 	if err := c.call(ctx, "getOpenSubsonicExtensions", nil, &r); err != nil {
+		if IsUnreachable(err) {
+			return err
+		}
 		return nil
 	}
 	for _, e := range r.OpenSubsonicExtensions {
@@ -322,6 +345,11 @@ func (c *Client) auth() url.Values {
 // call sends one request and decodes the subsonic-response into v, which
 // may be nil.
 func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v any) error {
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, Timeout)
+		defer cancel()
+	}
 	q := c.auth()
 	for k, vs := range params {
 		q[k] = vs
@@ -342,18 +370,29 @@ func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v
 	req.Header.Set("User-Agent", clientName)
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("%s: %w", endpoint, redact(err))
+		if ctx.Err() == context.Canceled {
+			return fmt.Errorf("%s: %w", endpoint, ctx.Err())
+		}
+		return fmt.Errorf("%s: %w", endpoint, unreachable{redact(err)})
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		_, _ = io.Copy(io.Discard, resp.Body)
-		return fmt.Errorf("%s: HTTP %s", endpoint, resp.Status)
+		err := fmt.Errorf("HTTP %s", resp.Status)
+		if resp.StatusCode >= 500 {
+			err = unreachable{err}
+		}
+		return fmt.Errorf("%s: %w", endpoint, err)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("%s: %w", endpoint, redact(err))
+		return fmt.Errorf("%s: %w", endpoint, unreachable{redact(err)})
 	}
 	if err := decode(body, v); err != nil {
+		var se *Error
+		if !errors.As(err, &se) { // not a Subsonic reply, such as a proxy's error page
+			err = unreachable{err}
+		}
 		return fmt.Errorf("%s: %w", endpoint, err)
 	}
 	return nil

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -127,6 +128,8 @@ func (m *Model) emptyList() string {
 	switch sy := m.state.Sync; {
 	case m.state.Library != nil:
 		return " nothing here"
+	case m.state.Offline:
+		return " can't reach " + m.deps.Config.Server.URL + " · retrying · :login to change it"
 	case sy.Running && sy.Total > 0:
 		return fmt.Sprintf(" Syncing library… %d / %d tracks", sy.Done, sy.Total)
 	case sy.Running:
@@ -183,7 +186,8 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 	var out []string
 	for i := m.queueOff; i < len(q) && len(out) < h; i++ {
 		mark := "  "
-		current := i == m.state.Current && m.state.Player.Playing
+		_, row, ok := m.state.NowPlaying()
+		current := ok && i == row
 		if current {
 			mark = "▶ "
 			if m.state.Player.Paused {
@@ -298,6 +302,14 @@ func hint(key, label string) string { return keyStyle.Render(key) + " " + dimSty
 // important first: mpv problems, then offline, then syncing.
 func (m *Model) indicators() []string {
 	var out []string
+	if m.state.Offline {
+		next := "offline · trying…"
+		if !m.state.Probing {
+			secs := int(math.Ceil(m.retryAt.Sub(m.clock.Now()).Seconds()))
+			next = fmt.Sprintf("offline · next try in %ds", max(secs, 1))
+		}
+		out = append(out, next)
+	}
 	if m.state.Sync.Running {
 		out = append(out, "⟳ syncing")
 	}
@@ -318,17 +330,20 @@ func fitIndicators(items []string, width int) string {
 // nowPlaying is the two-line bar: the track and indicators, then progress.
 func (m *Model) nowPlaying() []string {
 	s := m.state
-	playing := s.Player.Playing && s.Current >= 0 && s.Current < len(s.Queue)
+	t, row, playing := s.NowPlaying()
 	left := " ■ nothing playing"
 	var right []string
 	if playing {
-		t := s.Queue[s.Current].Track
 		icon := "▶"
 		if s.Player.Paused {
 			icon = "⏸"
 		}
 		left = fmt.Sprintf(" %s %s — %s · %s", icon, t.Title, t.Artist, t.Album)
-		right = append(right, fmt.Sprintf("%d/%d in queue", s.Current+1, len(s.Queue)))
+		if row >= 0 {
+			right = append(right, fmt.Sprintf("%d/%d in queue", row+1, len(s.Queue)))
+		} else {
+			right = append(right, "not in the queue")
+		}
 	}
 	if s.Player.Buffering {
 		right = append([]string{"buffering"}, right...)

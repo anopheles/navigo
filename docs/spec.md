@@ -458,6 +458,7 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **Input:** the keymap engine (counts, prefixes, scopes, notation) and the command registry.
 - **Session:** the login form, keyring and config saving.
 - **Screen:** the two windows and narrow layout, the hint line, the empty-queue message, the now-playing bar and the `:` line.
+- **Offline:** detection, backoff with the countdown indicator, `:reconnect`, the 10/60 s timeouts, the stream-failure and buffering-stall pings, the 3-skip cap, and starting from the cache when the server is unreachable ([#32](https://github.com/anopheles/navigo/issues/32)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A and the first layer B scenario.
 
@@ -467,7 +468,7 @@ Still to build for v1:
 - **Keys:** Visual mode, the `d`/`y` operators and the register, `p`/`P`, `J`/`K`, `x`, marks other than `'b`/`'q`, `/` with `n`/`N`, the jump list, the remaining motions, `gp`/`ga`/`gr`, volume, shuffle, repeat, info and stars.
 - **Discoverability:** the key menu, prefix menus, `:` fuzzy matching and tips, and the `/`-to-search offer.
 - **Rebinding:** the `keys:` block, its validation popup, `:map` and friends, `:reload-config` and `navigo check-config`.
-- **Offline:** the offline state with backoff and countdown, `:reconnect`, the 10/60 s timeouts, the stream-failure ping, and the 3-skip and 3-crash caps.
+- **Crash cap:** the 3-crash cap for mpv (with the mpv slice).
 - **mpv:** the startup check with install hints, `player.mpv_path`, and resuming after a crash.
 - **Media controls:** MPRIS on Linux, and `force-media-title` for macOS and Windows.
 - **Colours:** the 16-colour palette and `NO_COLOR`; the skeleton still uses fixed 256-colour values.

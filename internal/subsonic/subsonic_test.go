@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/anopheles/navigo/internal/subsonic/subsonictest"
 )
@@ -211,5 +212,50 @@ func TestPlaylistsStarredScanStatus(t *testing.T) {
 	scan, err := c.ScanStatus(ctx)
 	if err != nil || scan.Count != 547 || scan.LastScan.IsZero() {
 		t.Errorf("scan status = %+v, %v", scan, err)
+	}
+}
+
+func TestUnreachable(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	srv.SetDown(true)
+	if err := c.Ping(ctx); !IsUnreachable(err) {
+		t.Errorf("dropped connection: %v, want unreachable", err)
+	}
+	srv.SetDown(false)
+	if err := c.Ping(ctx); err != nil {
+		t.Errorf("back up: %v", err)
+	}
+	// A Subsonic error means the server is there.
+	if _, err := c.Album(ctx, subsonictest.NotFoundID); IsUnreachable(err) || !IsCode(err, CodeNotFound) {
+		t.Errorf("not found = %v", err)
+	}
+	// 5xx and replies that aren't from a Subsonic server are unreachable.
+	for name, h := range map[string]http.HandlerFunc{
+		"502":        func(w http.ResponseWriter, r *http.Request) { http.Error(w, "bad gateway", http.StatusBadGateway) },
+		"proxy page": func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("<html>captive portal</html>")) },
+	} {
+		hs := httptest.NewServer(h)
+		err := New(Credentials{URL: hs.URL, Username: "a", Password: "b"}).Ping(ctx)
+		hs.Close()
+		if !IsUnreachable(err) {
+			t.Errorf("%s: %v, want unreachable", name, err)
+		}
+	}
+	// No server at all.
+	if err := New(Credentials{URL: "http://127.0.0.1:1", Username: "a", Password: "b"}).Ping(ctx); !IsUnreachable(err) {
+		t.Errorf("refused: %v", err)
+	}
+}
+
+func TestDefaultTimeout(t *testing.T) {
+	hs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { <-r.Context().Done() }))
+	defer hs.Close()
+	c := New(Credentials{URL: hs.URL, Username: "a", Password: "b"})
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+	start := time.Now()
+	if err := c.Ping(ctx); !IsUnreachable(err) || time.Since(start) > 2*time.Second {
+		t.Errorf("Ping with a 200ms deadline: %v after %v", err, time.Since(start))
 	}
 }

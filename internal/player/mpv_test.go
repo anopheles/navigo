@@ -244,3 +244,38 @@ func TestVersionOK(t *testing.T) {
 		}
 	}
 }
+
+// A server that is gone makes mpv run through its playlist on its own.
+// After Stop and a new Play, events from the old entries start nothing.
+func TestMPVIgnoresReplacedEntries(t *testing.T) {
+	h := newMPV(t)
+	ctx := context.Background()
+	bad := MPVOptions{Args: []string{"--ao=null"}, StreamURL: func(id library.TrackID) string { return "http://127.0.0.1:1/" + string(id) }}
+	h.m.opts.StreamURL = bad.StreamURL
+	if err := h.m.Play(ctx, Span{Current: entry(1, "x"), Next: entry(2, "x")}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("entry 1 to fail", func(e Event) bool { x, ok := e.(TrackEnded); return ok && x.Entry == 1 && x.Reason == Failed })
+	if err := h.m.Stop(ctx); err != nil {
+		t.Fatal(err)
+	}
+	// Events mpv sent before the new Play were true when sent; drain them.
+	for drained := false; !drained; {
+		select {
+		case <-h.m.Events():
+		case <-time.After(300 * time.Millisecond):
+			drained = true
+		}
+	}
+	h.m.opts.StreamURL = func(id library.TrackID) string { return h.srv.URL + "/" + string(id) }
+	if err := h.m.Play(ctx, Span{Current: entry(3, "5s")}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("entry 3 to start", func(e Event) bool {
+		if s, ok := e.(TrackStarted); ok && s.Entry != 3 {
+			t.Fatalf("stale entry %d started after the new Play", s.Entry)
+		}
+		s, ok := e.(TrackStarted)
+		return ok && s.Entry == 3
+	})
+}

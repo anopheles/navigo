@@ -137,6 +137,23 @@ func (f *Fake) Finish() {
 	f.emit(TrackStarted{Entry: f.span.Current.ID})
 }
 
+// FailCurrent makes the current entry's stream fail, as mpv does when it
+// can't load it: the entry ends with Failed and mpv runs on to the next
+// one, which (with the server gone) fails too.
+func (f *Fake) FailCurrent(reason string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if !f.playing {
+		return
+	}
+	f.emit(TrackEnded{Entry: f.span.Current.ID, Reason: Failed, Err: reason})
+	if next := f.span.Next; next.ID != 0 {
+		f.emit(TrackStarted{Entry: next.ID})
+		f.emit(TrackEnded{Entry: next.ID, Reason: Failed, Err: reason})
+	}
+	f.span, f.playing, f.pos = Span{}, false, 0
+}
+
 // Tick advances the position of the playing entry and reports it.
 func (f *Fake) Tick(d time.Duration) {
 	f.mu.Lock()

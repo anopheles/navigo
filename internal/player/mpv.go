@@ -57,10 +57,14 @@ type MPV struct {
 
 	op sync.Mutex // serialises changes to mpv's playlist
 
-	mu        sync.Mutex
-	proc      *mpv.Process
-	entries   map[int64]Entry // mpv playlist_entry_id → entry
-	current   int64           // mpv ID of the playing entry, 0 if none
+	mu      sync.Mutex
+	proc    *mpv.Process
+	entries map[int64]Entry // mpv playlist_entry_id → entry
+	// live holds the IDs still in mpv's playlist. Events from entries a
+	// later Play replaced are stale (mpv may have run on to them while a
+	// stream failed) and must not start anything.
+	live      map[int64]bool
+	current   int64 // mpv ID of the playing entry, 0 if none
 	paused    bool
 	coreIdle  bool
 	buffering bool
@@ -79,6 +83,7 @@ func NewMPV(opts MPVOptions) *MPV {
 		events:  make(chan Event, 64),
 		closing: make(chan struct{}),
 		entries: map[int64]Entry{},
+		live:    map[int64]bool{},
 		volume:  -1,
 	}
 }
@@ -95,6 +100,9 @@ func (m *MPV) Play(ctx context.Context, w Span) error {
 	if err := p.Set(ctx, "pause", false); err != nil {
 		return err
 	}
+	m.mu.Lock()
+	m.live = map[int64]bool{}
+	m.mu.Unlock()
 	if _, err := m.load(ctx, p, w.Current, "replace", nil); err != nil {
 		return err
 	}
@@ -139,6 +147,9 @@ func (m *MPV) SeekBy(ctx context.Context, d time.Duration) error {
 func (m *MPV) Stop(ctx context.Context) error {
 	m.op.Lock()
 	defer m.op.Unlock()
+	m.mu.Lock()
+	m.live = map[int64]bool{}
+	m.mu.Unlock()
 	return m.command(ctx, "stop")
 }
 
@@ -249,6 +260,7 @@ func (m *MPV) load(ctx context.Context, p *mpv.Process, e Entry, flags string, i
 	}
 	m.mu.Lock()
 	m.entries[r.ID] = e
+	m.live[r.ID] = true
 	m.mu.Unlock()
 	return r.ID, nil
 }
@@ -298,6 +310,9 @@ func (m *MPV) reconcile(ctx context.Context, p *mpv.Process, prev, next *Entry) 
 		if _, err := p.Command(ctx, "playlist-remove", i); err != nil {
 			return err
 		}
+		m.mu.Lock()
+		delete(m.live, list[i].ID)
+		m.mu.Unlock()
 	}
 	if next != nil && next.ID != 0 && !keepNext {
 		if _, err := m.load(ctx, p, *next, "append", nil); err != nil {
@@ -329,6 +344,7 @@ func (m *MPV) loop(p *mpv.Process) {
 	m.proc = nil
 	m.current = 0
 	m.entries = map[int64]Entry{}
+	m.live = map[int64]bool{}
 	m.paused, m.coreIdle, m.buffering, m.volume = false, false, false, -1
 	m.mu.Unlock()
 	err := p.Err()
@@ -344,6 +360,7 @@ func (m *MPV) handle(p *mpv.Process, ev mpv.Event) {
 		m.settle()
 		m.mu.Lock()
 		e, ok := m.entries[ev.PlaylistEntryID]
+		ok = ok && m.live[ev.PlaylistEntryID]
 		if ok {
 			// duration stays: mpv reports it only when it changes, so
 			// the next track of the same length sends nothing.

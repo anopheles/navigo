@@ -80,6 +80,15 @@ type Server struct {
 	mu    sync.Mutex
 	salts map[string]bool
 	reqs  []Request
+	down  bool
+}
+
+// SetDown makes the server drop every connection without answering, as an
+// unreachable server would, until it is set up again.
+func (s *Server) SetDown(down bool) {
+	s.mu.Lock()
+	s.down = down
+	s.mu.Unlock()
 }
 
 // NewServer starts a fake server for the duration of the test.
@@ -100,6 +109,19 @@ func (s *Server) Requests() []Request {
 }
 
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	down := s.down
+	s.mu.Unlock()
+	if down {
+		if hj, ok := w.(http.Hijacker); ok {
+			if conn, _, err := hj.Hijack(); err == nil {
+				_ = conn.Close()
+				return
+			}
+		}
+		http.Error(w, "down", http.StatusServiceUnavailable)
+		return
+	}
 	endpoint, ok := strings.CutPrefix(r.URL.Path, "/rest/")
 	if !ok {
 		s.t.Errorf("subsonictest: request outside /rest/: %s", r.URL.Path)

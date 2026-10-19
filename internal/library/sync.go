@@ -3,12 +3,22 @@ package library
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/anopheles/navigo/internal/subsonic"
 )
 
 // pageSize is Navidrome's cap per request.
 const pageSize = 500
+
+// pageTimeout bounds one sync request: a page of a big library can take
+// longer than an ordinary call.
+const pageTimeout = 60 * time.Second
+
+// page returns a context for one sync request.
+func page(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, pageTimeout)
+}
 
 // Progress is told how many tracks a full sync has fetched so far and how
 // many the server says it has (0 when it doesn't say).
@@ -65,21 +75,23 @@ func searchAll(ctx context.Context, c *subsonic.Client, total int, progress Prog
 	var tracks []Track
 	n := subsonic.SearchCounts{ArtistCount: pageSize, AlbumCount: pageSize, SongCount: pageSize}
 	for n.ArtistCount+n.AlbumCount+n.SongCount > 0 {
-		page, err := c.Search3(ctx, "", n)
+		pctx, cancel := page(ctx)
+		res, err := c.Search3(pctx, "", n)
+		cancel()
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		for _, a := range page.Artists {
+		for _, a := range res.Artists {
 			artists = append(artists, ArtistFrom(a))
 		}
-		for _, a := range page.Albums {
+		for _, a := range res.Albums {
 			albums = append(albums, AlbumFrom(a))
 		}
-		for _, s := range page.Songs {
+		for _, s := range res.Songs {
 			tracks = append(tracks, TrackFrom(s))
 		}
 		progress(len(tracks), total)
-		n = next(n, len(page.Artists), len(page.Albums), len(page.Songs))
+		n = next(n, len(res.Artists), len(res.Albums), len(res.Songs))
 	}
 	return artists, albums, tracks, nil
 }
@@ -101,7 +113,9 @@ func next(n subsonic.SearchCounts, artists, albums, songs int) subsonic.SearchCo
 // albumByAlbum is the fallback: every album, then each album's songs.
 // Artists come from the songs and albums.
 func albumByAlbum(ctx context.Context, c *subsonic.Client, total int, progress Progress) ([]Artist, []Album, []Track, error) {
-	list, err := c.Albums(ctx, subsonic.ByName)
+	pctx, cancel := page(ctx)
+	list, err := c.Albums(pctx, subsonic.ByName)
+	cancel()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -110,7 +124,9 @@ func albumByAlbum(ctx context.Context, c *subsonic.Client, total int, progress P
 	var artists []Artist
 	seen := map[ArtistID]bool{}
 	for _, a := range list {
-		full, err := c.Album(ctx, a.ID)
+		pctx, cancel := page(ctx)
+		full, err := c.Album(pctx, a.ID)
+		cancel()
 		if err != nil {
 			return nil, nil, nil, err
 		}

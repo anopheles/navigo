@@ -47,14 +47,31 @@ type State struct {
 	cacheChecked bool // the cache file has been tried
 	loggedIn     bool
 
+	// Offline: the server can't be reached (see offline.go). Probing is
+	// set while a check of the server is running.
+	Offline  bool
+	Probing  bool
+	retry    int // backoff step
+	retrySeq int // the scheduled retry; older ones are ignored
+
+	// After a stream failure: player events are ignored until the next
+	// Play, and broken files skipped in a row are counted.
+	halted                 bool
+	skips                  int
+	failedTitle, failedErr string
+	// stale are entries mpv may still report on after a failure: the one
+	// that failed and the one mpv ran on to. Their events are ignored.
+	stale []player.EntryID
+
 	Queue []QueueEntry
 	// Current is the queue row that is playing, or last played; -1 if none.
 	Current int
 	Player  PlayerState
 
-	playing    player.EntryID // the entry the player says is playing
-	nextID     player.EntryID
-	undo, redo []snapshot
+	playing      player.EntryID // the entry the player says is playing
+	playingTrack library.Track  // its track, even if the queue changed since
+	nextID       player.EntryID
+	undo, redo   []snapshot
 
 	// Scrobbling of the playing entry: time listened, not counting seeks.
 	listened  time.Duration
@@ -69,6 +86,16 @@ type snapshot struct {
 
 // New returns the state navigo starts with: nothing loaded, empty queue.
 func New() State { return State{Current: -1} }
+
+// NowPlaying returns the track the player is playing and its queue row, or
+// -1 when the queue changed and no longer holds it (it plays on from mpv's
+// buffer while offline, or after an undo). ok is false when nothing plays.
+func (s State) NowPlaying() (t library.Track, row int, ok bool) {
+	if !s.Player.Playing || s.playing == 0 {
+		return library.Track{}, -1, false
+	}
+	return s.playingTrack, s.index(s.playing), true
+}
 
 // CanUndo and CanRedo report whether Undo and Redo would change the queue.
 func (s State) CanUndo() bool { return len(s.undo) > 0 }
@@ -181,13 +208,16 @@ func Apply(s State, e Event) (State, []Effect) {
 		}
 		return s, nil
 	case LoggedIn:
-		s.loggedIn = true
+		s.loggedIn, s.Offline = true, false
 		if s.cacheChecked {
 			return s.startSync(false)
 		}
 		return s, nil
 	case SyncNow:
 		switch {
+		case s.Offline:
+			s, out := s.probe(ProbeUser)
+			return s, append(out, Notice{Text: "offline · the library syncs once the server is back"})
 		case !s.loggedIn:
 			return s, []Effect{Notice{Text: "not connected to the server yet", Err: true}}
 		case s.Sync.Running:
@@ -215,12 +245,16 @@ func Apply(s State, e Event) (State, []Effect) {
 		had := len(s.Queue) > 0
 		s = s.edit(func(q []QueueEntry) ([]QueueEntry, int) { return nil, -1 })
 		s.Queue, s.nextID = entries(s.nextID, e.Tracks)
-		s.Current = e.Start
+		s.Current, s.skips = e.Start, 0
+		if s.Offline {
+			return s.play(s.Current) // explains why nothing plays
+		}
 		n := Notice{Text: "playing · " + count(len(e.Tracks)) + " in the queue"}
 		if had {
 			n = Notice{Text: "playing · queue replaced with " + count(len(e.Tracks)), Command: "undo", Hint: "brings the old queue back"}
 		}
-		return s, []Effect{Play{Span: s.span(s.Current)}, n}
+		s, out := s.play(s.Current)
+		return s, append(out, n)
 	case AddEnd:
 		if len(e.Tracks) == 0 {
 			return s, nil
@@ -249,8 +283,8 @@ func Apply(s State, e Event) (State, []Effect) {
 		if e.Index < 0 || e.Index >= len(s.Queue) {
 			return s, nil
 		}
-		s.Current = e.Index
-		return s, []Effect{Play{Span: s.span(e.Index)}}
+		s.Current, s.skips = e.Index, 0
+		return s.play(e.Index)
 
 	case PlayPause:
 		switch {
@@ -259,8 +293,8 @@ func Apply(s State, e Event) (State, []Effect) {
 		case s.Player.Playing:
 			return s, []Effect{Pause{}}
 		case len(s.Queue) > 0:
-			s.Current = max(s.Current, 0)
-			return s, []Effect{Play{Span: s.span(s.Current)}}
+			s.Current, s.skips = max(s.Current, 0), 0
+			return s.play(s.Current)
 		}
 		return s, []Effect{Notice{Text: "the queue is empty"}}
 	case NextTrack:
@@ -268,7 +302,8 @@ func Apply(s State, e Event) (State, []Effect) {
 			return s, []Effect{Notice{Text: "end of the queue"}}
 		}
 		s.Current++
-		return s, []Effect{Play{Span: s.span(s.Current)}}
+		s.skips = 0
+		return s.play(s.Current)
 	case PrevTrack:
 		if s.Player.Playing && (s.Player.Position > 3*time.Second || s.Current <= 0) {
 			return s, []Effect{SeekTo{}}
@@ -277,7 +312,8 @@ func Apply(s State, e Event) (State, []Effect) {
 			return s, nil
 		}
 		s.Current--
-		return s, []Effect{Play{Span: s.span(s.Current)}}
+		s.skips = 0
+		return s.play(s.Current)
 	case SeekBy:
 		if !s.Player.Playing {
 			return s, nil
@@ -312,6 +348,8 @@ func Apply(s State, e Event) (State, []Effect) {
 
 	case FromPlayer:
 		return s.fromPlayer(e.Event)
+	case Unreachable, StartedOffline, RetryNow, Reconnect, BufferingStalled, ProbeResult:
+		return s.applyOffline(e)
 	case PlayerFailed:
 		return s, []Effect{Notice{Text: "player: " + e.Err.Error(), Err: true, Unexpected: true}}
 	case Failed:
@@ -321,6 +359,15 @@ func Apply(s State, e Event) (State, []Effect) {
 }
 
 func (s State) fromPlayer(e player.Event) (State, []Effect) {
+	if s.halted {
+		switch e.(type) {
+		case player.TrackStarted, player.TrackEnded, player.Position, player.Buffering:
+			return s, nil // mpv reporting entries it ran on to after a failure
+		}
+	}
+	if id, ok := entryOf(e); ok && slices.Contains(s.stale, id) {
+		return s, nil
+	}
 	switch e := e.(type) {
 	case player.TrackStarted:
 		s.playing = e.Entry
@@ -332,20 +379,24 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 			return s, []Effect{SetNeighbours{}}
 		}
 		s.Current = i
+		s.playingTrack = s.Queue[i].Track
 		s.Player.Duration = s.Queue[i].Track.Duration
-		return s, append(s.neighbours(), Scrobble{Track: s.Queue[i].Track.ID})
+		out := s.neighbours()
+		if !s.Offline { // scrobbles are dropped while offline
+			out = append(out, Scrobble{Track: s.Queue[i].Track.ID})
+		}
+		return s, out
 	case player.TrackEnded:
 		// Stopped means Play or Stop replaced it on purpose.
 		if e.Entry != s.playing || e.Reason == player.Stopped {
 			return s, nil
 		}
-		var out []Effect
 		if e.Reason == player.Failed {
 			title := "the track"
 			if i := s.index(e.Entry); i >= 0 {
 				title = s.Queue[i].Track.Title
 			}
-			out = append(out, Notice{Text: fmt.Sprintf("couldn't play %s: %s", title, e.Err), Err: true})
+			return s.streamFailed(title, e.Err)
 		}
 		// mpv moves on to the next entry by itself; without one, playback
 		// is over.
@@ -353,12 +404,15 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 			s.playing = 0
 			s.Player = PlayerState{Volume: s.Player.Volume}
 		}
-		return s, out
+		return s, nil
 	case player.Position:
 		if e.Entry != s.playing {
 			return s, nil
 		}
 		s.Player.Position = e.Position
+		if e.Position > 0 {
+			s.skips = 0 // it really plays
+		}
 		if e.Duration > 0 {
 			s.Player.Duration = e.Duration
 		}
@@ -366,7 +420,7 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 			s.listened += d
 		}
 		s.lastPos = e.Position
-		if i := s.index(e.Entry); i >= 0 && !s.scrobbled && s.Player.Duration > 0 &&
+		if i := s.index(e.Entry); i >= 0 && !s.scrobbled && !s.Offline && s.Player.Duration > 0 &&
 			(s.listened >= s.Player.Duration/2 || s.listened >= scrobbleAfter) {
 			s.scrobbled = true
 			return s, []Effect{Scrobble{Track: s.Queue[i].Track.ID, Submission: true}}
@@ -383,6 +437,19 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 		return s, []Effect{Notice{Text: fmt.Sprintf("the player stopped (%v)", e.Err), Command: "play-pause", Hint: "starts it again", Err: true}}
 	}
 	return s, nil
+}
+
+// entryOf returns the queue entry a player event is about, if any.
+func entryOf(e player.Event) (player.EntryID, bool) {
+	switch e := e.(type) {
+	case player.TrackStarted:
+		return e.Entry, true
+	case player.TrackEnded:
+		return e.Entry, true
+	case player.Position:
+		return e.Entry, true
+	}
+	return 0, false
 }
 
 func (s State) startSync(full bool) (State, []Effect) {
@@ -406,6 +473,7 @@ func (s State) edit(f func([]QueueEntry) ([]QueueEntry, int)) State {
 // is in the restored queue.
 func (s State) restore(snap snapshot) State {
 	s.Queue, s.Current = snap.queue, snap.current
+	s.stale = nil // long past by the time anyone undoes
 	if s.playing != 0 {
 		s.Current = s.index(s.playing)
 	}

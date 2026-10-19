@@ -31,6 +31,9 @@ import (
 // ambiguousTimeout is how long an ambiguous prefix waits (keys.timeout).
 const ambiguousTimeout = time.Second
 
+// stallAfter is how long buffering may last before navigo checks the server.
+const stallAfter = 10 * time.Second
+
 // Deps is what the UI needs from outside.
 type Deps struct {
 	Config     config.Config
@@ -62,6 +65,8 @@ type (
 	}
 	savedMsg   struct{ err error }
 	timeoutMsg struct{ seq int }
+	secondMsg  struct{} // redraws the offline countdown
+	stallMsg   struct{ seq int }
 )
 
 type screen int
@@ -125,6 +130,10 @@ type Model struct {
 	clock  timeSource
 	timers []tea.Cmd // timers set while handling a message
 
+	retryAt  time.Time // when the next try of the server is due, while offline
+	ticking  bool      // the once-a-second redraw of the countdown is running
+	stallSeq int       // the buffering-stall timer; older ones are ignored
+
 	player sequencer
 	// send delivers messages from long-running work, such as sync
 	// progress; Program.Send in navigo, a queue in tests.
@@ -187,6 +196,16 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case expireMsg:
 		m.expire(msg.id)
 		return m, nil
+	case secondMsg:
+		m.ticking = false
+		m.tick()
+		return m, nil
+	case stallMsg:
+		if msg.seq != m.stallSeq || !m.state.Player.Buffering {
+			return m, nil
+		}
+		m.armStall()
+		return m, m.dispatch(app.BufferingStalled{})
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
 		m.line.SetWidth(max(m.w-2, 1))
@@ -207,6 +226,11 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case savedMsg:
 		return m, m.saved(msg)
 	case eventMsg:
+		if fp, ok := msg.Event.(app.FromPlayer); ok {
+			if b, ok := fp.Event.(player.Buffering); ok && b.Buffering && !m.state.Player.Buffering {
+				m.armStall()
+			}
+		}
 		switch msg.Event.(type) {
 		case app.Synced, app.CacheLoaded:
 			keep := m.cursorIDs()
@@ -252,8 +276,18 @@ func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
 		m.openLogin(s.URL, s.User, "the server rejected the saved username or password")
 		return nil
 	}
+	if subsonic.IsUnreachable(msg.err) {
+		// Open from the cache; the credentials are checked once the
+		// server is back.
+		m.client = msg.client
+		if m.deps.OnLogin != nil {
+			m.deps.OnLogin(msg.client)
+		}
+		m.clearMsg()
+		return m.dispatch(app.StartedOffline{})
+	}
 	if msg.err != nil {
-		m.setMsg("can't reach the server: "+msg.err.Error(), true)
+		m.setMsg("can't log in: "+msg.err.Error(), true)
 		return nil
 	}
 	return m.ready(msg.client)
@@ -327,6 +361,9 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 				return eventMsg{app.Synced{Err: errors.New("not logged in")}}
 			}
 			due, st, err := library.Due(ctx, c, e.Old, srv.URL, srv.User)
+			if subsonic.IsUnreachable(err) {
+				return eventMsg{app.Unreachable{Err: err}}
+			}
 			if err != nil {
 				return eventMsg{app.Synced{Err: err}}
 			}
@@ -335,6 +372,9 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 				snap, err = library.Sync(ctx, c, srv.URL, srv.User, st, progress)
 			} else {
 				snap, err = library.Refresh(ctx, c, e.Old)
+			}
+			if subsonic.IsUnreachable(err) {
+				return eventMsg{app.Unreachable{Err: err}}
 			}
 			return eventMsg{app.Synced{Library: snap, Err: err}}
 		}
@@ -350,11 +390,38 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		}
 	case app.Scrobble:
 		return func() tea.Msg {
-			if c != nil {
-				_ = c.Scrobble(ctx, string(e.Track), e.Submission) // fire and forget
+			if c == nil {
+				return nil
+			}
+			// Fire and forget, but a failure to reach the server counts.
+			if err := c.Scrobble(ctx, string(e.Track), e.Submission); subsonic.IsUnreachable(err) {
+				return eventMsg{app.Unreachable{Err: err}}
 			}
 			return nil
 		}
+	case app.Probe:
+		return func() tea.Msg {
+			if c == nil {
+				return eventMsg{app.ProbeResult{Why: e.Why, Err: errors.New("not logged in")}}
+			}
+			err := c.Ping(ctx)
+			switch {
+			case subsonic.IsCode(err, subsonic.CodeWrongCredentials):
+				return eventMsg{app.ProbeResult{Why: e.Why, WrongCredentials: true}}
+			case subsonic.IsUnreachable(err):
+				return eventMsg{app.ProbeResult{Why: e.Why, Err: err}}
+			}
+			return eventMsg{app.ProbeResult{Why: e.Why}} // the server answered
+		}
+	case app.ScheduleRetry:
+		m.retryAt = m.clock.Now().Add(e.After)
+		m.tick()
+		seq := e.Seq
+		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.RetryNow{Seq: seq}} })
+	case app.OpenLogin:
+		s := m.deps.Config.Server
+		m.openLogin(s.URL, s.User, "the server rejected the saved username or password")
+		return nil
 	}
 
 	var call func() error
@@ -385,6 +452,22 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		}
 		return nil
 	}
+}
+
+// tick keeps the offline countdown redrawing once a second.
+func (m *Model) tick() {
+	if m.ticking || !m.state.Offline {
+		return
+	}
+	m.ticking = true
+	m.timers = append(m.timers, m.clock.After(time.Second, func(time.Time) tea.Msg { return secondMsg{} }))
+}
+
+// armStall checks again in 10 s whether playback is still buffering.
+func (m *Model) armStall() {
+	m.stallSeq++
+	seq := m.stallSeq
+	m.timers = append(m.timers, m.clock.After(stallAfter, func(time.Time) tea.Msg { return stallMsg{seq} }))
 }
 
 // notice shows a core message, with the key for its command if it has one.

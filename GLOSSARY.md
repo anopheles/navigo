@@ -101,6 +101,14 @@ _Avoid_: status bar, player bar
 A box drawn over both windows for a short interruption, such as a Confirmation or track details.
 _Avoid_: modal, dialog, overlay
 
+**Message**:
+A line in the status line about something that just happened; information clears itself after a few seconds, errors stay until replaced or dismissed, and every message is kept in the message history.
+_Avoid_: toast, notification, alert
+
+**Indicator**:
+A short note in the now-playing bar about a state that lasts, such as being offline, syncing, or mpv missing; it shows for as long as the state does.
+_Avoid_: badge, status, icon
+
 **Hint line**:
 The row above the now-playing bar that lists the keys that matter for the row under the cursor and the current mode, drawn from the bindings in effect; on by default.
 _Avoid_: status bar, footer, cheat sheet

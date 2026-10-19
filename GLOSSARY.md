@@ -88,3 +88,17 @@ _Avoid_: status bar, player bar
 **Popup**:
 A box drawn over both windows for a short interruption, such as a Confirmation or track details.
 _Avoid_: modal, dialog, overlay
+
+## Data
+
+**Library**:
+The music on the server: its artists, albums, tracks and playlists.
+_Avoid_: collection, database
+
+**Cache**:
+navigo's local, disposable copy of the library's metadata, used to browse and search without waiting on the server; it never holds audio and the server always wins.
+_Avoid_: database, index, offline mode, download
+
+**Sync**:
+Bringing the cache up to date with the library.
+_Avoid_: refresh, scan (a scan is the server reading its own files)

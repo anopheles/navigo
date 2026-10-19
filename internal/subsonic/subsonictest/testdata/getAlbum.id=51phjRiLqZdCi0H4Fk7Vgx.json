@@ -1,0 +1,460 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "album": {
+      "id": "51phjRiLqZdCi0H4Fk7Vgx",
+      "name": "Static Bloom",
+      "artist": "The Quiet Ones",
+      "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+      "coverArt": "al-51phjRiLqZdCi0H4Fk7Vgx",
+      "songCount": 7,
+      "duration": 788,
+      "created": "2026-10-19T21:36:31.469150361Z",
+      "year": 2018,
+      "genre": "Indie",
+      "userRating": 0,
+      "genres": [
+        {
+          "name": "Indie"
+        }
+      ],
+      "musicBrainzId": "",
+      "isCompilation": false,
+      "sortName": "static bloom",
+      "discTitles": [],
+      "originalReleaseDate": {},
+      "releaseDate": {},
+      "releaseTypes": [],
+      "recordLabels": [],
+      "moods": [],
+      "artists": [
+        {
+          "id": "2dcbXjSrK8FSXPAQRDCG1H",
+          "name": "The Quiet Ones"
+        }
+      ],
+      "displayArtist": "The Quiet Ones",
+      "explicitStatus": "",
+      "version": "",
+      "song": [
+        {
+          "id": "49leiIXEE70oAUnYazSB1B",
+          "parent": "51phjRiLqZdCi0H4Fk7Vgx",
+          "isDir": false,
+          "title": "Static Bloom",
+          "album": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "track": 1,
+          "year": 2018,
+          "genre": "Indie",
+          "coverArt": "dc-51phjRiLqZdCi0H4Fk7Vgx:1",
+          "size": 62508,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Static Bloom/01-01 - Static Bloom.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.63348615Z",
+          "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "static bloom",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "2xbMJfwGpyPboergIEwAZO",
+          "parent": "51phjRiLqZdCi0H4Fk7Vgx",
+          "isDir": false,
+          "title": "Fieldnotes",
+          "album": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "track": 2,
+          "year": 2018,
+          "genre": "Indie",
+          "coverArt": "dc-51phjRiLqZdCi0H4Fk7Vgx:1",
+          "size": 128492,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 64,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Static Bloom/01-02 - Fieldnotes.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.636075054Z",
+          "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "fieldnotes",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "2fmC7exRaqHvgtny4r6scH",
+          "parent": "51phjRiLqZdCi0H4Fk7Vgx",
+          "isDir": false,
+          "title": "Small Hours",
+          "album": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "track": 3,
+          "year": 2018,
+          "genre": "Indie",
+          "coverArt": "dc-51phjRiLqZdCi0H4Fk7Vgx:1",
+          "size": 194530,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Static Bloom/01-03 - Small Hours.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.642581664Z",
+          "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "small hours",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "697Q3LkRPWiUa87WmtU4Ww",
+          "parent": "51phjRiLqZdCi0H4Fk7Vgx",
+          "isDir": false,
+          "title": "Copper Wire",
+          "album": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "track": 4,
+          "year": 2018,
+          "genre": "Indie",
+          "coverArt": "dc-51phjRiLqZdCi0H4Fk7Vgx:1",
+          "size": 284496,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Static Bloom/01-04 - Copper Wire.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.648409897Z",
+          "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "copper wire",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "18GRxs4NTG5G5nfGHjPhm8",
+          "parent": "51phjRiLqZdCi0H4Fk7Vgx",
+          "isDir": false,
+          "title": "Overpass",
+          "album": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "track": 5,
+          "year": 2018,
+          "genre": "Indie",
+          "coverArt": "dc-51phjRiLqZdCi0H4Fk7Vgx:1",
+          "size": 370540,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Static Bloom/01-05 - Overpass.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.652684799Z",
+          "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "overpass",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "39i9ZUlwxMizq2gGImR5fE",
+          "parent": "51phjRiLqZdCi0H4Fk7Vgx",
+          "isDir": false,
+          "title": "Weathervane",
+          "album": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "track": 6,
+          "year": 2018,
+          "genre": "Indie",
+          "coverArt": "dc-51phjRiLqZdCi0H4Fk7Vgx:1",
+          "size": 476496,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Static Bloom/01-06 - Weathervane.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.658993504Z",
+          "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "weathervane",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "08XU7Z3Y8E5yHLWV0WsfT7",
+          "parent": "51phjRiLqZdCi0H4Fk7Vgx",
+          "isDir": false,
+          "title": "Coda",
+          "album": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "track": 7,
+          "year": 2018,
+          "genre": "Indie",
+          "coverArt": "dc-51phjRiLqZdCi0H4Fk7Vgx:1",
+          "size": 62500,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Static Bloom/01-07 - Coda.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.664351031Z",
+          "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "coda",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

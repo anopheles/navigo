@@ -1,0 +1,60 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "artist": {
+      "id": "63sqASlAfjbGMuLP4JhnZU",
+      "name": "Various Artists",
+      "coverArt": "ar-63sqASlAfjbGMuLP4JhnZU",
+      "albumCount": 1,
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTYzc3FBU2xBZmpiR011TFA0SmhuWlUiLCJpc3MiOiJORCJ9.-AH0_6BhF3frTbNVx8bxD22FiYToWVNEbpG00uMJgOA?size=600",
+      "musicBrainzId": "",
+      "sortName": "various artists",
+      "roles": [
+        "maincredit",
+        "albumartist"
+      ],
+      "album": [
+        {
+          "id": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "name": "Night Drive Vol. 1",
+          "artist": "Various Artists",
+          "artistId": "63sqASlAfjbGMuLP4JhnZU",
+          "coverArt": "al-0SoeJ7FiG3xu1O5hOt7DXq",
+          "songCount": 4,
+          "duration": 334,
+          "created": "2026-10-19T21:36:44.143954699Z",
+          "year": 2023,
+          "genre": "Synthwave",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": true,
+          "sortName": "night drive vol. 1",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

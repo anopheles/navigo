@@ -1,0 +1,224 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "album": {
+      "id": "0sPz4dswpPlhawvYGD5rsx",
+      "name": "夜明け",
+      "artist": "森の音",
+      "artistId": "6MLPuYszTGDyqez6E6n9uf",
+      "coverArt": "al-0sPz4dswpPlhawvYGD5rsx",
+      "songCount": 3,
+      "duration": 565,
+      "created": "2026-10-19T21:36:31.706146701Z",
+      "year": 2017,
+      "genre": "Ambient",
+      "userRating": 0,
+      "genres": [
+        {
+          "name": "Ambient"
+        }
+      ],
+      "musicBrainzId": "",
+      "isCompilation": false,
+      "sortName": "夜明け",
+      "discTitles": [],
+      "originalReleaseDate": {},
+      "releaseDate": {},
+      "releaseTypes": [],
+      "recordLabels": [],
+      "moods": [],
+      "artists": [
+        {
+          "id": "6MLPuYszTGDyqez6E6n9uf",
+          "name": "森の音"
+        }
+      ],
+      "displayArtist": "森の音",
+      "explicitStatus": "",
+      "version": "",
+      "song": [
+        {
+          "id": "6H2qZejHNrAriRdruLr01Y",
+          "parent": "0sPz4dswpPlhawvYGD5rsx",
+          "isDir": false,
+          "title": "朝霧",
+          "album": "夜明け",
+          "artist": "森の音",
+          "track": 1,
+          "year": 2017,
+          "genre": "Ambient",
+          "coverArt": "dc-0sPz4dswpPlhawvYGD5rsx:1",
+          "size": 284481,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "森の音/夜明け/01-01 - 朝霧.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.761882165Z",
+          "albumId": "0sPz4dswpPlhawvYGD5rsx",
+          "artistId": "6MLPuYszTGDyqez6E6n9uf",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "朝霧",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Ambient"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayArtist": "森の音",
+          "albumArtists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayAlbumArtist": "森の音",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "28BO2iwC0Pr7VMa3ZzTn4D",
+          "parent": "0sPz4dswpPlhawvYGD5rsx",
+          "isDir": false,
+          "title": "川の歌",
+          "album": "夜明け",
+          "artist": "森の音",
+          "track": 2,
+          "year": 2017,
+          "genre": "Ambient",
+          "coverArt": "dc-0sPz4dswpPlhawvYGD5rsx:1",
+          "size": 370530,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "森の音/夜明け/01-02 - 川の歌.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.76450008Z",
+          "albumId": "0sPz4dswpPlhawvYGD5rsx",
+          "artistId": "6MLPuYszTGDyqez6E6n9uf",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "川の歌",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Ambient"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayArtist": "森の音",
+          "albumArtists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayAlbumArtist": "森の音",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "4U3SYOs31RjD1eBKEXPn3L",
+          "parent": "0sPz4dswpPlhawvYGD5rsx",
+          "isDir": false,
+          "title": "夜明け前",
+          "album": "夜明け",
+          "artist": "森の音",
+          "track": 3,
+          "year": 2017,
+          "genre": "Ambient",
+          "coverArt": "dc-0sPz4dswpPlhawvYGD5rsx:1",
+          "size": 476485,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "森の音/夜明け/01-03 - 夜明け前.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.756246523Z",
+          "albumId": "0sPz4dswpPlhawvYGD5rsx",
+          "artistId": "6MLPuYszTGDyqez6E6n9uf",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "夜明け前",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Ambient"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayArtist": "森の音",
+          "albumArtists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayAlbumArtist": "森の音",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

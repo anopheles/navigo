@@ -1,0 +1,402 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "album": {
+      "id": "2bI7rWm5e4WInj6kSy9Ehz",
+      "name": "Blue Hour",
+      "artist": "Aurora Lane",
+      "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+      "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
+      "songCount": 6,
+      "duration": 757,
+      "created": "2026-10-19T21:36:30.957158268Z",
+      "starred": "2026-10-19T21:36:54.966613294Z",
+      "year": 2021,
+      "genre": "Dream Pop",
+      "userRating": 0,
+      "genres": [
+        {
+          "name": "Dream Pop"
+        }
+      ],
+      "musicBrainzId": "",
+      "isCompilation": false,
+      "sortName": "blue hour",
+      "discTitles": [],
+      "originalReleaseDate": {},
+      "releaseDate": {},
+      "releaseTypes": [],
+      "recordLabels": [],
+      "moods": [],
+      "artists": [
+        {
+          "id": "1MNu0aqmjGxOZOiezuZPxB",
+          "name": "Aurora Lane"
+        }
+      ],
+      "displayArtist": "Aurora Lane",
+      "explicitStatus": "",
+      "version": "",
+      "song": [
+        {
+          "id": "6tVrnFt2PcWRVfQXA2NF5s",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Dusk Signal",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 1,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 284491,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-01 - Dusk Signal.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.554248114Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "dusk signal",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "3G9kMK0lm2cBJ9JCWIBDKP",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Low Tide",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 2,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 370535,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-02 - Low Tide.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.561272598Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "low tide",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0dtDDERvfkND2NIRjsAOe0",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Streetlamp",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 3,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 476490,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-03 - Streetlamp.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.533009578Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "streetlamp",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0QB4Vp09EZ9rUT4C9wrfoU",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Blue Hour",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 4,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 62500,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-04 - Blue Hour.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.539575042Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue hour",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0zvhTYmJfF1eQLSYfyy9kM",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Wintering",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 5,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 128486,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 64,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-05 - Wintering.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.546034354Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "wintering",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "4W0ulKPFxVSPU8zldI93pS",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Afterglow",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 6,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 194523,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-06 - Afterglow.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.550412252Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "afterglow",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

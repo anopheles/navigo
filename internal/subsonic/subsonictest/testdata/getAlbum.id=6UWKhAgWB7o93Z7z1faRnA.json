@@ -1,0 +1,342 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "album": {
+      "id": "6UWKhAgWB7o93Z7z1faRnA",
+      "name": "Blue",
+      "artist": "The Quiet Ones",
+      "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+      "coverArt": "al-6UWKhAgWB7o93Z7z1faRnA",
+      "songCount": 5,
+      "duration": 615,
+      "created": "2026-10-19T21:36:31.214154299Z",
+      "year": 2015,
+      "genre": "Indie",
+      "userRating": 0,
+      "genres": [
+        {
+          "name": "Indie"
+        }
+      ],
+      "musicBrainzId": "",
+      "isCompilation": false,
+      "sortName": "blue",
+      "discTitles": [],
+      "originalReleaseDate": {},
+      "releaseDate": {},
+      "releaseTypes": [],
+      "recordLabels": [],
+      "moods": [],
+      "artists": [
+        {
+          "id": "2dcbXjSrK8FSXPAQRDCG1H",
+          "name": "The Quiet Ones"
+        }
+      ],
+      "displayArtist": "The Quiet Ones",
+      "explicitStatus": "",
+      "version": "",
+      "song": [
+        {
+          "id": "3GHBIMT3uUN52dJwRBg8Mq",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Undertow",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 1,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 370532,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-01 - Undertow.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.505839482Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "undertow",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6bNh4ibrV0CrdKTOagndd2",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Quiet Room",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 2,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 476487,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-02 - Quiet Room.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.508666643Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "quiet room",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0AeB5z8GtVzfPDFj1Vn6xT",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Blue Static",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 3,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 62499,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-03 - Blue Static.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.511373102Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue static",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0rjjz7qAkswHBktPuPlNz0",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Radio Silence",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 4,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 128487,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 64,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-04 - Radio Silence.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.495643323Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "radio silence",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "76cUULYSwf7f5L4GoPHgVp",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Homeward",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 5,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 194519,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-05 - Homeward.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.503080451Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "homeward",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

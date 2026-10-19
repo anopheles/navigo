@@ -1,0 +1,189 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "starred2": {
+      "artist": [
+        {
+          "id": "2dcbXjSrK8FSXPAQRDCG1H",
+          "name": "The Quiet Ones",
+          "coverArt": "ar-2dcbXjSrK8FSXPAQRDCG1H",
+          "albumCount": 2,
+          "starred": "2026-10-19T21:36:54.968029561Z",
+          "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJkY2JYalNySzhGU1hQQVFSRENHMUgiLCJpc3MiOiJORCJ9.rW0cdFfOWxd8stzidPoRUS5FTjqKgxex_OaEgqiL1z0?size=600",
+          "musicBrainzId": "",
+          "sortName": "quiet ones",
+          "roles": [
+            "maincredit",
+            "albumartist",
+            "artist"
+          ]
+        }
+      ],
+      "album": [
+        {
+          "id": "2bI7rWm5e4WInj6kSy9Ehz",
+          "name": "Blue Hour",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
+          "songCount": 6,
+          "duration": 757,
+          "created": "2026-10-19T21:36:30.957158268Z",
+          "starred": "2026-10-19T21:36:54.966613294Z",
+          "year": 2021,
+          "genre": "Dream Pop",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue hour",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ],
+      "song": [
+        {
+          "id": "5ySX3NUsEP7uwgoH4udQN2",
+          "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "isDir": false,
+          "title": "Night Drive",
+          "album": "Night Drive Vol. 1",
+          "artist": "Pell Mell",
+          "track": 3,
+          "year": 2023,
+          "genre": "Synthwave",
+          "coverArt": "dc-0SoeJ7FiG3xu1O5hOt7DXq:1",
+          "size": 194561,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "starred": "2026-10-19T21:36:54.964805851Z",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "Various Artists/Night Drive Vol. 1/01-03 - Night Drive.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.688074441Z",
+          "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "artistId": "77xJO0lZ9YMevx8NMOguzQ",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "night drive",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "77xJO0lZ9YMevx8NMOguzQ",
+              "name": "Pell Mell"
+            }
+          ],
+          "displayArtist": "Pell Mell",
+          "albumArtists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "3K7YfRI0h4a90UD8DWqGFU",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Blue Again",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 6,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 284485,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "starred": "2026-10-19T21:36:54.962336805Z",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-06 - Blue Again.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.61960564Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue again",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

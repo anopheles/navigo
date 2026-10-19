@@ -1,0 +1,20 @@
+# A throwaway Navidrome serving the synthetic fixture library, for recording
+# fixtures and for e2e runs. Its data lives in a tmpfs, so every start is a
+# fresh server. Start it with tools/fixtures.sh.
+name: navigo-fixtures
+
+services:
+  navidrome:
+    image: deluan/navidrome:0.64.2
+    ports:
+      - "127.0.0.1:${NAVIGO_FIXTURE_PORT:-14533}:4533"
+    environment:
+      ND_DEVAUTOCREATEADMINPASSWORD: navigo-fixtures
+      ND_SCANNER_SCANONSTARTUP: "true"
+      ND_SCANNER_SCHEDULE: "0"
+      ND_ENABLEEXTERNALSERVICES: "false"
+      ND_LOGLEVEL: info
+    volumes:
+      - ${NAVIGO_FIXTURE_MUSIC:?set NAVIGO_FIXTURE_MUSIC to the generated library}:/music:ro
+    tmpfs:
+      - /data

@@ -1,0 +1,61 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "artist": {
+      "id": "2yVh46xHg7UbYmzN38kszb",
+      "name": "Zoë Brandt",
+      "coverArt": "ar-2yVh46xHg7UbYmzN38kszb",
+      "albumCount": 1,
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJ5Vmg0NnhIZzdVYlltek4zOGtzemIiLCJpc3MiOiJORCJ9._9QHG7Dj4H2vsOXijJi66C0ck4uqB-4O_U5bdKdHZX8?size=600",
+      "musicBrainzId": "",
+      "sortName": "zoe brandt",
+      "roles": [
+        "albumartist",
+        "artist",
+        "maincredit"
+      ],
+      "album": [
+        {
+          "id": "6dUjXTei5OjF3Dc9vq50Gh",
+          "name": "Ångström Days",
+          "artist": "Zoë Brandt",
+          "artistId": "2yVh46xHg7UbYmzN38kszb",
+          "coverArt": "al-6dUjXTei5OjF3Dc9vq50Gh",
+          "songCount": 4,
+          "duration": 596,
+          "created": "2026-10-19T21:36:31.650147566Z",
+          "year": 2020,
+          "genre": "Electronic",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Electronic"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "angstrom days",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "2yVh46xHg7UbYmzN38kszb",
+              "name": "Zoë Brandt"
+            }
+          ],
+          "displayArtist": "Zoë Brandt",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,284 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "album": {
+      "id": "0SoeJ7FiG3xu1O5hOt7DXq",
+      "name": "Night Drive Vol. 1",
+      "artist": "Various Artists",
+      "artistId": "63sqASlAfjbGMuLP4JhnZU",
+      "coverArt": "al-0SoeJ7FiG3xu1O5hOt7DXq",
+      "songCount": 4,
+      "duration": 334,
+      "created": "2026-10-19T21:36:44.143954699Z",
+      "year": 2023,
+      "genre": "Synthwave",
+      "userRating": 0,
+      "genres": [
+        {
+          "name": "Synthwave"
+        }
+      ],
+      "musicBrainzId": "",
+      "isCompilation": true,
+      "sortName": "night drive vol. 1",
+      "discTitles": [],
+      "originalReleaseDate": {},
+      "releaseDate": {},
+      "releaseTypes": [],
+      "recordLabels": [],
+      "moods": [],
+      "artists": [
+        {
+          "id": "63sqASlAfjbGMuLP4JhnZU",
+          "name": "Various Artists"
+        }
+      ],
+      "displayArtist": "Various Artists",
+      "explicitStatus": "",
+      "version": "",
+      "song": [
+        {
+          "id": "29BFytMBDD31SpC09SZksM",
+          "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "isDir": false,
+          "title": "Neon Coast",
+          "album": "Night Drive Vol. 1",
+          "artist": "Aurora Lane",
+          "track": 1,
+          "year": 2023,
+          "genre": "Synthwave",
+          "coverArt": "dc-0SoeJ7FiG3xu1O5hOt7DXq:1",
+          "size": 62539,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "Various Artists/Night Drive Vol. 1/01-01 - Neon Coast.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.700798537Z",
+          "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "neon coast",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "4c23B2zNd4rcbZwYo4NbPO",
+          "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "isDir": false,
+          "title": "Exit 14",
+          "album": "Night Drive Vol. 1",
+          "artist": "The Quiet Ones",
+          "track": 2,
+          "year": 2023,
+          "genre": "Synthwave",
+          "coverArt": "dc-0SoeJ7FiG3xu1O5hOt7DXq:1",
+          "size": 128525,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 64,
+          "bitRate": 16,
+          "path": "Various Artists/Night Drive Vol. 1/01-02 - Exit 14.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.684286391Z",
+          "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "exit 14",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "5ySX3NUsEP7uwgoH4udQN2",
+          "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "isDir": false,
+          "title": "Night Drive",
+          "album": "Night Drive Vol. 1",
+          "artist": "Pell Mell",
+          "track": 3,
+          "year": 2023,
+          "genre": "Synthwave",
+          "coverArt": "dc-0SoeJ7FiG3xu1O5hOt7DXq:1",
+          "size": 194561,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "starred": "2026-10-19T21:36:54.964805851Z",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "Various Artists/Night Drive Vol. 1/01-03 - Night Drive.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.688074441Z",
+          "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "artistId": "77xJO0lZ9YMevx8NMOguzQ",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "night drive",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "77xJO0lZ9YMevx8NMOguzQ",
+              "name": "Pell Mell"
+            }
+          ],
+          "displayArtist": "Pell Mell",
+          "albumArtists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "1YlMnHWu1YvEc47YhcLftZ",
+          "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "isDir": false,
+          "title": "Blue Highway",
+          "album": "Night Drive Vol. 1",
+          "artist": "Pell Mell",
+          "track": 4,
+          "year": 2023,
+          "genre": "Synthwave",
+          "coverArt": "dc-0SoeJ7FiG3xu1O5hOt7DXq:1",
+          "size": 284528,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "Various Artists/Night Drive Vol. 1/01-04 - Blue Highway.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.696221532Z",
+          "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "artistId": "77xJO0lZ9YMevx8NMOguzQ",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue highway",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "77xJO0lZ9YMevx8NMOguzQ",
+              "name": "Pell Mell"
+            }
+          ],
+          "displayArtist": "Pell Mell",
+          "albumArtists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

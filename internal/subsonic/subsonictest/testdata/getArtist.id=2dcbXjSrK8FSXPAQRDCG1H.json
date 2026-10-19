@@ -1,0 +1,98 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "artist": {
+      "id": "2dcbXjSrK8FSXPAQRDCG1H",
+      "name": "The Quiet Ones",
+      "coverArt": "ar-2dcbXjSrK8FSXPAQRDCG1H",
+      "albumCount": 2,
+      "starred": "2026-10-19T21:36:54.968029561Z",
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJkY2JYalNySzhGU1hQQVFSRENHMUgiLCJpc3MiOiJORCJ9.rW0cdFfOWxd8stzidPoRUS5FTjqKgxex_OaEgqiL1z0?size=600",
+      "musicBrainzId": "",
+      "sortName": "quiet ones",
+      "roles": [
+        "maincredit",
+        "albumartist",
+        "artist"
+      ],
+      "album": [
+        {
+          "id": "6UWKhAgWB7o93Z7z1faRnA",
+          "name": "Blue",
+          "artist": "The Quiet Ones",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "coverArt": "al-6UWKhAgWB7o93Z7z1faRnA",
+          "songCount": 5,
+          "duration": 615,
+          "created": "2026-10-19T21:36:31.214154299Z",
+          "year": 2015,
+          "genre": "Indie",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "51phjRiLqZdCi0H4Fk7Vgx",
+          "name": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "coverArt": "al-51phjRiLqZdCi0H4Fk7Vgx",
+          "songCount": 7,
+          "duration": 788,
+          "created": "2026-10-19T21:36:31.469150361Z",
+          "year": 2018,
+          "genre": "Indie",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "static bloom",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

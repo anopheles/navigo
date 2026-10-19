@@ -1,0 +1,35 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "playlists": {
+      "playlist": [
+        {
+          "id": "7c9s6in7GMf4TQ8GPuPBFi",
+          "name": "Empty",
+          "songCount": 0,
+          "duration": 0,
+          "owner": "admin",
+          "created": "2026-10-19T21:36:54.944230878Z",
+          "changed": "2026-10-19T21:36:54.945214435Z",
+          "coverArt": "pl-7c9s6in7GMf4TQ8GPuPBFi",
+          "readonly": false
+        },
+        {
+          "id": "0haYCALAWXZEl6qPx1C2Ri",
+          "name": "Morning Mix",
+          "songCount": 5,
+          "duration": 988,
+          "owner": "admin",
+          "created": "2026-10-19T21:36:54.931419094Z",
+          "changed": "2026-10-19T21:36:54.932998031Z",
+          "coverArt": "pl-0haYCALAWXZEl6qPx1C2Ri",
+          "readonly": false
+        }
+      ]
+    }
+  }
+}

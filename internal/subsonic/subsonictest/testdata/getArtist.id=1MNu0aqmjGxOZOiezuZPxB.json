@@ -1,0 +1,98 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "artist": {
+      "id": "1MNu0aqmjGxOZOiezuZPxB",
+      "name": "Aurora Lane",
+      "coverArt": "ar-1MNu0aqmjGxOZOiezuZPxB",
+      "albumCount": 2,
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTFNTnUwYXFtakd4T1pPaWV6dVpQeEIiLCJpc3MiOiJORCJ9.dPV8q3I-DpV9nzmH9pLVR9uohgYA6vbfCsjh2_QONC8?size=600",
+      "musicBrainzId": "",
+      "sortName": "aurora lane",
+      "roles": [
+        "albumartist",
+        "artist",
+        "maincredit"
+      ],
+      "album": [
+        {
+          "id": "3ZJQB487hjgDRlECI70I0Z",
+          "name": "Blue",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "coverArt": "al-3ZJQB487hjgDRlECI70I0Z",
+          "songCount": 8,
+          "duration": 1180,
+          "created": "2026-10-19T21:36:30.927158732Z",
+          "year": 2019,
+          "genre": "Dream Pop",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "2bI7rWm5e4WInj6kSy9Ehz",
+          "name": "Blue Hour",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
+          "songCount": 6,
+          "duration": 757,
+          "created": "2026-10-19T21:36:30.957158268Z",
+          "starred": "2026-10-19T21:36:54.966613294Z",
+          "year": 2021,
+          "genre": "Dream Pop",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue hour",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

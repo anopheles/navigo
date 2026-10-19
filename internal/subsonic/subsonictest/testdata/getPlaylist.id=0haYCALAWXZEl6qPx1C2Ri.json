@@ -1,0 +1,317 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "playlist": {
+      "id": "0haYCALAWXZEl6qPx1C2Ri",
+      "name": "Morning Mix",
+      "songCount": 5,
+      "duration": 988,
+      "owner": "admin",
+      "created": "2026-10-19T21:36:54.931419094Z",
+      "changed": "2026-10-19T21:36:54.932998031Z",
+      "coverArt": "pl-0haYCALAWXZEl6qPx1C2Ri",
+      "readonly": false,
+      "entry": [
+        {
+          "id": "4c2gnMNRKdVmWE03nWRwcc",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Blue",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 2,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 476479,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-02 - Blue.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.602731188Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "3GHBIMT3uUN52dJwRBg8Mq",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Undertow",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 1,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 370532,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-01 - Undertow.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.505839482Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "undertow",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "4hHFy7jMR9RGWSssges3lp",
+          "parent": "6dUjXTei5OjF3Dc9vq50Gh",
+          "isDir": false,
+          "title": "Café Nocturne",
+          "album": "Ångström Days",
+          "artist": "Zoë Brandt",
+          "track": 2,
+          "year": 2020,
+          "genre": "Electronic",
+          "coverArt": "dc-6dUjXTei5OjF3Dc9vq50Gh:1",
+          "size": 370601,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "Zoë Brandt/Ångström Days/01-02 - Café Nocturne.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.720474377Z",
+          "albumId": "6dUjXTei5OjF3Dc9vq50Gh",
+          "artistId": "2yVh46xHg7UbYmzN38kszb",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "cafe nocturne",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Electronic"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2yVh46xHg7UbYmzN38kszb",
+              "name": "Zoë Brandt"
+            }
+          ],
+          "displayArtist": "Zoë Brandt",
+          "albumArtists": [
+            {
+              "id": "2yVh46xHg7UbYmzN38kszb",
+              "name": "Zoë Brandt"
+            }
+          ],
+          "displayAlbumArtist": "Zoë Brandt",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6H2qZejHNrAriRdruLr01Y",
+          "parent": "0sPz4dswpPlhawvYGD5rsx",
+          "isDir": false,
+          "title": "朝霧",
+          "album": "夜明け",
+          "artist": "森の音",
+          "track": 1,
+          "year": 2017,
+          "genre": "Ambient",
+          "coverArt": "dc-0sPz4dswpPlhawvYGD5rsx:1",
+          "size": 284481,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "森の音/夜明け/01-01 - 朝霧.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.761882165Z",
+          "albumId": "0sPz4dswpPlhawvYGD5rsx",
+          "artistId": "6MLPuYszTGDyqez6E6n9uf",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "朝霧",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Ambient"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayArtist": "森の音",
+          "albumArtists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayAlbumArtist": "森の音",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "4c2gnMNRKdVmWE03nWRwcc",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Blue",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 2,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 476479,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-02 - Blue.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.602731188Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

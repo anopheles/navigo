@@ -1,0 +1,313 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "albumList2": {
+      "album": [
+        {
+          "id": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "name": "Night Drive Vol. 1",
+          "artist": "Various Artists",
+          "artistId": "63sqASlAfjbGMuLP4JhnZU",
+          "coverArt": "al-0SoeJ7FiG3xu1O5hOt7DXq",
+          "songCount": 4,
+          "duration": 334,
+          "created": "2026-10-19T21:36:44.143954699Z",
+          "year": 2023,
+          "genre": "Synthwave",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": true,
+          "sortName": "night drive vol. 1",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "1SJnfrI6VtIDLvy74TQoOJ",
+          "name": "The Long Haul",
+          "artist": "Long Haul Orchestra",
+          "artistId": "5qpNtcsC6DKi73YhXjLBY4",
+          "coverArt": "al-1SJnfrI6VtIDLvy74TQoOJ",
+          "songCount": 510,
+          "duration": 10230,
+          "created": "2026-10-19T21:36:31.764145805Z",
+          "year": 2022,
+          "genre": "Classical",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Classical"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "long haul",
+          "discTitles": [
+            {
+              "disc": 1,
+              "title": "",
+              "coverArt": "dc-1SJnfrI6VtIDLvy74TQoOJ:1"
+            },
+            {
+              "disc": 2,
+              "title": "",
+              "coverArt": "dc-1SJnfrI6VtIDLvy74TQoOJ:2"
+            }
+          ],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "5qpNtcsC6DKi73YhXjLBY4",
+              "name": "Long Haul Orchestra"
+            }
+          ],
+          "displayArtist": "Long Haul Orchestra",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "0sPz4dswpPlhawvYGD5rsx",
+          "name": "夜明け",
+          "artist": "森の音",
+          "artistId": "6MLPuYszTGDyqez6E6n9uf",
+          "coverArt": "al-0sPz4dswpPlhawvYGD5rsx",
+          "songCount": 3,
+          "duration": 565,
+          "created": "2026-10-19T21:36:31.706146701Z",
+          "year": 2017,
+          "genre": "Ambient",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Ambient"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "夜明け",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayArtist": "森の音",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "6dUjXTei5OjF3Dc9vq50Gh",
+          "name": "Ångström Days",
+          "artist": "Zoë Brandt",
+          "artistId": "2yVh46xHg7UbYmzN38kszb",
+          "coverArt": "al-6dUjXTei5OjF3Dc9vq50Gh",
+          "songCount": 4,
+          "duration": 596,
+          "created": "2026-10-19T21:36:31.650147566Z",
+          "year": 2020,
+          "genre": "Electronic",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Electronic"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "angstrom days",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "2yVh46xHg7UbYmzN38kszb",
+              "name": "Zoë Brandt"
+            }
+          ],
+          "displayArtist": "Zoë Brandt",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "51phjRiLqZdCi0H4Fk7Vgx",
+          "name": "Static Bloom",
+          "artist": "The Quiet Ones",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "coverArt": "al-51phjRiLqZdCi0H4Fk7Vgx",
+          "songCount": 7,
+          "duration": 788,
+          "created": "2026-10-19T21:36:31.469150361Z",
+          "year": 2018,
+          "genre": "Indie",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "static bloom",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "6UWKhAgWB7o93Z7z1faRnA",
+          "name": "Blue",
+          "artist": "The Quiet Ones",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "coverArt": "al-6UWKhAgWB7o93Z7z1faRnA",
+          "songCount": 5,
+          "duration": 615,
+          "created": "2026-10-19T21:36:31.214154299Z",
+          "year": 2015,
+          "genre": "Indie",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "2bI7rWm5e4WInj6kSy9Ehz",
+          "name": "Blue Hour",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
+          "songCount": 6,
+          "duration": 757,
+          "created": "2026-10-19T21:36:30.957158268Z",
+          "starred": "2026-10-19T21:36:54.966613294Z",
+          "year": 2021,
+          "genre": "Dream Pop",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue hour",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "3ZJQB487hjgDRlECI70I0Z",
+          "name": "Blue",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "coverArt": "al-3ZJQB487hjgDRlECI70I0Z",
+          "songCount": 8,
+          "duration": 1180,
+          "created": "2026-10-19T21:36:30.927158732Z",
+          "year": 2019,
+          "genre": "Dream Pop",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

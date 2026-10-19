@@ -1,0 +1,72 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "artist": {
+      "id": "5qpNtcsC6DKi73YhXjLBY4",
+      "name": "Long Haul Orchestra",
+      "coverArt": "ar-5qpNtcsC6DKi73YhXjLBY4",
+      "albumCount": 1,
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTVxcE50Y3NDNkRLaTczWWhYakxCWTQiLCJpc3MiOiJORCJ9.WV-b-xkL8rQCGX3qVHC2UBYu-pB8gCAzFOMvymsJCdc?size=600",
+      "musicBrainzId": "",
+      "sortName": "long haul orchestra",
+      "roles": [
+        "albumartist",
+        "artist",
+        "maincredit"
+      ],
+      "album": [
+        {
+          "id": "1SJnfrI6VtIDLvy74TQoOJ",
+          "name": "The Long Haul",
+          "artist": "Long Haul Orchestra",
+          "artistId": "5qpNtcsC6DKi73YhXjLBY4",
+          "coverArt": "al-1SJnfrI6VtIDLvy74TQoOJ",
+          "songCount": 510,
+          "duration": 10230,
+          "created": "2026-10-19T21:36:31.764145805Z",
+          "year": 2022,
+          "genre": "Classical",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Classical"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "long haul",
+          "discTitles": [
+            {
+              "disc": 1,
+              "title": "",
+              "coverArt": "dc-1SJnfrI6VtIDLvy74TQoOJ:1"
+            },
+            {
+              "disc": 2,
+              "title": "",
+              "coverArt": "dc-1SJnfrI6VtIDLvy74TQoOJ:2"
+            }
+          ],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "5qpNtcsC6DKi73YhXjLBY4",
+              "name": "Long Haul Orchestra"
+            }
+          ],
+          "displayArtist": "Long Haul Orchestra",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "artist": {
+      "id": "6MLPuYszTGDyqez6E6n9uf",
+      "name": "森の音",
+      "coverArt": "ar-6MLPuYszTGDyqez6E6n9uf",
+      "albumCount": 1,
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTZNTFB1WXN6VEdEeXFlejZFNm45dWYiLCJpc3MiOiJORCJ9.o5Nr1GzL-U6xE0xs-768lfV50pBKAcYMxsLBtlcvKxY?size=600",
+      "musicBrainzId": "",
+      "sortName": "森の音",
+      "roles": [
+        "albumartist",
+        "artist",
+        "maincredit"
+      ],
+      "album": [
+        {
+          "id": "0sPz4dswpPlhawvYGD5rsx",
+          "name": "夜明け",
+          "artist": "森の音",
+          "artistId": "6MLPuYszTGDyqez6E6n9uf",
+          "coverArt": "al-0sPz4dswpPlhawvYGD5rsx",
+          "songCount": 3,
+          "duration": 565,
+          "created": "2026-10-19T21:36:31.706146701Z",
+          "year": 2017,
+          "genre": "Ambient",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Ambient"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "夜明け",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "6MLPuYszTGDyqez6E6n9uf",
+              "name": "森の音"
+            }
+          ],
+          "displayArtist": "森の音",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

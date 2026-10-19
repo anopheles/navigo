@@ -1,0 +1,1305 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "searchResult3": {
+      "album": [
+        {
+          "id": "3ZJQB487hjgDRlECI70I0Z",
+          "name": "Blue",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "coverArt": "al-3ZJQB487hjgDRlECI70I0Z",
+          "songCount": 8,
+          "duration": 1180,
+          "created": "2026-10-19T21:36:30.927158732Z",
+          "year": 2019,
+          "genre": "Dream Pop",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "2bI7rWm5e4WInj6kSy9Ehz",
+          "name": "Blue Hour",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
+          "songCount": 6,
+          "duration": 757,
+          "created": "2026-10-19T21:36:30.957158268Z",
+          "starred": "2026-10-19T21:36:54.966613294Z",
+          "year": 2021,
+          "genre": "Dream Pop",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue hour",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "6UWKhAgWB7o93Z7z1faRnA",
+          "name": "Blue",
+          "artist": "The Quiet Ones",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "coverArt": "al-6UWKhAgWB7o93Z7z1faRnA",
+          "songCount": 5,
+          "duration": 615,
+          "created": "2026-10-19T21:36:31.214154299Z",
+          "year": 2015,
+          "genre": "Indie",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ],
+      "song": [
+        {
+          "id": "4c2gnMNRKdVmWE03nWRwcc",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Blue",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 2,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 476479,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-02 - Blue.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.602731188Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "3K7YfRI0h4a90UD8DWqGFU",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Blue Again",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 6,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 284485,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "starred": "2026-10-19T21:36:54.962336805Z",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-06 - Blue Again.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.61960564Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue again",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0QB4Vp09EZ9rUT4C9wrfoU",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Blue Hour",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 4,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 62500,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-04 - Blue Hour.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.539575042Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue hour",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0AeB5z8GtVzfPDFj1Vn6xT",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Blue Static",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 3,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 62499,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-03 - Blue Static.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.511373102Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue static",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "1YlMnHWu1YvEc47YhcLftZ",
+          "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "isDir": false,
+          "title": "Blue Highway",
+          "album": "Night Drive Vol. 1",
+          "artist": "Pell Mell",
+          "track": 4,
+          "year": 2023,
+          "genre": "Synthwave",
+          "coverArt": "dc-0SoeJ7FiG3xu1O5hOt7DXq:1",
+          "size": 284528,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "Various Artists/Night Drive Vol. 1/01-04 - Blue Highway.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.696221532Z",
+          "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
+          "artistId": "77xJO0lZ9YMevx8NMOguzQ",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "blue highway",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Synthwave"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "77xJO0lZ9YMevx8NMOguzQ",
+              "name": "Pell Mell"
+            }
+          ],
+          "displayArtist": "Pell Mell",
+          "albumArtists": [
+            {
+              "id": "63sqASlAfjbGMuLP4JhnZU",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "4nQHJnED8cTFbRbm6wpVhq",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Tidewater",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 1,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 370531,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-01 - Tidewater.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.59758417Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "tidewater",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "4W0ulKPFxVSPU8zldI93pS",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Afterglow",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 6,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 194523,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-06 - Afterglow.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.550412252Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "afterglow",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6gLWNkN7DOyxHDPSd0aSgw",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Glass Garden",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 7,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 370534,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-07 - Glass Garden.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.584110197Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "glass garden",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6PyCApV2AmugCjm1e4Pk9l",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Harbour Lights",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 5,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 194523,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-05 - Harbour Lights.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.615205846Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "harbour lights",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6p4xSWRZx0L3WIsoCTGl0E",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Last Ferry",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 8,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 476485,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-08 - Last Ferry.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.590835036Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "last ferry",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6Gbj4wkb2lrEAQU9ZeJC29",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Paper Lanterns",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 3,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 62500,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 31,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-03 - Paper Lanterns.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.609230196Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "paper lanterns",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "3tRK2Y4wl33xSKQ8s51CDL",
+          "parent": "3ZJQB487hjgDRlECI70I0Z",
+          "isDir": false,
+          "title": "Slow Orbit",
+          "album": "Blue",
+          "artist": "Aurora Lane",
+          "track": 4,
+          "year": 2019,
+          "genre": "Dream Pop",
+          "coverArt": "dc-3ZJQB487hjgDRlECI70I0Z:1",
+          "size": 128482,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 64,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue/01-04 - Slow Orbit.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.612684153Z",
+          "albumId": "3ZJQB487hjgDRlECI70I0Z",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "slow orbit",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0dtDDERvfkND2NIRjsAOe0",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Streetlamp",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 3,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 476490,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-03 - Streetlamp.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.533009578Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "streetlamp",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0zvhTYmJfF1eQLSYfyy9kM",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Wintering",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 5,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 128486,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 64,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-05 - Wintering.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.546034354Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "wintering",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6tVrnFt2PcWRVfQXA2NF5s",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Dusk Signal",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 1,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 284491,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 142,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-01 - Dusk Signal.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.554248114Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "dusk signal",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "3G9kMK0lm2cBJ9JCWIBDKP",
+          "parent": "2bI7rWm5e4WInj6kSy9Ehz",
+          "isDir": false,
+          "title": "Low Tide",
+          "album": "Blue Hour",
+          "artist": "Aurora Lane",
+          "track": 2,
+          "year": 2021,
+          "genre": "Dream Pop",
+          "coverArt": "dc-2bI7rWm5e4WInj6kSy9Ehz:1",
+          "size": 370535,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "Aurora Lane/Blue Hour/01-02 - Low Tide.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.561272598Z",
+          "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "low tide",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "albumArtists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayAlbumArtist": "Aurora Lane",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "76cUULYSwf7f5L4GoPHgVp",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Homeward",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 5,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 194519,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 97,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-05 - Homeward.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.503080451Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "homeward",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "3GHBIMT3uUN52dJwRBg8Mq",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Undertow",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 1,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 370532,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 185,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-01 - Undertow.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.505839482Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "undertow",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "6bNh4ibrV0CrdKTOagndd2",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Quiet Room",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 2,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 476487,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 238,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-02 - Quiet Room.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.508666643Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "quiet room",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        },
+        {
+          "id": "0rjjz7qAkswHBktPuPlNz0",
+          "parent": "6UWKhAgWB7o93Z7z1faRnA",
+          "isDir": false,
+          "title": "Radio Silence",
+          "album": "Blue",
+          "artist": "The Quiet Ones",
+          "track": 4,
+          "year": 2015,
+          "genre": "Indie",
+          "coverArt": "dc-6UWKhAgWB7o93Z7z1faRnA:1",
+          "size": 128487,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 64,
+          "bitRate": 16,
+          "path": "The Quiet Ones/Blue/01-04 - Radio Silence.mp3",
+          "discNumber": 1,
+          "created": "2026-10-19T21:36:51.495643323Z",
+          "albumId": "6UWKhAgWB7o93Z7z1faRnA",
+          "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
+          "type": "music",
+          "bpm": 0,
+          "comment": "",
+          "sortName": "radio silence",
+          "mediaType": "song",
+          "musicBrainzId": "",
+          "isrc": [],
+          "genres": [
+            {
+              "name": "Indie"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 1,
+          "samplingRate": 22050,
+          "bitDepth": 0,
+          "moods": [],
+          "artists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayArtist": "The Quiet Ones",
+          "albumArtists": [
+            {
+              "id": "2dcbXjSrK8FSXPAQRDCG1H",
+              "name": "The Quiet Ones"
+            }
+          ],
+          "displayAlbumArtist": "The Quiet Ones",
+          "contributors": [],
+          "displayComposer": "",
+          "explicitStatus": "",
+          "groupings": [],
+          "works": [],
+          "movements": []
+        }
+      ]
+    }
+  }
+}

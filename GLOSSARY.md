@@ -135,6 +135,10 @@ _Avoid_: featured on, guest albums, compilations
 navigo's local, disposable copy of the library's metadata, used to browse and search without waiting on the server; it never holds audio and the server always wins.
 _Avoid_: database, index, offline mode, download
 
+**Offline**:
+When navigo can't reach the server: lists and search still work from the cache, while playback, writes and sync wait for it to come back. A server that answers with an error is not offline.
+_Avoid_: offline mode, disconnected
+
 **Sync**:
 Bringing the cache up to date with the library.
 _Avoid_: refresh, scan (a scan is the server reading its own files)

@@ -2,8 +2,10 @@ package ui
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -35,6 +37,40 @@ type harness struct {
 	// they are delivered once that command returns.
 	queued   []tea.Msg
 	progress []string // the empty-list text seen while syncing
+	clock    *fakeClock
+}
+
+// fakeClock records timers instead of sleeping; advance fires them.
+type fakeClock struct {
+	now    time.Time
+	timers []timer
+}
+
+type timer struct {
+	at time.Time
+	fn func(time.Time) tea.Msg
+}
+
+func (c *fakeClock) Now() time.Time { return c.now }
+
+func (c *fakeClock) After(d time.Duration, fn func(time.Time) tea.Msg) tea.Cmd {
+	c.timers = append(c.timers, timer{c.now.Add(d), fn})
+	return nil
+}
+
+// advance moves the clock on by d and delivers the timers that fall due.
+func (h *harness) advance(d time.Duration) {
+	h.t.Helper()
+	h.clock.now = h.clock.now.Add(d)
+	for {
+		i := slices.IndexFunc(h.clock.timers, func(t timer) bool { return !t.at.After(h.clock.now) })
+		if i < 0 {
+			return
+		}
+		t := h.clock.timers[i]
+		h.clock.timers = slices.Delete(h.clock.timers, i, i+1)
+		h.send(t.fn(t.at))
+	}
 }
 
 type memKeyring map[string]string
@@ -62,8 +98,10 @@ func newHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.
 	}
 	hs := &harness{t: t, srv: srv, fake: player.NewFake(), kr: memKeyring{}, path: filepath.Join(t.TempDir(), "navigo", "config.yaml")}
 	hs.cache = filepath.Join(filepath.Dir(hs.path), "cache")
-	hs.m = New(Deps{Config: cfg, ConfigPath: hs.path, Player: hs.fake, Keyring: hs.kr, CacheDir: hs.cache, OnLogin: func(*subsonic.Client) { hs.logins++ }})
+	hs.m = New(Deps{Config: cfg, ConfigPath: hs.path, Player: hs.fake, Keyring: hs.kr, CacheDir: hs.cache, LogPath: "/logs/navigo.log", OnLogin: func(*subsonic.Client) { hs.logins++ }})
 	hs.m.SetSend(func(msg tea.Msg) { hs.queued = append(hs.queued, msg) })
+	hs.clock = &fakeClock{now: time.Date(2026, 10, 20, 9, 0, 0, 0, time.UTC)}
+	hs.m.clock = hs.clock
 	hs.send(tea.WindowSizeMsg{Width: w, Height: h})
 	hs.run(hs.m.Init())
 	return hs
@@ -76,6 +114,8 @@ func (h *harness) restart() *harness {
 	n := &harness{t: h.t, srv: h.srv, fake: player.NewFake(), kr: h.kr, path: h.path, cache: h.cache}
 	n.m = New(Deps{Config: h.m.deps.Config, ConfigPath: h.path, Player: n.fake, Keyring: n.kr, CacheDir: n.cache, OnLogin: func(*subsonic.Client) { n.logins++ }})
 	n.m.SetSend(func(msg tea.Msg) { n.queued = append(n.queued, msg) })
+	n.clock = &fakeClock{now: h.clock.now}
+	n.m.clock = n.clock
 	n.send(tea.WindowSizeMsg{Width: h.m.w, Height: h.m.h})
 	n.run(n.m.Init())
 	return n

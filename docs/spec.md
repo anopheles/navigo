@@ -458,13 +458,14 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **Input:** the keymap engine (counts, prefixes, scopes, notation) and the command registry.
 - **Session:** the login form, keyring and config saving.
 - **Screen:** the two windows and narrow layout, the hint line, the empty-queue message, the now-playing bar and the `:` line.
+- **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A and the first layer B scenario.
 
 Still to build for v1:
 
 - **Sections:** Home (and starting on it), Artists with artist pages, Playlists (with server-side editing and confirmations), Search, and Help. The skeleton starts on Albums.
 - **Keys:** Visual mode, the `d`/`y` operators and the register, `p`/`P`, `J`/`K`, `x`, marks other than `'b`/`'q`, `/` with `n`/`N`, the jump list, the remaining motions, `gp`/`ga`/`gr`, volume, shuffle, repeat, info and stars.
-- **Discoverability:** the key menu, prefix menus, `:` fuzzy matching and tips, the `/`-to-search offer, and the full message model with `:messages`.
+- **Discoverability:** the key menu, prefix menus, `:` fuzzy matching and tips, and the `/`-to-search offer.
 - **Rebinding:** the `keys:` block, its validation popup, `:map` and friends, `:reload-config` and `navigo check-config`.
 - **Offline:** the offline state with backoff and countdown, `:reconnect`, the 10/60 s timeouts, the stream-failure ping, and the 3-skip and 3-crash caps.
 - **mpv:** the startup check with install hints, `player.mpv_path`, and resuming after a crash.

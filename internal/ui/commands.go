@@ -46,7 +46,9 @@ func commands() *command.Registry[*Model] {
 		{Name: "redo", Label: "redo", Desc: "Redo the last undone change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Redo{}); return nil }},
 
 		{Name: "cmdline", Label: "command", Desc: "Type a command.", Run: func(m *Model, _ command.Call) error { m.enterLine(); return nil }},
-		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and clear the message.", Run: func(m *Model, _ command.Call) error { m.setMsg("", false); return nil }},
+		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and clear the message.", Run: func(m *Model, _ command.Call) error { m.clearMsg(); return nil }},
+		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
+		{Name: "messages", Label: "messages", Desc: "Show the messages of this session.", Run: func(m *Model, _ command.Call) error { m.showMessages(); return nil }},
 		{Name: "interrupt", Label: "cancel", Desc: "Like cancel; reminds you how to quit.", Run: func(m *Model, _ command.Call) error { m.setMsg("type :q to quit", false); return nil }},
 		{Name: "login", Label: "log in", Desc: "Log in to a server, or as another user.", Run: func(m *Model, _ command.Call) error {
 			s := m.deps.Config.Server
@@ -67,6 +69,10 @@ func (m *Model) then(c tea.Cmd) { m.pendingCmd = tea.Batch(m.pendingCmd, c) }
 func (m *Model) event(e app.Event) { m.then(m.dispatch(e)) }
 
 func (m *Model) move(d int) {
+	if m.popup != nil {
+		m.scrollPopup(d)
+		return
+	}
 	if m.focus == queueWindow {
 		m.queueCur = min(max(m.queueCur+d, 0), max(len(m.state.Queue)-1, 0))
 		return
@@ -78,6 +84,13 @@ func (m *Model) move(d int) {
 // goRow moves to row count (1-based) when a count was typed, else to def
 // (-1 for the last row).
 func (m *Model) goRow(count, def int) {
+	if m.popup != nil {
+		m.popup.off = 0
+		if def < 0 {
+			m.scrollPopup(len(m.popup.lines))
+		}
+		return
+	}
 	n := m.rows(m.top())
 	if m.focus == queueWindow {
 		n = len(m.state.Queue)

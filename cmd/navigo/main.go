@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -44,12 +46,11 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	closeLog, err := setupLog(*debug)
-	if err != nil {
-		return err
+	logFile, logPath := setupLog(*debug)
+	if logFile != nil {
+		defer logFile.Close()
 	}
-	defer closeLog()
-	slog.Info("starting", "config", path)
+	slog.Debug("starting", "config", path)
 
 	// The player signs stream URLs with whichever client logged in last.
 	var client atomic.Pointer[subsonic.Client]
@@ -74,6 +75,7 @@ func run() error {
 		Player:     mpv,
 		Keyring:    creds.OS,
 		CacheDir:   cacheDir,
+		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})
 	p := tea.NewProgram(m)
@@ -86,31 +88,50 @@ func run() error {
 			p.Send(ui.PlayerMsg(e))
 		}
 	}()
-	if _, err := p.Run(); err != nil {
-		return err
+	// While the TUI runs nothing may reach the terminal, so stderr goes to
+	// the log: a panic's stack trace, which Bubble Tea writes there after
+	// restoring the terminal, ends up in navigo.log.
+	stderr := os.Stderr
+	if logFile != nil {
+		os.Stderr = logFile
 	}
-	return nil
+	_, err = p.Run()
+	os.Stderr = stderr
+	if errors.Is(err, tea.ErrProgramPanic) {
+		slog.Error("navigo crashed")
+		return fmt.Errorf("crashed; details in %s", logPath)
+	}
+	return err
 }
 
 // setupLog sends slog to navigo.log in the user cache dir: nothing may go
 // to the terminal while the TUI runs. Stream URLs and tokens are never
-// logged.
-func setupLog(debug bool) (func(), error) {
+// logged. It returns the open file and its path, or nil and "" when there
+// is nowhere to write.
+func setupLog(debug bool) (*os.File, string) {
 	level := slog.LevelWarn
 	if debug {
 		level = slog.LevelDebug
 	}
 	var w io.Writer = io.Discard
-	closeFn := func() {}
+	var file *os.File
+	var path string
 	if dir, err := os.UserCacheDir(); err == nil {
 		dir = filepath.Join(dir, "navigo")
 		if err := os.MkdirAll(dir, 0o700); err == nil {
-			f, err := os.OpenFile(filepath.Join(dir, "navigo.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
-			if err == nil {
-				w, closeFn = f, func() { _ = f.Close() }
+			path = filepath.Join(dir, "navigo.log")
+			if f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600); err == nil {
+				w, file = f, f
+				hint := "run with --debug or NAVIGO_DEBUG=1 for more detail"
+				if debug {
+					hint = "debug logging on"
+				}
+				fmt.Fprintf(f, "# navigo started %s · %s\n", time.Now().Format(time.RFC3339), hint)
+			} else {
+				path = ""
 			}
 		}
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: level})))
-	return closeFn, nil
+	return file, path
 }

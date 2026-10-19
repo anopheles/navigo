@@ -27,6 +27,7 @@ var (
 	barStyle     = lipgloss.NewStyle().Background(lipgloss.Color("236"))
 	titleOn      = lipgloss.NewStyle().Reverse(true).Bold(true)
 	boxStyle     = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("81")).Padding(1, 2)
+	popupStyle   = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("244")).Padding(0, 1)
 	focusedInput = lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
 )
 
@@ -69,6 +70,10 @@ func (m *Model) render() string {
 	}
 	lines = append(lines, m.nowPlaying()...)
 	lines = append(lines, m.status())
+	if m.popup != nil {
+		box := m.renderPopup()
+		overlay(lines, box, max((m.w-lipgloss.Width(box))/2, 0), 2)
+	}
 	return strings.Join(lines, "\n")
 }
 
@@ -257,6 +262,9 @@ func (m *Model) hintLine() string {
 	if m.mode == keymap.Cmdline {
 		return " " + hint("<CR>", "run") + "  " + hint("<Esc>", "cancel")
 	}
+	if m.popup != nil {
+		return " " + hint("j/k", "scroll") + "  " + hint("q", "close")
+	}
 	if m.engine.Pending() != "" {
 		return dimStyle.Render(" waiting for the next key · ") + hint("<Esc>", "cancel")
 	}
@@ -286,28 +294,58 @@ func (m *Model) hintLine() string {
 
 func hint(key, label string) string { return keyStyle.Render(key) + " " + dimStyle.Render(label) }
 
-// nowPlaying is the two-line bar: the track, then its progress.
+// indicators are the lasting states shown in the now-playing bar, most
+// important first: mpv problems, then offline, then syncing.
+func (m *Model) indicators() []string {
+	var out []string
+	if m.state.Sync.Running {
+		out = append(out, "⟳ syncing")
+	}
+	return out
+}
+
+// fitIndicators joins items with " · " within width cells, dropping the
+// least important (last) first.
+func fitIndicators(items []string, width int) string {
+	for n := len(items); n > 0; n-- {
+		if s := strings.Join(items[:n], " · "); lipgloss.Width(s) <= width {
+			return s
+		}
+	}
+	return ""
+}
+
+// nowPlaying is the two-line bar: the track and indicators, then progress.
 func (m *Model) nowPlaying() []string {
 	s := m.state
-	syncing := ""
-	if s.Sync.Running {
-		syncing = "⟳ syncing · "
+	playing := s.Player.Playing && s.Current >= 0 && s.Current < len(s.Queue)
+	left := " ■ nothing playing"
+	var right []string
+	if playing {
+		t := s.Queue[s.Current].Track
+		icon := "▶"
+		if s.Player.Paused {
+			icon = "⏸"
+		}
+		left = fmt.Sprintf(" %s %s — %s · %s", icon, t.Title, t.Artist, t.Album)
+		right = append(right, fmt.Sprintf("%d/%d in queue", s.Current+1, len(s.Queue)))
 	}
-	if !s.Player.Playing || s.Current < 0 || s.Current >= len(s.Queue) {
-		right := strings.TrimSuffix(syncing, " · ") + " "
-		return []string{barStyle.Render(fit(" ■ nothing playing", m.w-lipgloss.Width(right)) + right), barStyle.Render(fit("", m.w))}
-	}
-	t := s.Queue[s.Current].Track
-	icon := "▶"
-	if s.Player.Paused {
-		icon = "⏸"
-	}
-	l1 := fmt.Sprintf(" %s %s — %s · %s", icon, t.Title, t.Artist, t.Album)
-	right := syncing + fmt.Sprintf("%d/%d in queue ", s.Current+1, len(s.Queue))
 	if s.Player.Buffering {
-		right = "buffering · " + right
+		right = append([]string{"buffering"}, right...)
 	}
-	l1 = fit(l1, m.w-lipgloss.Width(right)) + right
+	// Indicators get what's left after a readable start of the left part.
+	room := m.w - min(lipgloss.Width(left), 30) - 2 - lipgloss.Width(strings.Join(right, " · "))
+	if ind := fitIndicators(m.indicators(), room-3); ind != "" {
+		right = append([]string{ind}, right...)
+	}
+	r := strings.Join(right, " · ")
+	if r != "" {
+		r += " "
+	}
+	l1 := fit(left, m.w-lipgloss.Width(r)) + r
+	if !playing {
+		return []string{barStyle.Render(l1), barStyle.Render(fit("", m.w))}
+	}
 
 	dur := s.Player.Duration
 	times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur))
@@ -329,9 +367,9 @@ func (m *Model) status() string {
 	if right != "" {
 		right += "  "
 	}
-	left := " " + m.msg
-	if m.msgErr {
-		left = " " + errStyle.Render(m.msg)
+	left := " " + m.shown.text
+	if m.shown.err {
+		left = " " + errStyle.Render(m.shown.text)
 	}
 	return fit(left, m.w-lipgloss.Width(right)) + right
 }
@@ -364,6 +402,17 @@ func (m *Model) loginView() string {
 	rows = append(rows, "", hint("<Tab>", "next field")+"  "+hint("<CR>", "log in")+"  "+hint("<Esc>", "quit"))
 	box := boxStyle.Render(strings.Join(rows, "\n"))
 	return lipgloss.Place(m.w, m.h, lipgloss.Center, lipgloss.Center, box)
+}
+
+// overlay draws block over lines with its top-left corner at x, y.
+func overlay(lines []string, block string, x, y int) {
+	for i, bl := range strings.Split(block, "\n") {
+		if y+i < 0 || y+i >= len(lines) {
+			continue
+		}
+		l := lines[y+i]
+		lines[y+i] = ansi.Truncate(l, x, "") + bl + ansi.TruncateLeft(l, x+lipgloss.Width(bl), "")
+	}
 }
 
 // newInput returns a text input with a steady cursor: a blinking one

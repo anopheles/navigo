@@ -38,6 +38,8 @@ var defaults = []struct{ scope, keys, command string }{
 	{"tracks", "A", "add-end"},
 	{"tracks", "a", "add-next"},
 	{"queue", "<CR>", "play-row"},
+	{"popup", "q", "close"},
+	{"popup", "<Esc>", "close"},
 }
 
 // defaultTable returns the default bindings in Normal mode.

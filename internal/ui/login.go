@@ -184,7 +184,7 @@ func (m *Model) saved(msg savedMsg) tea.Cmd {
 	cmd := m.ready(f.client)
 	if msg.err != nil {
 		m.setMsg("logged in, but couldn't save "+m.deps.ConfigPath+": "+msg.err.Error(), true)
-	} else if !m.msgErr {
+	} else if !m.shown.err {
 		m.setMsg("logged in as "+s.User, false)
 	}
 	return cmd

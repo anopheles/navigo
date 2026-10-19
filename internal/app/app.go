@@ -118,6 +118,12 @@ type (
 	FromPlayer struct{ Event player.Event }
 	// PlayerFailed: a Player call returned an error.
 	PlayerFailed struct{ Err error }
+	// Failed: some other work went wrong in a way navigo can't explain,
+	// such as saving the cache.
+	Failed struct {
+		What string
+		Err  error
+	}
 )
 
 // Effect is an output of Apply, for the runner to execute.
@@ -151,6 +157,9 @@ type (
 		Command string
 		Hint    string
 		Err     bool
+		// Unexpected marks an error navigo can't explain in plain words;
+		// the UI logs it and points to the log.
+		Unexpected bool
 	}
 )
 
@@ -194,7 +203,7 @@ func Apply(s State, e Event) (State, []Effect) {
 	case Synced:
 		s.Sync = SyncStatus{}
 		if e.Err != nil {
-			return s, []Effect{Notice{Text: "couldn't sync the library: " + e.Err.Error(), Err: true}}
+			return s, []Effect{Notice{Text: "couldn't sync the library: " + e.Err.Error(), Err: true, Unexpected: true}}
 		}
 		s.Library = e.Library
 		return s, []Effect{SaveCache{Library: e.Library}}
@@ -304,7 +313,9 @@ func Apply(s State, e Event) (State, []Effect) {
 	case FromPlayer:
 		return s.fromPlayer(e.Event)
 	case PlayerFailed:
-		return s, []Effect{Notice{Text: "player: " + e.Err.Error(), Err: true}}
+		return s, []Effect{Notice{Text: "player: " + e.Err.Error(), Err: true, Unexpected: true}}
+	case Failed:
+		return s, []Effect{Notice{Text: e.What + ": " + e.Err.Error(), Err: true, Unexpected: true}}
 	}
 	return s, nil
 }
@@ -467,6 +478,7 @@ func (Undo) isEvent()         {}
 func (Redo) isEvent()         {}
 func (FromPlayer) isEvent()   {}
 func (PlayerFailed) isEvent() {}
+func (Failed) isEvent()       {}
 
 func (LoadCache) isEffect()     {}
 func (StartSync) isEffect()     {}

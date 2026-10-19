@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strconv"
 	"strings"
@@ -38,6 +39,8 @@ type Deps struct {
 	Keyring    creds.Keyring
 	// CacheDir holds the library cache files; empty means no cache.
 	CacheDir string
+	// LogPath is navigo.log, named in errors navigo can't explain.
+	LogPath string
 	// OnLogin is called with the client once the server accepted the
 	// credentials, so the player can sign stream URLs with it.
 	OnLogin func(*subsonic.Client)
@@ -113,9 +116,14 @@ type Model struct {
 	line     textinput.Model
 	seq      int // bumps on every key, to drop stale timeouts
 
-	msg    string
-	msgErr bool
-	hints  bool
+	shown   message // in the status line; zero when empty
+	history []message
+	msgSeq  int
+	popup   *popup
+	hints   bool
+
+	clock  timeSource
+	timers []tea.Cmd // timers set while handling a message
 
 	player sequencer
 	// send delivers messages from long-running work, such as sync
@@ -139,6 +147,7 @@ func New(deps Deps) *Model {
 		registry: commands(),
 		line:     line,
 		hints:    deps.Config.HintsOn(),
+		clock:    realClock{},
 	}
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
@@ -165,7 +174,19 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	_, cmd := m.update(msg)
+	if len(m.timers) > 0 {
+		cmd = tea.Batch(append(m.timers, cmd)...)
+		m.timers = nil
+	}
+	return m, cmd
+}
+
+func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case expireMsg:
+		m.expire(msg.id)
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
 		m.line.SetWidth(max(m.w-2, 1))
@@ -257,8 +278,8 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 	if m.deps.OnLogin != nil {
 		m.deps.OnLogin(c)
 	}
-	if !m.msgErr {
-		m.setMsg("", false)
+	if !m.shown.err {
+		m.clearMsg()
 	}
 	return tea.Batch(stop, m.dispatch(app.LoggedIn{}))
 }
@@ -322,7 +343,7 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		return func() tea.Msg {
 			if dir != "" {
 				if err := library.Save(dir, e.Library); err != nil {
-					return eventMsg{app.PlayerFailed{Err: err}}
+					return eventMsg{app.Failed{What: "couldn't save the library cache", Err: err}}
 				}
 			}
 			return nil
@@ -369,6 +390,12 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 // notice shows a core message, with the key for its command if it has one.
 func (m *Model) notice(n app.Notice) {
 	text := n.Text
+	if n.Unexpected {
+		slog.Error(n.Text)
+		if m.deps.LogPath != "" {
+			text += " · details in " + m.deps.LogPath
+		}
+	}
 	if n.Command != "" {
 		key := ":" + n.Command
 		if ks := m.engine.Table().Keys(keymap.Normal, m.scopes(), n.Command); len(ks) > 0 {
@@ -378,8 +405,6 @@ func (m *Model) notice(n app.Notice) {
 	}
 	m.setMsg(text, n.Err)
 }
-
-func (m *Model) setMsg(text string, isErr bool) { m.msg, m.msgErr = text, isErr }
 
 // key handles a key press on the main screen.
 func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
@@ -400,7 +425,7 @@ func (m *Model) result(r keymap.Result) tea.Cmd {
 	case keymap.Pending:
 		if r.Ambiguous {
 			seq := m.seq
-			return tea.Tick(ambiguousTimeout, func(time.Time) tea.Msg { return timeoutMsg{seq} })
+			return m.clock.After(ambiguousTimeout, func(time.Time) tea.Msg { return timeoutMsg{seq} })
 		}
 	}
 	return nil
@@ -449,6 +474,9 @@ func (m *Model) leaveLine() {
 
 // scopes is the scope chain for where the cursor is.
 func (m *Model) scopes() []string {
+	if m.popup != nil {
+		return []string{"popup", "global"}
+	}
 	if m.focus == queueWindow {
 		return []string{"queue", "global"}
 	}

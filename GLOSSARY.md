@@ -64,6 +64,18 @@ _Avoid_: song list
 The ordered tracks navigo will play, edited like a vim buffer.
 _Avoid_: playlist (a playlist lives on the server), now playing list
 
+**Queue entry**:
+One row of the queue: a track placed there once. The same track queued twice is two queue entries.
+_Avoid_: queue item, slot
+
+**Shuffle**:
+A one-shot command that reorders the queue at random; it can be undone like any other queue edit, and there is no hidden play order.
+_Avoid_: shuffle mode, random play
+
+**Repeat**:
+What happens at the end of a track or the queue: off, all (start the queue again) or one (play the same queue entry again).
+_Avoid_: loop
+
 **Group**:
 A run of consecutive tracks from the same album in a track list or the queue; `{`/`}` jump between groups.
 

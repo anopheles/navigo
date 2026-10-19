@@ -1,0 +1,6 @@
+# local e2e credentials
+.env.e2e
+
+# build output
+/navigo
+/dist/

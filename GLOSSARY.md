@@ -77,7 +77,7 @@ What happens at the end of a track or the queue: off, all (start the queue again
 _Avoid_: loop
 
 **Group**:
-A run of consecutive tracks from the same album in a track list or the queue; `{`/`}` jump between groups.
+A run of related rows in a list: consecutive tracks from the same album in a track list or the queue, or an artist's own albums and their Appears on albums on the artist's page; `{`/`}` jump between groups.
 
 ## Screen
 
@@ -118,6 +118,18 @@ _Avoid_: which-key, hint popup
 **Library**:
 The music on the server: its artists, albums, tracks and playlists.
 _Avoid_: collection, database
+
+**Artist**:
+Anyone credited as an artist on a track or as the album artist on an album; each artist the server lists for a track counts. Composers, conductors and other roles are not artists.
+_Avoid_: performer, band, contributor
+
+**Album artist**:
+The artist an album as a whole is credited to, such as Various Artists for a compilation.
+_Avoid_: main artist, album owner
+
+**Appears on**:
+An album where an artist has tracks but is not the album artist, such as a guest track on a compilation.
+_Avoid_: featured on, guest albums, compilations
 
 **Cache**:
 navigo's local, disposable copy of the library's metadata, used to browse and search without waiting on the server; it never holds audio and the server always wins.

@@ -36,8 +36,12 @@ const pageSize = 500
 func main() {
 	base := flag.String("url", "http://127.0.0.1:14533", "Navidrome base URL")
 	out := flag.String("out", "internal/subsonic/subsonictest/testdata", "fixture directory")
+	seedOnly := flag.Bool("seed-only", false, "wait for the scan and seed playlists and stars, but record nothing (for e2e runs)")
 	flag.Parse()
 	c := &client{base: *base, user: subsonictest.Username, password: subsonictest.Password}
+	if *seedOnly {
+		*out = ""
+	}
 	if err := run(c, *out); err != nil {
 		log.Fatalf("recordfixtures: %v", err)
 	}
@@ -53,6 +57,10 @@ func run(c *client, out string) error {
 	}
 	if err := c.seed(albums); err != nil {
 		return err
+	}
+	if out == "" {
+		fmt.Println("server scanned and seeded")
+		return nil
 	}
 
 	rec := &recorder{c: c, files: map[string][]byte{}}

@@ -6,6 +6,7 @@ set -eu
 
 test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
 go vet ./...
+go vet -tags e2e ./e2e
 go test ./...
 command -v go-licenses >/dev/null || go install github.com/google/go-licenses/v2@v2.0.1
 go-licenses check ./... --allowed_licenses=MIT,BSD-2-Clause,BSD-3-Clause,Apache-2.0,ISC,MPL-2.0

@@ -141,6 +141,9 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 
 // trackNumber is "3" or, on albums with several discs, "2-03".
 func trackNumber(ts []library.Track, i int) string {
+	if ts[i].Number == 0 { // untagged
+		return ""
+	}
 	if ts[len(ts)-1].Disc > 1 {
 		return fmt.Sprintf("%d-%02d", ts[i].Disc, ts[i].Number)
 	}

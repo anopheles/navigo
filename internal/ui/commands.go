@@ -133,34 +133,38 @@ func (m *Model) showAlbums() {
 }
 
 // trackRow returns the album tracks shown and the cursor row, if the
-// cursor is on a track in the library window.
-func (m *Model) trackRow() ([]library.Track, int, bool) {
+// cursor is on a track in the library window. An album still loading has
+// no rows yet, which is not an error.
+func (m *Model) trackRow() ([]library.Track, int, error) {
 	f := m.top()
 	if m.focus != libraryWindow || f.kind != albumTracks {
-		return nil, 0, false
+		return nil, 0, errNotOnTrack
 	}
 	ts := m.state.Tracks[f.album]
 	if f.cur >= len(ts) {
-		return nil, 0, false
+		return nil, 0, errNoRows
 	}
-	return ts, f.cur, true
+	return ts, f.cur, nil
 }
 
-var errNotOnTrack = errors.New("not on a track")
+var (
+	errNotOnTrack = errors.New("not on a track")
+	errNoRows     = errors.New("no rows yet")
+)
 
 func (m *Model) playNow(command.Call) error {
-	ts, i, ok := m.trackRow()
-	if !ok {
-		return errNotOnTrack
+	ts, i, err := m.trackRow()
+	if err != nil {
+		return quiet(err)
 	}
 	m.event(app.PlayNow{Tracks: ts, Start: i})
 	return nil
 }
 
 func (m *Model) add(c command.Call, next bool) error {
-	ts, i, ok := m.trackRow()
-	if !ok {
-		return errNotOnTrack
+	ts, i, err := m.trackRow()
+	if err != nil {
+		return quiet(err)
 	}
 	add := make([]library.Track, c.N())
 	for j := range add {
@@ -172,6 +176,15 @@ func (m *Model) add(c command.Call, next bool) error {
 		m.event(app.AddEnd{Tracks: add})
 	}
 	return nil
+}
+
+// quiet drops errNoRows: a key pressed before the list has loaded does
+// nothing.
+func quiet(err error) error {
+	if errors.Is(err, errNoRows) {
+		return nil
+	}
+	return err
 }
 
 func seek(m *Model, c command.Call) error {

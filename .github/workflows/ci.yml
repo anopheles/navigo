@@ -21,6 +21,19 @@ jobs:
       - name: gofmt, vet, test, licences
         run: tools/ci/check.sh
 
+  # Layer B: the real binary against a throwaway Navidrome and real mpv.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: ffmpeg for the fixture library
+        run: command -v ffmpeg || { sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg; }
+      - name: e2e
+        run: tools/e2e/run.sh
+
   build:
     runs-on: ubuntu-latest
     strategy:

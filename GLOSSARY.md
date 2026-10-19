@@ -126,3 +126,17 @@ _Avoid_: database, index, offline mode, download
 **Sync**:
 Bringing the cache up to date with the library.
 _Avoid_: refresh, scan (a scan is the server reading its own files)
+
+## Account
+
+**Server**:
+The one Navidrome/Subsonic server navigo is connected to, identified by its URL.
+_Avoid_: host, instance, backend
+
+**Credentials**:
+The server URL, username and password navigo logs in with; the password is never shown or stored as a token.
+_Avoid_: login, account, auth
+
+**Login form**:
+The full-screen form that asks for credentials and checks them against the server before saving; it opens on first run, when saved credentials are rejected, and on `:login`.
+_Avoid_: setup wizard, onboarding, login screen

@@ -122,6 +122,7 @@ func buildLibrary() {
 		":queue :artists :albums :playlists :home :search x :help",
 		"A: <Tab>/<S-Tab> gt/gT switch tabs",
 		"C: <C-w>w / <C-w>h / <C-w>l switch window",
+		"'h 'q 'a 'b 'p 's '?  home queue artists albums playlists search help",
 		"F2 or :variant a|b|c   switch prototype layout",
 		":q                  quit",
 	} {
@@ -131,6 +132,8 @@ func buildLibrary() {
 }
 
 var queue []*track
+
+var marks = map[string]string{"h": "home", "q": "queue", "a": "artists", "b": "albums", "p": "playlists", "?": "help"}
 
 // ---------- panes (a stack of frames over the tree) ----------
 
@@ -309,6 +312,17 @@ func (m model) key(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.pend != "" {
 		pend := m.pend
 		m.pend = ""
+		if pend == "'" { // section marks: each one runs a : command
+			if s == "s" {
+				m.mode, m.buf = "COMMAND", "search "
+				return m, nil
+			}
+			if c, ok := marks[s]; ok {
+				return m.run(c)
+			}
+			m.msg = "no mark: '" + s
+			return m, nil
+		}
 		switch pend + s {
 		case "gg":
 			p.top().cur = 0
@@ -356,7 +370,7 @@ func (m model) key(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.find(1, true)
 	case "N":
 		m.find(-1, true)
-	case "g", "d", "ctrl+w":
+	case "g", "d", "ctrl+w", "'":
 		m.pend = s
 	case "j", "down":
 		p.move(1)

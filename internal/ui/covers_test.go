@@ -2,6 +2,7 @@ package ui
 
 import (
 	"image/color"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -277,5 +278,26 @@ func TestTheTerminalsBackgroundIsKept(t *testing.T) {
 			h.m.covers.bg,
 			h.m.covers.rendered,
 		)
+	}
+}
+
+// The popup draws on every redraw; each must give the same lines, and the
+// rows kept for the next draw must stay as they were.
+func TestCoverPopupDrawsTheSameEveryTime(t *testing.T) {
+	h := coverHarness(t, 150, 42, config.CoverAuto, false)
+	h.play()
+	h.keys("gc")
+	first := slices.Clone(h.m.popup.live())
+	for range 3 {
+		if got := h.m.popup.live(); !slices.Equal(got, first) {
+			t.Fatalf("the popup changed between draws: %q then %q", first[0], got[0])
+		}
+	}
+	id, _ := h.m.playingCover()
+	cols, rows := h.m.coverPopupSize()
+	for i, l := range h.m.coverArt(id, cols, rows) {
+		if w := ansi.StringWidth(l); w != cols {
+			t.Fatalf("the kept row %d is %d cells wide, want %d: the popup padded it", i, w, cols)
+		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
+	"slices"
 	"strings"
 	"time"
 
@@ -422,7 +423,7 @@ func (m *Model) openCover() error {
 	m.popup.cover = true
 	m.popup.live = func() []string {
 		cols, rows := m.coverPopupSize()
-		lines := m.coverArt(id, cols, rows)
+		lines := slices.Clone(m.coverArt(id, cols, rows)) // the rows are kept; pad a copy
 		if e := m.covers.entries[id]; e != nil && e.state == coverNone {
 			lines = append(
 				[]string{dimStyle.Render("the server has no cover for this album")},

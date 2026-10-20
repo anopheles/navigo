@@ -279,7 +279,7 @@ keys:
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |
 | Windows | `<C-w>h` `<C-w>l` `<C-w>w` `<Tab>` · `<C-w>o` |
-| Help and quit | `?` key menu · `<F1>` `:help` · `<Esc>` cancel · `<C-c>` cancel + "type :q to quit" · `q` closes a popup only · `:q` `:qa` `ZZ` `ZQ` quit |
+| Help and quit | `?` key menu · `<F1>` `:help` · `<Esc>` cancel · `q` closes a popup only · `:q` `:qa` `<C-c>` `ZZ` `ZQ` quit |
 
 `s` and `r` are deliberately unbound, `\` is the leader and has no default bindings, and `<C-Space>` is never a default (because of a Windows console bug).
 

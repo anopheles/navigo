@@ -159,16 +159,19 @@ func TestCommandLine(t *testing.T) {
 	h.typeText("seek x")
 	h.keys("<CR>")
 	h.contains(`seek: "x" is not a number of seconds`)
-	h.keys("<C-c>")
-	h.contains("type :q to quit")
-	if h.quit {
-		t.Fatal("quit too early")
-	}
 	h.keys(":")
 	h.typeText("q")
 	h.keys("<CR>")
 	if !h.quit {
 		t.Error(":q didn't quit")
+	}
+}
+
+func TestCtrlCQuits(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("<C-c>")
+	if !h.quit {
+		t.Error("<C-c> didn't quit")
 	}
 }
 

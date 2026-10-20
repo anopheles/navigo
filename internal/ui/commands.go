@@ -129,7 +129,6 @@ func commands() *command.Registry[*Model] {
 		{Name: "cover", Label: "cover", Desc: "Show the playing track's cover art large.", Run: func(m *Model, _ command.Call) error { return m.openCover() }},
 		{Name: "key-menu", Label: "keys", Desc: "Show the keys for what is under the cursor; press one to run it.", Run: func(m *Model, _ command.Call) error { m.openKeyMenu(); return nil }},
 		{Name: "messages", Label: "messages", Desc: "Show the messages of this session.", Run: func(m *Model, _ command.Call) error { m.showMessages(); return nil }},
-		{Name: "interrupt", Label: "cancel", Desc: "Like cancel; reminds you how to quit.", Run: func(m *Model, _ command.Call) error { m.setMsg("type :q to quit", false); return nil }},
 		{Name: "login", Label: "log in", Desc: "Log in to a server, or as another user.", Run: func(m *Model, _ command.Call) error {
 			s := m.deps.Config.Server
 			m.openLogin(s.URL, s.User, "")

@@ -36,7 +36,11 @@ func commands() *command.Registry[*Model] {
 		{Name: "go-artist", Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
 		{Name: "artists", Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
 		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
-		{Name: "search", Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search},
+		{Name: "search", Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search, Complete: func(m *Model) []string {
+			s := slices.Clone(m.searchHist.items)
+			slices.Reverse(s) // newest first
+			return s
+		}},
 		{Name: "queue", Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focus = queueWindow; return nil }},
 		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error { m.focus = 1 - m.focus; return nil }},
 
@@ -260,6 +264,7 @@ func (m *Model) enterLine() {
 	m.line.Reset()
 	m.line.Prompt = ":"
 	m.fitLine()
+	m.cmdHist.begin(false)
 	m.then(m.line.Focus())
 }
 

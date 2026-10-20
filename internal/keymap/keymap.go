@@ -92,6 +92,27 @@ func (t *Table) Keys(mode Mode, scopes []string, name string) []string {
 	return out
 }
 
+// KeysFor is like Keys, but for one exact command line, arguments and
+// all, so "seek +30" doesn't find the key bound to "seek +10".
+func (t *Table) KeysFor(mode Mode, scopes []string, line string) []string {
+	want := strings.Join(strings.Fields(strings.TrimPrefix(strings.TrimSpace(line), ":")), " ")
+	var out []string
+	seen := map[string]bool{}
+	for _, s := range scopes {
+		for _, b := range t.bindings[mode][s] {
+			seq := b.Seq()
+			if seen[seq] {
+				continue
+			}
+			seen[seq] = true
+			if strings.Join(strings.Fields(strings.TrimPrefix(b.Command, ":")), " ") == want {
+				out = append(out, seq)
+			}
+		}
+	}
+	return out
+}
+
 // lookup reports the binding for keys exactly, if any, and whether keys
 // begin a longer binding, over the scope chain.
 func (t *Table) lookup(mode Mode, scopes []string, keys []string) (exact *Binding, prefix bool) {

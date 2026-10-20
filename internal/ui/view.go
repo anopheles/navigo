@@ -71,6 +71,10 @@ func (m *Model) render() string {
 	}
 	lines = append(lines, m.nowPlaying()...)
 	lines = append(lines, m.status())
+	if ms := m.matchList(); len(ms) > 0 {
+		at := len(lines) - 1 - len(ms) // just above the status line
+		copy(lines[max(at, 0):], ms)
+	}
 	if m.popup != nil {
 		box := m.renderPopup()
 		overlay(lines, box, max((m.w-lipgloss.Width(box))/2, 0), 2)
@@ -284,7 +288,7 @@ func (m *Model) styleRow(line string, cursor, focused, current bool) string {
 // mode, from the bindings in effect.
 func (m *Model) hintLine() string {
 	if m.mode == keymap.Cmdline {
-		return " " + hint("<CR>", "run") + "  " + hint("<Esc>", "cancel")
+		return " " + hint("<CR>", "run") + "  " + hint("<Tab>", "complete") + "  " + hint("<Up>/<Down>", "history") + "  " + hint("<Esc>", "cancel")
 	}
 	if m.mode == keymap.Search {
 		return " " + hint("<CR>", "go to the results") + "  " + hint("<Esc>", "cancel") + "  " + hint("<Up>/<Down>", "history")

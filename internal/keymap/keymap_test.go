@@ -150,6 +150,21 @@ func TestKeys(t *testing.T) {
 	}
 }
 
+func TestKeysFor(t *testing.T) {
+	tb := NewTable()
+	for seq, cmd := range map[string]string{".": "seek +10", ",": "seek -10", "X": "stop"} {
+		if err := tb.Bind(Normal, "global", seq, cmd); err != nil {
+			t.Fatal(err)
+		}
+	}
+	g := []string{"global"}
+	for line, want := range map[string][]string{":seek  +10": {"."}, "seek -10": {","}, "seek +30": nil, "stop": {"X"}} {
+		if got := tb.KeysFor(Normal, g, line); !reflect.DeepEqual(got, want) {
+			t.Errorf("KeysFor(%q) = %q, want %q", line, got, want)
+		}
+	}
+}
+
 func TestBindReplaces(t *testing.T) {
 	tb := table(t)
 	if err := tb.Bind(Normal, "global", "j", "seek +10"); err != nil {

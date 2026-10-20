@@ -128,13 +128,14 @@ type Model struct {
 	line     textinput.Model
 	seq      int // bumps on every key, to drop stale timeouts
 
-	// The search prompt: its text is selected until a key changes it,
-	// histIdx walks the history, and beforeSearch is what <Esc> restores.
-	searchHistory []string
-	selected      bool
-	histIdx       int
-	histDraft     string
-	beforeSearch  *savedView
+	// The ":" line and the search prompt. A search prompt's text is
+	// selected until a key changes it, and beforeSearch is what <Esc>
+	// restores. compl is the <Tab> completion being cycled through.
+	cmdHist      lineHistory
+	searchHist   lineHistory
+	selected     bool
+	beforeSearch *savedView
+	compl        *completion
 
 	shown   message // in the status line; zero when empty
 	history []message
@@ -174,7 +175,8 @@ func New(deps Deps) *Model {
 		hints:    deps.Config.HintsOn(),
 		clock:    realClock{},
 
-		searchHistory: loadHistory(deps.StateDir),
+		cmdHist:    loadHistory(deps.StateDir, "cmd_history", "command history"),
+		searchHist: loadHistory(deps.StateDir, "search_history", "search history"),
 	}
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
@@ -552,22 +554,8 @@ func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
 		}
 		return m.edit(k)
 	}
-	switch k.String() {
-	case "esc", "ctrl+c":
-		m.leaveLine()
-		return nil
-	case "enter":
-		text := m.line.Value()
-		m.leaveLine()
-		if strings.TrimSpace(text) == "" {
-			return nil
-		}
-		return m.exec(text, 0)
-	case "backspace":
-		if m.line.Value() == "" {
-			m.leaveLine()
-			return nil
-		}
+	if cmd, done := m.cmdKey(k); done {
+		return cmd
 	}
 	return m.edit(k)
 }
@@ -590,7 +578,7 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 
 func (m *Model) leaveLine() {
 	m.mode = keymap.Normal
-	m.selected = false
+	m.selected, m.compl = false, nil
 	m.line.Reset()
 	m.line.Blur()
 }

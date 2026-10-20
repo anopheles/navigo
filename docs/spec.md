@@ -462,6 +462,7 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)�
 - **Offline:** detection, backoff with the countdown indicator, `:reconnect`, the 10/60 s timeouts, the stream-failure and buffering-stall pings, the 3-skip cap, and starting from the cache when the server is unreachable ([#32](https://github.com/anopheles/navigo/issues/32)).
 - **Artists:** the Artists section and artist pages with the Appears on group, `{`/`}`, `ga`/`gr` (with a chooser for several artists), `'a`/`:artists`, and sections that keep their path ([#34](https://github.com/anopheles/navigo/issues/34)).
 - **Search:** `'s`/`:search`, live results from the cache in Artists/Albums/Tracks groups with caps and `… N more`, word-start matching without case or accents, ranking, the selected last query, and the saved history ([#38](https://github.com/anopheles/navigo/issues/38)). Visual mode in the results comes with Visual mode.
+- **The `:` line:** fuzzy matching of names and descriptions with each match's key, what applies here first; `<Tab>`/`<S-Tab>` completion of names and arguments (`:search` from its history); `tip: next time press …`; and the history, saved in the state directory ([#41](https://github.com/anopheles/navigo/issues/41)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A and the first layer B scenario.
 
@@ -469,7 +470,7 @@ Still to build for v1:
 
 - **Sections:** Home (and starting on it), Playlists (with server-side editing and confirmations), and Help. The skeleton starts on Albums.
 - **Keys:** Visual mode, the `d`/`y` operators and the register, `p`/`P`, `J`/`K`, `x`, marks other than `'a`/`'b`/`'q`/`'s`, `/` with `n`/`N`, the jump list, the remaining motions, `gp`, volume, shuffle, repeat, info and stars.
-- **Discoverability:** the key menu, prefix menus, `:` fuzzy matching and tips, and the `/`-to-search offer.
+- **Discoverability:** the key menu, prefix menus, and the `/`-to-search offer (with `/` find).
 - **Rebinding:** the `keys:` block, its validation popup, `:map` and friends, `:reload-config` and `navigo check-config`.
 - **Crash cap:** the 3-crash cap for mpv (with the mpv slice).
 - **mpv:** the startup check with install hints, `player.mpv_path`, and resuming after a crash.

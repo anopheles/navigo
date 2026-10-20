@@ -3,14 +3,11 @@ package ui
 import (
 	"fmt"
 	"maps"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
 	"github.com/anopheles/navigo/internal/keymap"
 	"github.com/anopheles/navigo/internal/library"
@@ -20,9 +17,6 @@ import (
 var caps = [3]int{library.ArtistGroup: 10, library.AlbumGroup: 20, library.TrackGroup: 200}
 
 var groupNames = [3]string{"Artists", "Albums", "Tracks"}
-
-// searchHistorySize is how many searches the history keeps.
-const searchHistorySize = 100
 
 // searchView is the Search section's results for one query. Frames share
 // it by pointer, so the section's saved path sees the same results.
@@ -155,7 +149,7 @@ func (m *Model) search(c command.Call) error {
 	if len(c.Args) > 0 {
 		q := strings.Join(c.Args, " ")
 		m.liveSearch(q)
-		m.remember(q)
+		m.then(m.remember(&m.searchHist, q))
 		return nil
 	}
 	m.startSearch()
@@ -173,10 +167,7 @@ func (m *Model) startSearch() {
 	before.query = f.search.query
 	m.beforeSearch = before
 
-	last := ""
-	if n := len(m.searchHistory); n > 0 {
-		last = m.searchHistory[n-1]
-	}
+	last := m.searchHist.last()
 	m.mode = keymap.Search
 	m.line.Reset()
 	m.line.Prompt = "search: "
@@ -184,10 +175,7 @@ func (m *Model) startSearch() {
 	m.line.SetValue(last)
 	m.line.CursorEnd()
 	m.selected = last != ""
-	m.histIdx, m.histDraft = len(m.searchHistory), ""
-	if last != "" {
-		m.histIdx-- // on the newest entry: <Up> goes to the one before
-	}
+	m.searchHist.begin(last != "")
 	m.then(m.line.Focus())
 	m.liveSearch(last)
 }
@@ -219,7 +207,7 @@ func (m *Model) searchKey(k tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		m.beforeSearch = nil
 		m.focus = libraryWindow
-		return m.remember(q), true
+		return m.remember(&m.searchHist, q), true
 	case "backspace":
 		if m.line.Value() == "" {
 			m.cancelSearch()
@@ -273,80 +261,13 @@ func (m *Model) searchFrames() []*frame {
 	return out
 }
 
-// historyStep moves through the search history, older on up.
+// historyStep shows an older (or newer) search from the history.
 func (m *Model) historyStep(older bool) {
-	h := m.searchHistory
-	if m.histIdx == len(h) {
-		m.histDraft = m.line.Value()
-	}
-	if older {
-		m.histIdx = max(m.histIdx-1, 0)
-	} else {
-		m.histIdx = min(m.histIdx+1, len(h))
-	}
-	q := m.histDraft
-	if m.histIdx < len(h) {
-		q = h[m.histIdx]
-	}
+	q := m.searchHist.step(older, m.line.Value())
 	m.selected = false
 	m.line.SetValue(q)
 	m.line.CursorEnd()
 	m.liveSearch(q)
-}
-
-// remember adds a query to the end of the history and saves it.
-func (m *Model) remember(q string) tea.Cmd {
-	q = strings.TrimSpace(q)
-	h := slices.DeleteFunc(m.searchHistory, func(s string) bool { return s == q })
-	h = append(h, q)
-	if over := len(h) - searchHistorySize; over > 0 {
-		h = h[over:]
-	}
-	m.searchHistory = h
-	dir, lines := m.deps.StateDir, slices.Clone(h)
-	if dir == "" {
-		return nil
-	}
-	return func() tea.Msg {
-		if err := saveHistory(dir, lines); err != nil {
-			return eventMsg{app.Failed{What: "couldn't save the search history", Err: err}}
-		}
-		return nil
-	}
-}
-
-const historyFile = "search_history"
-
-func loadHistory(dir string) []string {
-	if dir == "" {
-		return nil
-	}
-	b, err := os.ReadFile(filepath.Join(dir, historyFile))
-	if err != nil {
-		return nil
-	}
-	return slices.DeleteFunc(strings.Split(string(b), "\n"), func(s string) bool { return strings.TrimSpace(s) == "" })
-}
-
-// saveHistory writes the history, newest last, replacing the file in one
-// step.
-func saveHistory(dir string, lines []string) error {
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(dir, historyFile+".*")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.WriteString(strings.Join(lines, "\n") + "\n"); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmp.Name(), filepath.Join(dir, historyFile))
 }
 
 // searchRowText draws row i of the results.

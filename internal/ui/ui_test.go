@@ -145,7 +145,7 @@ func TestMotions(t *testing.T) {
 func TestCommandLine(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys(":")
-	h.contains("<CR> run  <Esc> cancel")
+	h.contains("<CR> run  <Tab> complete")
 	h.typeText("nope")
 	h.keys("<CR>")
 	h.contains("not a command: nope")

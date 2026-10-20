@@ -7,6 +7,7 @@ package app
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"time"
 
@@ -214,8 +215,17 @@ type (
 // Scrobble rule: a play counts after half the track or 4 minutes.
 const scrobbleAfter = 4 * time.Minute
 
-// Apply returns the state after e and the effects it calls for.
+// Apply returns the state after e and the effects it calls for. When what
+// the OS's media controls show changed, it adds PublishNowPlaying.
 func Apply(s State, e Event) (State, []Effect) {
+	n, out := apply(s, e)
+	if np := n.nowPlaying(); !reflect.DeepEqual(np, s.nowPlaying()) {
+		out = append(out, PublishNowPlaying{np})
+	}
+	return n, out
+}
+
+func apply(s State, e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case Start:
 		return s, []Effect{LoadCache{}}
@@ -396,6 +406,8 @@ func Apply(s State, e Event) (State, []Effect) {
 		return s.fromPlayer(e.Event)
 	case PlayerDied:
 		return s.died(e.Err, e.At)
+	case SeekAt, SetRepeat:
+		return s.applyMedia(e)
 	case PlayerChecked, Uncap:
 		return s.applyMPV(e)
 	case Unreachable, StartedOffline, RetryNow, Reconnect, BufferingStalled, ProbeResult:
@@ -564,7 +576,13 @@ func (s State) index(id player.EntryID) int {
 	return slices.IndexFunc(s.Queue, func(q QueueEntry) bool { return q.ID == id })
 }
 
-func (q QueueEntry) entry() player.Entry { return player.Entry{ID: q.ID, Track: q.Track.ID} }
+func (q QueueEntry) entry() player.Entry {
+	title := q.Track.Title
+	if q.Track.Artist != "" {
+		title += " — " + q.Track.Artist
+	}
+	return player.Entry{ID: q.ID, Track: q.Track.ID, Title: title}
+}
 
 // entries makes new queue entries for tracks, numbering on from last.
 func entries(last player.EntryID, tracks []library.Track) ([]QueueEntry, player.EntryID) {

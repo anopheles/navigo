@@ -23,6 +23,7 @@ import (
 	"github.com/anopheles/navigo/internal/creds"
 	"github.com/anopheles/navigo/internal/keymap"
 	"github.com/anopheles/navigo/internal/library"
+	"github.com/anopheles/navigo/internal/mediactl"
 	"github.com/anopheles/navigo/internal/player"
 	"github.com/anopheles/navigo/internal/subsonic"
 )
@@ -42,6 +43,8 @@ type Deps struct {
 	StateDir string
 	// LogPath is navigo.log, named in errors navigo can't explain.
 	LogPath string
+	// Media is the OS's media controls; nil for none.
+	Media mediactl.Controls
 	// OnLogin is called with the client once the server accepted the
 	// credentials, so the player can sign stream URLs with it.
 	OnLogin func(*subsonic.Client)
@@ -248,6 +251,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case expireMsg:
 		m.expire(msg.id)
 		return m, nil
+	case mediaMsg:
+		return m, m.mediaCommand(msg.Command)
 	case secondMsg:
 		m.ticking = false
 		m.tick()
@@ -473,6 +478,11 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 			}
 			return eventMsg{app.ProbeResult{Why: e.Why}} // the server answered
 		}
+	case app.PublishNowPlaying:
+		if m.deps.Media != nil {
+			m.deps.Media.Update(mediaStatus(e.NowPlayingInfo))
+		}
+		return nil
 	case app.ScheduleUncap:
 		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.Uncap{}} })
 	case app.ScheduleRetry:

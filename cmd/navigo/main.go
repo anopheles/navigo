@@ -19,6 +19,7 @@ import (
 	"github.com/anopheles/navigo/internal/config"
 	"github.com/anopheles/navigo/internal/creds"
 	"github.com/anopheles/navigo/internal/library"
+	"github.com/anopheles/navigo/internal/mediactl"
 	"github.com/anopheles/navigo/internal/player"
 	"github.com/anopheles/navigo/internal/subsonic"
 	"github.com/anopheles/navigo/internal/ui"
@@ -79,6 +80,11 @@ func run() error {
 		cacheDir = filepath.Join(dir, "navigo")
 	}
 	stateDir, _ := config.StateDir() // none: history isn't kept
+	media, err := mediactl.New()
+	if err != nil {
+		slog.Warn("no OS media controls", "err", err) // navigo works without them
+	}
+	defer media.Close()
 	m, err := ui.New(ui.Deps{
 		Config:     cfg,
 		ConfigPath: path,
@@ -86,6 +92,7 @@ func run() error {
 		Keyring:    creds.OS,
 		CacheDir:   cacheDir,
 		StateDir:   stateDir,
+		Media:      media,
 		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})
@@ -100,6 +107,11 @@ func run() error {
 	}
 	p := tea.NewProgram(m, opts...)
 	m.SetSend(p.Send)
+	go func() {
+		for c := range media.Commands() {
+			p.Send(ui.MediaMsg(c))
+		}
+	}()
 	go func() {
 		for e := range mpv.Events() {
 			if d, ok := e.(player.Died); ok {

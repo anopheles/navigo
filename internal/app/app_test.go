@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,8 +21,15 @@ func tracks(n int) []library.Track {
 	return out
 }
 
-// run applies events in order and returns the state and all effects.
+// run applies events in order and returns the state and all effects but
+// PublishNowPlaying, which publish (and TestPublishNowPlaying) checks.
 func run(s State, events ...Event) (State, []Effect) {
+	s, all := publish(s, events...)
+	return s, slices.DeleteFunc(all, func(e Effect) bool { _, ok := e.(PublishNowPlaying); return ok })
+}
+
+// publish is run with every effect.
+func publish(s State, events ...Event) (State, []Effect) {
 	var all []Effect
 	for _, e := range events {
 		var out []Effect
@@ -30,8 +39,10 @@ func run(s State, events ...Event) (State, []Effect) {
 	return s, all
 }
 
+// entry is the player entry for queue entry id of track "tN", whose
+// title is "Track N".
 func entry(id player.EntryID, track string) player.Entry {
-	return player.Entry{ID: id, Track: library.TrackID(track)}
+	return player.Entry{ID: id, Track: library.TrackID(track), Title: "Track " + strings.TrimPrefix(track, "t")}
 }
 
 func only[T Effect](effects []Effect) []T {

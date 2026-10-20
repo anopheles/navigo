@@ -148,3 +148,36 @@ func TestStars(t *testing.T) {
 		t.Errorf("after a failure: starred %v offline %v", s.Library.IsStarred("t2"), s.Offline)
 	}
 }
+
+func TestPublishNowPlaying(t *testing.T) {
+	s, out := publish(New(), PlayNow{Tracks: tracks(3), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
+	p := only[PublishNowPlaying](out)
+	if len(p) == 0 {
+		t.Fatal("nothing published")
+	}
+	last := p[len(p)-1]
+	if last.Track.ID != "t1" || !last.Playing || last.Paused || !last.CanNext || !last.CanPlay || last.Volume != 100 {
+		t.Errorf("published %+v", last.NowPlayingInfo)
+	}
+	// Each change publishes once; nothing new publishes nothing.
+	s, out = publish(s, FromPlayer{player.Paused{Paused: true}})
+	if p := only[PublishNowPlaying](out); len(p) != 1 || !p[0].Paused {
+		t.Errorf("after pausing: %+v", p)
+	}
+	if _, out = publish(s, FromPlayer{player.Paused{Paused: true}}); len(only[PublishNowPlaying](out)) != 0 {
+		t.Error("published without a change")
+	}
+	// The last row can't go next, unless the queue repeats.
+	s, _ = run(s, PlayRow{Index: 2}, FromPlayer{player.TrackStarted{Entry: 3}})
+	if np := s.nowPlaying(); np.CanNext {
+		t.Error("CanNext on the last row")
+	}
+	s, _ = run(s, SetRepeat{Repeat: RepeatAll})
+	if np := s.nowPlaying(); !np.CanNext || np.Repeat != RepeatAll {
+		t.Errorf("repeat all: %+v", np)
+	}
+	// SeekAt seeks only while playing.
+	if _, out = run(s, SeekAt{Pos: time.Minute}); len(only[SeekTo](out)) != 1 {
+		t.Errorf("SeekAt: %#v", out)
+	}
+}

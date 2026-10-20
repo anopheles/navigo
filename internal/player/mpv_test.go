@@ -333,3 +333,42 @@ func TestMPVPlaysFromAPosition(t *testing.T) {
 		return ok && p.Entry == 1 && p.Position >= 42*time.Second
 	})
 }
+
+// Each file's title reaches mpv's media-title, which its Now Playing and
+// SMTC show, commas and all.
+func TestMPVMediaTitle(t *testing.T) {
+	h := newMPV(t)
+	ctx := context.Background()
+	e := Entry{ID: 1, Track: "30s", Title: "Low Tide, Live — Aurora Lane"}
+	if err := h.m.Play(ctx, Span{Current: e}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("entry 1 to start", started(1))
+	var title string
+	if err := h.m.process().Get(ctx, "media-title", &title); err != nil {
+		t.Fatal(err)
+	}
+	if title != e.Title {
+		t.Errorf("media-title = %q, want %q", title, e.Title)
+	}
+}
+
+// Where mpv provides the media controls, 0.38 plays but gets a warning.
+func TestMPVCheckMediaControls(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the fake mpv is a shell script")
+	}
+	defer func(was bool) { mediaByMPV = was }(mediaByMPV)
+	mediaByMPV = true
+	fake := filepath.Join(t.TempDir(), "mpv")
+	if err := os.WriteFile(fake, []byte("#!/bin/sh\necho 'mpv v0.38.0 Copyright © 2000-2024 mpv/MPlayer/mplayer2 projects'\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := NewMPV(MPVOptions{Path: fake}).Check(context.Background()); !errors.Is(err, ErrNoMediaControls) {
+		t.Errorf("mpv 0.38 with mpv's media controls: %v", err)
+	}
+	mediaByMPV = false
+	if err := NewMPV(MPVOptions{Path: fake}).Check(context.Background()); err != nil {
+		t.Errorf("mpv 0.38 on Linux: %v", err)
+	}
+}

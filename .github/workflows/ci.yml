@@ -16,8 +16,8 @@ jobs:
     container: golang:1.26
     steps:
       - uses: actions/checkout@v7
-      - name: mpv for the player tests
-        run: apt-get update && apt-get install -y --no-install-recommends mpv
+      - name: mpv for the player tests, dbus-daemon for the MPRIS test
+        run: apt-get update && apt-get install -y --no-install-recommends mpv dbus-daemon
       - name: gofmt, vet, test, licences
         run: tools/ci/check.sh
 

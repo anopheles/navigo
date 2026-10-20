@@ -48,6 +48,10 @@ func (s State) applyMPV(e Event) (State, []Effect) {
 		switch {
 		case e.Err == nil:
 			s.PlayerProblem = ""
+		case errors.Is(e.Err, player.ErrNoMediaControls):
+			// It plays; only the OS's controls are missing. Said once.
+			s.PlayerProblem = ""
+			return s, []Effect{Notice{Text: "mpv plays, but " + e.Err.Error()}}
 		case errors.Is(e.Err, player.ErrMPVTooOld):
 			s.PlayerProblem = "mpv too old · install mpv 0.38 or newer to play"
 		case errors.Is(e.Err, player.ErrMPVMissing):

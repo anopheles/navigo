@@ -97,3 +97,16 @@ func TestCrashCap(t *testing.T) {
 		t.Errorf("after :reconnect: capped %v, %#v", r.PlayerCapped, out)
 	}
 }
+
+func TestOldMPVWithoutMediaControls(t *testing.T) {
+	s, out := run(New(), PlayerChecked{Err: fmt.Errorf("%w; found mpv v0.38.0", player.ErrNoMediaControls)})
+	if s.PlayerProblem != "" {
+		t.Errorf("a problem for a warning: %q", s.PlayerProblem)
+	}
+	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mpv plays, but the OS's media controls need mpv 0.39 or newer; found mpv v0.38.0" {
+		t.Errorf("notice = %#v", n)
+	}
+	if _, out = run(s, PlayNow{Tracks: tracks(1), Start: 0}); len(only[Play](out)) != 1 {
+		t.Error("it doesn't play")
+	}
+}

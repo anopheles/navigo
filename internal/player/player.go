@@ -23,6 +23,9 @@ type EntryID uint64
 type Entry struct {
 	ID    EntryID
 	Track library.TrackID
+	// Title is what the OS's media controls show for it, such as
+	// "Low Tide — Aurora Lane"; mpv's own Now Playing and SMTC read it.
+	Title string
 }
 
 // Span is the part of the queue the Player holds. A zero Prev or Next

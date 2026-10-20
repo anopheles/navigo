@@ -451,6 +451,7 @@ Small gaps no ticket settled, filled in here so the spec is complete; revisit th
 - **`/` in Help** filters the rows as you type rather than finding the next match, since Help is a reference to narrow down; `<Esc>` puts the old filter back. The key menu leaves motions out, so they scroll it.
 - **The scroll wheel.** The motions row lists it, but v1 has no mouse support (Startup), so it is left out; the keys do the same.
 - **Where `:sort` and `:filter` work.** On flat lists only: a playlist's tracks are left out because edits go to the server by row, and grouped or ranked lists (an artist page, search results, Help) keep their order.
+- **MPRIS's Shuffle.** navigo's shuffle reorders the queue once (ADR 0004), so the Shuffle property is always false and can't be set; `S` shuffles.
 - **The star key.** No ticket gave starring a key; `*` stars the row or the selection, or unstars them when all are starred (`:star`).
 - **Two settings called "hints".** Top-level `hints` turns the **hint line** on or off ([#13](https://github.com/anopheles/navigo/issues/13)). `keys.hints` and `keys.hint-delay` control **prefix menus** ([#7](https://github.com/anopheles/navigo/issues/7)). They stay as decided, but renaming the second to `keys.prefix-menus` would avoid the confusion.
 
@@ -478,9 +479,8 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **The remaining `:` commands:** `:logout` (stops playback, deletes the keyring entry, says when the config still holds a password), `:sort` and `:filter` with the view in the list's title and the cursor kept on its item, `:hints on|off`. The cache keeps genres and track years for `:filter` (cache version 2) ([#44](https://github.com/anopheles/navigo/issues/44)).
 - **mpv's health:** the startup check (`mpv --version`, honouring `player.mpv_path`) with the indicator and the OS's install hint on play keys; `<Space>` after mpv died resumes the track where it stopped; 3 deaths in a minute stop restarts for a minute or until `:reconnect`, pointing to the log ([#30](https://github.com/anopheles/navigo/issues/30)).
 - **Colours:** the 16-colour palette and attributes of the table above, the faint rule above the now-playing bar, and colours off for any non-empty `NO_COLOR`; the Visual selection and find matches are also underlined so they show without colour ([#28](https://github.com/anopheles/navigo/issues/28)).
+- **OS media controls:** the core's `PublishNowPlaying`; MPRIS on Linux (`org.mpris.MediaPlayer2.navigo`, or `.instance<pid>` for a second navigo) with play, pause, next, previous, stop, seek, position, volume and loop status; `force-media-title` on every file for mpv's own controls on macOS and Windows, and a one-time notice there for mpv 0.38 ([#43](https://github.com/anopheles/navigo/issues/43)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A, and the three layer B scenarios (the new-user path from search to playing, transport, cold start from the cache) on the fixture library and live ([#45](https://github.com/anopheles/navigo/issues/45)).
 
-Still to build for v1:
-
-- **Media controls:** MPRIS on Linux, and `force-media-title` for macOS and Windows.
+Still to build for v1: nothing; every item above is built.

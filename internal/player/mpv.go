@@ -8,6 +8,7 @@ import (
 	"math"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,6 +21,10 @@ import (
 // ErrMPVTooOld is returned when mpv is older than 0.38, the first version
 // with the named-argument loadfile navigo relies on.
 var ErrMPVTooOld = errors.New("mpv 0.38 or newer is needed")
+
+// ErrNoMediaControls is a warning from Check on macOS and Windows: mpv
+// plays, but its media integration (Now Playing, SMTC) needs 0.39.
+var ErrNoMediaControls = errors.New("the OS's media controls need mpv 0.39 or newer")
 
 // ErrMPVMissing is returned when there is no mpv to run.
 var ErrMPVMissing = errors.New("mpv not found")
@@ -113,11 +118,7 @@ func (m *MPV) Play(ctx context.Context, w Span) error {
 	m.mu.Lock()
 	m.live = map[int64]bool{}
 	m.mu.Unlock()
-	var start any
-	if w.Start > 0 {
-		start = fmt.Sprintf("start=%.3f", w.Start.Seconds())
-	}
-	if _, err := m.loadAt(ctx, p, w.Current, "replace", nil, start); err != nil {
+	if _, err := m.loadAt(ctx, p, w.Current, "replace", nil, w.Start); err != nil {
 		return err
 	}
 	if w.Next.ID != 0 {
@@ -229,11 +230,18 @@ func (m *MPV) Check(ctx context.Context) error {
 	}
 	version, _, _ := strings.Cut(string(out), "\n")
 	version, _, _ = strings.Cut(version, " Copyright")
+	version = strings.TrimSpace(version)
 	if !versionOK(version) {
-		return fmt.Errorf("%w, found %s", ErrMPVTooOld, strings.TrimSpace(version))
+		return fmt.Errorf("%w, found %s", ErrMPVTooOld, version)
+	}
+	if mediaByMPV && !atLeast(version, 0, 39) {
+		return fmt.Errorf("%w; found %s", ErrNoMediaControls, version)
 	}
 	return nil
 }
+
+// mediaByMPV: on macOS and Windows, mpv provides the OS's media controls.
+var mediaByMPV = runtime.GOOS == "darwin" || runtime.GOOS == "windows"
 
 // ensure returns the running mpv, starting it if needed.
 func (m *MPV) ensure(ctx context.Context) (*mpv.Process, error) {
@@ -285,33 +293,46 @@ var versionRE = regexp.MustCompile(`(\d+)\.(\d+)`)
 
 // versionOK reports whether an mpv-version such as "mpv v0.41.0" or
 // "mpv 0.38.0-45-g1234abc" is at least 0.38. Unknown formats pass.
-func versionOK(v string) bool {
+func versionOK(v string) bool { return atLeast(v, 0, 38) }
+
+// atLeast reports whether an mpv version string is at least major.minor.
+// Unknown formats pass.
+func atLeast(v string, major, minor int) bool {
 	m := versionRE.FindStringSubmatch(v)
 	if m == nil {
 		return true
 	}
-	major, _ := strconv.Atoi(m[1])
-	minor, _ := strconv.Atoi(m[2])
-	return major > 0 || minor >= 38
+	ma, _ := strconv.Atoi(m[1])
+	mi, _ := strconv.Atoi(m[2])
+	return ma > major || ma == major && mi >= minor
 }
 
 // load appends e's stream to mpv's playlist with the given loadfile flags
 // and returns its mpv ID.
 func (m *MPV) load(ctx context.Context, p *mpv.Process, e Entry, flags string, index any) (int64, error) {
-	return m.loadAt(ctx, p, e, flags, index, nil)
+	return m.loadAt(ctx, p, e, flags, index, 0)
 }
 
-// loadAt is load with per-file options, such as "start=42.000".
-func (m *MPV) loadAt(ctx context.Context, p *mpv.Process, e Entry, flags string, index, options any) (int64, error) {
+// loadAt is load starting at a position. Each file also gets its title
+// (force-media-title) for mpv's Now Playing on macOS and SMTC on Windows.
+func (m *MPV) loadAt(ctx context.Context, p *mpv.Process, e Entry, flags string, index any, start time.Duration) (int64, error) {
 	args := map[string]any{"url": m.opts.StreamURL(e.Track), "flags": flags}
 	if index != nil {
 		args["index"] = index
 	}
-	if options != nil {
+	var opts []string
+	if start > 0 {
+		opts = append(opts, fmt.Sprintf("start=%.3f", start.Seconds()))
+	}
+	if e.Title != "" {
+		// %N% gives the value's length in bytes, so commas in it are safe.
+		opts = append(opts, fmt.Sprintf("force-media-title=%%%d%%%s", len(e.Title), e.Title))
+	}
+	if len(opts) > 0 {
 		if index == nil {
 			args["index"] = -1 // options come after the index
 		}
-		args["options"] = options
+		args["options"] = strings.Join(opts, ",")
 	}
 	data, err := p.Named(ctx, "loadfile", args)
 	if err != nil {

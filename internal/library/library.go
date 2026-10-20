@@ -1,7 +1,6 @@
 // Package library holds navigo's view of the server's music: typed IDs,
 // the domain types the core and UI share, the immutable Snapshot that a
-// sync builds, and the cache file it is kept in between runs. Search
-// comes later.
+// sync builds, the cache file it is kept in between runs, and search.
 package library
 
 import (

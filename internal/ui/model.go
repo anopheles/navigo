@@ -41,6 +41,8 @@ type Deps struct {
 	Keyring    creds.Keyring
 	// CacheDir holds the library cache files; empty means no cache.
 	CacheDir string
+	// StateDir holds the search history; empty means it isn't kept.
+	StateDir string
 	// LogPath is navigo.log, named in errors navigo can't explain.
 	LogPath string
 	// OnLogin is called with the client once the server accepted the
@@ -90,6 +92,7 @@ const (
 	artistPage
 	albumList
 	albumTracks
+	searchList
 )
 
 // frame is one level of the library window's drill-down.
@@ -97,6 +100,7 @@ type frame struct {
 	kind        listKind
 	album       library.AlbumID
 	artist      library.ArtistID
+	search      *searchView
 	title       string
 	cur, offset int
 }
@@ -123,6 +127,14 @@ type Model struct {
 	registry *command.Registry[*Model]
 	line     textinput.Model
 	seq      int // bumps on every key, to drop stale timeouts
+
+	// The search prompt: its text is selected until a key changes it,
+	// histIdx walks the history, and beforeSearch is what <Esc> restores.
+	searchHistory []string
+	selected      bool
+	histIdx       int
+	histDraft     string
+	beforeSearch  *savedView
 
 	shown   message // in the status line; zero when empty
 	history []message
@@ -161,6 +173,8 @@ func New(deps Deps) *Model {
 		line:     line,
 		hints:    deps.Config.HintsOn(),
 		clock:    realClock{},
+
+		searchHistory: loadHistory(deps.StateDir),
 	}
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
@@ -212,7 +226,7 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.dispatch(app.BufferingStalled{})
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
-		m.line.SetWidth(max(m.w-2, 1))
+		m.fitLine()
 		return m, nil
 	case passwordMsg:
 		s := m.deps.Config.Server
@@ -239,6 +253,9 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case app.Synced, app.CacheLoaded:
 			keep := m.cursorIDs()
 			cmd := m.dispatch(msg.Event)
+			for _, f := range m.searchFrames() {
+				f.search.run(m.state.Library)
+			}
 			m.restoreCursors(keep)
 			return m, cmd
 		}
@@ -255,10 +272,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, m.key(msg)
 	}
-	if m.mode == keymap.Cmdline {
-		var cmd tea.Cmd
-		m.line, cmd = m.line.Update(msg)
-		return m, cmd
+	if m.mode == keymap.Cmdline || m.mode == keymap.Search {
+		return m, m.edit(msg)
 	}
 	return m, nil
 }
@@ -495,7 +510,7 @@ func (m *Model) notice(n app.Notice) {
 
 // key handles a key press on the main screen.
 func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
-	if m.mode == keymap.Cmdline {
+	if m.mode == keymap.Cmdline || m.mode == keymap.Search {
 		return m.lineKey(k)
 	}
 	token := keymap.FromTerminal(k.String(), k.Text)
@@ -531,6 +546,12 @@ func (m *Model) exec(line string, count int) tea.Cmd {
 }
 
 func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
+	if m.mode == keymap.Search {
+		if cmd, done := m.searchKey(k); done {
+			return cmd
+		}
+		return m.edit(k)
+	}
 	switch k.String() {
 	case "esc", "ctrl+c":
 		m.leaveLine()
@@ -548,13 +569,28 @@ func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
 			return nil
 		}
 	}
+	return m.edit(k)
+}
+
+// edit passes a message to the line editor; in the search prompt, a
+// changed text searches again.
+func (m *Model) edit(msg tea.Msg) tea.Cmd {
+	if _, paste := msg.(tea.PasteMsg); paste && m.selected {
+		m.line.SetValue("") // a paste replaces the selected query too
+	}
+	before := m.line.Value()
 	var cmd tea.Cmd
-	m.line, cmd = m.line.Update(k)
+	m.line, cmd = m.line.Update(msg)
+	if m.mode == keymap.Search && m.line.Value() != before {
+		m.selected = false
+		m.liveSearch(m.line.Value())
+	}
 	return cmd
 }
 
 func (m *Model) leaveLine() {
 	m.mode = keymap.Normal
+	m.selected = false
 	m.line.Reset()
 	m.line.Blur()
 }
@@ -574,6 +610,18 @@ func (m *Model) scopes() []string {
 		return []string{"albums", "containers", "global"}
 	case artistList, artistPage:
 		return []string{"artists", "containers", "global"}
+	case searchList:
+		v := m.top().search
+		if _, ok := v.track(m.top().cur); ok {
+			return []string{"search", "tracks", "global"}
+		}
+		if _, ok := v.album(m.top().cur); ok {
+			return []string{"search", "albums", "containers", "global"}
+		}
+		if _, ok := v.artist(m.top().cur); ok {
+			return []string{"search", "artists", "containers", "global"}
+		}
+		return []string{"search", "containers", "global"}
 	}
 	return []string{"sections", "containers", "global"}
 }
@@ -596,6 +644,8 @@ func (m *Model) rows(f *frame) int {
 		return len(lib.Albums)
 	case f.kind == albumTracks:
 		return len(lib.AlbumTracks(f.album))
+	case f.kind == searchList && f.search != nil:
+		return len(f.search.rows)
 	}
 	return 0
 }
@@ -629,6 +679,8 @@ func (m *Model) rowID(f *frame, i int) string {
 		return string(lib.Albums[i].ID)
 	case albumTracks:
 		return string(lib.AlbumTracks(f.album)[i].ID)
+	case searchList:
+		return f.search.rowID(i)
 	}
 	return ""
 }

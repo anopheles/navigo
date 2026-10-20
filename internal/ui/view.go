@@ -114,7 +114,11 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	n := m.rows(f)
 	f.offset = scroll(f.cur, f.offset, h, n)
 	var out []string
-	if n == 0 {
+	if n == 0 && f.kind == searchList && f.search != nil {
+		for _, l := range m.emptySearch(f.search) {
+			out = append(out, dimStyle.Render(fit(l, w)))
+		}
+	} else if n == 0 {
 		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
@@ -155,6 +159,8 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 		return dimStyle.Render(fit(" ── Appears on ──", w))
 	case albumList:
 		return albumRow(lib.Albums[i], w)
+	case searchList:
+		return m.searchRowText(f.search, i, w)
 	}
 	ts := lib.AlbumTracks(f.album)
 	return trackRow("  ", trackNumber(ts, i), ts[i], w)
@@ -280,6 +286,9 @@ func (m *Model) hintLine() string {
 	if m.mode == keymap.Cmdline {
 		return " " + hint("<CR>", "run") + "  " + hint("<Esc>", "cancel")
 	}
+	if m.mode == keymap.Search {
+		return " " + hint("<CR>", "go to the results") + "  " + hint("<Esc>", "cancel") + "  " + hint("<Up>/<Down>", "history")
+	}
 	if m.popup != nil && m.popup.pick != nil {
 		return " " + hint("j/k", "move") + "  " + hint("<CR>", "choose") + "  " + hint("q", "close")
 	}
@@ -295,7 +304,7 @@ func (m *Model) hintLine() string {
 		names = []string{"window", "albums"}
 	case m.focus == queueWindow:
 		names = []string{"play-row", "play-pause", "undo", "window"}
-	case m.top().kind == albumTracks:
+	case m.onTrack():
 		names = []string{"play-now", "add-end", "add-next", "back", "window"}
 	default:
 		names = []string{"open", "back", "window"}
@@ -392,7 +401,10 @@ func (m *Model) nowPlaying() []string {
 
 // status is the bottom line: the ":" line, or a message, and pending keys.
 func (m *Model) status() string {
-	if m.mode == keymap.Cmdline {
+	if m.mode == keymap.Search && m.selected {
+		return fit(m.line.Prompt+cursorStyle.Render(m.line.Value()), m.w)
+	}
+	if m.mode == keymap.Cmdline || m.mode == keymap.Search {
 		return fit(m.line.View(), m.w)
 	}
 	right := m.engine.Pending()

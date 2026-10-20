@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -54,6 +55,19 @@ func TestPath(t *testing.T) {
 	}
 	if filepath.Base(p) != "config.yaml" || filepath.Base(filepath.Dir(p)) != "navigo" {
 		t.Errorf("Path = %s, want .../navigo/config.yaml", p)
+	}
+}
+
+func TestStateDir(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("XDG_STATE_HOME is Linux only")
+	}
+	t.Setenv("HOME", "/home/x")
+	for env, want := range map[string]string{"/state": "/state/navigo", "": "/home/x/.local/state/navigo", "relative": "/home/x/.local/state/navigo"} {
+		t.Setenv("XDG_STATE_HOME", env)
+		if got, err := StateDir(); err != nil || got != want {
+			t.Errorf("XDG_STATE_HOME=%q: StateDir = %q, %v; want %q", env, got, err, want)
+		}
 	}
 }
 

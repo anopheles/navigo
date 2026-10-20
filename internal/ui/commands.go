@@ -2,9 +2,11 @@ package ui
 
 import (
 	"errors"
+	"slices"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
@@ -34,6 +36,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "go-artist", Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
 		{Name: "artists", Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
 		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
+		{Name: "search", Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search},
 		{Name: "queue", Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focus = queueWindow; return nil }},
 		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error { m.focus = 1 - m.focus; return nil }},
 
@@ -126,7 +129,11 @@ func (m *Model) open(command.Call) error {
 	f := m.top()
 	switch f.kind {
 	case sectionList:
-		m.showSection(sections[f.cur].kind)
+		if sections[f.cur].kind == searchList {
+			m.startSearch()
+		} else {
+			m.showSection(sections[f.cur].kind)
+		}
 	case artistList:
 		if lib := m.state.Library; lib != nil && f.cur < len(lib.Artists) {
 			m.openArtist(lib.Artists[f.cur])
@@ -134,6 +141,16 @@ func (m *Model) open(command.Call) error {
 	case albumList, artistPage:
 		if a, ok := m.rowAlbum(); ok {
 			m.openAlbum(a, f.artist)
+		}
+	case searchList:
+		v := f.search
+		if a, ok := v.artist(f.cur); ok {
+			m.openArtist(a)
+		} else if a, ok := v.album(f.cur); ok {
+			m.openAlbum(a, "")
+		} else if r := v.row(f.cur); r.more > 0 {
+			v.expanded[r.group] = true
+			v.layout()
 		}
 	}
 	return nil
@@ -145,17 +162,29 @@ func (m *Model) back() {
 	}
 }
 
-// trackRow returns the album tracks shown and the cursor row, if the
-// cursor is on a track in the library window. An album still loading has
-// no rows yet, which is not an error.
+// trackRow returns the album of the track under the cursor in the library
+// window, and the track's row in it. An album still loading has no rows
+// yet, which is not an error.
 func (m *Model) trackRow() ([]library.Track, int, error) {
 	f := m.top()
+	lib := m.state.Library
+	if m.focus == libraryWindow && f.kind == searchList {
+		t, ok := f.search.track(f.cur)
+		if !ok || lib == nil {
+			return nil, 0, errNotOnTrack
+		}
+		ts := lib.AlbumTracks(t.AlbumID)
+		if i := slices.IndexFunc(ts, func(o library.Track) bool { return o.ID == t.ID }); i >= 0 {
+			return ts, i, nil
+		}
+		return []library.Track{t}, 0, nil
+	}
 	if m.focus != libraryWindow || f.kind != albumTracks {
 		return nil, 0, errNotOnTrack
 	}
 	var ts []library.Track
-	if m.state.Library != nil {
-		ts = m.state.Library.AlbumTracks(f.album)
+	if lib != nil {
+		ts = lib.AlbumTracks(f.album)
 	}
 	if f.cur >= len(ts) {
 		return nil, 0, errNoRows
@@ -177,14 +206,25 @@ func (m *Model) playNow(command.Call) error {
 	return nil
 }
 
+// add adds the track under the cursor, or all of the album under it,
+// count times.
 func (m *Model) add(c command.Call, next bool) error {
-	ts, i, err := m.trackRow()
-	if err != nil {
+	var one []library.Track
+	if ts, i, err := m.trackRow(); err == nil {
+		one = ts[i : i+1]
+	} else if a, ok := m.rowAlbum(); ok {
+		one = m.state.Library.AlbumTracks(a.ID)
+	} else if f := m.top(); f.kind == searchList && m.focus == libraryWindow {
+		if _, ok := f.search.artist(f.cur); ok {
+			return errors.New("an artist can't be added · open it and add their albums")
+		}
+		return errNotOnTrack
+	} else {
 		return quiet(err)
 	}
-	add := make([]library.Track, c.N())
-	for j := range add {
-		add[j] = ts[i]
+	var add []library.Track
+	for range c.N() {
+		add = append(add, one...)
 	}
 	if next {
 		m.event(app.AddNext{Tracks: add})
@@ -218,5 +258,17 @@ func seek(m *Model, c command.Call) error {
 func (m *Model) enterLine() {
 	m.mode = keymap.Cmdline
 	m.line.Reset()
+	m.line.Prompt = ":"
+	m.fitLine()
 	m.then(m.line.Focus())
+}
+
+// fitLine sizes the line editor to the status line after its prompt.
+func (m *Model) fitLine() { m.line.SetWidth(max(m.w-lipgloss.Width(m.line.Prompt)-1, 1)) }
+
+// onTrack reports whether the cursor is on a track in the library
+// window, or in an album whose tracks are still loading.
+func (m *Model) onTrack() bool {
+	_, _, err := m.trackRow()
+	return err == nil || errors.Is(err, errNoRows)
 }

@@ -69,12 +69,14 @@ func run() error {
 	if dir, err := os.UserCacheDir(); err == nil {
 		cacheDir = filepath.Join(dir, "navigo")
 	}
+	stateDir, _ := config.StateDir() // none: history isn't kept
 	m := ui.New(ui.Deps{
 		Config:     cfg,
 		ConfigPath: path,
 		Player:     mpv,
 		Keyring:    creds.OS,
 		CacheDir:   cacheDir,
+		StateDir:   stateDir,
 		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})

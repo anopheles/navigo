@@ -34,6 +34,7 @@ type Snapshot struct {
 	own        map[ArtistID][]int // indexes in Albums, as album artist
 	appearsOn  map[ArtistID][]int // indexes in Albums, credited on tracks only
 	starred    map[string]bool
+	search     *searchIndex
 }
 
 // Build sorts the synced data, derives what the server doesn't send, and
@@ -131,6 +132,11 @@ func (s *Snapshot) index() {
 			}
 		}
 	}
+	s.indexStars()
+	s.buildSearch()
+}
+
+func (s *Snapshot) indexStars() {
 	s.starred = make(map[string]bool, len(s.Starred))
 	for _, id := range s.Starred {
 		s.starred[id] = true
@@ -213,11 +219,11 @@ func (s *Snapshot) PlaylistTracks(id PlaylistID) []Track {
 func (s *Snapshot) IsStarred(id string) bool { return s.starred[id] }
 
 // WithExtras returns a copy with new playlists and stars, as a refresh
-// without a full sync produces.
+// without a full sync produces. It shares the unchanged indexes.
 func (s *Snapshot) WithExtras(playlists []Playlist, starred []string) *Snapshot {
 	n := *s
 	n.Playlists, n.Starred = slices.Clone(playlists), slices.Clone(starred)
 	n.SyncedAt = time.Now()
-	n.index()
+	n.indexStars()
 	return &n
 }

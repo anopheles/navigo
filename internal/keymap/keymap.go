@@ -17,12 +17,13 @@ import (
 // Mode decides which bindings apply.
 type Mode string
 
-// The modes the skeleton uses. Command-line keys are handled by the line
-// editor, not by bindings.
+// The modes navigo uses. Command-line and Search keys are handled by the
+// line editor, not by bindings.
 const (
 	Normal  Mode = "normal"
 	Visual  Mode = "visual"
 	Cmdline Mode = "cmdline"
+	Search  Mode = "search"
 )
 
 // Binding pairs a key sequence with a command line, within one scope.

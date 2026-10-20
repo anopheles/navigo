@@ -11,7 +11,7 @@ import (
 
 // sections are the library window's top-level entries, in the spec's
 // order; Home, Playlists, Search and Help come later.
-var sections = []section{{"Artists", artistList}, {"Albums", albumList}}
+var sections = []section{{"Artists", artistList}, {"Albums", albumList}, {"Search", searchList}}
 
 type section struct {
 	title string
@@ -110,7 +110,13 @@ func (r artistRows) index(id library.AlbumID) int {
 
 // skipped reports whether row i is one the cursor passes over.
 func (m *Model) skipped(f *frame, i int) bool {
-	return f.kind == artistPage && i == m.artistRows(f.artist).heading()
+	switch f.kind {
+	case artistPage:
+		return i == m.artistRows(f.artist).heading()
+	case searchList:
+		return f.search != nil && f.search.row(i).heading
+	}
+	return false
 }
 
 // settle moves the cursor off a skipped row, in direction dir if it can.
@@ -129,6 +135,15 @@ func (m *Model) settle(f *frame, dir int) {
 
 // groups are the first rows of a list's groups, for { and }.
 func (m *Model) groups(f *frame) []int {
+	if f.kind == searchList && f.search != nil {
+		var gs []int
+		for i, r := range f.search.rows {
+			if r.heading {
+				gs = append(gs, i+1)
+			}
+		}
+		return gs
+	}
 	if f.kind == artistPage {
 		if h := m.artistRows(f.artist).heading(); h > 0 {
 			return []int{0, h + 1}
@@ -223,6 +238,8 @@ func (m *Model) rowAlbum() (library.Album, bool) {
 		}
 	case artistPage:
 		return m.artistRows(f.artist).album(f.cur)
+	case searchList:
+		return f.search.album(f.cur)
 	}
 	return library.Album{}, false
 }

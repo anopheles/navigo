@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -51,6 +52,27 @@ func Path() (string, error) {
 		return "", err
 	}
 	return filepath.Join(dir, "navigo", "config.yaml"), nil
+}
+
+// StateDir is where navigo keeps history: navigo/ under XDG_STATE_HOME or
+// ~/.local/state on Linux, and under os.UserCacheDir elsewhere, since Go
+// has no per-OS state directory.
+func StateDir() (string, error) {
+	if runtime.GOOS == "linux" {
+		if dir := os.Getenv("XDG_STATE_HOME"); filepath.IsAbs(dir) {
+			return filepath.Join(dir, "navigo"), nil
+		}
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, ".local", "state", "navigo"), nil
+	}
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "navigo"), nil
 }
 
 // Load reads the config at path. A missing file is an empty config.

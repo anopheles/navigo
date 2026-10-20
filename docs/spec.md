@@ -476,12 +476,11 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **Home:** startup on Home, its five album lists from the server with the last answer kept for offline, `'h` and `:home` ([#33](https://github.com/anopheles/navigo/issues/33)).
 - **Motions, find and jumps:** `<C-f>`/`<C-b>`, `<C-e>`/`<C-y>`, `H`/`M`/`L`, `zz`/`zt`/`zb`, `[count]%`; `/` and `:find-back` (smart-case, highlights, wrapping `n`/`N`, `:noh`/`<Esc>`), and a `/` that finds nothing offering `<CR>` to search the library; the jump list (`<C-o>`, `<C-i>`, `:forward`) recording marks, section commands, `ga`/`gr`/`gp`, `gg`/`G` and finds; `gp` ([#36](https://github.com/anopheles/navigo/issues/36)).
 - **The remaining `:` commands:** `:logout` (stops playback, deletes the keyring entry, says when the config still holds a password), `:sort` and `:filter` with the view in the list's title and the cursor kept on its item, `:hints on|off`. The cache keeps genres and track years for `:filter` (cache version 2) ([#44](https://github.com/anopheles/navigo/issues/44)).
+- **mpv's health:** the startup check (`mpv --version`, honouring `player.mpv_path`) with the indicator and the OS's install hint on play keys; `<Space>` after mpv died resumes the track where it stopped; 3 deaths in a minute stop restarts for a minute or until `:reconnect`, pointing to the log ([#30](https://github.com/anopheles/navigo/issues/30)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A, and the three layer B scenarios (the new-user path from search to playing, transport, cold start from the cache) on the fixture library and live ([#45](https://github.com/anopheles/navigo/issues/45)).
 
 Still to build for v1:
 
-- **Crash cap:** the 3-crash cap for mpv (with the mpv slice).
-- **mpv:** the startup check with install hints, `player.mpv_path`, and resuming after a crash.
 - **Media controls:** MPRIS on Linux, and `force-media-title` for macOS and Windows.
 - **Colours:** the 16-colour palette and `NO_COLOR`; the skeleton still uses fixed 256-colour values.

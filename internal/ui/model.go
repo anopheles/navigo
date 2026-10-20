@@ -221,12 +221,14 @@ func (m *Model) SetSend(send func(tea.Msg)) { m.send = send }
 
 func (m *Model) Init() tea.Cmd {
 	s := m.deps.Config.Server
+	p, ctx := m.deps.Player, m.ctx
+	check := func() tea.Msg { return eventMsg{app.PlayerChecked{Err: p.Check(ctx), Hint: installHint()}} }
 	if s.URL == "" {
 		m.openLogin(s.URL, s.User, "")
-		return nil
+		return check
 	}
 	m.setMsg("connecting to "+s.URL+"…", false)
-	return tea.Batch(m.dispatch(app.Start{}), func() tea.Msg {
+	return tea.Batch(check, m.dispatch(app.Start{}), func() tea.Msg {
 		p, err := creds.Password(m.ctx, s, m.deps.Keyring)
 		return passwordMsg{p, err}
 	})
@@ -277,6 +279,9 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.saved(msg)
 	case eventMsg:
 		if fp, ok := msg.Event.(app.FromPlayer); ok {
+			if d, ok := fp.Event.(player.Died); ok { // the crash cap counts in time
+				return m, m.dispatch(app.PlayerDied{Err: d.Err, At: m.clock.Now()})
+			}
 			if b, ok := fp.Event.(player.Buffering); ok && b.Buffering && !m.state.Player.Buffering {
 				m.armStall()
 			}
@@ -468,6 +473,8 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 			}
 			return eventMsg{app.ProbeResult{Why: e.Why}} // the server answered
 		}
+	case app.ScheduleUncap:
+		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.Uncap{}} })
 	case app.ScheduleRetry:
 		m.retryAt = m.clock.Now().Add(e.After)
 		m.tick()

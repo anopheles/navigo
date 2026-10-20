@@ -133,3 +133,10 @@ func TestHints(t *testing.T) {
 		t.Error("hints default on, false turns them off")
 	}
 }
+
+func TestParseMPVPath(t *testing.T) {
+	c, err := Parse([]byte("player:\n  mpv_path: /opt/mpv/bin/mpv\n"))
+	if err != nil || c.Player.MPVPath != "/opt/mpv/bin/mpv" {
+		t.Errorf("mpv_path = %q, %v", c.Player.MPVPath, err)
+	}
+}

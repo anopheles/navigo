@@ -62,6 +62,7 @@ func run() error {
 	// The player signs stream URLs with whichever client logged in last.
 	var client atomic.Pointer[subsonic.Client]
 	mpv := player.NewMPV(player.MPVOptions{
+		Path: cfg.Player.MPVPath,
 		Args: cfg.Player.MPVArgs,
 		StreamURL: func(id library.TrackID) string {
 			if c := client.Load(); c != nil {

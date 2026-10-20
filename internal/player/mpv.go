@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,6 +20,9 @@ import (
 // ErrMPVTooOld is returned when mpv is older than 0.38, the first version
 // with the named-argument loadfile navigo relies on.
 var ErrMPVTooOld = errors.New("mpv 0.38 or newer is needed")
+
+// ErrMPVMissing is returned when there is no mpv to run.
+var ErrMPVMissing = errors.New("mpv not found")
 
 // MPVOptions configure the mpv adapter.
 type MPVOptions struct {
@@ -108,7 +113,11 @@ func (m *MPV) Play(ctx context.Context, w Span) error {
 	m.mu.Lock()
 	m.live = map[int64]bool{}
 	m.mu.Unlock()
-	if _, err := m.load(ctx, p, w.Current, "replace", nil); err != nil {
+	var start any
+	if w.Start > 0 {
+		start = fmt.Sprintf("start=%.3f", w.Start.Seconds())
+	}
+	if _, err := m.loadAt(ctx, p, w.Current, "replace", nil, start); err != nil {
 		return err
 	}
 	if w.Next.ID != 0 {
@@ -201,6 +210,31 @@ func (m *MPV) command(ctx context.Context, args ...any) error {
 	return err
 }
 
+// Check runs mpv --version: ErrMPVMissing if there is no mpv at the path
+// (or on PATH), ErrMPVTooOld if it is older than 0.38.
+func (m *MPV) Check(ctx context.Context) error {
+	path := m.opts.Path
+	if path == "" {
+		path = "mpv"
+	}
+	bin, err := exec.LookPath(path)
+	if err != nil {
+		return fmt.Errorf("%w at %s", ErrMPVMissing, path)
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, bin, "--no-config", "--version").Output()
+	if err != nil {
+		return fmt.Errorf("%s --version: %w", bin, err)
+	}
+	version, _, _ := strings.Cut(string(out), "\n")
+	version, _, _ = strings.Cut(version, " Copyright")
+	if !versionOK(version) {
+		return fmt.Errorf("%w, found %s", ErrMPVTooOld, strings.TrimSpace(version))
+	}
+	return nil
+}
+
 // ensure returns the running mpv, starting it if needed.
 func (m *MPV) ensure(ctx context.Context) (*mpv.Process, error) {
 	if p := m.process(); p != nil {
@@ -264,9 +298,20 @@ func versionOK(v string) bool {
 // load appends e's stream to mpv's playlist with the given loadfile flags
 // and returns its mpv ID.
 func (m *MPV) load(ctx context.Context, p *mpv.Process, e Entry, flags string, index any) (int64, error) {
+	return m.loadAt(ctx, p, e, flags, index, nil)
+}
+
+// loadAt is load with per-file options, such as "start=42.000".
+func (m *MPV) loadAt(ctx context.Context, p *mpv.Process, e Entry, flags string, index, options any) (int64, error) {
 	args := map[string]any{"url": m.opts.StreamURL(e.Track), "flags": flags}
 	if index != nil {
 		args["index"] = index
+	}
+	if options != nil {
+		if index == nil {
+			args["index"] = -1 // options come after the index
+		}
+		args["options"] = options
 	}
 	data, err := p.Named(ctx, "loadfile", args)
 	if err != nil {

@@ -71,6 +71,16 @@ type State struct {
 	Player  PlayerState
 	Repeat  Repeat
 
+	// mpv's health: PlayerProblem is why it can't play at all (missing or
+	// too old); PlayerDown, that it died and <Space> restarts it;
+	// PlayerCapped, that it died too often to restart for now.
+	PlayerProblem string
+	PlayerDown    bool
+	PlayerCapped  bool
+	installHint   string
+	resume        *resumePoint
+	deaths        []time.Time
+
 	playing      player.EntryID // the entry the player says is playing
 	playingTrack library.Track  // its track, even if the queue changed since
 	// orphanNext is where the queue goes on after the playing entry was
@@ -257,7 +267,7 @@ func Apply(s State, e Event) (State, []Effect) {
 		s = s.edit(func(q []QueueEntry) ([]QueueEntry, int) { return nil, -1 })
 		s.Queue, s.nextID = entries(s.nextID, e.Tracks)
 		s.Current, s.skips = e.Start, 0
-		if s.Offline {
+		if s.Offline || s.cantPlay() != nil {
 			return s.play(s.Current) // explains why nothing plays
 		}
 		n := Notice{Text: "playing · " + count(len(e.Tracks)) + " in the queue"}
@@ -303,6 +313,10 @@ func Apply(s State, e Event) (State, []Effect) {
 			return s, []Effect{Resume{}}
 		case s.Player.Playing:
 			return s, []Effect{Pause{}}
+		case s.resume != nil && s.index(s.resume.entry) >= 0:
+			r := s.resume
+			s.Current, s.skips = s.index(r.entry), 0
+			return s.playFrom(s.Current, r.pos)
 		case len(s.Queue) > 0:
 			s.Current, s.skips = max(s.Current, 0), 0
 			return s.play(s.Current)
@@ -376,7 +390,14 @@ func Apply(s State, e Event) (State, []Effect) {
 	case PlaylistRemove, PlaylistInsert, PlaylistMove, PlaylistCreate, PlaylistDelete, PlaylistWritten:
 		return s.applyPlaylist(e)
 	case FromPlayer:
+		if d, ok := e.Event.(player.Died); ok {
+			return s.died(d.Err, time.Time{})
+		}
 		return s.fromPlayer(e.Event)
+	case PlayerDied:
+		return s.died(e.Err, e.At)
+	case PlayerChecked, Uncap:
+		return s.applyMPV(e)
 	case Unreachable, StartedOffline, RetryNow, Reconnect, BufferingStalled, ProbeResult:
 		return s.applyOffline(e)
 	case PlayerFailed:
@@ -400,6 +421,7 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 	switch e := e.(type) {
 	case player.TrackStarted:
 		s.playing, s.orphanNext = e.Entry, 0
+		s.PlayerDown, s.resume = false, nil
 		s.Player.Playing, s.Player.Position = true, 0
 		s.listened, s.lastPos, s.scrobbled = 0, 0, false
 		i := s.index(e.Entry)
@@ -465,10 +487,6 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 		s.Player.Buffering = e.Buffering
 	case player.Volume:
 		s.Player.Volume = e.Percent
-	case player.Died:
-		s.playing = 0
-		s.Player = PlayerState{Volume: s.Player.Volume}
-		return s, []Effect{Notice{Text: fmt.Sprintf("the player stopped (%v)", e.Err), Command: "play-pause", Hint: "starts it again", Err: true}}
 	}
 	return s, nil
 }

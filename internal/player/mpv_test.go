@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -290,5 +294,42 @@ func TestMPVIgnoresReplacedEntries(t *testing.T) {
 		}
 		s, ok := e.(TrackStarted)
 		return ok && s.Entry == 3
+	})
+}
+
+func TestMPVCheck(t *testing.T) {
+	ctx := context.Background()
+	missing := NewMPV(MPVOptions{Path: filepath.Join(t.TempDir(), "no-mpv")})
+	if err := missing.Check(ctx); !errors.Is(err, ErrMPVMissing) {
+		t.Errorf("a missing mpv: %v", err)
+	}
+	if runtime.GOOS == "windows" {
+		t.Skip("the fake mpv is a shell script")
+	}
+	old := filepath.Join(t.TempDir(), "mpv")
+	if err := os.WriteFile(old, []byte("#!/bin/sh\necho 'mpv v0.37.0 Copyright © 2000-2023 mpv/MPlayer/mplayer2 projects'\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	err := NewMPV(MPVOptions{Path: old}).Check(ctx)
+	if !errors.Is(err, ErrMPVTooOld) || !strings.Contains(err.Error(), "mpv v0.37.0") {
+		t.Errorf("an old mpv: %v", err)
+	}
+	if _, err := exec.LookPath("mpv"); err == nil {
+		if err := NewMPV(MPVOptions{}).Check(ctx); err != nil {
+			t.Errorf("the mpv on PATH: %v", err)
+		}
+	}
+}
+
+// Play with a start position, as when resuming after mpv died.
+func TestMPVPlaysFromAPosition(t *testing.T) {
+	h := newMPV(t)
+	ctx := context.Background()
+	if err := h.m.Play(ctx, Span{Current: entry(1, "60s"), Start: 42 * time.Second}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("a position past 42s", func(e Event) bool {
+		p, ok := e.(Position)
+		return ok && p.Entry == 1 && p.Position >= 42*time.Second
 	})
 }

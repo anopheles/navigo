@@ -80,6 +80,12 @@ func (s State) applyOffline(e Event) (State, []Effect) {
 		}
 		return s.probe(ProbeRetry)
 	case Reconnect:
+		if s.PlayerCapped { // :reconnect also lets mpv start again
+			s.PlayerCapped = false
+			if !s.Offline {
+				return s, []Effect{Notice{Text: "mpv can start again", Command: "play-pause", Hint: "starts it"}}
+			}
+		}
 		s, out := s.probe(ProbeReconnect)
 		return s, append(out, Notice{Text: "trying the server…"})
 	case BufferingStalled:
@@ -206,14 +212,24 @@ func (s State) halt() State {
 }
 
 // play starts queue row i, or explains that it can't while offline.
-func (s State) play(i int) (State, []Effect) {
+func (s State) play(i int) (State, []Effect) { return s.playFrom(i, 0) }
+
+// playFrom plays queue row i from a position, unless something stops it:
+// mpv missing, too old or crashing, or the server gone.
+func (s State) playFrom(i int, start time.Duration) (State, []Effect) {
+	if out := s.cantPlay(); out != nil {
+		return s, out
+	}
+	s.resume = nil
 	if s.Offline {
 		s, out := s.probe(ProbeUser)
 		return s, append(out, Notice{Text: "offline · the queue is ready", Command: "play-pause", Hint: "plays it once the server is back"})
 	}
 	s.halted = false
 	s = s.rekeyStale()
-	return s, []Effect{Play{Span: s.span(i)}}
+	sp := s.span(i)
+	sp.Start = start
+	return s, []Effect{Play{Span: sp}}
 }
 
 // rekeyStale gives queue entries mpv may still report on new IDs, so its

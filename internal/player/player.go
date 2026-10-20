@@ -29,12 +29,17 @@ type Entry struct {
 // means there is none.
 type Span struct {
 	Prev, Current, Next Entry
+	// Start is where Current starts playing; zero is its beginning.
+	Start time.Duration
 }
 
 // Player plays queue entries and reports what happens as Events.
 type Player interface {
-	// Play starts w.Current from the beginning, unpaused, replacing
-	// whatever was playing.
+	// Check reports whether the player can play at all, before the first
+	// track: ErrMPVMissing, ErrMPVTooOld, or nil.
+	Check(ctx context.Context) error
+	// Play starts w.Current at w.Start, unpaused, replacing whatever was
+	// playing.
 	Play(ctx context.Context, w Span) error
 	// SetNeighbours replaces the entries around the current one without
 	// interrupting it, after the queue changed or a new track started.

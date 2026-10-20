@@ -396,6 +396,18 @@ func hint(key, label string) string { return keyStyle.Render(key) + " " + dimSty
 // important first: mpv problems, then offline, then syncing.
 func (m *Model) indicators() []string {
 	var out []string
+	switch s := m.state; {
+	case s.PlayerProblem != "":
+		out = append(out, s.PlayerProblem)
+	case s.PlayerCapped:
+		out = append(out, "mpv keeps crashing · :reconnect")
+	case s.PlayerDown:
+		if ks := m.engine.Table().Keys(keymap.Normal, []string{"global"}, "play-pause"); len(ks) > 0 {
+			out = append(out, "mpv stopped · "+keyLabel(ks[0])+" restarts it")
+		} else {
+			out = append(out, "mpv stopped")
+		}
+	}
 	if m.state.Offline {
 		next := "offline · trying…"
 		if !m.state.Probing {

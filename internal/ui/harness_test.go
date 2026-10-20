@@ -117,6 +117,13 @@ func (h *harness) toAlbums() {
 // homeHarness starts navigo at w×h and leaves it where it starts: Home.
 func homeHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.Server)) *harness {
 	t.Helper()
+	return setupHarness(t, w, h, edit, nil)
+}
+
+// setupHarness is homeHarness with setup run before Init, such as to make
+// the fake player's startup check fail.
+func setupHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.Server), setup func(*harness)) *harness {
+	t.Helper()
 	srv := subsonictest.NewServer(t)
 	cfg := config.Config{Server: config.Server{URL: srv.URL, User: subsonictest.Username, Password: subsonictest.Password}}
 	if edit != nil {
@@ -134,6 +141,9 @@ func homeHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest
 	hs.clock = &fakeClock{now: time.Date(2026, 10, 20, 9, 0, 0, 0, time.UTC)}
 	hs.m.clock = hs.clock
 	hs.send(tea.WindowSizeMsg{Width: w, Height: h})
+	if setup != nil {
+		setup(hs)
+	}
 	hs.run(hs.m.Init())
 	return hs
 }

@@ -38,6 +38,8 @@ func (c Config) HintsOn() bool { return c.Hints == nil || *c.Hints }
 
 // Player configures playback.
 type Player struct {
+	// MPVPath is the mpv to run when it isn't on PATH.
+	MPVPath string `yaml:"mpv_path"`
 	// MPVArgs are extra mpv options, such as --audio-device=... or
 	// --ao=null. navigo's own options come first, so these can override
 	// them, except the IPC ones navigo can't run without.

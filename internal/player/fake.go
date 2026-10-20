@@ -23,6 +23,8 @@ type Fake struct {
 
 	// Err, when set, is returned by every call instead of acting.
 	Err error
+	// CheckErr is what Check returns.
+	CheckErr error
 }
 
 var _ Player = (*Fake)(nil)
@@ -57,13 +59,22 @@ func (f *Fake) State() (playing, paused bool, pos time.Duration, volume int) {
 
 func (f *Fake) Events() <-chan Event { return f.events }
 
+func (f *Fake) Check(context.Context) error { return f.CheckErr }
+
 func (f *Fake) Play(_ context.Context, w Span) error {
-	return f.do(fmt.Sprintf("Play(%d %d %d)", w.Prev.ID, w.Current.ID, w.Next.ID), func() {
+	call := fmt.Sprintf("Play(%d %d %d)", w.Prev.ID, w.Current.ID, w.Next.ID)
+	if w.Start > 0 {
+		call = fmt.Sprintf("Play(%d %d %d from %v)", w.Prev.ID, w.Current.ID, w.Next.ID, w.Start)
+	}
+	return f.do(call, func() {
 		if f.playing {
 			f.emit(TrackEnded{Entry: f.span.Current.ID, Reason: Stopped})
 		}
-		f.span, f.playing, f.paused, f.pos = w, true, false, 0
+		f.span, f.playing, f.paused, f.pos = w, true, false, w.Start
 		f.emit(TrackStarted{Entry: w.Current.ID})
+		if w.Start > 0 { // as mpv reports the position it starts at
+			f.emit(Position{Entry: w.Current.ID, Position: w.Start})
+		}
 	})
 }
 

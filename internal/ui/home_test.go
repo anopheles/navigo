@@ -87,7 +87,10 @@ func TestHomeOffline(t *testing.T) {
 
 func TestHomeMix(t *testing.T) {
 	h := homeHarness(t, 120, 40, nil)
-	h.keys("<CR>") // Mix, the first row
+	h.contains("<CR> mix")
+	h.keys("j")
+	h.contains("<CR> open")
+	h.keys("k<CR>") // Mix, the first row
 	h.contains(" Home ", "mixed ")
 	if h.m.top().kind != homeList {
 		t.Error("Mix left Home")

@@ -73,3 +73,9 @@ func (m *Model) mix(c command.Call) {
 	}
 	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now()})
 }
+
+// onMixRow reports whether the cursor is on Home's Mix row.
+func (m *Model) onMixRow() bool {
+	f := m.top()
+	return f.kind == homeList && homeLists[f.cur].kind == "mix"
+}

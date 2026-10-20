@@ -488,7 +488,11 @@ func (m *Model) hintLine() string {
 		}
 		c, _ := m.registry.Get(name)
 		if ks := m.engine.Table().Keys(keymap.Normal, m.scopes(), name); len(ks) > 0 && c != nil {
-			parts = append(parts, hint(ks[0], c.Label))
+			label := c.Label
+			if name == "open" && m.onMixRow() {
+				label = "mix" // <CR> on Home's Mix row runs a mix, not opens a list
+			}
+			parts = append(parts, hint(ks[0], label))
 		}
 	}
 	return " " + strings.Join(parts, "  ")

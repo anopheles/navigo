@@ -189,6 +189,27 @@ func TestTransport(t *testing.T) {
 	)
 }
 
+// Mix: gm replaces the queue with a pick from the whole library and plays
+// it; a second one says u brings the first back.
+func TestMix(t *testing.T) {
+	srv := target(t)
+	s := start(t, srv)
+	s.synced()
+
+	s.keys("3gm")
+	s.waitText("mixed 3 tracks", 15*time.Second)
+	serverPlays(t, srv, s.playing())
+	if n, _ := strconv.Atoi(queueRE.FindStringSubmatch(s.screen())[2]); n != 3 {
+		t.Errorf("queue after 3gm has %d entries, want 3", n)
+	}
+
+	s.keys("gm")
+	s.waitText("u brings the old queue back", 15*time.Second)
+	s.waitText("Queue (50)", 15*time.Second)
+	s.keys("u")
+	s.waitText("Queue (3)", 15*time.Second)
+}
+
 // Cold start: the second launch shows the library from the cache file at
 // once and checks the server without a full sync.
 func TestColdStart(t *testing.T) {

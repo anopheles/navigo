@@ -73,6 +73,10 @@ func (m *Model) render() string {
 	}
 	lines = append(lines, m.nowPlaying()...)
 	lines = append(lines, m.status())
+	if pm := m.prefixMenu(); len(pm) > 0 {
+		at := len(lines) - 1 - len(pm)
+		copy(lines[max(at, 0):], pm)
+	}
 	if ms := m.matchList(); len(ms) > 0 {
 		at := len(lines) - 1 - len(ms) // just above the status line
 		copy(lines[max(at, 0):], ms)
@@ -120,7 +124,9 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	n := m.rows(f)
 	f.offset = scroll(f.cur, f.offset, h, n)
 	var out []string
-	if n == 0 && f.kind == searchList && f.search != nil {
+	if n == 0 && f.kind == helpList && f.help != nil {
+		out = append(out, dimStyle.Render(fit(m.emptyHelp(f.help), w)))
+	} else if n == 0 && f.kind == searchList && f.search != nil {
 		for _, l := range m.emptySearch(f.search) {
 			out = append(out, dimStyle.Render(fit(l, w)))
 		}
@@ -172,6 +178,8 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 		return m.trackLine("  ", fmt.Sprint(i+1), ts[i], w)
 	case searchList:
 		return m.searchRowText(f.search, i, w)
+	case helpList:
+		return m.helpRowText(f.help, i, w)
 	}
 	ts := lib.AlbumTracks(f.album)
 	return m.trackLine("  ", trackNumber(ts, i), ts[i], w)
@@ -313,11 +321,17 @@ func (m *Model) hintLine() string {
 	if m.mode == keymap.Cmdline {
 		return " " + hint("<CR>", "run") + "  " + hint("<Tab>", "complete") + "  " + hint("<Up>/<Down>", "history") + "  " + hint("<Esc>", "cancel")
 	}
+	if m.promptHelp {
+		return " " + hint("<CR>", "keep the filter") + "  " + hint("<Esc>", "put it back")
+	}
 	if m.mode == keymap.Search {
 		return " " + hint("<CR>", "go to the results") + "  " + hint("<Esc>", "cancel") + "  " + hint("<Up>/<Down>", "history")
 	}
 	if m.popup != nil && m.popup.yes != nil {
 		return " " + hint("y", "yes") + "  " + hint("n", "no")
+	}
+	if m.popup != nil && m.popup.keyMenu != nil {
+		return " " + dimStyle.Render("press a key to run it") + "  " + hint("j/k", "scroll") + "  " + hint("<F1>", "help") + "  " + hint("q", "close")
 	}
 	if m.popup != nil && m.popup.pick != nil {
 		return " " + hint("j/k", "move") + "  " + hint("<CR>", "choose") + "  " + hint("q", "close")
@@ -334,13 +348,13 @@ func (m *Model) hintLine() string {
 	var names []string
 	switch {
 	case m.focus == queueWindow && len(m.state.Queue) == 0:
-		names = []string{"window", "albums"}
+		names = []string{"window", "albums", "key-menu"}
 	case m.focus == queueWindow:
-		names = []string{"play-row", "visual", "play-pause", "undo", "window"}
+		names = []string{"play-row", "visual", "play-pause", "undo", "window", "key-menu"}
 	case m.onTrack():
-		names = []string{"play-now", "add-end", "add-next", "visual", "back", "window"}
+		names = []string{"play-now", "add-end", "add-next", "visual", "back", "window", "key-menu"}
 	default:
-		names = []string{"open", "back", "window"}
+		names = []string{"open", "back", "window", "key-menu"}
 	}
 	var parts []string
 	for _, name := range names {

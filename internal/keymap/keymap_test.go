@@ -270,3 +270,29 @@ func TestBindReplaces(t *testing.T) {
 		t.Errorf("j runs %q after rebinding", got.Command)
 	}
 }
+
+func TestEffectiveAndContinuations(t *testing.T) {
+	tb := table(t)
+	seqs := func(bs []Binding) []string {
+		var out []string
+		for _, b := range bs {
+			out = append(out, b.Seq()+"="+b.Command)
+		}
+		return out
+	}
+	// <CR> in tracks shadows the global one.
+	if got := seqs(tb.Effective(Normal, []string{"tracks", "global"})); !reflect.DeepEqual(got, []string{
+		"<CR>=play-now", "a=add-next", "j=down", "gg=first", "G=last", "<C-w>w=window", "'b=albums",
+	}) {
+		t.Errorf("Effective = %q", got)
+	}
+	if got := seqs(tb.Continuations(Normal, []string{"queue", "global"}, []string{"d"})); !reflect.DeepEqual(got, []string{"dd=remove"}) {
+		t.Errorf("Continuations(d) = %q", got)
+	}
+	if got := seqs(tb.Continuations(Normal, []string{"global"}, []string{"g"})); !reflect.DeepEqual(got, []string{"gg=first"}) {
+		t.Errorf("Continuations(g) = %q", got)
+	}
+	if got := tb.Scopes(Normal); !reflect.DeepEqual(got, []string{"global", "queue", "tracks"}) {
+		t.Errorf("Scopes = %q", got)
+	}
+}

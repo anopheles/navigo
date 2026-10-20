@@ -96,6 +96,9 @@ type popup struct {
 	// yes makes it a Confirmation: y runs it, n or <Esc> doesn't. These
 	// keys are fixed, not bindings.
 	yes func()
+	// keyMenu makes it the key menu: the scopes it was opened in, where
+	// its keys run.
+	keyMenu []string
 }
 
 func (m *Model) openPopup(title string, lines []string) {
@@ -147,7 +150,12 @@ func (m *Model) closePopup() { m.popup = nil }
 
 // popupRows is how many lines of a popup fit between the title row and
 // the hint line: it starts on row 2 and adds a title and two borders.
-func (m *Model) popupRows() int { return max(m.h-9, 3) }
+func (m *Model) popupRows() int {
+	if m.popup != nil && m.popup.keyMenu != nil {
+		return min(max(m.h-9, 3), keyMenuRows)
+	}
+	return max(m.h-9, 3)
+}
 
 func (m *Model) scrollPopup(d int) {
 	p := m.popup

@@ -95,6 +95,7 @@ const (
 	playlistList
 	playlistTracks
 	searchList
+	helpList
 )
 
 // frame is one level of the library window's drill-down.
@@ -104,6 +105,7 @@ type frame struct {
 	artist      library.ArtistID
 	playlist    library.PlaylistID
 	search      *searchView
+	help        *helpView
 	title       string
 	cur, offset int
 }
@@ -140,6 +142,12 @@ type Model struct {
 	selected     bool
 	beforeSearch *savedView
 	compl        *completion
+	// The Help filter prompt shares the search prompt's mode; helpBefore
+	// is the filter <Esc> puts back.
+	promptHelp bool
+	helpBefore string
+	// prefixShown: a pure prefix has waited long enough for its menu.
+	prefixShown bool
 
 	shown   message // in the status line; zero when empty
 	history []message
@@ -271,6 +279,9 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 		return m, m.dispatch(msg.Event)
+	case prefixMsg:
+		m.prefixShown = msg.seq == m.seq && m.engine.Pending() != ""
+		return m, nil
 	case timeoutMsg:
 		if msg.seq == m.seq {
 			return m, m.result(m.engine.Timeout(m.mode, m.scopes()))
@@ -278,6 +289,7 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyPressMsg:
 		m.seq++
+		m.prefixShown = false
 		if m.screen == screenLogin {
 			return m, m.loginKey(msg)
 		}
@@ -569,12 +581,22 @@ func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
 	if token == "\x00" { // Ctrl on Windows conhost arrives as NUL
 		return nil
 	}
+	if m.popup != nil && m.popup.keyMenu != nil {
+		if cmd, done := m.keyMenuKey(token); done {
+			return cmd
+		}
+	}
 	return m.result(m.engine.Feed(m.mode, m.scopes(), token))
 }
 
 func (m *Model) result(r keymap.Result) tea.Cmd {
 	switch r.Kind {
 	case keymap.Run:
+		if p := m.popup; p != nil && p.keyMenu != nil {
+			if c, ok := m.registry.Get(keymap.Binding{Command: r.Command}.Name()); !ok || !c.Motion {
+				m.closePopup() // a listed key runs where the menu was opened
+			}
+		}
 		return m.execCall(r.Command, command.Call{Count: r.Count, Motion: r.Motion, Double: r.Double})
 	case keymap.Rejected:
 		m.setMsg(r.Text, true)
@@ -583,6 +605,7 @@ func (m *Model) result(r keymap.Result) tea.Cmd {
 			seq := m.seq
 			return m.clock.After(ambiguousTimeout, func(time.Time) tea.Msg { return timeoutMsg{seq} })
 		}
+		return m.armPrefix()
 	}
 	return nil
 }
@@ -607,6 +630,12 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 }
 
 func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
+	if m.promptHelp {
+		if cmd, done := m.helpKey(k); done {
+			return cmd
+		}
+		return m.edit(k)
+	}
 	if m.mode == keymap.Search {
 		if cmd, done := m.searchKey(k); done {
 			return cmd
@@ -628,7 +657,11 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 	before := m.line.Value()
 	var cmd tea.Cmd
 	m.line, cmd = m.line.Update(msg)
-	if m.mode == keymap.Search && m.line.Value() != before {
+	switch {
+	case m.line.Value() == before:
+	case m.promptHelp:
+		m.filterHelp(m.line.Value())
+	case m.mode == keymap.Search:
 		m.selected = false
 		m.liveSearch(m.line.Value())
 	}
@@ -637,7 +670,7 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 
 func (m *Model) leaveLine() {
 	m.mode = keymap.Normal
-	m.selected, m.compl = false, nil
+	m.selected, m.compl, m.promptHelp = false, nil, false
 	m.line.Reset()
 	m.line.Blur()
 }
@@ -645,6 +678,9 @@ func (m *Model) leaveLine() {
 // scopes is the scope chain for where the cursor is.
 func (m *Model) scopes() []string {
 	if m.popup != nil {
+		if m.popup.keyMenu != nil {
+			return m.popup.keyMenu
+		}
 		return []string{"popup", "global"}
 	}
 	if m.focus == queueWindow {
@@ -661,6 +697,8 @@ func (m *Model) scopes() []string {
 		return []string{"playlists", "containers", "global"}
 	case playlistTracks:
 		return []string{"playlist-tracks", "tracks", "global"}
+	case helpList:
+		return []string{"help", "global"}
 	case searchList:
 		v := m.top().search
 		if _, ok := v.track(m.top().cur); ok {
@@ -685,6 +723,8 @@ func (m *Model) rows(f *frame) int {
 	switch {
 	case f.kind == sectionList:
 		return len(sections)
+	case f.kind == helpList && f.help != nil:
+		return len(f.help.rows)
 	case lib == nil:
 		return 0
 	case f.kind == artistList:
@@ -740,6 +780,9 @@ func (m *Model) rowID(f *frame, i int) string {
 		return string(lib.PlaylistTracks(f.playlist)[i].ID)
 	case searchList:
 		return f.search.rowID(i)
+	case helpList:
+		r := f.help.rows[i]
+		return r.heading + r.key + " " + r.line
 	}
 	return ""
 }

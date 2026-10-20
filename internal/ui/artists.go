@@ -11,7 +11,7 @@ import (
 
 // sections are the library window's top-level entries, in the spec's
 // order; Home, Playlists, Search and Help come later.
-var sections = []section{{"Artists", artistList}, {"Albums", albumList}, {"Playlists", playlistList}, {"Search", searchList}}
+var sections = []section{{"Artists", artistList}, {"Albums", albumList}, {"Playlists", playlistList}, {"Search", searchList}, {"Help", helpList}}
 
 type section struct {
 	title string
@@ -115,6 +115,8 @@ func (m *Model) skipped(f *frame, i int) bool {
 		return i == m.artistRows(f.artist).heading()
 	case searchList:
 		return f.search != nil && f.search.row(i).heading
+	case helpList:
+		return f.help != nil && i < len(f.help.rows) && f.help.rows[i].heading != ""
 	}
 	return false
 }
@@ -139,6 +141,15 @@ func (m *Model) groups(f *frame) []int {
 		var gs []int
 		for i, r := range f.search.rows {
 			if r.heading {
+				gs = append(gs, i+1)
+			}
+		}
+		return gs
+	}
+	if f.kind == helpList && f.help != nil {
+		var gs []int
+		for i, r := range f.help.rows {
+			if r.heading != "" {
 				gs = append(gs, i+1)
 			}
 		}

@@ -1,0 +1,40 @@
+ Help                                                                     Queue (0)                                     
+ ── Everywhere ──                                                       │                                               
+ j          down               Move the cursor down.                    │ The queue is empty.                           
+ <Down>     down               Move the cursor down.                    │                                               
+ k          up                 Move the cursor up.                      │ Find something to play:                       
+ <Up>       up                 Move the cursor up.                      │   'b albums   j/k move                        
+ gg         first              Go to the first row, or to row N with a …│   <CR> open   h back                          
+ G          last               Go to the last row, or to row N with a c…│                                               
+ <C-d>      half-page-down     Move down half a page.                   │ On a track:                                   
+ <C-u>      half-page-up       Move up half a page.                     │   <CR> play it   A add to queue               
+ }          next-group         Go to the start of the next group, such …│                                               
+ {          prev-group         Go to the start of this group, or of the…│   :q quit                                     
+ ga         go-album           Go to the album of the track or album un…│                                               
+ gr         go-artist          Go to the artist of the track or album u…│                                               
+ h          back               Go back out to the list you came from.   │                                               
+ <Space>    play-pause         Pause or resume playback, or start the q…│                                               
+ >          next-track         Play the next track in the queue.        │                                               
+ <          prev-track         Play the previous track, or restart this…│                                               
+ .          seek +10           Seek by a number of seconds, such as see…│                                               
+ ,          seek -10           Seek by a number of seconds, such as see…│                                               
+ X          stop               Stop playback.                           │                                               
+ =          volume +5          Change the volume by points, such as vol…│                                               
+ +          volume +5          Change the volume by points, such as vol…│                                               
+ -          volume -5          Change the volume by points, such as vol…│                                               
+ S          shuffle            Shuffle the queue once, keeping the curr…│                                               
+ R          repeat             Cycle repeat: off, all (the queue again)…│                                               
+ i          info               Show details of the track, album or arti…│                                               
+ *          star               Star the track, album or artist under th…│                                               
+ u          undo               Undo the last change to the queue.       │                                               
+ <C-r>      redo               Redo the last undone change to the queue.│                                               
+ <Tab>      window             Move to the other window.                │                                               
+ <C-w>w     window             Move to the other window.                │                                               
+ 'a         artists            Show the Artists section.                │                                               
+ 'b         albums             Show the Albums section.                 │                                               
+ 'p         playlists          Show the Playlists section.              │                                               
+ 's         search             Search the library, or type the text to …│                                               
+ h back  <Tab> other window  ? keys                                                                                     
+ ■ nothing playing                                                                                                      
+                                                                                                                        
+                                                                                                                        

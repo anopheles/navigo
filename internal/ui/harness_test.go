@@ -220,6 +220,8 @@ func keyFor(tok string) tea.Key {
 		return tea.Key{Code: tea.KeyDown}
 	case "<lt>":
 		return tea.Key{Code: '<', Text: "<"}
+	case "<F1>":
+		return tea.Key{Code: tea.KeyF1}
 	}
 	if strings.HasPrefix(tok, "<C-") {
 		return tea.Key{Code: []rune(tok)[3], Mod: tea.ModCtrl}

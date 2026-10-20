@@ -1,0 +1,127 @@
+package ui
+
+import (
+	"strings"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/anopheles/navigo/internal/keymap"
+)
+
+// prefixDelay is how long a pure prefix waits before its menu shows
+// (keys.hint-delay).
+const prefixDelay = 500 * time.Millisecond
+
+// keyMenuRows is the most rows the key menu shows before it scrolls.
+const keyMenuRows = 24
+
+type prefixMsg struct{ seq int }
+
+// menuGroups sort the key menu's commands. Motions aren't listed: they
+// scroll the menu.
+var menuGroups = []struct {
+	title string
+	names []string
+}{
+	{"Play", []string{"play-now", "play-row", "play-pause", "next-track", "prev-track", "seek", "stop", "volume", "shuffle", "repeat"}},
+	{"Queue", []string{"add-end", "add-next", "delete", "remove", "yank", "paste-after", "paste-before", "move-down", "move-up", "undo", "redo", "playlist-undo", "playlist-delete"}},
+	{"Select", []string{"visual", "star"}},
+	{"Go", []string{"open", "back", "go-album", "go-artist", "window", "queue", "artists", "albums", "playlists", "search", "help-filter"}},
+	{"Help", []string{"info", "key-menu", "help", "messages", "cmdline", "quit"}},
+}
+
+// openKeyMenu is ?: the keys for what is under the cursor, by group.
+// While it is open, keys run in the scopes it was opened in.
+func (m *Model) openKeyMenu() {
+	under := m.scopes()
+	bs := m.engine.Table().Effective(keymap.Normal, under)
+	var lines []string
+	for _, g := range menuGroups {
+		var rows []string
+		for _, name := range g.names {
+			for _, b := range bs {
+				if b.Name() != name {
+					continue
+				}
+				c, ok := m.registry.Get(name)
+				if !ok {
+					continue
+				}
+				label := c.Label
+				if _, args, ok := strings.Cut(b.Command, " "); ok {
+					label += " " + args
+				}
+				rows = append(rows, "  "+keyStyle.Render(fit(keyLabel(b.Seq()), 8))+" "+fit(label, 18)+" "+dimStyle.Render(c.Desc))
+			}
+		}
+		if len(rows) > 0 {
+			lines = append(append(lines, accentStyle.Render(g.title)), rows...)
+		}
+	}
+	m.openPopup("Keys here", lines)
+	m.popup.keyMenu = under
+}
+
+// keyMenuKey handles the keys the key menu keeps for itself; it reports
+// whether it handled the key.
+func (m *Model) keyMenuKey(token string) (tea.Cmd, bool) {
+	if m.engine.Pending() != "" {
+		return nil, false
+	}
+	switch token {
+	case "q", "<Esc>":
+		m.closePopup()
+		return nil, true
+	case "<F1>":
+		m.closePopup()
+		return m.exec("help", 0), true
+	}
+	return nil, false
+}
+
+// prefixMenu draws what can follow the keys typed so far, above the
+// status line, once a pure prefix has waited prefixDelay.
+func (m *Model) prefixMenu() []string {
+	if !m.prefixShown || m.engine.Pending() == "" {
+		return nil
+	}
+	t := m.engine.Table()
+	type entry struct{ keys, name, args string }
+	var entries []entry
+	if op, opKeys := m.engine.Operator(); op != "" {
+		entries = append(entries, entry{strings.Join(opKeys, ""), "", "this row"})
+		for _, b := range t.Effective(keymap.Normal, m.scopes()) {
+			if c, ok := m.registry.Get(b.Name()); ok && c.Motion {
+				entries = append(entries, entry{b.Seq(), b.Name(), ""})
+			}
+		}
+	} else {
+		prefix := m.engine.PendingKeys()
+		for _, b := range t.Continuations(m.mode, m.scopes(), prefix) {
+			_, args, _ := strings.Cut(b.Command, " ")
+			entries = append(entries, entry{strings.Join(b.Keys[len(prefix):], ""), b.Name(), args})
+		}
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+	entries = entries[:min(len(entries), max(m.h-6, 1))]
+	out := []string{barStyle.Render(fit(dimStyle.Render(" after "+m.engine.Pending()+":"), m.w))}
+	for _, e := range entries {
+		label := e.args
+		if c, ok := m.registry.Get(e.name); ok {
+			label = strings.TrimSpace(c.Label + " " + e.args)
+		}
+		row := "   " + keyStyle.Render(fit(keyLabel(e.keys), 6)) + " " + label
+		out = append(out, barStyle.Render(fit(row, m.w)))
+	}
+	return out
+}
+
+// armPrefix shows the prefix menu if the keys are still pending after
+// prefixDelay.
+func (m *Model) armPrefix() tea.Cmd {
+	seq := m.seq
+	return m.clock.After(prefixDelay, func(time.Time) tea.Msg { return prefixMsg{seq} })
+}

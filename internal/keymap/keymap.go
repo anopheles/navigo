@@ -93,6 +93,52 @@ func (t *Table) Keys(mode Mode, scopes []string, name string) []string {
 	return out
 }
 
+// Effective lists the bindings in effect for a scope chain: for each key
+// sequence the narrowest scope's binding, narrow scopes first, each in
+// table order.
+func (t *Table) Effective(mode Mode, scopes []string) []Binding {
+	var out []Binding
+	seen := map[string]bool{}
+	for _, s := range scopes {
+		for _, b := range t.bindings[mode][s] {
+			if !seen[b.Seq()] {
+				seen[b.Seq()] = true
+				out = append(out, b)
+			}
+		}
+	}
+	return out
+}
+
+// Scopes lists the scopes with bindings in a mode, sorted.
+func (t *Table) Scopes(mode Mode) []string {
+	var out []string
+	for s, bs := range t.bindings[mode] {
+		if len(bs) > 0 {
+			out = append(out, s)
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+// Bindings returns one scope's own bindings in a mode, in table order.
+func (t *Table) Bindings(mode Mode, scope string) []Binding {
+	return slices.Clone(t.bindings[mode][scope])
+}
+
+// Continuations lists the bindings in effect that are longer than prefix
+// and start with it: what can follow keys typed so far.
+func (t *Table) Continuations(mode Mode, scopes []string, prefix []string) []Binding {
+	var out []Binding
+	for _, b := range t.Effective(mode, scopes) {
+		if len(b.Keys) > len(prefix) && sameStart(b.Keys, prefix) {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
 // KeysFor is like Keys, but for one exact command line, arguments and
 // all, so "seek +30" doesn't find the key bound to "seek +10".
 func (t *Table) KeysFor(mode Mode, scopes []string, line string) []string {
@@ -218,6 +264,19 @@ func (e *Engine) Pending() string {
 		p = `"` + p
 	}
 	return p
+}
+
+// PendingKeys are the keys typed toward a binding, without counts; for
+// prefix menus.
+func (e *Engine) PendingKeys() []string { return slices.Clone(e.keys) }
+
+// Operator is the command line of the operator waiting for its motion,
+// and its keys; "" when none waits.
+func (e *Engine) Operator() (string, []string) {
+	if e.op == nil {
+		return "", nil
+	}
+	return e.op.Command, e.op.Keys
 }
 
 // Reset drops anything pending.

@@ -190,7 +190,9 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
+		m.pop.dress = !(i == f.cur) && !m.inSelection(libraryWindow, i)
 		row := m.libraryRow(f, i, w)
+		m.pop.dress = false
 		if focused {
 			row = m.highlight(row)
 		}
@@ -266,6 +268,9 @@ func (m *Model) artistLine(a library.Artist, w int) string {
 }
 
 func (m *Model) albumLine(a library.Album, w int) string {
+	if m.dressed() {
+		return m.albumLineDressed(a, w)
+	}
 	year := ""
 	if a.Year > 0 {
 		year = fmt.Sprint(a.Year)
@@ -299,6 +304,9 @@ func (m *Model) trackLine(mark, num string, t library.Track, w int) string {
 	title := m.starred(string(t.ID), t.Title)
 	if w < 40 {
 		return fit(mark+title, w)
+	}
+	if m.dressed() {
+		return m.trackLineDressed(mark, num, t, w)
 	}
 	numW := max(len(num)+1, 3)
 	rest := w - lipgloss.Width(mark) - numW - 6
@@ -336,7 +344,12 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 				mark = "⏸ "
 			}
 		}
+		m.pop.dress = i != m.queueCur && !current && !m.inSelection(queueWindow, i)
 		line := m.trackLine(mark, fmt.Sprint(i+1), q[i].Track, w)
+		if m.pop.rows > 0 && m.pop.dress && row >= 0 && i < row {
+			line = dimStyle.Render(ansi.Strip(line)) // played
+		}
+		m.pop.dress = false
 		if focused {
 			line = m.highlight(line)
 		}
@@ -609,7 +622,7 @@ func (m *Model) nowPlaying() []string {
 	if dur > 0 {
 		fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
 	}
-	l2 := " " + progressBar(fill, pw) + times + " "
+	l2 := " " + m.progress(fill, pw) + times + " "
 	return []string{(l1), (fit(l2, m.w))}
 }
 

@@ -1,5 +1,5 @@
 .PHONY: help build install run test update-golden vet fmt gate e2e e2e-live \
-	fixtures-up fixtures-record fixtures-down
+	fixtures-up fixtures-record fixtures-down demo
 
 help:
 	@echo "build            build ./navigo"
@@ -15,6 +15,7 @@ help:
 	@echo "fixtures-up      generate the fixture library and start Navidrome"
 	@echo "fixtures-record  seed and record the fixtures"
 	@echo "fixtures-down    stop Navidrome and drop its data"
+	@echo "demo             record docs/media/demo.gif (Docker, ffmpeg)"
 
 build:
 	go build -o navigo ./cmd/navigo
@@ -55,3 +56,6 @@ fixtures-record:
 
 fixtures-down:
 	tools/fixtures.sh down
+
+demo:
+	tools/demo/demo.sh

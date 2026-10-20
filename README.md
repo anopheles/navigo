@@ -6,6 +6,10 @@ buffer (`dd`, `yy`, `p`, `V`, `u`), the library is cached locally so
 browsing and search work at once and offline, and playback goes through
 mpv, gaplessly.
 
+![navigo browsing albums, playing a track with its cover, seeking and finding](docs/media/demo.gif)
+
+*Recorded against a made-up library, with `make demo`; the covers are generated.*
+
 ## What you need
 
 - A Navidrome server, or another Subsonic server (API 1.16.1). navigo is

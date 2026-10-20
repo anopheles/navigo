@@ -72,3 +72,12 @@ tools/e2e/run.sh    # layer B against a throwaway Navidrome (needs Docker, ffmpe
 from `.env.e2e` (`NAVIGO_E2E_URL`, `NAVIGO_E2E_USER`,
 `NAVIGO_E2E_PASSWORD`). It plays tracks there, so they count as played
 for that account.
+
+## Recording the README demo
+
+`make demo` records `docs/media/demo.gif`: a throwaway Navidrome serves the
+synthetic fixture library with generated covers, and [VHS](https://github.com/charmbracelet/vhs)
+runs navigo against it in Docker (`tools/demo/`). It needs Docker, ffmpeg and
+Go. The script is `tools/demo/demo.tape`; change it when the interface
+changes and record again. Never record a real library: the repository is
+public.

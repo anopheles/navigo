@@ -501,7 +501,7 @@ func (m *Model) hintLine() string {
 func hint(key, label string) string { return keyStyle.Render(key) + " " + dimStyle.Render(label) }
 
 // indicators are the lasting states shown in the now-playing bar, most
-// important first: mpv problems, then offline, then syncing.
+// important first: mpv problems, then offline, then syncing, then ReplayGain.
 func (m *Model) indicators() []string {
 	var out []string
 	switch s := m.state; {
@@ -529,6 +529,9 @@ func (m *Model) indicators() []string {
 	}
 	if m.state.Sync.Running {
 		out = append(out, "⟳ syncing")
+	}
+	if rg := m.gainIndicator(); rg != "" {
+		out = append(out, rg)
 	}
 	return out
 }

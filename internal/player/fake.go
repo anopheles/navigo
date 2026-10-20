@@ -109,6 +109,10 @@ func (f *Fake) SetVolume(_ context.Context, percent int) error {
 	})
 }
 
+func (f *Fake) SetReplayGain(_ context.Context, g ReplayGain) error {
+	return f.do(fmt.Sprintf("SetReplayGain(%s, %g)", g.Mode, g.Preamp), func() {})
+}
+
 func (f *Fake) Stop(context.Context) error {
 	return f.do("Stop", func() {
 		if f.playing {

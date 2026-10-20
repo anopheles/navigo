@@ -75,6 +75,10 @@ func run() error {
 	mpv := player.NewMPV(player.MPVOptions{
 		Path: cfg.Player.MPVPath,
 		Args: cfg.Player.MPVArgs,
+		ReplayGain: player.ReplayGain{
+			Mode:   player.GainMode(cfg.Player.GainMode()),
+			Preamp: cfg.Player.ReplayGainPreamp,
+		},
 		StreamURL: func(id library.TrackID) string {
 			if c := client.Load(); c != nil {
 				return c.StreamURL(string(id))

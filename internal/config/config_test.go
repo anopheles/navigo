@@ -151,3 +151,47 @@ func TestParseMPVPath(t *testing.T) {
 		t.Errorf("mpv_path = %q, %v", c.Player.MPVPath, err)
 	}
 }
+
+func TestParseReplayGain(t *testing.T) {
+	c, err := Parse(nil)
+	if err != nil || c.Player.GainMode() != "track" || c.Player.ReplayGainPreamp != 0 {
+		t.Fatalf("defaults = %q, %v, %v", c.Player.GainMode(), c.Player.ReplayGainPreamp, err)
+	}
+	c, err = Parse(
+		[]byte("player:\n  mpv_path: /x/mpv\n  replaygain: album\n  replaygain_preamp: -3.5\n"),
+	)
+	if err != nil || c.Player.GainMode() != "album" || c.Player.ReplayGainPreamp != -3.5 ||
+		c.Player.MPVPath != "/x/mpv" || len(c.Player.Problems) != 0 {
+		t.Fatalf("set = %+v, %v", c.Player, err)
+	}
+}
+
+func TestParseReplayGainProblems(t *testing.T) {
+	for _, tc := range []struct {
+		yaml, msg string
+		line, col int
+	}{
+		{"player:\n  replaygain: loud\n", "player.replaygain: give off, track or album", 2, 15},
+		{"player:\n  replaygain_preamp: lots\n", "player.replaygain_preamp: give a number of dB", 2, 22},
+		{"player:\n  replaygain_preamp: 40\n", "player.replaygain_preamp: give dB from -15 to 15", 2, 22},
+		{"player:\n  replaygain_preamp: -16\n", "player.replaygain_preamp: give dB from -15 to 15", 2, 22},
+	} {
+		c, err := Parse([]byte(tc.yaml))
+		if err != nil {
+			t.Errorf("%q: %v", tc.yaml, err)
+			continue
+		}
+		if len(c.Player.Problems) != 1 {
+			t.Errorf("%q: problems = %v", tc.yaml, c.Player.Problems)
+			continue
+		}
+		p := c.Player.Problems[0]
+		if p.Msg != tc.msg || p.Line != tc.line || p.Col != tc.col {
+			t.Errorf("%q: problem = %+v, want %q at %d:%d", tc.yaml, p, tc.msg, tc.line, tc.col)
+		}
+		// The bad value leaves the defaults.
+		if c.Player.GainMode() != "track" || c.Player.ReplayGainPreamp != 0 {
+			t.Errorf("%q: kept %q, %v", tc.yaml, c.Player.GainMode(), c.Player.ReplayGainPreamp)
+		}
+	}
+}

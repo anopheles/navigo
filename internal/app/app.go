@@ -44,6 +44,12 @@ type State struct {
 	// loaded or the first sync is done.
 	Library *library.Snapshot
 	Sync    SyncStatus
+	// ReplayGain is the mode and preamp in use: the configured ones, or
+	// what :replaygain set for the session.
+	ReplayGain player.ReplayGain
+	// Gain holds the ReplayGain tags of the playing file, once the player
+	// has read them.
+	Gain player.GainTags
 	// Home is Home's album lists by kind, as the server last sent them.
 	Home map[string]AlbumList
 
@@ -440,6 +446,8 @@ func apply(s State, e Event) (State, []Effect) {
 
 	case ChangeVolume, Shuffle, CycleRepeat:
 		return s.applyPlayback(e)
+	case SetReplayGainMode, ConfigureReplayGain:
+		return s.applyReplayGain(e)
 	case Mix:
 		return s.applyMix(e)
 	case LoadAlbumList, AlbumListLoaded:
@@ -555,6 +563,10 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 		s.Player.Buffering = e.Buffering
 	case player.Volume:
 		s.Player.Volume = e.Percent
+	case player.GainTags:
+		if e.Entry == s.playing {
+			s.Gain = e
+		}
 	}
 	return s, nil
 }

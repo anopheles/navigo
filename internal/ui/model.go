@@ -210,7 +210,8 @@ func New(deps Deps) (*Model, error) {
 	}
 	m.keys = set
 	m.setTable(t)
-	m.showProblems(problems)
+	m.state.ReplayGain = gainOf(deps.Config.Player)
+	m.showProblems(append(problems, deps.Config.Player.Problems...))
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
 		m.setMsg(
@@ -589,6 +590,8 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		call = func() error { return p.Stop(ctx) }
 	case app.SetVolume:
 		call = func() error { return p.SetVolume(ctx, e.Percent) }
+	case app.SetReplayGain:
+		call = func() error { return p.SetReplayGain(ctx, e.ReplayGain) }
 	default:
 		return nil
 	}

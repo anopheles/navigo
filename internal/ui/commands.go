@@ -83,6 +83,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "reconnect", Label: "reconnect", Desc: "Try the server now instead of waiting for the next retry.", Run: func(m *Model, _ command.Call) error { m.event(app.Reconnect{}); return nil }},
 		{Name: "sync", Label: "sync", Desc: "Sync the whole library from the server.", Run: func(m *Model, _ command.Call) error { m.event(app.SyncNow{}); return nil }},
 		{Name: "volume", Args: volumeArgs, Label: "volume", Desc: "Change the volume by points, such as volume +5, or set it: volume 60.", Run: volume},
+		{Name: "replaygain", Args: replaygainArgs, Label: "ReplayGain mode", Desc: "Set the ReplayGain mode for this session: replaygain off|track|album; alone, move to the next one.", Run: replaygain, Complete: gainWords},
 		{Name: "mix", Label: "mix", Desc: "Replace the queue with 50 tracks from the whole library, or as many as a count says, leaning toward starred, well-rated tracks not played lately; u undoes it.", Run: func(m *Model, c command.Call) error { m.mix(c); return nil }},
 		{Name: "shuffle", Label: "shuffle", Desc: "Shuffle the queue once, keeping the current track first; u undoes it.", Run: func(m *Model, _ command.Call) error { m.event(app.Shuffle{Seed: m.seed()}); return nil }},
 		{Name: "repeat", Label: "repeat", Desc: "Cycle repeat: off, all (the queue again), one (the same track again).", Run: func(m *Model, _ command.Call) error { m.event(app.CycleRepeat{}); return nil }},

@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -44,6 +46,64 @@ type Player struct {
 	// --ao=null. navigo's own options come first, so these can override
 	// them, except the IPC ones navigo can't run without.
 	MPVArgs []string `yaml:"mpv_args"`
+	// ReplayGain is off, track or album, and ReplayGainPreamp is in dB;
+	// bad values are Problems and leave the defaults.
+	ReplayGain       string  `yaml:"-"`
+	ReplayGainPreamp float64 `yaml:"-"`
+	// Problems are what was wrong with the block's ReplayGain values.
+	Problems []Problem `yaml:"-"`
+}
+
+// GainMode is the ReplayGain mode, track unless set.
+func (p Player) GainMode() string {
+	if p.ReplayGain == "" {
+		return "track"
+	}
+	return p.ReplayGain
+}
+
+// maxPreamp is the largest preamp in dB, either way.
+const maxPreamp = 15
+
+// UnmarshalYAML reads the block node by node, so a bad ReplayGain value
+// is a Problem at its place and not an error.
+func (p *Player) UnmarshalYAML(n *yaml.Node) error {
+	type plain Player
+	if err := n.Decode((*plain)(p)); err != nil {
+		return err
+	}
+	for i := 0; i+1 < len(n.Content); i += 2 {
+		key, val := n.Content[i], n.Content[i+1]
+		bad := func(msg string) {
+			p.Problems = append(p.Problems, Problem{pos(val), msg})
+		}
+		switch key.Value {
+		case "replaygain":
+			switch val.Value {
+			case "off", "track", "album":
+				p.ReplayGain = val.Value
+			default:
+				bad("player.replaygain: give off, track or album")
+			}
+		case "replaygain_preamp":
+			v, err := strconv.ParseFloat(val.Value, 64)
+			switch {
+			case val.Kind != yaml.ScalarNode || err != nil || math.IsNaN(v):
+				bad("player.replaygain_preamp: give a number of dB")
+			case v < -maxPreamp || v > maxPreamp:
+				bad(
+					fmt.Sprintf(
+						"player.replaygain_preamp: give dB from -%d to %d",
+						maxPreamp,
+						maxPreamp,
+					),
+				)
+			default:
+				p.ReplayGainPreamp = v
+			}
+		}
+	}
+	return nil
 }
 
 // Path is where config.yaml lives: navigo/config.yaml under

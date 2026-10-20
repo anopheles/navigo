@@ -351,7 +351,7 @@ The `:` line has Tab completion for command names and arguments.
 - **Clipping and fallback** are mpv's defaults (the gain is capped at `1/peak` where a peak is known; untagged tracks play at their own level) and are not settings.
 - **Set** with `player.replaygain` and `player.replaygain_preamp`, or `:replaygain` for the session. A change is heard after about a second, once mpv's buffer drains, and the message confirms it at once.
 - **Volume** is separate: ReplayGain never changes it, and it can lift a track above unity.
-- **Shown** as a faint `RG track` or `RG album` in the now-playing bar when on, and the `i` popup shows the gain mpv reports, or "no replaygain tags".
+- **Shown** as a faint `RG track` or `RG album` in the now-playing bar when on, and the `i` popup shows the track and album gain the playing file is tagged with (mpv cannot report the gain it applies), or "no replaygain tags".
 - **mpv 0.38** is still the minimum.
 
 ## Offline cache and sync

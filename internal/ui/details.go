@@ -186,6 +186,9 @@ func (m *Model) info(command.Call) error {
 		}
 		add("Length", clock(t.Duration))
 		add("Played", times(t.PlayCount))
+		if np, _, ok := m.state.NowPlaying(); ok && np.ID == t.ID {
+			add("ReplayGain", m.gainText())
+		}
 	case library.AlbumGroup:
 		a, _ := lib.Album(library.AlbumID(it.id))
 		add("Artist", a.Artist)

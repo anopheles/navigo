@@ -406,3 +406,79 @@ func TestMPVCheckMediaControls(t *testing.T) {
 		t.Errorf("mpv 0.38 on Linux: %v", err)
 	}
 }
+
+func TestReplayGainArgs(t *testing.T) {
+	for _, tc := range []struct {
+		g    ReplayGain
+		want string
+	}{
+		{ReplayGain{}, ""},
+		{ReplayGain{Mode: GainOff}, "--replaygain=no --replaygain-preamp=0"},
+		{ReplayGain{Mode: GainTrack, Preamp: -3.5}, "--replaygain=track --replaygain-preamp=-3.5"},
+		{ReplayGain{Mode: GainAlbum, Preamp: 6}, "--replaygain=album --replaygain-preamp=6"},
+	} {
+		if got := strings.Join(tc.g.args(), " "); got != tc.want {
+			t.Errorf("%+v args = %q, want %q", tc.g, got, tc.want)
+		}
+	}
+}
+
+func TestGainFrom(t *testing.T) {
+	f := func(v float64) *float64 { return &v }
+	for _, tc := range []struct {
+		name         string
+		tags         map[string]string
+		track, album *float64
+	}{
+		{"none", map[string]string{"encoder": "x"}, nil, nil},
+		{"vorbis", map[string]string{"REPLAYGAIN_TRACK_GAIN": "-6.50 dB", "REPLAYGAIN_ALBUM_GAIN": "-7.1 dB"}, f(-6.5), f(-7.1)},
+		{"id3 case", map[string]string{"replaygain_track_gain": "+2.00 dB"}, f(2), nil},
+		{"opus r128", map[string]string{"R128_TRACK_GAIN": "-1280", "R128_ALBUM_GAIN": "0"}, f(0), f(5)},
+		{"unparsable", map[string]string{"REPLAYGAIN_TRACK_GAIN": "loud"}, nil, nil},
+	} {
+		track, album := gainFrom(tc.tags)
+		same := func(a, b *float64) bool { return a == nil && b == nil || a != nil && b != nil && *a == *b }
+		if !same(track, tc.track) || !same(album, tc.album) {
+			t.Errorf("%s: got %v, %v", tc.name, track, album)
+		}
+	}
+}
+
+func TestMPVReplayGain(t *testing.T) {
+	h := newMPV(t)
+	ctx := context.Background()
+	prop := func(name string, v any) {
+		t.Helper()
+		if err := h.m.process().Get(ctx, name, v); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Asked for before mpv runs, it is how mpv starts.
+	if err := h.m.SetReplayGain(ctx, ReplayGain{Mode: GainAlbum, Preamp: 3}); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.m.Play(ctx, Span{Current: entry(1, "30s")}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("entry 1 to start", started(1))
+	var mode any // mpv answers "no" as false
+	var preamp float64
+	prop("replaygain", &mode)
+	prop("replaygain-preamp", &preamp)
+	if mode != "album" || preamp != 3 {
+		t.Errorf("started with %q, %v", mode, preamp)
+	}
+	// Changed while playing, it applies without ending the track.
+	if err := h.m.SetReplayGain(ctx, ReplayGain{Mode: GainOff, Preamp: -2}); err != nil {
+		t.Fatal(err)
+	}
+	prop("replaygain", &mode)
+	prop("replaygain-preamp", &preamp)
+	if mode != false || preamp != -2 {
+		t.Errorf("changed to %q, %v", mode, preamp)
+	}
+	h.await("a tag-less file to report no gain", func(e Event) bool {
+		g, ok := e.(GainTags)
+		return ok && g.Entry == 1 && g.Track == nil && g.Album == nil
+	})
+}

@@ -37,6 +37,9 @@ type MPVOptions struct {
 	// StreamURL signs a stream URL for a track, with a fresh salt each
 	// call. It is called whenever an entry is loaded into mpv.
 	StreamURL func(library.TrackID) string
+	// ReplayGain is the mode and preamp mpv starts with; the zero value
+	// leaves mpv's own.
+	ReplayGain ReplayGain
 }
 
 // Observer IDs for the properties MPV follows.
@@ -46,6 +49,7 @@ const (
 	obsDuration
 	obsVolume
 	obsCoreIdle
+	obsMetadata
 )
 
 var observed = map[int64]string{
@@ -54,6 +58,7 @@ var observed = map[int64]string{
 	obsDuration: "duration",
 	obsVolume:   "volume",
 	obsCoreIdle: "core-idle",
+	obsMetadata: "metadata",
 }
 
 // MPV is the Player backed by an mpv process. mpv is started on the first
@@ -85,6 +90,8 @@ type MPV struct {
 	// wantVolume is the volume last asked for, set on every mpv started,
 	// or -1 to leave mpv's own.
 	wantVolume int
+	// rg is the ReplayGain last asked for, passed to every mpv started.
+	rg ReplayGain
 }
 
 var _ Player = (*MPV)(nil)
@@ -100,6 +107,7 @@ func NewMPV(opts MPVOptions) *MPV {
 		volume:  -1,
 
 		wantVolume: -1,
+		rg:         opts.ReplayGain,
 	}
 }
 
@@ -244,6 +252,44 @@ func (m *MPV) Check(ctx context.Context) error {
 var mediaByMPV = runtime.GOOS == "darwin" || runtime.GOOS == "windows"
 
 // ensure returns the running mpv, starting it if needed.
+// SetReplayGain applies the mode and preamp now if mpv runs, and to any
+// mpv started later. mpv recomputes the gain of the current and queued
+// tracks without restarting or interrupting them.
+func (m *MPV) SetReplayGain(ctx context.Context, g ReplayGain) error {
+	m.mu.Lock()
+	m.rg = g
+	m.mu.Unlock()
+	p := m.process()
+	if p == nil {
+		return nil
+	}
+	if err := p.Set(ctx, "replaygain", g.mpvMode()); err != nil {
+		return err
+	}
+	return p.Set(ctx, "replaygain-preamp", g.Preamp)
+}
+
+// mpvMode is the value of mpv's replaygain option.
+func (g ReplayGain) mpvMode() string {
+	switch g.Mode {
+	case GainTrack, GainAlbum:
+		return string(g.Mode)
+	}
+	return "no"
+}
+
+// args are the mpv options for g, none for the zero value. They come
+// before player.mpv_args, which can override them.
+func (g ReplayGain) args() []string {
+	if g.Mode == "" {
+		return nil
+	}
+	return []string{
+		"--replaygain=" + g.mpvMode(),
+		"--replaygain-preamp=" + strconv.FormatFloat(g.Preamp, 'f', -1, 64),
+	}
+}
+
 func (m *MPV) ensure(ctx context.Context) (*mpv.Process, error) {
 	if p := m.process(); p != nil {
 		return p, nil
@@ -253,7 +299,10 @@ func (m *MPV) ensure(ctx context.Context) (*mpv.Process, error) {
 		return nil, errors.New("player: closed")
 	default:
 	}
-	p, err := mpv.Start(ctx, mpv.Options{Path: m.opts.Path, Args: m.opts.Args})
+	m.mu.Lock()
+	args := append(m.rg.args(), m.opts.Args...)
+	m.mu.Unlock()
+	p, err := mpv.Start(ctx, mpv.Options{Path: m.opts.Path, Args: args})
 	if err != nil {
 		return nil, err
 	}
@@ -516,6 +565,10 @@ func (m *MPV) settle() {
 }
 
 func (m *MPV) property(ev mpv.Event) {
+	if ev.ID == obsMetadata {
+		m.metadata(ev)
+		return
+	}
 	var num float64
 	var flag bool
 	switch ev.ID {
@@ -579,4 +632,58 @@ func (m *MPV) emit(e Event) {
 
 func seconds(s float64) time.Duration {
 	return time.Duration(s * float64(time.Second))
+}
+
+// metadata reports the ReplayGain tags of the file that just loaded, or
+// that it has none.
+func (m *MPV) metadata(ev mpv.Event) {
+	var tags map[string]string
+	if ev.Data != nil {
+		_ = json.Unmarshal(ev.Data, &tags)
+	}
+	m.mu.Lock()
+	e, ok := m.entries[m.current]
+	ok = ok && m.current != 0
+	m.mu.Unlock()
+	if !ok {
+		return
+	}
+	g := GainTags{Entry: e.ID}
+	g.Track, g.Album = gainFrom(tags)
+	m.emit(g)
+}
+
+// gainFrom reads the track and album gain, in dB, from a file's tags.
+// Tag names differ in case between formats. Opus stores R128_*_GAIN as
+// Q7.8 fixed point relative to -23 LUFS, which is 5 dB louder than the
+// ReplayGain reference.
+func gainFrom(tags map[string]string) (track, album *float64) {
+	lower := make(map[string]string, len(tags))
+	for k, v := range tags {
+		lower[strings.ToLower(k)] = v
+	}
+	one := func(rg, r128 string) *float64 {
+		if v, ok := lower[rg]; ok {
+			if f, err := strconv.ParseFloat(
+				strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(v), "dB")),
+				64,
+			); err == nil {
+				return &f
+			}
+		}
+		if v, ok := lower[r128]; ok {
+			if q, err := strconv.Atoi(strings.TrimSpace(v)); err == nil {
+				f := float64(q)/256 + 5
+				return &f
+			}
+		}
+		return nil
+	}
+	return one(
+			"replaygain_track_gain",
+			"r128_track_gain",
+		), one(
+			"replaygain_album_gain",
+			"r128_album_gain",
+		)
 }

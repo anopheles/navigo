@@ -9,6 +9,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
 	"github.com/anopheles/navigo/internal/config"
 	"github.com/anopheles/navigo/internal/keymap"
@@ -262,7 +263,7 @@ func mapKeys[V any](m map[string]V) func(func(string) bool) {
 func CheckConfig(cfg config.Config, path string) ([]string, error) {
 	_, _, problems, err := buildKeys(cfg.Keys, commands())
 	var out []string
-	for _, p := range problems {
+	for _, p := range append(problems, cfg.Player.Problems...) {
 		out = append(out, p.Format(path))
 	}
 	return out, err
@@ -281,7 +282,7 @@ func (m *Model) showProblems(problems []config.Problem) {
 		lines,
 		"",
 		dimStyle.Render(
-			"These bindings were skipped; the rest apply. :reload-config reads the file again.",
+			"These settings were skipped; the rest apply. :reload-config reads the file again.",
 		),
 	)
 	m.openPopup("config.yaml has problems", lines)
@@ -374,9 +375,11 @@ func (m *Model) reloadConfig(command.Call) error {
 		return fmt.Errorf("%s: %w; the old bindings stay", m.deps.ConfigPath, err)
 	}
 	m.deps.Config.Keys, m.keys = cfg.Keys, set
+	m.deps.Config.Player = cfg.Player
 	m.setTable(t)
+	m.event(app.ConfigureReplayGain{ReplayGain: gainOf(cfg.Player)})
 	m.setMsg("config reloaded", false)
-	m.showProblems(problems)
+	m.showProblems(append(problems, cfg.Player.Problems...))
 	return nil
 }
 

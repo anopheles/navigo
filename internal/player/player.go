@@ -55,11 +55,31 @@ type Player interface {
 	SeekBy(ctx context.Context, d time.Duration) error
 	// SetVolume sets the volume in percent, 0 to 100.
 	SetVolume(ctx context.Context, percent int) error
+	// SetReplayGain sets the ReplayGain mode and preamp now, on the
+	// current and the queued tracks, and on any player started later.
+	SetReplayGain(ctx context.Context, g ReplayGain) error
 	// Stop ends playback and empties the span.
 	Stop(ctx context.Context) error
 	// Events delivers what happened, in order. It is closed by Close.
 	Events() <-chan Event
 	Close() error
+}
+
+// GainMode is how ReplayGain levels the loudness: not at all, per track,
+// or per album (which falls back to the track's gain when an album gain
+// is missing).
+type GainMode string
+
+const (
+	GainOff   GainMode = "off"
+	GainTrack GainMode = "track"
+	GainAlbum GainMode = "album"
+)
+
+// ReplayGain is the mode and the preamp in dB that the player applies.
+type ReplayGain struct {
+	Mode   GainMode
+	Preamp float64
 }
 
 // Event is one of the event types below.
@@ -105,6 +125,13 @@ type Buffering struct{ Buffering bool }
 // Volume changed, in percent.
 type Volume struct{ Percent int }
 
+// GainTags are the ReplayGain tags found in the playing entry's file, in
+// dB. A tag the file lacks is nil; both nil means no ReplayGain data.
+type GainTags struct {
+	Entry        EntryID
+	Track, Album *float64
+}
+
 // Died: the player stopped working, such as mpv exiting. The span is
 // gone; the next Play starts over.
 type Died struct{ Err error }
@@ -115,4 +142,5 @@ func (Position) isEvent()     {}
 func (Paused) isEvent()       {}
 func (Buffering) isEvent()    {}
 func (Volume) isEvent()       {}
+func (GainTags) isEvent()     {}
 func (Died) isEvent()         {}

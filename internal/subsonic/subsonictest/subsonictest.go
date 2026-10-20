@@ -42,9 +42,10 @@ var fixtures embed.FS
 // authParams are left out of fixture names.
 var authParams = []string{"u", "t", "s", "p", "v", "c", "f", "apiKey"}
 
-// ignoresParams are write endpoints whose response is the same plain "ok"
-// whatever they are called with; check their parameters with Requests.
-var ignoresParams = []string{"scrobble", "star", "unstar"}
+// ignoresParams are write endpoints replayed the same whatever they are
+// called with: a plain "ok", or for createPlaylist the playlist the
+// recording made. Check their parameters with Requests.
+var ignoresParams = []string{"scrobble", "star", "unstar", "createPlaylist", "updatePlaylist", "deletePlaylist"}
 
 // FixtureName is the testdata file name a request is replayed from:
 // "getAlbum.id=xyz.json", or "getArtists.json" without parameters.

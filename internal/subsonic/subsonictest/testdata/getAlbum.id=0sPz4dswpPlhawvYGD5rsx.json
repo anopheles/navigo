@@ -10,10 +10,9 @@
       "name": "夜明け",
       "artist": "森の音",
       "artistId": "6MLPuYszTGDyqez6E6n9uf",
-      "coverArt": "al-0sPz4dswpPlhawvYGD5rsx",
       "songCount": 3,
       "duration": 565,
-      "created": "2026-10-20T08:43:15.36459882Z",
+      "created": "2026-10-20T09:29:06.690530064Z",
       "year": 2017,
       "genre": "Ambient",
       "userRating": 0,
@@ -42,7 +41,7 @@
       "version": "",
       "song": [
         {
-          "id": "3xP8Xw4ZX74d5Y8ziHnws3",
+          "id": "002JcAFDmMujiwOSDOqhTB",
           "parent": "0sPz4dswpPlhawvYGD5rsx",
           "isDir": false,
           "title": "朝霧",
@@ -59,7 +58,7 @@
           "bitRate": 16,
           "path": "森の音/夜明け/01-01 - 朝霧.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.965290105Z",
+          "created": "2026-10-20T09:29:21.476696984Z",
           "albumId": "0sPz4dswpPlhawvYGD5rsx",
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "type": "music",
@@ -101,7 +100,7 @@
           "movements": []
         },
         {
-          "id": "15Z9UsdgZF82bmaaBcawCr",
+          "id": "5JTt7j3gPHZJhiUkVIrHw8",
           "parent": "0sPz4dswpPlhawvYGD5rsx",
           "isDir": false,
           "title": "川の歌",
@@ -118,7 +117,7 @@
           "bitRate": 16,
           "path": "森の音/夜明け/01-02 - 川の歌.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.960166382Z",
+          "created": "2026-10-20T09:29:21.473217633Z",
           "albumId": "0sPz4dswpPlhawvYGD5rsx",
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "type": "music",
@@ -160,7 +159,7 @@
           "movements": []
         },
         {
-          "id": "58yyIIc6lKqeeXQxppCNoF",
+          "id": "4WgNV9glZqZWRziVmnCYrx",
           "parent": "0sPz4dswpPlhawvYGD5rsx",
           "isDir": false,
           "title": "夜明け前",
@@ -177,7 +176,7 @@
           "bitRate": 16,
           "path": "森の音/夜明け/01-03 - 夜明け前.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.962911537Z",
+          "created": "2026-10-20T09:29:21.47499214Z",
           "albumId": "0sPz4dswpPlhawvYGD5rsx",
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "type": "music",

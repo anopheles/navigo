@@ -355,6 +355,8 @@ func Apply(s State, e Event) (State, []Effect) {
 
 	case Yank, Remove, Paste, Move:
 		return s.applyEdit(e)
+	case PlaylistRemove, PlaylistInsert, PlaylistMove, PlaylistCreate, PlaylistDelete, PlaylistWritten:
+		return s.applyPlaylist(e)
 	case FromPlayer:
 		return s.fromPlayer(e.Event)
 	case Unreachable, StartedOffline, RetryNow, Reconnect, BufferingStalled, ProbeResult:

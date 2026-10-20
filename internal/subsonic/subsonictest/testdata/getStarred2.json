@@ -10,16 +10,14 @@
         {
           "id": "2dcbXjSrK8FSXPAQRDCG1H",
           "name": "The Quiet Ones",
-          "coverArt": "ar-2dcbXjSrK8FSXPAQRDCG1H",
           "albumCount": 2,
-          "starred": "2026-10-20T08:43:34.253050914Z",
-          "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJkY2JYalNySzhGU1hQQVFSRENHMUgiLCJpc3MiOiJORCJ9.y-J35FxI4BBNzqcCMOT21bZ8plOvbf0J1dIcKspea5Q?size=600",
+          "starred": "2026-10-20T09:29:23.958848822Z",
           "musicBrainzId": "",
           "sortName": "quiet ones",
           "roles": [
+            "albumartist",
             "artist",
-            "maincredit",
-            "albumartist"
+            "maincredit"
           ]
         }
       ],
@@ -29,11 +27,10 @@
           "name": "Blue Hour",
           "artist": "Aurora Lane",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
-          "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
           "songCount": 6,
           "duration": 757,
-          "created": "2026-10-20T08:43:14.584608535Z",
-          "starred": "2026-10-20T08:43:34.251886283Z",
+          "created": "2026-10-20T09:29:06.064539579Z",
+          "starred": "2026-10-20T09:29:23.958142054Z",
           "year": 2021,
           "genre": "Dream Pop",
           "userRating": 0,
@@ -64,7 +61,7 @@
       ],
       "song": [
         {
-          "id": "4m3U6UzJzPGgh1VfogCkQK",
+          "id": "2xlX7kSHMHe0H5QybskBZs",
           "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
           "isDir": false,
           "title": "Night Drive",
@@ -77,12 +74,12 @@
           "size": 194561,
           "contentType": "audio/mpeg",
           "suffix": "mp3",
-          "starred": "2026-10-20T08:43:34.250199873Z",
+          "starred": "2026-10-20T09:29:23.956940164Z",
           "duration": 97,
           "bitRate": 16,
           "path": "Various Artists/Night Drive Vol. 1/01-03 - Night Drive.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.913084269Z",
+          "created": "2026-10-20T09:29:21.433640645Z",
           "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
           "artistId": "77xJO0lZ9YMevx8NMOguzQ",
           "type": "music",
@@ -124,7 +121,7 @@
           "movements": []
         },
         {
-          "id": "3Govtf2kA2s6MyQEwX3E1G",
+          "id": "2juTBRjgBSUGdulmgDlImA",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Blue Again",
@@ -137,12 +134,12 @@
           "size": 284485,
           "contentType": "audio/mpeg",
           "suffix": "mp3",
-          "starred": "2026-10-20T08:43:34.247355979Z",
+          "starred": "2026-10-20T09:29:23.955101087Z",
           "duration": 142,
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-06 - Blue Again.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.881064429Z",
+          "created": "2026-10-20T09:29:21.404133096Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",

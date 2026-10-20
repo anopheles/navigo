@@ -10,10 +10,9 @@
       "name": "Blue",
       "artist": "Aurora Lane",
       "artistId": "1MNu0aqmjGxOZOiezuZPxB",
-      "coverArt": "al-3ZJQB487hjgDRlECI70I0Z",
       "songCount": 8,
       "duration": 1180,
-      "created": "2026-10-20T08:43:14.565608772Z",
+      "created": "2026-10-20T09:29:06.040539944Z",
       "year": 2019,
       "genre": "Dream Pop",
       "userRating": 0,
@@ -42,7 +41,7 @@
       "version": "",
       "song": [
         {
-          "id": "6ybYBQmmmC1MVRcqoSdhLI",
+          "id": "11ArqWQhG0aHwFmDdX6sOB",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Tidewater",
@@ -59,7 +58,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-01 - Tidewater.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.892219603Z",
+          "created": "2026-10-20T09:29:21.412636409Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -101,7 +100,7 @@
           "movements": []
         },
         {
-          "id": "3mYBzk3EXlTJoLyMOkQkpg",
+          "id": "7dWdYf10vxnFswNrQ9wpwe",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Blue",
@@ -118,7 +117,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-02 - Blue.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.894349116Z",
+          "created": "2026-10-20T09:29:21.414515819Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -160,7 +159,7 @@
           "movements": []
         },
         {
-          "id": "598jEqwmuiA9HWcnflfQZk",
+          "id": "2Na8B1drTFNbqgHFih4WW9",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Paper Lanterns",
@@ -177,7 +176,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-03 - Paper Lanterns.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.870050114Z",
+          "created": "2026-10-20T09:29:21.416526288Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -219,7 +218,7 @@
           "movements": []
         },
         {
-          "id": "1lbcK4HFcIdeQX0Mo1ZgsD",
+          "id": "5AQPGMYSrYGETBcyryc0Z9",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Slow Orbit",
@@ -236,7 +235,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-04 - Slow Orbit.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.875009301Z",
+          "created": "2026-10-20T09:29:21.41992789Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -278,7 +277,7 @@
           "movements": []
         },
         {
-          "id": "699W3gEgW8SQemq5YrmNBb",
+          "id": "24XULBgw1kj0ad0Oqez7Rb",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Harbour Lights",
@@ -295,7 +294,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-05 - Harbour Lights.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.878358032Z",
+          "created": "2026-10-20T09:29:21.399802482Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -337,7 +336,7 @@
           "movements": []
         },
         {
-          "id": "3Govtf2kA2s6MyQEwX3E1G",
+          "id": "2juTBRjgBSUGdulmgDlImA",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Blue Again",
@@ -350,12 +349,12 @@
           "size": 284485,
           "contentType": "audio/mpeg",
           "suffix": "mp3",
-          "starred": "2026-10-20T08:43:34.247355979Z",
+          "starred": "2026-10-20T09:29:23.955101087Z",
           "duration": 142,
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-06 - Blue Again.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.881064429Z",
+          "created": "2026-10-20T09:29:21.404133096Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -397,7 +396,7 @@
           "movements": []
         },
         {
-          "id": "0VjEGnbau3uR77g3p1cKW5",
+          "id": "6PNpa2zjYukGg0RXDMHoxh",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Glass Garden",
@@ -414,7 +413,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-07 - Glass Garden.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.885596883Z",
+          "created": "2026-10-20T09:29:21.407213342Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -456,7 +455,7 @@
           "movements": []
         },
         {
-          "id": "4xdcGuChQpmF5Nh1TTtkIj",
+          "id": "5cORhbEKTJkoQlQNk2mzkY",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Last Ferry",
@@ -473,7 +472,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-08 - Last Ferry.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.888691015Z",
+          "created": "2026-10-20T09:29:21.409383024Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",

@@ -93,6 +93,9 @@ type popup struct {
 	off   int
 	sel   int
 	pick  func(int) error
+	// yes makes it a Confirmation: y runs it, n or <Esc> doesn't. These
+	// keys are fixed, not bindings.
+	yes func()
 }
 
 func (m *Model) openPopup(title string, lines []string) {
@@ -104,6 +107,30 @@ func (m *Model) openPopup(title string, lines []string) {
 func (m *Model) openChoice(title string, lines []string, pick func(int) error) {
 	m.openPopup(title, lines)
 	m.popup.pick = pick
+}
+
+// confirm asks a y/n question before a change on the server.
+func (m *Model) confirm(question string, yes func()) {
+	m.openPopup(question, []string{hint("y", "yes") + "   " + hint("n", "no")})
+	m.popup.yes = yes
+}
+
+// confirmKey handles a key while a Confirmation is open.
+func (m *Model) confirmKey(k tea.KeyPressMsg) tea.Cmd {
+	p := m.popup
+	switch k.String() {
+	case "y", "Y":
+		m.closePopup()
+		m.pendingCmd = nil
+		p.yes()
+		cmd := m.pendingCmd
+		m.pendingCmd = nil
+		return cmd
+	case "n", "N", "esc", "q", "ctrl+c":
+		m.closePopup()
+		m.setMsg("nothing changed", false)
+	}
+	return nil
 }
 
 // choose picks the choice under the popup's cursor and closes it.

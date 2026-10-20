@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -257,5 +258,38 @@ func TestDefaultTimeout(t *testing.T) {
 	start := time.Now()
 	if err := c.Ping(ctx); !IsUnreachable(err) || time.Since(start) > 2*time.Second {
 		t.Errorf("Ping with a 200ms deadline: %v after %v", err, time.Since(start))
+	}
+}
+
+func TestPlaylistWrites(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	id, err := c.CreatePlaylist(ctx, "Rock", "", []string{"a", "b"})
+	if err != nil || id == "" {
+		t.Fatalf("CreatePlaylist = %q, %v", id, err)
+	}
+	if id, err := c.CreatePlaylist(ctx, "", "pl1", []string{"b", "a"}); err != nil || id != "pl1" {
+		t.Errorf("replacing = %q, %v", id, err)
+	}
+	if err := c.UpdatePlaylist(ctx, "pl1", []string{"c"}, []int{0, 2}); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.DeletePlaylist(ctx, "pl1"); err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, r := range srv.Requests() {
+		if r.Endpoint != "ping" && r.Endpoint != "getOpenSubsonicExtensions" {
+			got = append(got, r.Endpoint+" "+r.Params.Encode())
+		}
+	}
+	want := []string{
+		"createPlaylist name=Rock&songId=a&songId=b",
+		"createPlaylist playlistId=pl1&songId=b&songId=a",
+		"updatePlaylist playlistId=pl1&songIdToAdd=c&songIndexToRemove=0&songIndexToRemove=2",
+		"deletePlaylist id=pl1",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("requests =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }

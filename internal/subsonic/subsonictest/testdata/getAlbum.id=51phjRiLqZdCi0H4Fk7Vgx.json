@@ -10,10 +10,9 @@
       "name": "Static Bloom",
       "artist": "The Quiet Ones",
       "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
-      "coverArt": "al-51phjRiLqZdCi0H4Fk7Vgx",
       "songCount": 7,
       "duration": 788,
-      "created": "2026-10-20T08:43:15.074602432Z",
+      "created": "2026-10-20T09:29:06.395534548Z",
       "year": 2018,
       "genre": "Indie",
       "userRating": 0,
@@ -42,7 +41,7 @@
       "version": "",
       "song": [
         {
-          "id": "4RGwcgMZx0la1I17d2MTjL",
+          "id": "74Y9HOr3P8vZU600s1Ejg9",
           "parent": "51phjRiLqZdCi0H4Fk7Vgx",
           "isDir": false,
           "title": "Static Bloom",
@@ -59,7 +58,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Static Bloom/01-01 - Static Bloom.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.852625403Z",
+          "created": "2026-10-20T09:29:21.370795788Z",
           "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -101,7 +100,7 @@
           "movements": []
         },
         {
-          "id": "4hG70RX0qaIfA4EbXoZX0o",
+          "id": "2Vjw0lFNCNiLgHqUoSMqta",
           "parent": "51phjRiLqZdCi0H4Fk7Vgx",
           "isDir": false,
           "title": "Fieldnotes",
@@ -118,7 +117,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Static Bloom/01-02 - Fieldnotes.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.85554921Z",
+          "created": "2026-10-20T09:29:21.373718765Z",
           "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -160,7 +159,7 @@
           "movements": []
         },
         {
-          "id": "5gJCkLsWPZmKYmOSf0CgNC",
+          "id": "6xAXb4RyEGILOd4gHVmEM1",
           "parent": "51phjRiLqZdCi0H4Fk7Vgx",
           "isDir": false,
           "title": "Small Hours",
@@ -177,7 +176,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Static Bloom/01-03 - Small Hours.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.832014596Z",
+          "created": "2026-10-20T09:29:21.375741095Z",
           "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -219,7 +218,7 @@
           "movements": []
         },
         {
-          "id": "0vxXcf8CrJldvRsu52B9VY",
+          "id": "6Au7l1OWrDeLlJHGwt27re",
           "parent": "51phjRiLqZdCi0H4Fk7Vgx",
           "isDir": false,
           "title": "Copper Wire",
@@ -236,7 +235,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Static Bloom/01-04 - Copper Wire.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.83661161Z",
+          "created": "2026-10-20T09:29:21.377496217Z",
           "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -278,7 +277,7 @@
           "movements": []
         },
         {
-          "id": "1jnSwHpz80z51dXSTnaEWt",
+          "id": "3HVF1gjcq0UJWs5FPUmLrt",
           "parent": "51phjRiLqZdCi0H4Fk7Vgx",
           "isDir": false,
           "title": "Overpass",
@@ -295,7 +294,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Static Bloom/01-05 - Overpass.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.840112102Z",
+          "created": "2026-10-20T09:29:21.380961096Z",
           "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -337,7 +336,7 @@
           "movements": []
         },
         {
-          "id": "30GtdA7qElus93XZ6BKKpg",
+          "id": "4EnTLP9uPUejYOm9D1veUG",
           "parent": "51phjRiLqZdCi0H4Fk7Vgx",
           "isDir": false,
           "title": "Weathervane",
@@ -354,7 +353,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Static Bloom/01-06 - Weathervane.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.843988973Z",
+          "created": "2026-10-20T09:29:21.383620514Z",
           "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -396,7 +395,7 @@
           "movements": []
         },
         {
-          "id": "0t5jJ7gWqvdVCMGVO4HEmq",
+          "id": "1p2RvQ6YR2hXolqWRmZP3v",
           "parent": "51phjRiLqZdCi0H4Fk7Vgx",
           "isDir": false,
           "title": "Coda",
@@ -413,7 +412,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Static Bloom/01-07 - Coda.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.848107858Z",
+          "created": "2026-10-20T09:29:21.385955287Z",
           "albumId": "51phjRiLqZdCi0H4Fk7Vgx",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",

@@ -197,22 +197,52 @@ func (s *Snapshot) ArtistAlbums(id ArtistID) (own, appearsOn []Album) {
 // their album artist.
 func (s *Snapshot) AppearsOn(id ArtistID) int { return len(s.appearsOn[id]) }
 
-// PlaylistTracks returns a playlist's tracks in order, skipping any the
-// library no longer has.
-func (s *Snapshot) PlaylistTracks(id PlaylistID) []Track {
-	for _, p := range s.Playlists {
-		if p.ID != id {
-			continue
-		}
-		out := make([]Track, 0, len(p.Tracks))
-		for _, t := range p.Tracks {
-			if tr, ok := s.Track(t); ok {
-				out = append(out, tr)
-			}
-		}
-		return out
+// Playlist returns a playlist by ID.
+func (s *Snapshot) Playlist(id PlaylistID) (Playlist, bool) {
+	i := slices.IndexFunc(s.Playlists, func(p Playlist) bool { return p.ID == id })
+	if i < 0 {
+		return Playlist{}, false
 	}
-	return nil
+	return s.Playlists[i], true
+}
+
+// PlaylistTracks returns a playlist's tracks in order, one per entry, so
+// row i is the server's index i. A track the library no longer has is a
+// placeholder titled "(not in the library)".
+func (s *Snapshot) PlaylistTracks(id PlaylistID) []Track {
+	p, ok := s.Playlist(id)
+	if !ok {
+		return nil
+	}
+	out := make([]Track, 0, len(p.Tracks))
+	for _, t := range p.Tracks {
+		tr, ok := s.Track(t)
+		if !ok {
+			tr = Track{ID: t, Title: "(not in the library)"}
+		}
+		out = append(out, tr)
+	}
+	return out
+}
+
+// WithPlaylist returns a copy with p added, or replacing the playlist
+// with its ID, as after an edit on the server.
+func (s *Snapshot) WithPlaylist(p Playlist) *Snapshot {
+	n := *s
+	n.Playlists = slices.Clone(s.Playlists)
+	if i := slices.IndexFunc(n.Playlists, func(o Playlist) bool { return o.ID == p.ID }); i >= 0 {
+		n.Playlists[i] = p
+	} else {
+		n.Playlists = append(n.Playlists, p)
+	}
+	return &n
+}
+
+// WithoutPlaylist returns a copy without a playlist.
+func (s *Snapshot) WithoutPlaylist(id PlaylistID) *Snapshot {
+	n := *s
+	n.Playlists = slices.DeleteFunc(slices.Clone(s.Playlists), func(p Playlist) bool { return p.ID == id })
+	return &n
 }
 
 // IsStarred reports whether an artist, album or track ID is starred.

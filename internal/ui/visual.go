@@ -125,6 +125,10 @@ func (m *Model) rowTracks(f *frame, i int) (tracks []library.Track, artist bool)
 		}
 	case albumTracks:
 		return lib.AlbumTracks(f.album)[i : i+1], false
+	case playlistList:
+		return lib.PlaylistTracks(lib.Playlists[i].ID), false
+	case playlistTracks:
+		return lib.PlaylistTracks(f.playlist)[i : i+1], false
 	case searchList:
 		v := f.search
 		if _, ok := v.artist(i); ok {
@@ -188,10 +192,19 @@ func (m *Model) yank(c command.Call) error {
 	return nil
 }
 
-var errQueueOnly = errors.New("only the queue can be edited here · y yanks")
+var errQueueOnly = errors.New("only the queue and playlists can be edited · y yanks")
 
-// remove is d and x: queue rows go into the register.
+// onPlaylist reports whether the cursor is in a playlist's tracks.
+func (m *Model) onPlaylist() bool {
+	return m.focus == libraryWindow && m.top().kind == playlistTracks
+}
+
+// remove is d and x: queue rows go into the register, and so do playlist
+// rows, once the removal is confirmed.
 func (m *Model) remove(c command.Call) error {
+	if m.onPlaylist() {
+		return m.removeFromPlaylist(c)
+	}
 	if m.focus != queueWindow {
 		m.endVisual()
 		return errQueueOnly
@@ -203,8 +216,12 @@ func (m *Model) remove(c command.Call) error {
 	return nil
 }
 
-// paste is p (after) and P (before the cursor row in the queue).
+// paste is p (after) and P (before the cursor row) in the queue or a
+// playlist.
 func (m *Model) paste(c command.Call, after bool) error {
+	if m.onPlaylist() {
+		return m.pasteInPlaylist(c, after)
+	}
 	at := m.queueCur
 	if after && len(m.state.Queue) > 0 {
 		at++
@@ -219,6 +236,9 @@ func (m *Model) paste(c command.Call, after bool) error {
 
 // moveRows is J and K: the cursor row or the selection moves down or up.
 func (m *Model) moveRows(c command.Call, down bool) error {
+	if m.onPlaylist() {
+		return m.moveInPlaylist(c, down)
+	}
 	if m.focus != queueWindow {
 		return errQueueOnly
 	}

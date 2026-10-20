@@ -164,6 +164,13 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 		return dimStyle.Render(fit(" ── Appears on ──", w))
 	case albumList:
 		return albumRow(lib.Albums[i], w)
+	case playlistList:
+		p := lib.Playlists[i]
+		n := count(len(p.Tracks))
+		return " " + fit(p.Name, w-2-len(n)-2) + "  " + n + " "
+	case playlistTracks:
+		ts := lib.PlaylistTracks(f.playlist)
+		return trackRow("  ", fmt.Sprint(i+1), ts[i], w)
 	case searchList:
 		return m.searchRowText(f.search, i, w)
 	}
@@ -295,6 +302,9 @@ func (m *Model) hintLine() string {
 	}
 	if m.mode == keymap.Search {
 		return " " + hint("<CR>", "go to the results") + "  " + hint("<Esc>", "cancel") + "  " + hint("<Up>/<Down>", "history")
+	}
+	if m.popup != nil && m.popup.yes != nil {
+		return " " + hint("y", "yes") + "  " + hint("n", "no")
 	}
 	if m.popup != nil && m.popup.pick != nil {
 		return " " + hint("j/k", "move") + "  " + hint("<CR>", "choose") + "  " + hint("q", "close")

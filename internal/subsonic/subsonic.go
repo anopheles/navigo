@@ -279,6 +279,44 @@ func (c *Client) Playlist(ctx context.Context, id string) (Playlist, error) {
 	return r.Playlist, err
 }
 
+// CreatePlaylist makes a playlist of songs, in order, and returns its ID.
+// With id set it replaces that playlist's songs instead, which is how
+// navigo reorders one.
+func (c *Client) CreatePlaylist(ctx context.Context, name, id string, songIDs []string) (string, error) {
+	q := url.Values{"songId": songIDs}
+	if id != "" {
+		q.Set("playlistId", id)
+	} else {
+		q.Set("name", name)
+	}
+	var r struct {
+		Playlist Playlist `json:"playlist"`
+	}
+	err := c.call(ctx, "createPlaylist", q, &r)
+	if id != "" {
+		return id, err
+	}
+	return r.Playlist.ID, err
+}
+
+// UpdatePlaylist adds songs to the end of a playlist and removes the
+// songs at the given indexes, counted before the change.
+func (c *Client) UpdatePlaylist(ctx context.Context, id string, add []string, remove []int) error {
+	q := url.Values{"playlistId": {id}}
+	for _, s := range add {
+		q.Add("songIdToAdd", s)
+	}
+	for _, i := range remove {
+		q.Add("songIndexToRemove", strconv.Itoa(i))
+	}
+	return c.call(ctx, "updatePlaylist", q, nil)
+}
+
+// DeletePlaylist deletes a playlist.
+func (c *Client) DeletePlaylist(ctx context.Context, id string) error {
+	return c.call(ctx, "deletePlaylist", url.Values{"id": {id}}, nil)
+}
+
 // Starred is what the user has starred.
 type Starred struct {
 	Artists []Artist `json:"artist"`

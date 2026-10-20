@@ -11,7 +11,7 @@ import (
 
 // sections are the library window's top-level entries, in the spec's
 // order; Home, Playlists, Search and Help come later.
-var sections = []section{{"Artists", artistList}, {"Albums", albumList}, {"Search", searchList}}
+var sections = []section{{"Artists", artistList}, {"Albums", albumList}, {"Playlists", playlistList}, {"Search", searchList}}
 
 type section struct {
 	title string

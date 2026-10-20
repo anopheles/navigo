@@ -13,9 +13,7 @@
             {
               "id": "6MLPuYszTGDyqez6E6n9uf",
               "name": "森の音",
-              "coverArt": "ar-6MLPuYszTGDyqez6E6n9uf",
               "albumCount": 1,
-              "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTZNTFB1WXN6VEdEeXFlejZFNm45dWYiLCJpc3MiOiJORCJ9.Ksw6uphVwlGKbwpuvQmJibN3eldLVzk5BiQ0ALChfu8?size=600",
               "musicBrainzId": "",
               "sortName": "森の音",
               "roles": [
@@ -32,9 +30,7 @@
             {
               "id": "1MNu0aqmjGxOZOiezuZPxB",
               "name": "Aurora Lane",
-              "coverArt": "ar-1MNu0aqmjGxOZOiezuZPxB",
               "albumCount": 2,
-              "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTFNTnUwYXFtakd4T1pPaWV6dVpQeEIiLCJpc3MiOiJORCJ9.xo1dKU1lae6iw4x-vxtJJ88-f7yQn61-Yz9f-aJxwDk?size=600",
               "musicBrainzId": "",
               "sortName": "aurora lane",
               "roles": [
@@ -51,15 +47,13 @@
             {
               "id": "5qpNtcsC6DKi73YhXjLBY4",
               "name": "Long Haul Orchestra",
-              "coverArt": "ar-5qpNtcsC6DKi73YhXjLBY4",
               "albumCount": 1,
-              "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTVxcE50Y3NDNkRLaTczWWhYakxCWTQiLCJpc3MiOiJORCJ9.2BR5W3pswaVIrIcCB35mo2PVMXiD7kPa6zSP6Sd7rj8?size=600",
               "musicBrainzId": "",
               "sortName": "long haul orchestra",
               "roles": [
-                "albumartist",
                 "artist",
-                "maincredit"
+                "maincredit",
+                "albumartist"
               ]
             }
           ]
@@ -70,16 +64,14 @@
             {
               "id": "2dcbXjSrK8FSXPAQRDCG1H",
               "name": "The Quiet Ones",
-              "coverArt": "ar-2dcbXjSrK8FSXPAQRDCG1H",
               "albumCount": 2,
-              "starred": "2026-10-20T08:43:34.253050914Z",
-              "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJkY2JYalNySzhGU1hQQVFSRENHMUgiLCJpc3MiOiJORCJ9.y-J35FxI4BBNzqcCMOT21bZ8plOvbf0J1dIcKspea5Q?size=600",
+              "starred": "2026-10-20T09:29:23.958848822Z",
               "musicBrainzId": "",
               "sortName": "quiet ones",
               "roles": [
+                "artist",
                 "maincredit",
-                "albumartist",
-                "artist"
+                "albumartist"
               ]
             }
           ]
@@ -90,14 +82,12 @@
             {
               "id": "63sqASlAfjbGMuLP4JhnZU",
               "name": "Various Artists",
-              "coverArt": "ar-63sqASlAfjbGMuLP4JhnZU",
               "albumCount": 1,
-              "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTYzc3FBU2xBZmpiR011TFA0SmhuWlUiLCJpc3MiOiJORCJ9.s5ifjR693MvdscPTWxu3jiZTzi1PcyOdGjLAhAy5OaA?size=600",
               "musicBrainzId": "",
               "sortName": "various artists",
               "roles": [
-                "maincredit",
-                "albumartist"
+                "albumartist",
+                "maincredit"
               ]
             }
           ]
@@ -108,21 +98,19 @@
             {
               "id": "2yVh46xHg7UbYmzN38kszb",
               "name": "Zoë Brandt",
-              "coverArt": "ar-2yVh46xHg7UbYmzN38kszb",
               "albumCount": 1,
-              "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJ5Vmg0NnhIZzdVYlltek4zOGtzemIiLCJpc3MiOiJORCJ9.PGxisuibngW2WhtI7WbONqHKN14784WSa7wqbX1MoQk?size=600",
               "musicBrainzId": "",
               "sortName": "zoe brandt",
               "roles": [
+                "artist",
                 "maincredit",
-                "albumartist",
-                "artist"
+                "albumartist"
               ]
             }
           ]
         }
       ],
-      "lastModified": 1792485810000,
+      "lastModified": 1792488560000,
       "ignoredArticles": "The El La Los Las Le Les Os As O A"
     }
   }

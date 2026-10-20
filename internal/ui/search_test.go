@@ -134,7 +134,7 @@ func TestSearchRows(t *testing.T) {
 	// From the section list, Search opens the prompt.
 	h.keys("'b'bh")
 	h.cursorOn("Albums")
-	h.keys("j<CR>")
+	h.keys("jj<CR>") // past Playlists
 	if h.m.mode != keymap.Search {
 		t.Errorf("mode %s, want the search prompt", h.m.mode)
 	}

@@ -92,6 +92,8 @@ const (
 	artistPage
 	albumList
 	albumTracks
+	playlistList
+	playlistTracks
 	searchList
 )
 
@@ -100,6 +102,7 @@ type frame struct {
 	kind        listKind
 	album       library.AlbumID
 	artist      library.ArtistID
+	playlist    library.PlaylistID
 	search      *searchView
 	title       string
 	cur, offset int
@@ -444,6 +447,31 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		m.tick()
 		seq := e.Seq
 		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.RetryNow{Seq: seq}} })
+	case app.WritePlaylist:
+		return func() tea.Msg {
+			if c == nil {
+				return eventMsg{app.PlaylistWritten{Write: e, Err: errors.New("not logged in")}}
+			}
+			var newID string
+			var err error
+			switch e.Kind {
+			case app.UpdatePlaylist:
+				add := make([]string, len(e.Add))
+				for i, id := range e.Add {
+					add[i] = string(id)
+				}
+				err = c.UpdatePlaylist(ctx, string(e.ID), add, e.Remove)
+			case app.ReplacePlaylist, app.CreatePlaylist:
+				songs := make([]string, len(e.Songs))
+				for i, id := range e.Songs {
+					songs[i] = string(id)
+				}
+				newID, err = c.CreatePlaylist(ctx, e.Name, string(e.ID), songs)
+			case app.DeletePlaylist:
+				err = c.DeletePlaylist(ctx, string(e.ID))
+			}
+			return eventMsg{app.PlaylistWritten{Write: e, NewID: library.PlaylistID(newID), Err: err, Unreachable: subsonic.IsUnreachable(err)}}
+		}
 	case app.OpenLogin:
 		s := m.deps.Config.Server
 		m.openLogin(s.URL, s.User, "the server rejected the saved username or password")
@@ -522,6 +550,9 @@ func (m *Model) notice(n app.Notice) {
 func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
 	if m.mode == keymap.Cmdline || m.mode == keymap.Search {
 		return m.lineKey(k)
+	}
+	if m.popup != nil && m.popup.yes != nil {
+		return m.confirmKey(k)
 	}
 	token := keymap.FromTerminal(k.String(), k.Text)
 	if token == "\x00" { // Ctrl on Windows conhost arrives as NUL
@@ -615,6 +646,10 @@ func (m *Model) scopes() []string {
 		return []string{"albums", "containers", "global"}
 	case artistList, artistPage:
 		return []string{"artists", "containers", "global"}
+	case playlistList:
+		return []string{"playlists", "containers", "global"}
+	case playlistTracks:
+		return []string{"playlist-tracks", "tracks", "global"}
 	case searchList:
 		v := m.top().search
 		if _, ok := v.track(m.top().cur); ok {
@@ -649,6 +684,10 @@ func (m *Model) rows(f *frame) int {
 		return len(lib.Albums)
 	case f.kind == albumTracks:
 		return len(lib.AlbumTracks(f.album))
+	case f.kind == playlistList:
+		return len(lib.Playlists)
+	case f.kind == playlistTracks:
+		return len(lib.PlaylistTracks(f.playlist))
 	case f.kind == searchList && f.search != nil:
 		return len(f.search.rows)
 	}
@@ -684,6 +723,10 @@ func (m *Model) rowID(f *frame, i int) string {
 		return string(lib.Albums[i].ID)
 	case albumTracks:
 		return string(lib.AlbumTracks(f.album)[i].ID)
+	case playlistList:
+		return string(lib.Playlists[i].ID)
+	case playlistTracks:
+		return string(lib.PlaylistTracks(f.playlist)[i].ID)
 	case searchList:
 		return f.search.rowID(i)
 	}

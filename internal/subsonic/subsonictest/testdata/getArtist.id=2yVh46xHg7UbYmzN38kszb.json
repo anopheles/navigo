@@ -8,9 +8,7 @@
     "artist": {
       "id": "2yVh46xHg7UbYmzN38kszb",
       "name": "Zoë Brandt",
-      "coverArt": "ar-2yVh46xHg7UbYmzN38kszb",
       "albumCount": 1,
-      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJ5Vmg0NnhIZzdVYlltek4zOGtzemIiLCJpc3MiOiJORCJ9.PGxisuibngW2WhtI7WbONqHKN14784WSa7wqbX1MoQk?size=600",
       "musicBrainzId": "",
       "sortName": "zoe brandt",
       "roles": [
@@ -24,10 +22,9 @@
           "name": "Ångström Days",
           "artist": "Zoë Brandt",
           "artistId": "2yVh46xHg7UbYmzN38kszb",
-          "coverArt": "al-6dUjXTei5OjF3Dc9vq50Gh",
           "songCount": 4,
           "duration": 596,
-          "created": "2026-10-20T08:43:15.20160085Z",
+          "created": "2026-10-20T09:29:06.568531918Z",
           "year": 2020,
           "genre": "Electronic",
           "userRating": 0,

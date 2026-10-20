@@ -12,10 +12,9 @@
           "name": "Blue",
           "artist": "Aurora Lane",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
-          "coverArt": "al-3ZJQB487hjgDRlECI70I0Z",
           "songCount": 8,
           "duration": 1180,
-          "created": "2026-10-20T08:43:14.565608772Z",
+          "created": "2026-10-20T09:29:06.040539944Z",
           "year": 2019,
           "genre": "Dream Pop",
           "userRating": 0,
@@ -48,11 +47,10 @@
           "name": "Blue Hour",
           "artist": "Aurora Lane",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
-          "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
           "songCount": 6,
           "duration": 757,
-          "created": "2026-10-20T08:43:14.584608535Z",
-          "starred": "2026-10-20T08:43:34.251886283Z",
+          "created": "2026-10-20T09:29:06.064539579Z",
+          "starred": "2026-10-20T09:29:23.958142054Z",
           "year": 2021,
           "genre": "Dream Pop",
           "userRating": 0,
@@ -85,10 +83,9 @@
           "name": "Blue",
           "artist": "The Quiet Ones",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
-          "coverArt": "al-6UWKhAgWB7o93Z7z1faRnA",
           "songCount": 5,
           "duration": 615,
-          "created": "2026-10-20T08:43:14.883604811Z",
+          "created": "2026-10-20T09:29:06.337535429Z",
           "year": 2015,
           "genre": "Indie",
           "userRating": 0,
@@ -119,7 +116,7 @@
       ],
       "song": [
         {
-          "id": "3mYBzk3EXlTJoLyMOkQkpg",
+          "id": "7dWdYf10vxnFswNrQ9wpwe",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Blue",
@@ -136,7 +133,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-02 - Blue.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.894349116Z",
+          "created": "2026-10-20T09:29:21.414515819Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -178,7 +175,7 @@
           "movements": []
         },
         {
-          "id": "3Govtf2kA2s6MyQEwX3E1G",
+          "id": "2juTBRjgBSUGdulmgDlImA",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Blue Again",
@@ -191,12 +188,12 @@
           "size": 284485,
           "contentType": "audio/mpeg",
           "suffix": "mp3",
-          "starred": "2026-10-20T08:43:34.247355979Z",
+          "starred": "2026-10-20T09:29:23.955101087Z",
           "duration": 142,
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-06 - Blue Again.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.881064429Z",
+          "created": "2026-10-20T09:29:21.404133096Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -238,7 +235,7 @@
           "movements": []
         },
         {
-          "id": "09IWd1dkhoPSJC2jde4u7i",
+          "id": "60W9gwMUm5gJvVEOTQnAGi",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Blue Hour",
@@ -255,7 +252,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-04 - Blue Hour.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.812181104Z",
+          "created": "2026-10-20T09:29:21.325670252Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -297,7 +294,7 @@
           "movements": []
         },
         {
-          "id": "74WMNnW3gu1wlG83JDKuwD",
+          "id": "6gtcoMmov14n3S1cJavV1D",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Blue Static",
@@ -314,7 +311,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-03 - Blue Static.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.76755071Z",
+          "created": "2026-10-20T09:29:21.354627321Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -356,7 +353,7 @@
           "movements": []
         },
         {
-          "id": "6ybYBQmmmC1MVRcqoSdhLI",
+          "id": "11ArqWQhG0aHwFmDdX6sOB",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Tidewater",
@@ -373,7 +370,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-01 - Tidewater.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.892219603Z",
+          "created": "2026-10-20T09:29:21.412636409Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -415,7 +412,7 @@
           "movements": []
         },
         {
-          "id": "0eMuibV7G54DgNhVM8i5X8",
+          "id": "5bqAJg8SFLDc3jp5Qkk39h",
           "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
           "isDir": false,
           "title": "Blue Highway",
@@ -432,7 +429,7 @@
           "bitRate": 16,
           "path": "Various Artists/Night Drive Vol. 1/01-04 - Blue Highway.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.916581836Z",
+          "created": "2026-10-20T09:29:21.436621448Z",
           "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
           "artistId": "77xJO0lZ9YMevx8NMOguzQ",
           "type": "music",
@@ -478,7 +475,7 @@
           "movements": []
         },
         {
-          "id": "6FCX2Puk3kOfisgD7Lnzy8",
+          "id": "6uBpEAZjRMpJYnaKczBKUV",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Afterglow",
@@ -495,7 +492,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-06 - Afterglow.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.799462646Z",
+          "created": "2026-10-20T09:29:21.309833669Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -537,7 +534,7 @@
           "movements": []
         },
         {
-          "id": "0VjEGnbau3uR77g3p1cKW5",
+          "id": "6PNpa2zjYukGg0RXDMHoxh",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Glass Garden",
@@ -554,7 +551,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-07 - Glass Garden.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.885596883Z",
+          "created": "2026-10-20T09:29:21.407213342Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -596,7 +593,7 @@
           "movements": []
         },
         {
-          "id": "699W3gEgW8SQemq5YrmNBb",
+          "id": "24XULBgw1kj0ad0Oqez7Rb",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Harbour Lights",
@@ -613,7 +610,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-05 - Harbour Lights.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.878358032Z",
+          "created": "2026-10-20T09:29:21.399802482Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -655,7 +652,7 @@
           "movements": []
         },
         {
-          "id": "4xdcGuChQpmF5Nh1TTtkIj",
+          "id": "5cORhbEKTJkoQlQNk2mzkY",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Last Ferry",
@@ -672,7 +669,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-08 - Last Ferry.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.888691015Z",
+          "created": "2026-10-20T09:29:21.409383024Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -714,7 +711,7 @@
           "movements": []
         },
         {
-          "id": "598jEqwmuiA9HWcnflfQZk",
+          "id": "2Na8B1drTFNbqgHFih4WW9",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Paper Lanterns",
@@ -731,7 +728,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-03 - Paper Lanterns.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.870050114Z",
+          "created": "2026-10-20T09:29:21.416526288Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -773,7 +770,7 @@
           "movements": []
         },
         {
-          "id": "1lbcK4HFcIdeQX0Mo1ZgsD",
+          "id": "5AQPGMYSrYGETBcyryc0Z9",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Slow Orbit",
@@ -790,7 +787,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-04 - Slow Orbit.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.875009301Z",
+          "created": "2026-10-20T09:29:21.41992789Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -832,7 +829,7 @@
           "movements": []
         },
         {
-          "id": "3KY4mCrWs04isXI5RnGAQu",
+          "id": "1UMqR8fl2IDYSx77I6EWZQ",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Streetlamp",
@@ -849,7 +846,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-03 - Streetlamp.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.809434956Z",
+          "created": "2026-10-20T09:29:21.321535064Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -891,7 +888,7 @@
           "movements": []
         },
         {
-          "id": "5gcO5pKZ53Z1gf6sfzBin4",
+          "id": "4fqNRhcjaw8j1UZzzaIGex",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Wintering",
@@ -908,7 +905,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-05 - Wintering.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.814494347Z",
+          "created": "2026-10-20T09:29:21.305618163Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -950,7 +947,7 @@
           "movements": []
         },
         {
-          "id": "1uwLWmYW7opHsSaqmUk5uY",
+          "id": "3ZWGPF71FShZLf4KjSH5Eq",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Dusk Signal",
@@ -967,7 +964,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-01 - Dusk Signal.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.802891373Z",
+          "created": "2026-10-20T09:29:21.314475578Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -1009,7 +1006,7 @@
           "movements": []
         },
         {
-          "id": "4Bi46kraa9YUXHIvjVONOF",
+          "id": "1UEKTzBSBWt1lztZ7Vle5S",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Low Tide",
@@ -1026,7 +1023,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-02 - Low Tide.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.805203592Z",
+          "created": "2026-10-20T09:29:21.318568182Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -1068,7 +1065,7 @@
           "movements": []
         },
         {
-          "id": "7gei3bqMJjFjy9Wm7frt8F",
+          "id": "3AlY4w7o6wi0I7smzlOf0d",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Homeward",
@@ -1085,7 +1082,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-05 - Homeward.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.776924956Z",
+          "created": "2026-10-20T09:29:21.342450919Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -1127,7 +1124,7 @@
           "movements": []
         },
         {
-          "id": "0cPrrgkdhSESVETeqnlYOz",
+          "id": "0uDMsNSpx4DwxFFIJcfQk0",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Undertow",
@@ -1144,7 +1141,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-01 - Undertow.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.781303204Z",
+          "created": "2026-10-20T09:29:21.346928285Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -1186,7 +1183,7 @@
           "movements": []
         },
         {
-          "id": "4bMwRHBOJVHl1xtrRFq6TC",
+          "id": "52pgIpAzzEUcJJlBl6lKkl",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Quiet Room",
@@ -1203,7 +1200,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-02 - Quiet Room.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.761966515Z",
+          "created": "2026-10-20T09:29:21.349758036Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -1245,7 +1242,7 @@
           "movements": []
         },
         {
-          "id": "3I08ta5L5E45YVd9HvRFv0",
+          "id": "7cCBeYbHX2TzEW7aC8uZdq",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Radio Silence",
@@ -1262,7 +1259,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-04 - Radio Silence.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.770973755Z",
+          "created": "2026-10-20T09:29:21.356934438Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",

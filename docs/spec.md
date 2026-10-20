@@ -108,7 +108,8 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 - **Endpoints:**
   - session and library: `ping`, `getOpenSubsonicExtensions`, `getArtists`, `getArtist`, `getAlbumList2`, `getAlbum`, `getPlaylists`, `getPlaylist`, `search3`;
   - playback: `stream`, `getCoverArt`, `scrobble`;
-  - stars and change detection: `star`/`unstar`, `getStarred2`, `getScanStatus`, `getIndexes`.
+  - stars and change detection: `star`/`unstar`, `getStarred2`, `getScanStatus`, `getIndexes`;
+  - playlist edits: `createPlaylist` (also with `playlistId`, to reorder: it replaces the tracks), `updatePlaylist`, `deletePlaylist`.
 - **Extensions:** `formPost` (calls go as POST once offered, keeping tokens out of URLs) and `transcodeOffset` (seeking in transcoded streams). Optional features are gated on `getOpenSubsonicExtensions`.
 - **Limits:** Navidrome caps list endpoints at 500. An empty-query `search3` lists the whole library with offsets; that's the sync path, with a `getAlbumList2`+`getAlbum` fallback.
 - **Scrobbles:** `stream` doesn't count a play. navigo sends `scrobble submission=false` when a track starts and `submission=true` after half the track or 4 minutes listened, whichever comes first, once per queue-entry play. Seeks don't count toward that.
@@ -253,7 +254,7 @@ keys:
 | Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `R` repeat off → all → one · `X` stop |
 | Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
-| Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `p` re-adds the last removal |
+| Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |
 | Windows | `<C-w>h` `<C-w>l` `<C-w>w` `<Tab>` · `<C-w>o` |
 | Help and quit | `?` key menu · `<F1>` `:help` · `<Esc>` cancel · `<C-c>` cancel + "type :q to quit" · `q` closes a popup only · `:q` `:qa` `ZZ` `ZQ` quit |
@@ -464,13 +465,14 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)�
 - **Search:** `'s`/`:search`, live results from the cache in Artists/Albums/Tracks groups with caps and `… N more`, word-start matching without case or accents, ranking, the selected last query, and the saved history ([#38](https://github.com/anopheles/navigo/issues/38)).
 - **Visual mode and queue editing:** `V`/`v` with the selection highlighted and counts in the hint line, `:` on the selection, spanning Search groups with artist rows skipped; the `d`/`y` operators with motions, counts and doubling; the one register shared by every view; `p`/`P`, `x`, `J`/`K`, each an undoable step that keeps the player's neighbours right; `"x` rejected ([#35](https://github.com/anopheles/navigo/issues/35)).
 - **The `:` line:** fuzzy matching of names and descriptions with each match's key, what applies here first; `<Tab>`/`<S-Tab>` completion of names and arguments (`:search` from its history); `tip: next time press …`; and the history, saved in the state directory ([#41](https://github.com/anopheles/navigo/issues/41)).
+- **Playlists:** the Playlists list and playlist tracks with `'p`; removals (`dd`, `x`, `d{motion}`, Visual `d`) after a y/n Confirmation, into the register; `p`/`P` and `J`/`K` on the server; `dd` on the list; `:playlist-add`, `:playlist-new`; no undo; edits refused offline ([#37](https://github.com/anopheles/navigo/issues/37)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A and the first layer B scenario.
 
 Still to build for v1:
 
-- **Sections:** Home (and starting on it), Playlists (with server-side editing and confirmations), and Help. The skeleton starts on Albums.
-- **Keys:** marks other than `'a`/`'b`/`'q`/`'s`, `/` with `n`/`N`, the jump list, the remaining motions, `gp`, volume, shuffle, repeat, info and stars.
+- **Sections:** Home (and starting on it), and Help. The skeleton starts on Albums.
+- **Keys:** marks other than `'a`/`'b`/`'p`/`'q`/`'s`, `/` with `n`/`N`, the jump list, the remaining motions, `gp`, volume, shuffle, repeat, info and stars.
 - **Discoverability:** the key menu, prefix menus, and the `/`-to-search offer (with `/` find).
 - **Rebinding:** the `keys:` block, its validation popup, `:map` and friends, `:reload-config` and `navigo check-config`.
 - **Crash cap:** the 3-crash cap for mpv (with the mpv slice).

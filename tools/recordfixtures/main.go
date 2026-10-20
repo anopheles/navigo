@@ -119,6 +119,14 @@ func run(c *client, out string) error {
 	rec.get("scrobble", url.Values{"id": {first}, "submission": {"false"}})
 	rec.get("star", url.Values{"id": {first}})
 	rec.get("unstar", url.Values{"id": {first}})
+	// A playlist made, changed and deleted again, so the seeded ones stay
+	// as they are.
+	var made struct {
+		Playlist struct{ ID string }
+	}
+	rec.decode(rec.get("createPlaylist", url.Values{"name": {"navigo-recorded"}, "songId": {first}}), &made)
+	rec.get("updatePlaylist", url.Values{"playlistId": {made.Playlist.ID}, "songIdToAdd": {first}, "songIndexToRemove": {"0"}})
+	rec.get("deletePlaylist", url.Values{"id": {made.Playlist.ID}})
 
 	bad := *c
 	bad.password = "wrong"

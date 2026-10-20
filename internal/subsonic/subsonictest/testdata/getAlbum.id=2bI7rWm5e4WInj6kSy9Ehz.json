@@ -10,11 +10,10 @@
       "name": "Blue Hour",
       "artist": "Aurora Lane",
       "artistId": "1MNu0aqmjGxOZOiezuZPxB",
-      "coverArt": "al-2bI7rWm5e4WInj6kSy9Ehz",
       "songCount": 6,
       "duration": 757,
-      "created": "2026-10-20T08:43:14.584608535Z",
-      "starred": "2026-10-20T08:43:34.251886283Z",
+      "created": "2026-10-20T09:29:06.064539579Z",
+      "starred": "2026-10-20T09:29:23.958142054Z",
       "year": 2021,
       "genre": "Dream Pop",
       "userRating": 0,
@@ -43,7 +42,7 @@
       "version": "",
       "song": [
         {
-          "id": "1uwLWmYW7opHsSaqmUk5uY",
+          "id": "3ZWGPF71FShZLf4KjSH5Eq",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Dusk Signal",
@@ -60,7 +59,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-01 - Dusk Signal.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.802891373Z",
+          "created": "2026-10-20T09:29:21.314475578Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -102,7 +101,7 @@
           "movements": []
         },
         {
-          "id": "4Bi46kraa9YUXHIvjVONOF",
+          "id": "1UEKTzBSBWt1lztZ7Vle5S",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Low Tide",
@@ -119,7 +118,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-02 - Low Tide.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.805203592Z",
+          "created": "2026-10-20T09:29:21.318568182Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -161,7 +160,7 @@
           "movements": []
         },
         {
-          "id": "3KY4mCrWs04isXI5RnGAQu",
+          "id": "1UMqR8fl2IDYSx77I6EWZQ",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Streetlamp",
@@ -178,7 +177,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-03 - Streetlamp.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.809434956Z",
+          "created": "2026-10-20T09:29:21.321535064Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -220,7 +219,7 @@
           "movements": []
         },
         {
-          "id": "09IWd1dkhoPSJC2jde4u7i",
+          "id": "60W9gwMUm5gJvVEOTQnAGi",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Blue Hour",
@@ -237,7 +236,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-04 - Blue Hour.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.812181104Z",
+          "created": "2026-10-20T09:29:21.325670252Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -279,7 +278,7 @@
           "movements": []
         },
         {
-          "id": "5gcO5pKZ53Z1gf6sfzBin4",
+          "id": "4fqNRhcjaw8j1UZzzaIGex",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Wintering",
@@ -296,7 +295,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-05 - Wintering.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.814494347Z",
+          "created": "2026-10-20T09:29:21.305618163Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -338,7 +337,7 @@
           "movements": []
         },
         {
-          "id": "6FCX2Puk3kOfisgD7Lnzy8",
+          "id": "6uBpEAZjRMpJYnaKczBKUV",
           "parent": "2bI7rWm5e4WInj6kSy9Ehz",
           "isDir": false,
           "title": "Afterglow",
@@ -355,7 +354,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue Hour/01-06 - Afterglow.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T08:43:31.799462646Z",
+          "created": "2026-10-20T09:29:21.309833669Z",
           "albumId": "2bI7rWm5e4WInj6kSy9Ehz",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",

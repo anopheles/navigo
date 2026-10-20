@@ -36,6 +36,11 @@ func commands() *command.Registry[*Model] {
 		{Name: "go-artist", Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
 		{Name: "artists", Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
 		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
+		{Name: "playlists", Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
+		{Name: "playlist-add", Label: "add to playlist", Desc: "Add the selection or the row under the cursor to the end of a playlist: playlist-add Rock.", Run: (*Model).playlistAdd, Complete: (*Model).playlistNames},
+		{Name: "playlist-new", Label: "new playlist", Desc: "Make a playlist of the selection or the row under the cursor: playlist-new Rock.", Run: (*Model).playlistNew},
+		{Name: "playlist-delete", Label: "delete playlist", Desc: "Delete the playlist under the cursor, after asking.", Run: (*Model).deletePlaylist},
+		{Name: "playlist-undo", Label: "undo", Desc: "Explain that playlist changes can't be undone, and how to put a removal back.", Run: (*Model).playlistUndo},
 		{Name: "search", Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search, Complete: func(m *Model) []string {
 			s := slices.Clone(m.searchHist.items)
 			slices.Reverse(s) // newest first
@@ -154,6 +159,11 @@ func (m *Model) open(command.Call) error {
 		if a, ok := m.rowAlbum(); ok {
 			m.openAlbum(a, f.artist)
 		}
+	case playlistList:
+		if lib := m.state.Library; lib != nil && f.cur < len(lib.Playlists) {
+			p := lib.Playlists[f.cur]
+			m.lib = append(m.lib, frame{kind: playlistTracks, playlist: p.ID, title: p.Name})
+		}
 	case searchList:
 		v := f.search
 		if a, ok := v.artist(f.cur); ok {
@@ -191,12 +201,16 @@ func (m *Model) trackRow() ([]library.Track, int, error) {
 		}
 		return []library.Track{t}, 0, nil
 	}
-	if m.focus != libraryWindow || f.kind != albumTracks {
+	if m.focus != libraryWindow || f.kind != albumTracks && f.kind != playlistTracks {
 		return nil, 0, errNotOnTrack
 	}
 	var ts []library.Track
-	if lib != nil {
+	switch {
+	case lib == nil:
+	case f.kind == albumTracks:
 		ts = lib.AlbumTracks(f.album)
+	default:
+		ts = lib.PlaylistTracks(f.playlist)
 	}
 	if f.cur >= len(ts) {
 		return nil, 0, errNoRows
@@ -221,34 +235,16 @@ func (m *Model) playNow(command.Call) error {
 // add adds the selection, or the track or album under the cursor, count
 // times. Artist rows are left out with a note.
 func (m *Model) add(c command.Call, next bool) error {
-	var one []library.Track
-	artists := 0
-	switch {
-	case m.visual != nil && m.focus == queueWindow:
+	if m.focus == queueWindow {
 		m.endVisual()
 		return errors.New("those are in the queue already · y and p copy them")
-	case m.visual != nil:
-		one, artists = m.rangeTracks(m.selection())
-		m.endVisual()
-	default:
-		if _, _, err := m.trackRow(); errors.Is(err, errNoRows) {
-			return nil
-		}
-		f := m.top()
-		if m.focus != libraryWindow || f.kind == sectionList {
-			return errNotOnTrack
-		}
-		var artist bool
-		one, artist = m.rowTracks(f, f.cur)
-		if artist {
-			artists = 1
-		}
 	}
-	if len(one) == 0 {
-		if artists > 0 {
-			return errArtist
-		}
-		return errNotOnTrack
+	if _, _, err := m.trackRow(); errors.Is(err, errNoRows) {
+		return nil
+	}
+	one, artists, err := m.chosenTracks()
+	if err != nil {
+		return err
 	}
 	defer m.skippedArtists(artists)
 	var add []library.Track

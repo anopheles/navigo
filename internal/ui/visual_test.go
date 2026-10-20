@@ -137,7 +137,7 @@ func TestYankInLibraryPasteInQueue(t *testing.T) {
 	h.keys("<Tab>hyy")
 	h.contains("6 tracks yanked")
 	h.keys("Vd")
-	h.contains("only the queue can be edited here")
+	h.contains("only the queue and playlists can be edited")
 	h.keys(`"a`)
 	h.contains("navigo has one register")
 }

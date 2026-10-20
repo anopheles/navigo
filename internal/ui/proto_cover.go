@@ -416,11 +416,13 @@ func protoBox(w, h int, msg string) []string {
 	for i := range out {
 		out[i] = dimStyle.Render(strings.Repeat("░", w))
 	}
-	mid := h / 2
-	pad := max((w-lipgloss.Width(msg))/2, 0)
-	out[mid] = dimStyle.Render(
-		fit(strings.Repeat("░", max(pad-1, 0))+" "+msg+" "+strings.Repeat("░", w), w),
-	)
+	label := " " + msg + " "
+	if lw := lipgloss.Width(label); lw <= w {
+		left := (w - lw) / 2
+		out[h/2] = dimStyle.Render(
+			strings.Repeat("░", left) + label + strings.Repeat("░", w-lw-left),
+		)
+	}
 	return out
 }
 

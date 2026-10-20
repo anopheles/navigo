@@ -100,7 +100,11 @@ func newHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.
 	hs := &harness{t: t, srv: srv, fake: player.NewFake(), kr: memKeyring{}, path: filepath.Join(t.TempDir(), "navigo", "config.yaml")}
 	hs.cache = filepath.Join(filepath.Dir(hs.path), "cache")
 	hs.state = filepath.Join(filepath.Dir(hs.path), "state")
-	hs.m = New(Deps{Config: cfg, ConfigPath: hs.path, Player: hs.fake, Keyring: hs.kr, CacheDir: hs.cache, StateDir: hs.state, LogPath: "/logs/navigo.log", OnLogin: func(*subsonic.Client) { hs.logins++ }})
+	m, err := New(Deps{Config: cfg, ConfigPath: hs.path, Player: hs.fake, Keyring: hs.kr, CacheDir: hs.cache, StateDir: hs.state, LogPath: "/logs/navigo.log", OnLogin: func(*subsonic.Client) { hs.logins++ }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hs.m = m
 	hs.m.SetSend(func(msg tea.Msg) { hs.queued = append(hs.queued, msg) })
 	hs.clock = &fakeClock{now: time.Date(2026, 10, 20, 9, 0, 0, 0, time.UTC)}
 	hs.m.clock = hs.clock
@@ -114,7 +118,11 @@ func newHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.
 func (h *harness) restart() *harness {
 	h.t.Helper()
 	n := &harness{t: h.t, srv: h.srv, fake: player.NewFake(), kr: h.kr, path: h.path, cache: h.cache, state: h.state}
-	n.m = New(Deps{Config: h.m.deps.Config, ConfigPath: h.path, Player: n.fake, Keyring: n.kr, CacheDir: n.cache, StateDir: n.state, OnLogin: func(*subsonic.Client) { n.logins++ }})
+	m, err := New(Deps{Config: h.m.deps.Config, ConfigPath: h.path, Player: n.fake, Keyring: n.kr, CacheDir: n.cache, StateDir: n.state, OnLogin: func(*subsonic.Client) { n.logins++ }})
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	n.m = m
 	n.m.SetSend(func(msg tea.Msg) { n.queued = append(n.queued, msg) })
 	n.clock = &fakeClock{now: h.clock.now}
 	n.m.clock = n.clock

@@ -27,9 +27,6 @@ import (
 	"github.com/anopheles/navigo/internal/subsonic"
 )
 
-// ambiguousTimeout is how long an ambiguous prefix waits (keys.timeout).
-const ambiguousTimeout = time.Second
-
 // stallAfter is how long buffering may last before navigo checks the server.
 const stallAfter = 10 * time.Second
 
@@ -130,6 +127,7 @@ type Model struct {
 
 	mode     keymap.Mode
 	engine   *keymap.Engine
+	keys     keySettings
 	registry *command.Registry[*Model]
 	line     textinput.Model
 	seq      int // bumps on every key, to drop stale timeouts
@@ -171,8 +169,9 @@ type Model struct {
 	pendingCmd tea.Cmd
 }
 
-// New returns the model; Init starts logging in.
-func New(deps Deps) *Model {
+// New returns the model; Init starts logging in. It refuses a keys: block
+// that leaves no way to quit.
+func New(deps Deps) (*Model, error) {
 	line := newInput()
 	line.Prompt = ":"
 	m := &Model{
@@ -182,7 +181,6 @@ func New(deps Deps) *Model {
 		lib:      startPath(),
 		paths:    map[listKind][]frame{},
 		mode:     keymap.Normal,
-		engine:   keymap.NewEngine(defaultTable()),
 		registry: commands(),
 		line:     line,
 		hints:    deps.Config.HintsOn(),
@@ -191,15 +189,18 @@ func New(deps Deps) *Model {
 		cmdHist:    loadHistory(deps.StateDir, "cmd_history", "command history"),
 		searchHist: loadHistory(deps.StateDir, "search_history", "search history"),
 	}
-	m.engine.SetKinds(keymap.Kinds{
-		Operator: func(n string) bool { c, ok := m.registry.Get(n); return ok && c.Operator },
-		Motion:   func(n string) bool { c, ok := m.registry.Get(n); return ok && c.Motion },
-	})
+	t, set, problems, err := buildKeys(deps.Config.Keys, m.registry)
+	if err != nil {
+		return nil, err
+	}
+	m.keys = set
+	m.setTable(t)
+	m.showProblems(problems)
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
 		m.setMsg(fmt.Sprintf("%s holds a password and others can read it · chmod 600 it", deps.ConfigPath), true)
 	}
-	return m
+	return m, nil
 }
 
 // SetSend gives the model a way to deliver messages from work that runs
@@ -603,7 +604,7 @@ func (m *Model) result(r keymap.Result) tea.Cmd {
 	case keymap.Pending:
 		if r.Ambiguous {
 			seq := m.seq
-			return m.clock.After(ambiguousTimeout, func(time.Time) tea.Msg { return timeoutMsg{seq} })
+			return m.clock.After(m.keys.timeout, func(time.Time) tea.Msg { return timeoutMsg{seq} })
 		}
 		return m.armPrefix()
 	}
@@ -629,20 +630,44 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 	return cmd
 }
 
+// lineKey handles a key on the ":" line or a prompt. Keys bound in the
+// cmdline table run their line command and never type; others edit.
 func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
-	if m.promptHelp {
-		if cmd, done := m.helpKey(k); done {
-			return cmd
+	key := "" // what the prompt's handler is told: enter, esc, up, …
+	if a, ok := m.lineBound(k); ok {
+		switch a {
+		case "nop":
+			return nil
+		case "accept":
+			key = "enter"
+		case "cancel":
+			key = "esc"
+		case "complete":
+			key = "tab"
+		case "complete-back":
+			key = "shift+tab"
+		case "history-back":
+			key = "up"
+		case "history-forward":
+			key = "down"
+		default:
+			m.editLine(a)
+			return nil
 		}
-		return m.edit(k)
+	} else if k.String() == "backspace" {
+		key = "backspace"
 	}
-	if m.mode == keymap.Search {
-		if cmd, done := m.searchKey(k); done {
-			return cmd
-		}
-		return m.edit(k)
+	var cmd tea.Cmd
+	var done bool
+	switch {
+	case m.promptHelp:
+		cmd, done = m.helpKey(key)
+	case m.mode == keymap.Search:
+		cmd, done = m.searchKey(key, k)
+	default:
+		cmd, done = m.cmdKey(key)
 	}
-	if cmd, done := m.cmdKey(k); done {
+	if done || key != "" && key != "backspace" {
 		return cmd
 	}
 	return m.edit(k)
@@ -657,6 +682,12 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 	before := m.line.Value()
 	var cmd tea.Cmd
 	m.line, cmd = m.line.Update(msg)
+	m.lineChanged(before)
+	return cmd
+}
+
+// lineChanged filters Help or searches again when a prompt's text changed.
+func (m *Model) lineChanged(before string) {
 	switch {
 	case m.line.Value() == before:
 	case m.promptHelp:
@@ -665,7 +696,6 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 		m.selected = false
 		m.liveSearch(m.line.Value())
 	}
-	return cmd
 }
 
 func (m *Model) leaveLine() {

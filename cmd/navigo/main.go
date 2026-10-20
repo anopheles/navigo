@@ -46,6 +46,13 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	switch flag.Arg(0) {
+	case "":
+	case "check-config":
+		return checkConfig(cfg, path)
+	default:
+		return fmt.Errorf("unknown command %q; the only one is check-config", flag.Arg(0))
+	}
 	logFile, logPath := setupLog(*debug)
 	if logFile != nil {
 		defer logFile.Close()
@@ -70,7 +77,7 @@ func run() error {
 		cacheDir = filepath.Join(dir, "navigo")
 	}
 	stateDir, _ := config.StateDir() // none: history isn't kept
-	m := ui.New(ui.Deps{
+	m, err := ui.New(ui.Deps{
 		Config:     cfg,
 		ConfigPath: path,
 		Player:     mpv,
@@ -80,6 +87,9 @@ func run() error {
 		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
 	p := tea.NewProgram(m)
 	m.SetSend(p.Send)
 	go func() {
@@ -104,6 +114,25 @@ func run() error {
 		return fmt.Errorf("crashed; details in %s", logPath)
 	}
 	return err
+}
+
+// checkConfig is navigo check-config: it lists every problem with the
+// config's bindings and fails if there are any.
+func checkConfig(cfg config.Config, path string) error {
+	problems, err := ui.CheckConfig(cfg, path)
+	for _, p := range problems {
+		fmt.Println(p)
+	}
+	switch {
+	case err != nil:
+		return fmt.Errorf("%s: %w", path, err)
+	case len(problems) == 1:
+		return fmt.Errorf("%s: 1 problem; navigo skips that binding", path)
+	case len(problems) > 1:
+		return fmt.Errorf("%s: %d problems; navigo skips those bindings", path, len(problems))
+	}
+	fmt.Println(path + ": fine")
+	return nil
 }
 
 // setupLog sends slog to navigo.log in the user cache dir: nothing may go

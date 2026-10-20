@@ -2,6 +2,7 @@ package keymap
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -120,4 +121,22 @@ func FromTerminal(s, text string) string {
 		}
 	}
 	return "<" + prefix + inner + ">"
+}
+
+// bracketed finds a bracketed key name, such as <C-d> or <nope>.
+var bracketed = regexp.MustCompile(`<[A-Za-z0-9-]+>`)
+
+// Check reports what Parse lets through but is most likely a mistake: a
+// bracketed name it doesn't know, which it reads as the < key and the
+// letters after it. <lt> writes a < key.
+func Check(seq string) error {
+	if seq == "" {
+		return fmt.Errorf("empty key sequence")
+	}
+	for _, name := range bracketed.FindAllString(seq, -1) {
+		if _, ok := canonical(name[1 : len(name)-1]); !ok {
+			return fmt.Errorf("unknown key name %s; write <lt> for the < key", name)
+		}
+	}
+	return nil
 }

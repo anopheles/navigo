@@ -126,3 +126,19 @@ func TestMove(t *testing.T) {
 		t.Errorf("after undoing a clamped move: %v", ids(s))
 	}
 }
+
+func TestClearQueue(t *testing.T) {
+	s, out := run(playing4(t), ClearQueue{})
+	if len(s.Queue) != 0 || s.Current != -1 {
+		t.Fatalf("queue %v current %d", ids(s), s.Current)
+	}
+	if n := only[Notice](out); n[0].Text != "queue cleared (4 tracks)" || n[0].Command != "undo" {
+		t.Errorf("notice = %#v", n)
+	}
+	if sn := only[SetNeighbours](out); sn[0] != (SetNeighbours{}) {
+		t.Errorf("neighbours = %#v", sn)
+	}
+	if s, _ = run(s, Undo{}); !sameIDs(ids(s), 1, 2, 3, 4) || s.Current != 1 {
+		t.Errorf("after undo: %v current %d", ids(s), s.Current)
+	}
+}

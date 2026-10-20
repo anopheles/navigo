@@ -2,7 +2,10 @@ package ui
 
 import (
 	"errors"
+	"fmt"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -37,11 +40,11 @@ func commands() *command.Registry[*Model] {
 		{Name: "artists", Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
 		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
 		{Name: "playlists", Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
-		{Name: "playlist-add", Label: "add to playlist", Desc: "Add the selection or the row under the cursor to the end of a playlist: playlist-add Rock.", Run: (*Model).playlistAdd, Complete: (*Model).playlistNames},
-		{Name: "playlist-new", Label: "new playlist", Desc: "Make a playlist of the selection or the row under the cursor: playlist-new Rock.", Run: (*Model).playlistNew},
+		{Name: "playlist-add", Args: someArgs, Label: "add to playlist", Desc: "Add the selection or the row under the cursor to the end of a playlist: playlist-add Rock.", Run: (*Model).playlistAdd, Complete: (*Model).playlistNames},
+		{Name: "playlist-new", Args: someArgs, Label: "new playlist", Desc: "Make a playlist of the selection or the row under the cursor: playlist-new Rock.", Run: (*Model).playlistNew},
 		{Name: "playlist-delete", Label: "delete playlist", Desc: "Delete the playlist under the cursor, after asking.", Run: (*Model).deletePlaylist},
 		{Name: "playlist-undo", Label: "undo", Desc: "Explain that playlist changes can't be undone, and how to put a removal back.", Run: (*Model).playlistUndo},
-		{Name: "search", Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search, Complete: func(m *Model) []string {
+		{Name: "search", Args: anyArgs, Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search, Complete: func(m *Model) []string {
 			s := slices.Clone(m.searchHist.items)
 			slices.Reverse(s) // newest first
 			return s
@@ -56,15 +59,16 @@ func commands() *command.Registry[*Model] {
 		{Name: "play-pause", Label: "play/pause", Desc: "Pause or resume playback, or start the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.PlayPause{}); return nil }},
 		{Name: "next-track", Label: "next track", Desc: "Play the next track in the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.NextTrack{}); return nil }},
 		{Name: "prev-track", Label: "previous track", Desc: "Play the previous track, or restart this one after 3 seconds.", Run: func(m *Model, _ command.Call) error { m.event(app.PrevTrack{}); return nil }},
-		{Name: "seek", Label: "seek", Desc: "Seek by a number of seconds, such as seek +10; a count multiplies it.", Run: seek},
+		{Name: "seek", Args: seekArgs, Label: "seek", Desc: "Seek by a number of seconds, such as seek +10; a count multiplies it.", Run: seek},
 		{Name: "reconnect", Label: "reconnect", Desc: "Try the server now instead of waiting for the next retry.", Run: func(m *Model, _ command.Call) error { m.event(app.Reconnect{}); return nil }},
 		{Name: "sync", Label: "sync", Desc: "Sync the whole library from the server.", Run: func(m *Model, _ command.Call) error { m.event(app.SyncNow{}); return nil }},
-		{Name: "volume", Label: "volume", Desc: "Change the volume by points, such as volume +5, or set it: volume 60.", Run: volume},
+		{Name: "volume", Args: volumeArgs, Label: "volume", Desc: "Change the volume by points, such as volume +5, or set it: volume 60.", Run: volume},
 		{Name: "shuffle", Label: "shuffle", Desc: "Shuffle the queue once, keeping the current track first; u undoes it.", Run: func(m *Model, _ command.Call) error { m.event(app.Shuffle{Seed: m.seed()}); return nil }},
 		{Name: "repeat", Label: "repeat", Desc: "Cycle repeat: off, all (the queue again), one (the same track again).", Run: func(m *Model, _ command.Call) error { m.event(app.CycleRepeat{}); return nil }},
 		{Name: "info", Label: "info", Desc: "Show details of the track, album or artist under the cursor, or of what plays.", Run: (*Model).info},
 		{Name: "star", Label: "star", Desc: "Star the track, album or artist under the cursor, or the selection; again unstars.", Run: (*Model).star},
 		{Name: "stop", Label: "stop", Desc: "Stop playback.", Run: func(m *Model, _ command.Call) error { m.event(app.StopPlayback{}); return nil }},
+		{Name: "queue-clear", Label: "clear queue", Desc: "Empty the queue; what plays plays on to its end. u brings it back.", Run: func(m *Model, _ command.Call) error { m.event(app.ClearQueue{}); return nil }},
 		{Name: "visual", Label: "select", Desc: "Select rows: start Visual mode, or end it.", Run: func(m *Model, _ command.Call) error { m.startVisual(); return nil }},
 		{Name: "yank", Label: "yank", Desc: "Yank the rows a motion covers (yy: this row) into the register.", Operator: true, Run: (*Model).yank},
 		{Name: "delete", Label: "remove", Desc: "Remove the queue rows a motion covers (dd: this row) into the register.", Operator: true, Run: (*Model).remove},
@@ -80,6 +84,15 @@ func commands() *command.Registry[*Model] {
 		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and the selection, and clear the message.", Run: func(m *Model, _ command.Call) error { m.endVisual(); m.clearMsg(); return nil }},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
+		{Name: "nop", Label: "nothing", Desc: "Do nothing: bind it to make a dead key.", Run: func(*Model, command.Call) error { return nil }},
+		{Name: "nmap", Args: anyArgs, Label: "map", Desc: "Bind keys in Normal mode for this session: nmap [--in queue] <leader>x seek +60.", Run: sessionMapIn("normal")},
+		{Name: "vmap", Args: anyArgs, Label: "map", Desc: "Bind keys in Visual mode for this session: vmap [--in scope] keys command.", Run: sessionMapIn("visual")},
+		{Name: "cmap", Args: anyArgs, Label: "map", Desc: "Bind a key on the command line for this session: cmap <C-k> kill-to-end.", Run: sessionMapIn("cmdline")},
+		{Name: "nunmap", Args: anyArgs, Label: "unmap", Desc: "Unbind keys in Normal mode for this session: nunmap [--in scope] keys.", Run: sessionUnmapIn("normal")},
+		{Name: "vunmap", Args: anyArgs, Label: "unmap", Desc: "Unbind keys in Visual mode for this session: vunmap [--in scope] keys.", Run: sessionUnmapIn("visual")},
+		{Name: "cunmap", Args: anyArgs, Label: "unmap", Desc: "Unbind a command-line key for this session: cunmap <C-k>.", Run: sessionUnmapIn("cmdline")},
+		{Name: "map", Label: "bindings", Desc: "List the bindings that differ from the defaults.", Run: (*Model).showMap},
+		{Name: "reload-config", Label: "reload config", Desc: "Read config.yaml again and rebuild the bindings, dropping this session's mappings.", Run: (*Model).reloadConfig},
 		{Name: "help", Label: "help", Desc: "Show every key and command, from the bindings in effect.", Run: func(m *Model, _ command.Call) error { m.showHelp(); return nil }},
 		{Name: "help-filter", Label: "filter", Desc: "Filter Help to the keys and commands that match what you type.", Run: func(m *Model, _ command.Call) error { m.startHelpFilter(); return nil }},
 		{Name: "key-menu", Label: "keys", Desc: "Show the keys for what is under the cursor; press one to run it.", Run: func(m *Model, _ command.Call) error { m.openKeyMenu(); return nil }},
@@ -308,4 +321,32 @@ func (m *Model) fitLine() { m.line.SetWidth(max(m.w-lipgloss.Width(m.line.Prompt
 func (m *Model) onTrack() bool {
 	_, _, err := m.trackRow()
 	return err == nil || errors.Is(err, errNoRows)
+}
+
+// Argument checks for binding commands to keys.
+func anyArgs([]string) error { return nil }
+
+func someArgs(a []string) error {
+	if len(a) == 0 {
+		return errors.New("give it a name")
+	}
+	return nil
+}
+
+func seekArgs(a []string) error {
+	if len(a) != 1 {
+		return errors.New("seek: give seconds, such as seek +10")
+	}
+	_, err := seconds(a[0])
+	return err
+}
+
+func volumeArgs(a []string) error {
+	if len(a) != 1 {
+		return errors.New("volume: give points, such as volume +5, or a level: volume 60")
+	}
+	if _, err := strconv.Atoi(strings.TrimPrefix(a[0], "+")); err != nil {
+		return fmt.Errorf("volume: %q is not a number", a[0])
+	}
+	return nil
 }

@@ -73,6 +73,36 @@ func (t *Table) Bind(mode Mode, scope, seq, command string) error {
 	return nil
 }
 
+// Unbind removes the binding for seq in one scope. It reports whether
+// there was one.
+func (t *Table) Unbind(mode Mode, scope, seq string) (bool, error) {
+	keys, err := Parse(seq)
+	if err != nil {
+		return false, err
+	}
+	want := strings.Join(keys, "")
+	list := t.bindings[mode][scope]
+	for i, b := range list {
+		if b.Seq() == want {
+			t.bindings[mode][scope] = slices.Delete(slices.Clone(list), i, i+1)
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// Clone returns a copy that can change without changing t.
+func (t *Table) Clone() *Table {
+	c := NewTable()
+	for mode, scopes := range t.bindings {
+		c.bindings[mode] = map[string][]Binding{}
+		for scope, bs := range scopes {
+			c.bindings[mode][scope] = slices.Clone(bs)
+		}
+	}
+	return c
+}
+
 // Keys returns the key sequences that run the named command in this scope
 // chain, narrowest scope first, skipping any a narrower scope shadows.
 func (t *Table) Keys(mode Mode, scopes []string, name string) []string {

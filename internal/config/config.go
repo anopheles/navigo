@@ -21,6 +21,7 @@ type Config struct {
 	Player Player `yaml:"player"`
 	// Hints shows the hint line; on unless set to false.
 	Hints *bool `yaml:"hints"`
+	Keys  Keys  `yaml:"keys"`
 }
 
 // Server is the one server navigo connects to. The password comes from

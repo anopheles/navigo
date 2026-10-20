@@ -99,10 +99,26 @@ var visualDefaults = []struct{ scope, keys, command string }{
 	{"global", "<C-c>", "cancel"},
 }
 
+// lineDefaults edit the ":" line, the search prompt and Help's filter.
+var lineDefaults = []struct{ scope, keys, command string }{
+	{"global", "<CR>", "accept"},
+	{"global", "<Esc>", "cancel"},
+	{"global", "<C-c>", "cancel"},
+	{"global", "<Tab>", "complete"},
+	{"global", "<S-Tab>", "complete-back"},
+	{"global", "<Up>", "history-back"},
+	{"global", "<Down>", "history-forward"},
+	{"global", "<C-a>", "line-start"},
+	{"global", "<C-e>", "line-end"},
+	{"global", "<C-w>", "kill-word"},
+	{"global", "<C-u>", "kill-to-start"},
+	{"global", "<C-k>", "kill-to-end"},
+}
+
 // defaultTable returns the default bindings.
 func defaultTable() *keymap.Table {
 	t := keymap.NewTable()
-	for mode, list := range map[keymap.Mode][]struct{ scope, keys, command string }{keymap.Normal: defaults, keymap.Visual: visualDefaults} {
+	for mode, list := range map[keymap.Mode][]struct{ scope, keys, command string }{keymap.Normal: defaults, keymap.Visual: visualDefaults, keymap.Cmdline: lineDefaults} {
 		for _, b := range list {
 			if err := t.Bind(mode, b.scope, b.keys, b.command); err != nil {
 				panic("ui: default binding " + b.keys + ": " + err.Error())

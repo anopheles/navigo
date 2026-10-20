@@ -83,6 +83,12 @@ func (m *Model) buildHelp() *helpView {
 		}
 		group(title, keymap.Visual, s)
 	}
+	if bs := t.Bindings(keymap.Cmdline, "global"); len(bs) > 0 {
+		rows = append(rows, helpRow{heading: "On the : line and in prompts"})
+		for _, b := range bs {
+			rows = append(rows, helpRow{key: keyLabel(b.Seq()), line: b.Command, desc: lineCommands[b.Command]})
+		}
+	}
 	var unbound []helpRow
 	for _, c := range m.registry.All() {
 		if !bound[c.Name] {
@@ -166,8 +172,8 @@ func (m *Model) startHelpFilter() {
 
 // helpKey handles the keys of the filter prompt other than editing; it
 // reports whether it handled k.
-func (m *Model) helpKey(k tea.KeyPressMsg) (tea.Cmd, bool) {
-	switch k.String() {
+func (m *Model) helpKey(key string) (tea.Cmd, bool) {
+	switch key {
 	case "esc", "ctrl+c":
 		before := m.helpBefore
 		m.leaveLine()

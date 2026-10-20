@@ -193,8 +193,8 @@ func (m *Model) liveSearch(q string) {
 
 // searchKey handles the keys of the search prompt that differ from the
 // ":" line. It reports whether it handled k.
-func (m *Model) searchKey(k tea.KeyPressMsg) (tea.Cmd, bool) {
-	switch k.String() {
+func (m *Model) searchKey(key string, k tea.KeyPressMsg) (tea.Cmd, bool) {
+	switch key {
 	case "esc", "ctrl+c":
 		m.cancelSearch()
 		return nil, true
@@ -214,13 +214,13 @@ func (m *Model) searchKey(k tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		}
 	case "up", "down":
-		m.historyStep(k.String() == "up")
+		m.historyStep(key == "up")
 		return nil, true
 	}
 	if m.selected {
 		m.selected = false
-		switch s := k.String(); {
-		case k.Text != "", s == "backspace", s == "ctrl+w", s == "ctrl+u":
+		switch {
+		case k.Text != "", key == "backspace":
 			m.line.SetValue("")
 		}
 	}

@@ -9,10 +9,6 @@ import (
 	"github.com/anopheles/navigo/internal/keymap"
 )
 
-// prefixDelay is how long a pure prefix waits before its menu shows
-// (keys.hint-delay).
-const prefixDelay = 500 * time.Millisecond
-
 // keyMenuRows is the most rows the key menu shows before it scrolls.
 const keyMenuRows = 24
 
@@ -81,7 +77,7 @@ func (m *Model) keyMenuKey(token string) (tea.Cmd, bool) {
 }
 
 // prefixMenu draws what can follow the keys typed so far, above the
-// status line, once a pure prefix has waited prefixDelay.
+// status line, once a pure prefix has waited keys.hint-delay.
 func (m *Model) prefixMenu() []string {
 	if !m.prefixShown || m.engine.Pending() == "" {
 		return nil
@@ -120,8 +116,11 @@ func (m *Model) prefixMenu() []string {
 }
 
 // armPrefix shows the prefix menu if the keys are still pending after
-// prefixDelay.
+// keys.hint-delay, unless keys.hints is off.
 func (m *Model) armPrefix() tea.Cmd {
+	if !m.keys.prefixMenus {
+		return nil
+	}
 	seq := m.seq
-	return m.clock.After(prefixDelay, func(time.Time) tea.Msg { return prefixMsg{seq} })
+	return m.clock.After(m.keys.hintDelay, func(time.Time) tea.Msg { return prefixMsg{seq} })
 }

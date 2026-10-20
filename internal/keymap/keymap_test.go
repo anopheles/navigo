@@ -296,3 +296,22 @@ func TestEffectiveAndContinuations(t *testing.T) {
 		t.Errorf("Scopes = %q", got)
 	}
 }
+
+func TestUnbindCloneCheck(t *testing.T) {
+	tb := table(t)
+	c := tb.Clone()
+	if ok, err := c.Unbind(Normal, "global", "gg"); !ok || err != nil {
+		t.Fatalf("Unbind(gg) = %v, %v", ok, err)
+	}
+	if ok, _ := c.Unbind(Normal, "global", "gg"); ok {
+		t.Error("unbound gg twice")
+	}
+	if len(c.Keys(Normal, []string{"global"}, "first")) != 0 || len(tb.Keys(Normal, []string{"global"}, "first")) != 1 {
+		t.Error("Unbind on the clone changed the original, or didn't unbind")
+	}
+	for seq, ok := range map[string]bool{"gg": true, "<C-d>": true, "<leader>x": true, "<lt>b": true, "<F12>": true, "<nope>": false, "": false} {
+		if err := Check(seq); (err == nil) != ok {
+			t.Errorf("Check(%q) = %v", seq, err)
+		}
+	}
+}

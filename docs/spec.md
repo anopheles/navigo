@@ -470,6 +470,7 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **Playlists:** the Playlists list and playlist tracks with `'p`; removals (`dd`, `x`, `d{motion}`, Visual `d`) after a y/n Confirmation, into the register; `p`/`P` and `J`/`K` on the server; `dd` on the list; `:playlist-add`, `:playlist-new`; no undo; edits refused offline ([#37](https://github.com/anopheles/navigo/issues/37)).
 - **Playback extras:** `=`/`+`/`-` volume (kept for mpv started later), `S` shuffle keeping the current track first, `R` repeat off/all/one driving what plays next and shown in the now-playing bar, the `i`/`:info` popup, and `*` stars, refused offline ([#39](https://github.com/anopheles/navigo/issues/39)).
 - **Help and menus:** the Help section (`'?`, `<F1>`, `:help`) built from the bindings in effect, by scope, with Visual mode and the commands no key runs, and `/` filtering it; the `?` key menu grouped Play, Queue, Select, Go, Help, where a listed key runs, motions scroll, and `<F1>` goes to Help; prefix menus after 500 ms, including after an operator ([#40](https://github.com/anopheles/navigo/issues/40)).
+- **Rebinding:** the `keys:` block with its options, `~` and `nop`, validation with every problem in a popup as `config.yaml:LINE:COL: message`, the can't-quit refusal, `navigo check-config`, the table-driven `:` line (`cmdline:`), `:nmap`/`:vmap`/`:cmap` and the `unmap` forms, `:map`, `:reload-config`, and `:queue-clear` from the example ([#42](https://github.com/anopheles/navigo/issues/42)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A, and the three layer B scenarios (the new-user path from search to playing, transport, cold start from the cache) on the fixture library and live ([#45](https://github.com/anopheles/navigo/issues/45)).
 
@@ -477,8 +478,7 @@ Still to build for v1:
 
 - **Sections:** Home (and starting on it). The skeleton starts on Albums.
 - **Keys:** marks other than `'a`/`'b`/`'p`/`'q`/`'s`/`'?`, `/` with `n`/`N`, the jump list, the remaining motions, and `gp`.
-- **Discoverability:** the `/`-to-search offer (with `/` find), and `keys.hints`/`keys.hint-delay` (with the `keys:` block; the delay is 500 ms until then).
-- **Rebinding:** the `keys:` block, its validation popup, `:map` and friends, `:reload-config` and `navigo check-config`.
+- **Discoverability:** the `/`-to-search offer (with `/` find).
 - **Crash cap:** the 3-crash cap for mpv (with the mpv slice).
 - **mpv:** the startup check with install hints, `player.mpv_path`, and resuming after a crash.
 - **Media controls:** MPRIS on Linux, and `force-media-title` for macOS and Windows.

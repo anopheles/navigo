@@ -24,8 +24,8 @@ type completion struct {
 
 // cmdKey handles the keys of the ":" line that aren't plain editing. It
 // reports whether it handled k.
-func (m *Model) cmdKey(k tea.KeyPressMsg) (tea.Cmd, bool) {
-	s := k.String()
+func (m *Model) cmdKey(key string) (tea.Cmd, bool) {
+	s := key
 	if s != "tab" && s != "shift+tab" {
 		m.compl = nil
 	}

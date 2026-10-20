@@ -50,6 +50,9 @@ type Command[T any] struct {
 	// Complete, if set, lists the argument texts <Tab> offers, such as
 	// playlist names.
 	Complete func(target T) []string
+	// Args checks the arguments of a command line before it is bound to a
+	// key. Nil means the command takes none.
+	Args func(args []string) error
 }
 
 // Registry maps names to commands, in the order they were added.

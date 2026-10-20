@@ -20,12 +20,15 @@ type (
 	// Move moves rows By places, down when positive. The UI clamps By
 	// so the rows stay in the queue.
 	Move struct{ From, To, By int }
+	// ClearQueue empties the queue; what plays plays on to its end.
+	ClearQueue struct{}
 )
 
-func (Yank) isEvent()   {}
-func (Remove) isEvent() {}
-func (Paste) isEvent()  {}
-func (Move) isEvent()   {}
+func (Yank) isEvent()       {}
+func (Remove) isEvent()     {}
+func (Paste) isEvent()      {}
+func (Move) isEvent()       {}
+func (ClearQueue) isEvent() {}
 
 func (s State) applyEdit(e Event) (State, []Effect) {
 	switch e := e.(type) {
@@ -68,6 +71,14 @@ func (s State) applyEdit(e Event) (State, []Effect) {
 		s = s.editRows(slices.Insert(slices.Clone(s.Queue), at, added...), -1)
 		text := fmt.Sprintf("%s pasted (%d in queue)", count(len(added)), len(s.Queue))
 		return s, append(s.neighbours(), Notice{Text: text, Command: "undo", Hint: "undoes"})
+
+	case ClearQueue:
+		if len(s.Queue) == 0 {
+			return s, []Effect{Notice{Text: "the queue is empty already"}}
+		}
+		n := len(s.Queue)
+		s = s.editRows(nil, -1)
+		return s, append(s.neighbours(), Notice{Text: "queue cleared (" + count(n) + ")", Command: "undo", Hint: "brings it back"})
 
 	case Move:
 		from, to := max(e.From, 0), min(e.To, len(s.Queue))

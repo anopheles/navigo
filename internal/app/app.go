@@ -367,7 +367,7 @@ func Apply(s State, e Event) (State, []Effect) {
 		return s.applyPlayback(e)
 	case SetStars, StarsWritten:
 		return s.applyStars(e)
-	case Yank, Remove, Paste, Move:
+	case Yank, Remove, Paste, Move, ClearQueue:
 		return s.applyEdit(e)
 	case PlaylistRemove, PlaylistInsert, PlaylistMove, PlaylistCreate, PlaylistDelete, PlaylistWritten:
 		return s.applyPlaylist(e)

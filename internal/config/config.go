@@ -26,6 +26,8 @@ type Config struct {
 	Hints *bool `yaml:"hints"`
 	// Resume keeps the queue between runs; on unless set to false.
 	Resume Resume `yaml:"resume"`
+	// Colors recolours the roles the user can change.
+	Colors Colors `yaml:"colors"`
 	Keys   Keys   `yaml:"keys"`
 }
 
@@ -54,7 +56,7 @@ func (c Config) ResumeOn() bool { return !c.Resume.Off }
 // keys block, each at its place; the settings concerned keep their
 // defaults.
 func (c Config) Problems() []Problem {
-	return append(slices.Clone(c.Player.Problems), c.Resume.Problems...)
+	return slices.Concat(c.Player.Problems, c.Resume.Problems, c.Colors.Problems)
 }
 
 // Server is the one server navigo connects to. The password comes from

@@ -453,11 +453,11 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 | Hint line, now-playing bar | no background; a faint rule above the now-playing bar |
 | Login and popup borders | faint; the focused login field's label cyan |
 
-**Recolouring** ([What can a user change about navigo's look?](https://github.com/anopheles/navigo/issues/52), reversing the "no colour settings" choice above): the `colors` block recolours four **roles**: `playing`, `key`, `error` and `selection`. A value is an ANSI name, a number from 0 to 15, or `#rrggbb`.
+**Recolouring** ([What can a user change about navigo's look?](https://github.com/anopheles/navigo/issues/52), reversing the "no colour settings" choice above): the `colors` block recolours four **roles**: `playing`, `key`, `error` and `selection`. A value is one of the 16 colours by name (`red`, `bright-red`, `gray`), by number from 0 to 15, or `#rrggbb`.
 - **The other elements** are attributes (reverse, bold, faint, underline) and follow whatever colours are set.
 - **No presets and no single accent:** the terminal's own theme is the preset, and one accent would merge "playing" with "focus" and, for red, with "error".
 - **Low colour depth:** a hex colour snaps to the nearest colour of a 256- or 16-colour terminal.
-- **Safeguard:** a `selection` equal to the text colour is reported and skipped, so the selection can't vanish.
+- **Safeguard:** the Visual selection stays underlined whatever colour it has, so a `selection` close to the text colour can't hide it, and it shows with colours off. navigo can't know the terminal's text colour, so it cannot check for that.
 
 **Without colour:** no meaning depends on colour alone, so navigo works fully with colours off. Any non-empty `NO_COLOR` turns colours off.
 

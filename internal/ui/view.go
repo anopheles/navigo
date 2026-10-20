@@ -19,9 +19,10 @@ import (
 // narrow is the width below which only one window is shown.
 const narrow = 100
 
-// Styles use only the terminal's 16 colours and text attributes, so
-// navigo follows the terminal's theme. Each colour means one thing:
-// magenta playing, cyan a key, red an error. With colours off (NO_COLOR)
+// Styles use the terminal's 16 colours and text attributes, so navigo
+// follows the terminal's theme; colors.go lets the config recolour the
+// four roles. Each colour means one thing: magenta playing, cyan a key,
+// red an error, blue the selection. With colours off (NO_COLOR)
 // the attributes and marks (▶, ★, ──) still tell everything apart.
 var (
 	cursorStyle = lipgloss.NewStyle().Reverse(true)   // the cursor in the focused window

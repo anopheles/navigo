@@ -376,6 +376,8 @@ func (m *Model) reloadConfig(command.Call) error {
 	}
 	m.deps.Config.Keys, m.keys = cfg.Keys, set
 	m.deps.Config.Player, m.deps.Config.Resume = cfg.Player, cfg.Resume
+	m.deps.Config.Colors = cfg.Colors
+	applyColors(cfg.Colors)
 	m.setTable(t)
 	m.event(app.ConfigureReplayGain{ReplayGain: gainOf(cfg.Player)})
 	m.event(app.ConfigureResume{On: cfg.ResumeOn()})

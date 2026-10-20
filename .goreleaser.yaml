@@ -1,0 +1,38 @@
+# Builds and drafts a GitHub release when .github/workflows/release.yml
+# runs on a v* tag; docs/releasing.md has the steps.
+version: 2
+
+builds:
+  - main: ./cmd/navigo
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Tag}} -X main.commit={{.ShortCommit}} -X main.date={{.CommitDate}}
+    mod_timestamp: "{{.CommitTimestamp}}"
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - "^Reformat"
+
+release:
+  draft: true
+  prerelease: auto

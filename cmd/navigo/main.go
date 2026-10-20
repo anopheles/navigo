@@ -39,7 +39,12 @@ func run() error {
 		"",
 		"config file (default: navigo/config.yaml in the user config dir)",
 	)
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
+	if *showVersion {
+		fmt.Println(versionString())
+		return nil
+	}
 
 	path := *configPath
 	if path == "" {
@@ -63,7 +68,7 @@ func run() error {
 	if logFile != nil {
 		defer logFile.Close()
 	}
-	slog.Debug("starting", "config", path)
+	slog.Debug("starting", "version", versionString(), "config", path)
 
 	// The player signs stream URLs with whichever client logged in last.
 	var client atomic.Pointer[subsonic.Client]

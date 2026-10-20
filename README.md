@@ -17,11 +17,18 @@ mpv, gaplessly.
 
 ## Install
 
-With Go 1.26 or newer:
+Download the archive for your OS and CPU from
+[Releases](https://github.com/anopheles/navigo/releases), unpack it and
+put `navigo` on your `PATH`. On macOS, the binary isn't notarized: run
+`xattr -d com.apple.quarantine navigo` once after unpacking.
+
+Or, with Go 1.26 or newer:
 
 ```sh
 go install github.com/anopheles/navigo/cmd/navigo@latest
 ```
+
+`navigo --version` says which version you have.
 
 ## First run
 

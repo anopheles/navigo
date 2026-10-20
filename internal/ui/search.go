@@ -14,16 +14,21 @@ import (
 )
 
 // caps are how many results of each group show before a "… N more" row.
-var caps = [3]int{library.ArtistGroup: 10, library.AlbumGroup: 20, library.TrackGroup: 200}
+var caps = [4]int{
+	library.ArtistGroup:   10,
+	library.AlbumGroup:    20,
+	library.PlaylistGroup: 10,
+	library.TrackGroup:    200,
+}
 
-var groupNames = [3]string{"Artists", "Albums", "Tracks"}
+var groupNames = [4]string{"Artists", "Albums", "Playlists", "Tracks"}
 
 // searchView is the Search section's results for one query. Frames share
 // it by pointer, so the section's saved path sees the same results.
 type searchView struct {
 	query    string
 	res      library.Results
-	expanded [3]bool
+	expanded [4]bool
 	rows     []searchRow
 }
 
@@ -98,6 +103,13 @@ func (v *searchView) album(i int) (library.Album, bool) {
 	return library.Album{}, false
 }
 
+func (v *searchView) playlist(i int) (library.Playlist, bool) {
+	if r := v.row(i); r.group == library.PlaylistGroup && r.i >= 0 {
+		return v.res.Playlists[r.i], true
+	}
+	return library.Playlist{}, false
+}
+
 func (v *searchView) track(i int) (library.Track, bool) {
 	if r := v.row(i); r.group == library.TrackGroup && r.i >= 0 {
 		return v.res.Tracks[r.i], true
@@ -119,6 +131,9 @@ func (v *searchView) rowID(i int) string {
 	}
 	if a, ok := v.album(i); ok {
 		return "album:" + string(a.ID)
+	}
+	if p, ok := v.playlist(i); ok {
+		return "playlist:" + string(p.ID)
 	}
 	t, _ := v.track(i)
 	return "track:" + string(t.ID)
@@ -187,7 +202,7 @@ func (m *Model) startSearch() {
 func (m *Model) liveSearch(q string) {
 	f := m.searchFrame()
 	v := f.search
-	v.query, v.expanded = q, [3]bool{}
+	v.query, v.expanded = q, [4]bool{}
 	v.run(m.state.Library)
 	f.title = searchTitle(q)
 	f.cur, f.offset = v.best(), 0
@@ -289,6 +304,10 @@ func (m *Model) searchRowText(v *searchView, i, w int) string {
 	}
 	if a, ok := v.album(i); ok {
 		return m.albumLine(a, w)
+	}
+	if p, ok := v.playlist(i); ok {
+		n := count(len(p.Tracks))
+		return " " + fit(p.Name, w-2-len(n)-2) + "  " + n + " "
 	}
 	t, _ := v.track(i)
 	t.Artist += " · " + t.Album // what it matched on

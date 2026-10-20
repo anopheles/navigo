@@ -858,6 +858,10 @@ func (m *Model) scopes() []string {
 		if _, ok := v.artist(m.top().cur); ok {
 			return []string{"search", "artists", "containers", "global"}
 		}
+		// A playlist's own keys (dd, J, K) belong to the Playlists section.
+		if _, ok := v.playlist(m.top().cur); ok {
+			return []string{"search", "containers", "global"}
+		}
 		return []string{"search", "containers", "global"}
 	}
 	return []string{"sections", "containers", "global"}

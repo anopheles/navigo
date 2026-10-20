@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 // found lists results as "name (artist)" so same-named albums differ.
@@ -82,5 +83,98 @@ func TestWords(t *testing.T) {
 		if got := strings.Join(words(in), " "); got != want {
 			t.Errorf("words(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func playlistLib() *Snapshot {
+	return Build("https://m.example", "ann", time.Time{}, nil, nil,
+		[]Track{{ID: "t1", Title: "Road Trip"}, {ID: "t2", Title: "Morning"}},
+		[]Playlist{
+			{ID: "p1", Name: "Road trip", Tracks: []TrackID{"t1"}},
+			{ID: "p2", Name: "Road Trip Classics", Tracks: []TrackID{"t1", "t2"}},
+			{ID: "p3", Name: "A road to nowhere"},
+			{ID: "p4", Name: "Sängerfest"},
+			{ID: "p5", Name: "Morning Mix"},
+		}, nil)
+}
+
+func names(ps []Playlist) []string {
+	var out []string
+	for _, p := range ps {
+		out = append(out, p.Name)
+	}
+	return out
+}
+
+func TestSearchPlaylists(t *testing.T) {
+	s := playlistLib()
+	// Same tiers as the other groups: exact, prefix, words; ties by name.
+	got := names(s.Search("road trip").Playlists)
+	if want := []string{
+		"Road trip",
+		"Road Trip Classics",
+		"A road to nowhere",
+	}; !slices.Equal(
+		got[:2],
+		want[:2],
+	) ||
+		slices.Contains(got, "Morning Mix") {
+		t.Errorf("road trip = %q", got)
+	}
+	if got := names(s.Search("rd").Playlists); len(got) != 0 {
+		t.Errorf("rd = %q, want none", got)
+	}
+	// Words start words; accents and case are ignored; only the name counts.
+	if got := names(
+		s.Search("ROAD no").Playlists,
+	); !slices.Equal(
+		got,
+		[]string{"A road to nowhere"},
+	) {
+		t.Errorf("ROAD no = %q", got)
+	}
+	if got := names(s.Search("sangerfest").Playlists); !slices.Equal(got, []string{"Sängerfest"}) {
+		t.Errorf("sangerfest = %q", got)
+	}
+	if got := names(s.Search("t1").Playlists); len(got) != 0 {
+		t.Errorf("a track ID matched a playlist: %q", got)
+	}
+}
+
+func TestSearchBestMatchCanBeAPlaylist(t *testing.T) {
+	s := playlistLib()
+	// "Road trip" is both a track and a playlist, exactly; the earlier
+	// group wins the tie.
+	if r := s.Search("road trip"); r.Best != PlaylistGroup {
+		t.Errorf("best = %d, want the playlist", r.Best)
+	}
+	if r := s.Search("morning mix"); r.Best != PlaylistGroup || len(r.Tracks) != 0 {
+		t.Errorf("morning mix: best %d, tracks %d", r.Best, len(r.Tracks))
+	}
+	if r := s.Search("morning"); r.Best != TrackGroup {
+		t.Errorf("morning best = %d, want the track named exactly that", r.Best)
+	}
+}
+
+func TestSearchSeesPlaylistChanges(t *testing.T) {
+	s := playlistLib()
+	n := s.WithPlaylist(Playlist{ID: "p6", Name: "Gym Rotation"})
+	if len(n.Search("gym").Playlists) != 1 {
+		t.Error("a created playlist isn't found")
+	}
+	if len(s.Search("gym").Playlists) != 0 {
+		t.Error("the old snapshot learned of the new playlist")
+	}
+	n = n.WithPlaylist(Playlist{ID: "p6", Name: "Cardio"})
+	if len(n.Search("gym").Playlists) != 0 || len(n.Search("cardio").Playlists) != 1 {
+		t.Error("a renamed playlist is found by its old name")
+	}
+	n = n.WithoutPlaylist("p6")
+	if len(n.Search("cardio").Playlists) != 0 {
+		t.Error("a deleted playlist is found")
+	}
+	e := s.WithExtras([]Playlist{{ID: "p9", Name: "Fresh From Sync"}}, nil)
+	if len(e.Search("fresh").Playlists) != 1 || len(e.Search("road").Playlists) != 0 {
+		t.Error("playlists from a refresh aren't what is searched")
 	}
 }

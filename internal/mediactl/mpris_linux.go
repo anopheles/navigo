@@ -20,6 +20,7 @@ const (
 	objectPath  = dbus.ObjectPath("/org/mpris/MediaPlayer2")
 	rootIface   = "org.mpris.MediaPlayer2"
 	playerIface = "org.mpris.MediaPlayer2.Player"
+	propsIface  = "org.freedesktop.DBus.Properties"
 	noTrack     = dbus.ObjectPath("/org/mpris/MediaPlayer2/TrackList/NoTrack")
 )
 
@@ -66,6 +67,9 @@ func Serve(conn *dbus.Conn) (Controls, error) {
 		return nil, err
 	}
 	m.props = props
+	if err := conn.Export(withMessages{props}, objectPath, propsIface); err != nil {
+		return nil, err
+	}
 	node := &introspect.Node{
 		Name: string(objectPath),
 		Interfaces: []introspect.Interface{
@@ -257,6 +261,38 @@ func trackPath(id string) dbus.ObjectPath {
 		}
 	}
 	return dbus.ObjectPath(b.String())
+}
+
+// withMessages is org.freedesktop.DBus.Properties with a message on every
+// error. godbus's errors have an empty body, and playerctld, which asks
+// every player for TrackList and Playlists, crashes on such a reply, and
+// then crash-loops as the bus restarts it for every client that asks.
+type withMessages struct{ p *prop.Properties }
+
+func (w withMessages) Get(iface, name string) (dbus.Variant, *dbus.Error) {
+	v, err := w.p.Get(iface, name)
+	return v, explain(err, iface, name)
+}
+
+func (w withMessages) GetAll(iface string) (map[string]dbus.Variant, *dbus.Error) {
+	all, err := w.p.GetAll(iface)
+	return all, explain(err, iface, "")
+}
+
+func (w withMessages) Set(iface, name string, v dbus.Variant) *dbus.Error {
+	return explain(w.p.Set(iface, name, v), iface, name)
+}
+
+// explain gives err a message naming what was asked for.
+func explain(err *dbus.Error, iface, name string) *dbus.Error {
+	if err == nil || len(err.Body) > 0 {
+		return err
+	}
+	what := iface
+	if name != "" {
+		what += "." + name
+	}
+	return dbus.NewError(err.Name, []any{what + ": " + strings.TrimPrefix(err.Name, propsIface+".Error.")})
 }
 
 // root is org.mpris.MediaPlayer2: navigo can't be raised or quit from

@@ -4,6 +4,7 @@ package mediactl
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -203,4 +204,40 @@ func TestMPRIS(t *testing.T) {
 	if !strings.Contains(strings.Join(names, " "), busName+".instance") {
 		t.Errorf("bus names %q lack a second instance", names)
 	}
+}
+
+// GLib clients such as playerctld read the message out of an error reply,
+// and playerctld crashes on one without it, so errors for interfaces and
+// properties navigo lacks (TrackList, DesktopEntry) must carry a message.
+func TestMPRISErrorsCarryAMessage(t *testing.T) {
+	addr := privateBus(t)
+	ctl, err := Serve(connect(t, addr))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ctl.Close()
+	obj := connect(t, addr).Object(busName, objectPath)
+	const props = "org.freedesktop.DBus.Properties"
+	for name, call := range map[string]*dbus.Call{
+		"GetAll of an unknown interface": obj.Call(props+".GetAll", 0, "org.mpris.MediaPlayer2.TrackList"),
+		"Get of an unknown interface":    obj.Call(props+".Get", 0, "org.mpris.MediaPlayer2.TrackList", "Tracks"),
+		"Get of an unknown property":     obj.Call(props+".Get", 0, rootIface, "DesktopEntry"),
+		"Set of a read-only property":    obj.Call(props+".Set", 0, rootIface, "Identity", dbus.MakeVariant("x")),
+	} {
+		var derr dbus.Error
+		if !errors.As(call.Err, &derr) {
+			t.Errorf("%s: got %v, want a D-Bus error", name, call.Err)
+			continue
+		}
+		if msg, _ := firstBody(derr).(string); msg == "" {
+			t.Errorf("%s: the %s error has no message", name, derr.Name)
+		}
+	}
+}
+
+func firstBody(e dbus.Error) any {
+	if len(e.Body) == 0 {
+		return nil
+	}
+	return e.Body[0]
 }

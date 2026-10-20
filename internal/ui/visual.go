@@ -140,6 +140,9 @@ func (m *Model) rowTracks(f *frame, i int) (tracks []library.Track, artist bool)
 		if a, ok := v.album(i); ok {
 			return lib.AlbumTracks(a.ID), false
 		}
+		if p, ok := v.playlist(i); ok {
+			return lib.PlaylistTracks(p.ID), false
+		}
 		if t, ok := v.track(i); ok {
 			return []library.Track{t}, false
 		}

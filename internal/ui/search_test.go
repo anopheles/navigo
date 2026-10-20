@@ -157,3 +157,40 @@ func TestSearchAccents(t *testing.T) {
 		t.Error("album not found without its accents")
 	}
 }
+
+func TestSearchFindsPlaylists(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys(":search morning<CR>")
+	h.contains("Playlists · 1", "Morning Mix", "5 tracks")
+	h.cursorOn("Morning Mix") // the best match
+
+	// <CR> opens the playlist's tracks.
+	h.keys("<CR>")
+	h.contains("Search “morning” › Morning Mix", "Undertow", "朝霧")
+	h.keys("h")
+
+	// a/A add every track; * and dd leave a playlist alone.
+	h.keys("A")
+	h.contains("5 tracks added to the end of the queue (5 in queue)")
+	h.keys("*")
+	h.contains("playlists can't be starred")
+	h.keys("dd")
+	h.lacks("delete")
+	if n := len(h.m.state.Library.Playlists); n != 2 {
+		t.Errorf("%d playlists left, want 2", n)
+	}
+	if len(h.writes()) != 0 {
+		t.Errorf("a key in Search wrote to the server: %v", h.writes())
+	}
+
+	// In Visual mode too.
+	h.keys("Va")
+	h.contains("Queue (10)")
+}
+
+func TestSearchFindsAPlaylistMadeLater(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys(":playlist-new Gym Rotation<CR>")
+	h.keys(":search gym<CR>")
+	h.contains("Playlists · 1", "Gym Rotation")
+}

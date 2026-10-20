@@ -114,6 +114,11 @@ func (m *Model) chosenItems() []item {
 // star is *: it stars the chosen items, or unstars them when all are
 // starred already.
 func (m *Model) star(command.Call) error {
+	if f := m.top(); m.focus == libraryWindow && f.kind == searchList && m.visual == nil {
+		if _, ok := f.search.playlist(f.cur); ok {
+			return errors.New("playlists can't be starred")
+		}
+	}
 	items := m.chosenItems()
 	m.endVisual()
 	if len(items) == 0 {

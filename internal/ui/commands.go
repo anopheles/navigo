@@ -227,6 +227,8 @@ func (m *Model) open(c command.Call) error {
 			m.openArtist(a)
 		} else if a, ok := v.album(f.cur); ok {
 			m.openAlbum(a, "")
+		} else if p, ok := v.playlist(f.cur); ok {
+			m.lib = append(m.lib, frame{kind: playlistTracks, playlist: p.ID, title: p.Name})
 		} else if r := v.row(f.cur); r.more > 0 {
 			v.expanded[r.group] = true
 			v.layout()

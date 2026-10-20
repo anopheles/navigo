@@ -256,6 +256,7 @@ func (s *Snapshot) WithPlaylist(p Playlist) *Snapshot {
 	} else {
 		n.Playlists = append(n.Playlists, p)
 	}
+	n.reindexPlaylists()
 	return &n
 }
 
@@ -266,6 +267,7 @@ func (s *Snapshot) WithoutPlaylist(id PlaylistID) *Snapshot {
 		slices.Clone(s.Playlists),
 		func(p Playlist) bool { return p.ID == id },
 	)
+	n.reindexPlaylists()
 	return &n
 }
 
@@ -279,6 +281,7 @@ func (s *Snapshot) WithExtras(playlists []Playlist, starred []string) *Snapshot 
 	n.Playlists, n.Starred = slices.Clone(playlists), slices.Clone(starred)
 	n.SyncedAt = time.Now()
 	n.indexStars()
+	n.reindexPlaylists()
 	return &n
 }
 

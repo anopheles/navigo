@@ -307,14 +307,14 @@ The `:` line has Tab completion for command names and arguments.
 **What it searches:** only the cache, ignoring case and accents. It never calls `search3`.
 
 **Layout:**
-- Results come in **fixed groups, in this order: Artists, Albums, Tracks.** Each is under a heading the cursor skips, and `{`/`}` jump between groups.
+- Results come in **fixed groups, in this order: Artists, Albums, Playlists, Tracks.** Each is under a heading the cursor skips, and `{`/`}` jump between groups.
 - The cursor starts on the **best match**.
-- **Caps:** 10 artists, 20 albums and 200 tracks, each capped group ending in a `… N more` row that `<CR>` expands.
+- **Caps:** 10 artists, 20 albums, 10 playlists and 200 tracks, each capped group ending in a `… N more` row that `<CR>` expands.
 - **No match:** `nothing in the library matches "xyz"`, plus "still syncing, results may be incomplete" during the first sync.
 
 **Matching:**
 - Every query word must match the start of a word: "blu ho" finds Blue Hour.
-- **Tracks** match on title + artist + album, **albums** on name + album artist, **artists** on name.
+- **Tracks** match on title + artist + album, **albums** on name + album artist, **playlists** and **artists** on name.
 - **Rank:** exact name, then name starting with the query, then all words in the name, then words spread over artist or album. Ties go to play count, then alphabetical order.
 
 **Typing:**
@@ -325,7 +325,8 @@ The `:` line has Tab completion for command names and arguments.
 - **Tracks:** `<CR>` plays the track within its album, `a`/`A` add just the track, and `ga`/`gr` go to its album or artist.
 - **Albums:** `<CR>`/`l` open the album, and `a`/`A` add all of it.
 - **Artists:** `<CR>`/`l` open the artist page.
-- **Visual mode** can span groups. `a`/`A` add selected albums and tracks, and skip artist rows with a note.
+- **Playlists** ([#59](https://github.com/anopheles/navigo/issues/59)): a row shows the name and, at the right, `N tracks`. `<CR>`/`l` open the playlist's tracks, and `a`/`A` add all of them. `*` says playlists can't be starred, and a playlist's own keys (`dd`, `J`, `K`) work in the Playlists section, not here. A playlist takes part in the best match like any other result, and a created, renamed or deleted playlist is found (or no longer found) at once.
+- **Visual mode** can span groups. `a`/`A` add selected albums, playlists and tracks, and skip artist rows with a note.
 
 ## Queue and playback
 
@@ -523,7 +524,7 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)�
 - **Screen:** the two windows and narrow layout, the hint line, the empty-queue message, the now-playing bar and the `:` line.
 - **Offline:** detection, backoff with the countdown indicator, `:reconnect`, the 10/60 s timeouts, the stream-failure and buffering-stall pings, the 3-skip cap, and starting from the cache when the server is unreachable ([#32](https://github.com/anopheles/navigo/issues/32)).
 - **Artists:** the Artists section and artist pages with the Appears on group, `{`/`}`, `ga`/`gr` (with a chooser for several artists), `'a`/`:artists`, and sections that keep their path ([#34](https://github.com/anopheles/navigo/issues/34)).
-- **Search:** `'s`/`:search`, live results from the cache in Artists/Albums/Tracks groups with caps and `… N more`, word-start matching without case or accents, ranking, the selected last query, and the saved history ([#38](https://github.com/anopheles/navigo/issues/38)).
+- **Search:** `'s`/`:search`, live results from the cache in Artists/Albums/Playlists/Tracks groups with caps and `… N more`, word-start matching without case or accents, ranking, the selected last query, and the saved history ([#38](https://github.com/anopheles/navigo/issues/38)).
 - **Visual mode and queue editing:** `V`/`v` with the selection highlighted and counts in the hint line, `:` on the selection, spanning Search groups with artist rows skipped; the `d`/`y` operators with motions, counts and doubling; the one register shared by every view; `p`/`P`, `x`, `J`/`K`, each an undoable step that keeps the player's neighbours right; `"x` rejected ([#35](https://github.com/anopheles/navigo/issues/35)).
 - **The `:` line:** fuzzy matching of names and descriptions with each match's key, what applies here first; `<Tab>`/`<S-Tab>` completion of names and arguments (`:search` from its history); `tip: next time press …`; and the history, saved in the state directory ([#41](https://github.com/anopheles/navigo/issues/41)).
 - **Playlists:** the Playlists list and playlist tracks with `'p`; removals (`dd`, `x`, `d{motion}`, Visual `d`) after a y/n Confirmation, into the register; `p`/`P` and `J`/`K` on the server; `dd` on the list; `:playlist-add`, `:playlist-new`; no undo; edits refused offline ([#37](https://github.com/anopheles/navigo/issues/37)).

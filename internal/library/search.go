@@ -17,14 +17,16 @@ type Group int
 const (
 	ArtistGroup Group = iota
 	AlbumGroup
+	PlaylistGroup
 	TrackGroup
 )
 
 // Results are what a search found, each group best match first.
 type Results struct {
-	Artists []Artist
-	Albums  []Album
-	Tracks  []Track
+	Artists   []Artist
+	Albums    []Album
+	Playlists []Playlist
+	Tracks    []Track
 	// Best is the group holding the best match overall, or -1 when
 	// nothing matched. Its first entry is the match.
 	Best Group
@@ -37,6 +39,8 @@ func (r Results) Len(g Group) int {
 		return len(r.Artists)
 	case AlbumGroup:
 		return len(r.Albums)
+	case PlaylistGroup:
+		return len(r.Playlists)
 	}
 	return len(r.Tracks)
 }
@@ -74,13 +78,15 @@ func newKeys(s string) keys {
 	return keys{w, strings.Join(w, " ")}
 }
 
-// searchIndex holds every artist, album and track prepared for matching.
+// searchIndex holds every artist, album, playlist and track prepared for
+// matching.
 // Tracks' extra words are their artist and album; albums' are the album
 // artist.
 type searchIndex struct {
 	artists            []keys
 	albums, albumExtra []keys
 	tracks, trackExtra []keys
+	playlists          []keys
 }
 
 func (s *Snapshot) buildSearch() {
@@ -96,11 +102,33 @@ func (s *Snapshot) buildSearch() {
 		x.tracks = append(x.tracks, newKeys(t.Title))
 		x.trackExtra = append(x.trackExtra, newKeys(t.Artist+" "+t.Album))
 	}
+	x.playlists = playlistKeys(s.Playlists)
 	s.search = x
 }
 
-// Search finds artists by name, albums by name and album artist, and
-// tracks by title, artist and album, ignoring case and accents. Every
+// playlistKeys prepares playlists for matching, by name only.
+func playlistKeys(ps []Playlist) []keys {
+	out := make([]keys, len(ps))
+	for i, p := range ps {
+		out[i] = newKeys(p.Name)
+	}
+	return out
+}
+
+// reindexPlaylists makes the search see s.Playlists after they changed. It
+// gives s its own index, since the copy it came from shares the old one.
+func (s *Snapshot) reindexPlaylists() {
+	if s.search == nil {
+		s.buildSearch()
+		return
+	}
+	x := *s.search
+	x.playlists = playlistKeys(s.Playlists)
+	s.search = &x
+}
+
+// Search finds artists by name, albums by name and album artist,
+// playlists by name, and tracks by title, artist and album, ignoring case and accents. Every
 // query word must start a word. An empty query finds nothing.
 func (s *Snapshot) Search(query string) Results {
 	q := newKeys(query)
@@ -138,6 +166,18 @@ func (s *Snapshot) Search(query string) Results {
 	sortBy(res.Albums, al)
 	if len(al) > 0 {
 		found(AlbumGroup, slices.MinFunc(al, rank.compare))
+	}
+
+	var pl []rank
+	for i, k := range x.playlists {
+		if t, ok := match(q, k, keys{}); ok {
+			res.Playlists = append(res.Playlists, s.Playlists[i])
+			pl = append(pl, rank{t, 0, k.joined})
+		}
+	}
+	sortBy(res.Playlists, pl)
+	if len(pl) > 0 {
+		found(PlaylistGroup, slices.MinFunc(pl, rank.compare))
 	}
 
 	var tr []rank

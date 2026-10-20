@@ -72,15 +72,27 @@ func (m *Model) render() string {
 	} else {
 		lw := m.w * 3 / 5
 		rw := m.w - lw
+		var lhead, rhead []string
+		lh, rh := h, h
+		if m.protoActive() && m.proto.place == 3 {
+			if a, ok := m.protoBrowseAlbum(); ok {
+				lhead = m.protoPanel(protoWant{string(a.ID), 300, 20, 10}, m.protoAlbumText(a), lw-2)
+				lh = max(h-len(lhead), 1)
+			}
+		}
+		if m.protoActive() && m.proto.place == 2 && m.protoPlayingID() != "" {
+			rhead = m.protoPanel(protoWant{m.protoPlayingID(), 300, 20, 10}, m.protoPlayingText(), rw-2)
+			rh = max(h-len(rhead), 1)
+		}
 		left := pane(
 			m.libTitle(),
-			m.libraryRows(lw-2, h, m.focus == libraryWindow),
+			append(lhead, m.libraryRows(lw-2, lh, m.focus == libraryWindow)...),
 			lw,
 			m.focus == libraryWindow,
 		)
 		right := pane(
 			m.queueTitle(),
-			m.queueRows(rw-2, h, m.focus == queueWindow),
+			append(rhead, m.queueRows(rw-2, rh, m.focus == queueWindow)...),
 			rw,
 			m.focus == queueWindow,
 		)
@@ -95,7 +107,11 @@ func (m *Model) render() string {
 		lines,
 		dimStyle.Render(strings.Repeat("─", max(m.w, 0))),
 	) // the rule above the bar
-	lines = append(lines, m.nowPlaying()...)
+	if m.protoRows() > 0 && m.protoPlayingID() != "" {
+		lines = append(lines, m.protoCard()...)
+	} else {
+		lines = append(lines, m.nowPlaying()...)
+	}
 	lines = append(lines, m.status())
 	if pm := m.prefixMenu(); len(pm) > 0 {
 		at := len(lines) - 1 - len(pm)
@@ -104,6 +120,11 @@ func (m *Model) render() string {
 	if ms := m.matchList(); len(ms) > 0 {
 		at := len(lines) - 1 - len(ms) // just above the status line
 		copy(lines[max(at, 0):], ms)
+	}
+	if m.protoActive() && m.proto.popup {
+		if box := m.protoPopup(); box != "" {
+			overlay(lines, box, max((m.w-lipgloss.Width(box))/2, 0), 2)
+		}
 	}
 	if m.popup != nil {
 		box := m.renderPopup()

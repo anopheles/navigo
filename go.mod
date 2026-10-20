@@ -10,11 +10,13 @@ require (
 	github.com/charmbracelet/colorprofile v0.4.3
 	github.com/charmbracelet/x/ansi v0.11.9
 	github.com/charmbracelet/x/exp/golden v0.1.0
+	github.com/charmbracelet/x/mosaic v0.0.0-20261018003744-cb897cb4ed72
 	github.com/charmbracelet/x/vt v0.1.0
 	github.com/charmbracelet/x/xpty v0.1.4
 	github.com/godbus/dbus/v5 v5.2.4
 	github.com/zalando/go-keyring v0.2.8
 	go.yaml.in/yaml/v3 v3.0.5
+	golang.org/x/image v0.44.0
 	golang.org/x/text v0.43.0
 )
 

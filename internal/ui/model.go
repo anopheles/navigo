@@ -120,6 +120,7 @@ type frame struct {
 // Model is the root Bubble Tea model. It is used by pointer.
 type Model struct {
 	deps  Deps
+	proto protoCover
 	state app.State
 	// pendingSave is the saved queue waiting to be written; saveArmed,
 	// that the timer for it is running.
@@ -256,7 +257,11 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if cmd, ok := m.protoUpdate(msg); ok {
+		return m, cmd
+	}
 	_, cmd := m.update(msg)
+	cmd = tea.Batch(cmd, m.protoPost())
 	if len(m.timers) > 0 {
 		cmd = tea.Batch(append(m.timers, cmd)...)
 		m.timers = nil
@@ -986,6 +991,7 @@ func (m *Model) bodyHeight() int {
 	if m.hints {
 		h--
 	}
+	h -= m.protoRows()
 	return max(h, 1)
 }
 

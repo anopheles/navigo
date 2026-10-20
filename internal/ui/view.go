@@ -77,8 +77,12 @@ func (m *Model) render() string {
 		if m.protoActive() && m.proto.place == 3 {
 			if a, ok := m.protoBrowseAlbum(); ok {
 				lhead = m.protoPanel(protoWant{string(a.ID), 300, 20, 10}, m.protoAlbumText(a), lw-2)
-				lh = max(h-len(lhead), 1)
+			} else {
+				lhead = m.protoPanel(protoWant{"", 300, 20, 10},
+					[]string{"", dimStyle.Render("P3: no album under the cursor here"),
+						dimStyle.Render("open Albums, Recently added, or an album")}, lw-2)
 			}
+			lh = max(h-len(lhead), 1)
 		}
 		if m.protoActive() && m.proto.place == 2 && m.protoPlayingID() != "" {
 			rhead = m.protoPanel(protoWant{m.protoPlayingID(), 300, 20, 10}, m.protoPlayingText(), rw-2)

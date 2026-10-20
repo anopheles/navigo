@@ -279,6 +279,11 @@ func (m *Model) protoUpdate(msg tea.Msg) (tea.Cmd, bool) {
 		default:
 			return nil, false
 		}
+		if p.place > 0 && !m.protoActive() {
+			note += fmt.Sprintf(" — HIDDEN: needs 100×28, this is %d×%d (F9 overrides)", m.w, m.h)
+		} else if p.place == 3 {
+			note += " — shows on album lists and album pages"
+		}
 		m.setMsg("proto: "+note, false)
 		return m.protoPost(), true
 	}

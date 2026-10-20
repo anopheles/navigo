@@ -126,6 +126,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "reload-config", Label: "reload config", Desc: "Read config.yaml again and rebuild the bindings, dropping this session's mappings.", Run: (*Model).reloadConfig},
 		{Name: "help", Jump: true, Label: "help", Desc: "Show every key and command, from the bindings in effect.", Run: func(m *Model, _ command.Call) error { m.showHelp(); return nil }},
 		{Name: "help-filter", Label: "filter", Desc: "Filter Help to the keys and commands that match what you type.", Run: func(m *Model, _ command.Call) error { m.startHelpFilter(); return nil }},
+		{Name: "cover", Label: "cover", Desc: "Show the playing track's cover art large.", Run: func(m *Model, _ command.Call) error { return m.openCover() }},
 		{Name: "key-menu", Label: "keys", Desc: "Show the keys for what is under the cursor; press one to run it.", Run: func(m *Model, _ command.Call) error { m.openKeyMenu(); return nil }},
 		{Name: "messages", Label: "messages", Desc: "Show the messages of this session.", Run: func(m *Model, _ command.Call) error { m.showMessages(); return nil }},
 		{Name: "interrupt", Label: "cancel", Desc: "Like cancel; reminds you how to quit.", Run: func(m *Model, _ command.Call) error { m.setMsg("type :q to quit", false); return nil }},

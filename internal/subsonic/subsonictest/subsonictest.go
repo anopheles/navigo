@@ -14,9 +14,14 @@
 package subsonictest
 
 import (
+	"bytes"
 	"crypto/md5"
 	"embed"
 	"encoding/hex"
+	"hash/fnv"
+	"image"
+	"image/color"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -34,6 +39,7 @@ const (
 )
 
 // NotFoundID is an album ID with a recorded "not found" (error 70) response.
+// getCoverArt answers it with a 404.
 const NotFoundID = "does-not-exist"
 
 //go:embed testdata
@@ -143,6 +149,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	params := r.Form
+	if endpoint == "getCoverArt" {
+		s.serveCover(w, r, endpoint, params)
+		return
+	}
 	if f := params.Get("f"); f != "json" {
 		s.t.Errorf("subsonictest: %s: f=%q, want json", endpoint, f)
 	}
@@ -199,4 +209,56 @@ func (s *Server) authorized(endpoint string, params url.Values) bool {
 	}
 	sum := md5.Sum([]byte(Password + salt))
 	return params.Get("u") == Username && token == hex.EncodeToString(sum[:])
+}
+
+// serveCover answers getCoverArt with a generated PNG whose colours come from
+// the id, because the fixture library has no artwork to record. The answer
+// to NotFoundID is a 404, as Navidrome's is for an entity with no art.
+func (s *Server) serveCover(
+	w http.ResponseWriter, r *http.Request, endpoint string, params url.Values,
+) {
+	if !s.authorized(endpoint, params) {
+		w.Header().Set("Content-Type", "application/json")
+		body, _ := fixtures.ReadFile("testdata/error-40.json")
+		_, _ = w.Write(body)
+		return
+	}
+	clean := url.Values{}
+	for k, v := range params {
+		if !slices.Contains(authParams, k) {
+			clean[k] = v
+		}
+	}
+	s.mu.Lock()
+	s.reqs = append(s.reqs, Request{Method: r.Method, Endpoint: endpoint, Params: clean})
+	s.mu.Unlock()
+	id := params.Get("id")
+	if id == NotFoundID {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	_, _ = w.Write(CoverPNG(id))
+}
+
+// CoverPNG is the 16×16 image the fake server sends for id: a diagonal
+// blend of two colours taken from a hash of the id, so each album's cover
+// differs and the same id always gives the same bytes.
+func CoverPNG(id string) []byte {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(id))
+	v := h.Sum32()
+	a := color.RGBA{uint8(v), uint8(v >> 8), uint8(v >> 16), 255}
+	b := color.RGBA{uint8(v >> 24), uint8(v >> 4), uint8(v >> 12), 255}
+	img := image.NewRGBA(image.Rect(0, 0, 16, 16))
+	for y := range 16 {
+		for x := range 16 {
+			f := uint32(x+y) * 255 / 30
+			mix := func(p, q uint8) uint8 { return uint8((uint32(p)*(255-f) + uint32(q)*f) / 255) }
+			img.Set(x, y, color.RGBA{mix(a.R, b.R), mix(a.G, b.G), mix(a.B, b.B), 255})
+		}
+	}
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return buf.Bytes()
 }

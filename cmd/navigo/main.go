@@ -9,7 +9,9 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/charmbracelet/colorprofile"
 
 	"github.com/anopheles/navigo/internal/config"
+	"github.com/anopheles/navigo/internal/cover"
 	"github.com/anopheles/navigo/internal/creds"
 	"github.com/anopheles/navigo/internal/library"
 	"github.com/anopheles/navigo/internal/mediactl"
@@ -107,6 +110,10 @@ func run() error {
 		StateDir:   stateDir,
 		Media:      media,
 		TrueColor:  trueColor(),
+		CoverArtOK: coverColours(),
+		CoverKitty: cover.Supported(os.Getenv, tmuxPassthrough),
+		InTmux:     os.Getenv("TMUX") != "",
+		CoverCache: cover.OpenCache(coverDir(cacheDir), 100<<20),
 		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})
@@ -208,4 +215,28 @@ func trueColor() bool {
 		return false
 	}
 	return colorprofile.Detect(os.Stdout, os.Environ()) == colorprofile.TrueColor
+}
+
+// coverColours says the terminal shows 256 colours or more, and colours are
+// on: cover art is drawn in colour and has no meaning without.
+func coverColours() bool {
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+	return colorprofile.Detect(os.Stdout, os.Environ()) >= colorprofile.ANSI256
+}
+
+// coverDir is where the cover files are kept; none without a cache directory.
+func coverDir(cacheDir string) string {
+	if cacheDir == "" {
+		return ""
+	}
+	return filepath.Join(cacheDir, "covers")
+}
+
+// tmuxPassthrough reports whether tmux forwards graphics to the terminal.
+func tmuxPassthrough() bool {
+	out, err := exec.Command("tmux", "show", "-gv", "allow-passthrough").Output()
+	v := strings.TrimSpace(string(out))
+	return err == nil && (v == "on" || v == "all")
 }

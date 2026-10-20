@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -39,6 +40,7 @@ type harness struct {
 	queued   []tea.Msg
 	progress []string // the empty-list text seen while syncing
 	clock    *fakeClock
+	raw      []string // what was written straight to the terminal
 }
 
 // fakeClock records timers instead of sleeping; advance fires them.
@@ -255,6 +257,8 @@ func (h *harness) run(cmd tea.Cmd) {
 		}
 	case tea.QuitMsg:
 		h.quit = true
+	case tea.RawMsg: // what the program would write to the terminal as it is
+		h.raw = append(h.raw, fmt.Sprint(msg.Msg))
 	default:
 		h.send(msg)
 	}

@@ -95,7 +95,11 @@ func (m *Model) render() string {
 		lines,
 		dimStyle.Render(strings.Repeat("─", max(m.w, 0))),
 	) // the rule above the bar
-	lines = append(lines, m.nowPlaying()...)
+	if m.cardOn() {
+		lines = append(lines, m.nowPlayingCard()...)
+	} else {
+		lines = append(lines, m.nowPlaying()...)
+	}
 	lines = append(lines, m.status())
 	if pm := m.prefixMenu(); len(pm) > 0 {
 		at := len(lines) - 1 - len(pm)

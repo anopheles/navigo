@@ -30,7 +30,10 @@ type Config struct {
 	// roles on top of it.
 	Theme  Theme  `yaml:"theme"`
 	Colors Colors `yaml:"colors"`
-	Keys   Keys   `yaml:"keys"`
+	// CoverArt turns the playing track's cover on or off, or forces a
+	// renderer; on, automatic, unless set.
+	CoverArt CoverArt `yaml:"cover_art"`
+	Keys     Keys     `yaml:"keys"`
 }
 
 // Resume is the resume: setting.
@@ -58,7 +61,10 @@ func (c Config) ResumeOn() bool { return !c.Resume.Off }
 // keys block, each at its place; the settings concerned keep their
 // defaults.
 func (c Config) Problems() []Problem {
-	return slices.Concat(c.Player.Problems, c.Resume.Problems, c.Theme.Problems, c.Colors.Problems)
+	return slices.Concat(
+		c.Player.Problems, c.Resume.Problems, c.Theme.Problems, c.Colors.Problems,
+		c.CoverArt.Problems,
+	)
 }
 
 // Server is the one server navigo connects to. The password comes from

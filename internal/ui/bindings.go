@@ -49,6 +49,7 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "gm", "mix"},
 	{"global", "R", "repeat"},
 	{"global", "i", "info"},
+	{"global", "gc", "cover"},
 	{"global", "*", "star"},
 	{"global", "u", "undo"},
 	{"global", "<C-r>", "redo"},

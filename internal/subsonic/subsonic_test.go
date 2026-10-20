@@ -349,3 +349,63 @@ func TestStar(t *testing.T) {
 		t.Errorf("requests = %q, want %q", got, want)
 	}
 }
+
+func TestCoverArt(t *testing.T) {
+	c, srv := newClient(t)
+	got, err := c.CoverArt(context.Background(), "al-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(got, subsonictest.CoverPNG("al-1")) {
+		t.Errorf("got %d bytes, not the cover for al-1", len(got))
+	}
+	var req subsonictest.Request
+	for _, r := range srv.Requests() {
+		if r.Endpoint == "getCoverArt" {
+			req = r
+		}
+	}
+	if req.Method != http.MethodPost || req.Params.Get("id") != "al-1" ||
+		req.Params.Get("size") == "" || req.Params.Has("f") {
+		t.Errorf("request = %+v, want a form POST for al-1 with a size and no f", req)
+	}
+}
+
+func TestCoverArtNotFound(t *testing.T) {
+	c, _ := newClient(t)
+	if _, err := c.CoverArt(context.Background(), subsonictest.NotFoundID); !errors.Is(
+		err, ErrNoCover) {
+		t.Errorf("err = %v, want ErrNoCover", err)
+	}
+}
+
+func TestCoverArtErrors(t *testing.T) {
+	for name, h := range map[string]http.HandlerFunc{
+		"a Subsonic not-found": func(w http.ResponseWriter, _ *http.Request) {
+			_, _ = w.Write([]byte(`{"subsonic-response":{"status":"failed","version":"1.16.1",` +
+				`"error":{"code":70,"message":"not found"}}}`))
+		},
+		"a server error": func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "boom", http.StatusInternalServerError)
+		},
+		"an HTML page": func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			_, _ = w.Write([]byte("<html>login</html>"))
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := httptest.NewServer(h)
+			defer srv.Close()
+			c := New(Credentials{URL: srv.URL + "/", Username: "u", Password: "p"})
+			_, err := c.CoverArt(context.Background(), "x")
+			switch {
+			case err == nil:
+				t.Error("no error")
+			case name == "a Subsonic not-found" && !errors.Is(err, ErrNoCover):
+				t.Errorf("err = %v, want ErrNoCover", err)
+			case name != "a Subsonic not-found" && errors.Is(err, ErrNoCover):
+				t.Errorf("err = %v, which says there is no cover", err)
+			}
+		})
+	}
+}

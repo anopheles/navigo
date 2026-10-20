@@ -1,0 +1,396 @@
+package ui
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"image/color"
+	"strings"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
+	"github.com/anopheles/navigo/internal/config"
+	"github.com/anopheles/navigo/internal/cover"
+	"github.com/anopheles/navigo/internal/library"
+	"github.com/anopheles/navigo/internal/subsonic"
+)
+
+// The cover art of the playing track: a card in the bar when the terminal
+// has room, and a large one in a popup. The image is fetched once per album
+// and kept on disk; what is drawn is block characters that keep the
+// image's transparency, or kitty graphics where the terminal has them.
+
+const (
+	// cardCols and cardRows are the card's art: square in cells, as a cell
+	// is twice as tall as wide.
+	cardCols, cardRows = 12, 6
+	// cardExtra is how many rows the card takes beyond the bar's two.
+	cardExtra = cardRows - 2
+	// coverMinW and coverMinH are the smallest terminal the card is shown on.
+	coverMinW, coverMinH = narrow, 28
+	// coverRetry is how long after a failed fetch the cover is asked for again.
+	coverRetry = 30 * time.Second
+	// keptImages is how many kitty images are kept in the terminal.
+	keptImages = 8
+)
+
+type coverState int
+
+const (
+	coverLoading coverState = iota
+	coverReady
+	coverNone   // the server has no cover for it
+	coverFailed // the fetch failed; tried again after coverRetry
+)
+
+type coverEntry struct {
+	state  coverState
+	art    *cover.Art
+	failed time.Time
+}
+
+// sentImage is an image kitty holds: which cover at which size, and its id.
+type sentImage struct {
+	key  string
+	id   uint32
+	last uint32 // the use count, to drop the least recently used
+}
+
+type covers struct {
+	entries  map[string]*coverEntry
+	bg       color.Color // the terminal's background, once it has said
+	rendered map[string][]string
+	sent     []sentImage
+	nextID   uint32
+	uses     uint32
+}
+
+// coverMsg is a fetched cover, or why there is none.
+type coverMsg struct {
+	id  string
+	art *cover.Art
+	err error
+}
+
+// coverMode is "" when cover art is off, else config.CoverBlocks or
+// config.CoverKitty. It is off with the option, or where colour is.
+func (m *Model) coverMode() string {
+	cfg := m.deps.Config.CoverArt.Mode
+	switch {
+	case cfg == config.CoverOff || !m.deps.CoverArtOK:
+		return ""
+	case cfg == config.CoverBlocks:
+		return config.CoverBlocks
+	case cfg == config.CoverKitty || m.deps.CoverKitty:
+		return config.CoverKitty
+	}
+	return config.CoverBlocks
+}
+
+// cardOn reports whether the bar is the card: cover art is on, the
+// terminal is big enough, and the main screen shows.
+func (m *Model) cardOn() bool {
+	return m.coverMode() != "" && m.screen != screenLogin && m.w >= coverMinW &&
+		m.h >= coverMinH
+}
+
+// coverRows is how many rows the card takes from the windows.
+func (m *Model) coverRows() int {
+	if m.cardOn() {
+		return cardExtra
+	}
+	return 0
+}
+
+// coverID is what the server is asked for: the album of the playing track,
+// so one fetch serves all its tracks.
+func coverID(t library.Track) string {
+	if t.AlbumID != "" {
+		return string(t.AlbumID)
+	}
+	return string(t.ID)
+}
+
+// playingCover is the id of the playing track's cover, if a track plays.
+func (m *Model) playingCover() (string, bool) {
+	t, _, ok := m.state.NowPlaying()
+	if !ok {
+		return "", false
+	}
+	return coverID(t), true
+}
+
+// coverPost runs after every update: it asks for the cover the screen
+// needs, and sends the kitty images that are missing.
+func (m *Model) coverPost() tea.Cmd {
+	mode := m.coverMode()
+	if mode == "" || m.client == nil {
+		return nil
+	}
+	id, ok := m.playingCover()
+	if !ok || (!m.cardOn() && m.popup == nil) {
+		return nil
+	}
+	if m.covers.entries == nil {
+		m.covers.entries = map[string]*coverEntry{}
+	}
+	e := m.covers.entries[id]
+	if e != nil && e.state == coverFailed && m.clock.Now().Sub(e.failed) >= coverRetry {
+		e = nil
+	}
+	if e == nil {
+		m.covers.entries[id] = &coverEntry{}
+		return m.fetchCover(id)
+	}
+	if e.state != coverReady || mode != config.CoverKitty {
+		return nil
+	}
+	var cmds []tea.Cmd
+	for _, g := range m.coverSizes() {
+		if cmd := m.sendImage(id, e.art, g.cols, g.rows); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+	}
+	return tea.Batch(cmds...)
+}
+
+type geometry struct{ cols, rows int }
+
+// coverSizes are the sizes the screen draws the playing cover at.
+func (m *Model) coverSizes() []geometry {
+	var out []geometry
+	if m.cardOn() {
+		out = append(out, geometry{cardCols, cardRows})
+	}
+	if m.popup != nil && m.popup.cover {
+		cols, rows := m.coverPopupSize()
+		out = append(out, geometry{cols, rows})
+	}
+	return out
+}
+
+func (m *Model) fetchCover(id string) tea.Cmd {
+	c, cache, ctx := m.client, m.deps.CoverCache, m.ctx
+	return func() tea.Msg {
+		b, ok := cache.Get(id)
+		if !ok {
+			var err error
+			if b, err = c.CoverArt(ctx, id); err != nil {
+				return coverMsg{id: id, err: err}
+			}
+		}
+		art, err := cover.Decode(b)
+		if err != nil {
+			return coverMsg{id: id, err: err}
+		}
+		if !ok {
+			cache.Put(id, b) // only what decoded is kept
+		}
+		return coverMsg{id: id, art: art}
+	}
+}
+
+// coverArrived keeps a fetched cover.
+func (m *Model) coverArrived(msg coverMsg) {
+	e := &coverEntry{}
+	switch {
+	case msg.err == nil:
+		e.state, e.art = coverReady, msg.art
+	case errors.Is(msg.err, subsonic.ErrNoCover):
+		e.state = coverNone
+	case errors.Is(msg.err, context.Canceled):
+		delete(m.covers.entries, msg.id)
+		return
+	default:
+		e.state, e.failed = coverFailed, m.clock.Now()
+	}
+	if m.covers.entries == nil {
+		m.covers.entries = map[string]*coverEntry{}
+	}
+	m.covers.entries[msg.id] = e
+	m.covers.rendered = nil
+}
+
+// sendImage returns the command that stores a cover in the terminal at a
+// size, unless it holds it already; the oldest image is freed past
+// keptImages.
+func (m *Model) sendImage(id string, art *cover.Art, cols, rows int) tea.Cmd {
+	key := fmt.Sprintf("%s|%d|%d", id, cols, rows)
+	cv := &m.covers
+	cv.uses++
+	for i := range cv.sent {
+		if cv.sent[i].key == key {
+			cv.sent[i].last = cv.uses
+			return nil
+		}
+	}
+	cv.nextID++
+	img := sentImage{key, cv.nextID, cv.uses}
+	var out strings.Builder
+	if len(cv.sent) >= keptImages {
+		oldest := 0
+		for i, s := range cv.sent {
+			if s.last < cv.sent[oldest].last {
+				oldest = i
+			}
+		}
+		out.WriteString(cover.Delete(cv.sent[oldest].id, m.deps.InTmux))
+		cv.sent = append(cv.sent[:oldest], cv.sent[oldest+1:]...)
+	}
+	cv.sent = append(cv.sent, img)
+	px := min(cols*2*cellPixels, cover.Side)
+	out.WriteString(cover.Transmit(img.id, cols, rows, art, px, m.deps.InTmux))
+	return tea.Raw(out.String())
+}
+
+// cellPixels is a guess at a cell's width in pixels, to scale what is sent
+// to kitty; the image is scaled to the cells by the terminal anyway.
+const cellPixels = 12
+
+// coverArt is the playing cover as rows lines of cols cells, whatever its
+// state: the image, a faint placeholder while it loads, or blank cells.
+func (m *Model) coverArt(id string, cols, rows int) []string {
+	blank := func(s string) []string {
+		out := make([]string, rows)
+		for i := range out {
+			out[i] = strings.Repeat(s, cols)
+		}
+		return out
+	}
+	e := m.covers.entries[id]
+	switch {
+	case e == nil || e.state == coverLoading:
+		out := blank("░")
+		for i := range out {
+			out[i] = dimStyle.Render(out[i])
+		}
+		return out
+	case e.state != coverReady:
+		return blank(" ")
+	}
+	if m.coverMode() == config.CoverKitty {
+		for _, s := range m.covers.sent {
+			if s.key == fmt.Sprintf("%s|%d|%d", id, cols, rows) {
+				if rows := cover.Placeholders(s.id, cols, rows); rows != nil {
+					return rows
+				}
+			}
+		}
+		return blank(" ") // not in the terminal yet, or too big for kitty
+	}
+	key := fmt.Sprintf("%s|%d|%d", id, cols, rows)
+	if rows, ok := m.covers.rendered[key]; ok {
+		return rows
+	}
+	art := e.art.Blocks(cols, rows, m.covers.bg)
+	if m.covers.rendered == nil {
+		m.covers.rendered = map[string][]string{}
+	}
+	m.covers.rendered[key] = art
+	return art
+}
+
+// nowPlayingCard is the bar as a card: the cover on the left and six rows
+// of the same facts the two-line bar has.
+func (m *Model) nowPlayingCard() []string {
+	s := m.state
+	t, row, playing := s.NowPlaying()
+	art := make([]string, cardRows)
+	if playing {
+		id, _ := m.playingCover()
+		art = m.coverArt(id, cardCols, cardRows)
+	} else {
+		for i := range art {
+			art[i] = strings.Repeat(" ", cardCols)
+		}
+	}
+	w := m.w - cardCols - 3
+	text := make([]string, cardRows)
+	flags := m.flags()
+	if !playing {
+		text[1] = fit(" ■ nothing playing", w)
+		text[4] = fit(m.cardRight(nil, w), w)
+		text[5] = fit(strings.Repeat(" ", max(w-lipgloss.Width(flags), 0))+flags, w)
+	} else {
+		icon := "▶"
+		if s.Player.Paused {
+			icon = "⏸"
+		}
+		var right []string
+		if row >= 0 {
+			right = append(right, fmt.Sprintf("%d/%d in queue", row+1, len(s.Queue)))
+		} else {
+			right = append(right, "not in the queue")
+		}
+		if s.Player.Buffering {
+			right = append([]string{"buffering"}, right...)
+		}
+		text[1] = fit(" "+accentStyle.Render(icon+" "+t.Title), w)
+		text[2] = fit(" "+titleOff.Render(t.Artist), w)
+		text[3] = fit(" "+dimStyle.Render(t.Album), w)
+		text[4] = fit(m.cardRight(right, w), w)
+		dur := s.Player.Duration
+		times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur)) + flags
+		pw := max(w-lipgloss.Width(times)-2, 0)
+		fill := 0
+		if dur > 0 {
+			fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
+		}
+		text[5] = fit(" "+progressBar(fill, pw)+times, w)
+	}
+	out := make([]string, cardRows)
+	for i := range out {
+		out[i] = " " + art[i] + "  " + fit(text[i], w)
+	}
+	return out
+}
+
+// cardRight is the card's fourth line: the lasting states, then right.
+func (m *Model) cardRight(right []string, w int) string {
+	if ind := fitIndicators(
+		m.indicators(),
+		w-lipgloss.Width(strings.Join(right, " · "))-4,
+	); ind != "" {
+		right = append([]string{ind}, right...)
+	}
+	return " " + dimStyle.Render(strings.Join(right, " · "))
+}
+
+// coverPopupSize is the size of the cover in the popup: as large as the
+// screen and kitty allow, square in cells.
+func (m *Model) coverPopupSize() (cols, rows int) {
+	rows = min(m.popupRows()-1, (m.w-12)/2, 30, cover.MaxCells/2)
+	rows = max(rows, 4)
+	return rows * 2, rows
+}
+
+// openCover shows the playing track's cover large.
+func (m *Model) openCover() error {
+	id, ok := m.playingCover()
+	switch {
+	case m.coverMode() == "":
+		return errors.New("cover art is off")
+	case !ok:
+		return errors.New("nothing is playing")
+	}
+	t, _, _ := m.state.NowPlaying()
+	m.openPopup(t.Title+" — "+t.Artist, nil)
+	m.popup.cover = true
+	m.popup.live = func() []string {
+		cols, rows := m.coverPopupSize()
+		lines := m.coverArt(id, cols, rows)
+		if e := m.covers.entries[id]; e != nil && e.state == coverNone {
+			lines = append(
+				[]string{dimStyle.Render("the server has no cover for this album")},
+				lines...)
+		}
+		pad := strings.Repeat(" ", max((min(m.w-4, 100)-4-cols)/2, 0))
+		for i := range lines {
+			lines[i] = pad + lines[i]
+		}
+		return lines
+	}
+	return nil
+}

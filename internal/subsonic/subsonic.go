@@ -457,30 +457,10 @@ func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v
 	for k, vs := range params {
 		q[k] = vs
 	}
-	var req *http.Request
-	var err error
-	if c.formPost.Load() {
-		req, err = http.NewRequestWithContext(
-			ctx,
-			http.MethodPost,
-			c.base+endpoint,
-			strings.NewReader(q.Encode()),
-		)
-		if req != nil {
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		}
-	} else {
-		req, err = http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			c.base+endpoint+"?"+q.Encode(),
-			nil,
-		)
-	}
+	req, err := c.newRequest(ctx, endpoint, q)
 	if err != nil {
 		return fmt.Errorf("%s: %w", endpoint, err)
 	}
-	req.Header.Set("User-Agent", clientName)
 	resp, err := c.http.Do(req)
 	if err != nil {
 		if ctx.Err() == context.Canceled {
@@ -509,6 +489,39 @@ func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v
 		return fmt.Errorf("%s: %w", endpoint, err)
 	}
 	return nil
+}
+
+// newRequest is a request for endpoint with the signed parameters q: a
+// POST form once the server offers formPost, which keeps the token out of
+// the URL, and a GET otherwise.
+func (c *Client) newRequest(
+	ctx context.Context, endpoint string, q url.Values,
+) (*http.Request, error) {
+	var req *http.Request
+	var err error
+	if c.formPost.Load() {
+		req, err = http.NewRequestWithContext(
+			ctx,
+			http.MethodPost,
+			c.base+endpoint,
+			strings.NewReader(q.Encode()),
+		)
+		if req != nil {
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		}
+	} else {
+		req, err = http.NewRequestWithContext(
+			ctx,
+			http.MethodGet,
+			c.base+endpoint+"?"+q.Encode(),
+			nil,
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", clientName)
+	return req, nil
 }
 
 func decode(body []byte, v any) error {

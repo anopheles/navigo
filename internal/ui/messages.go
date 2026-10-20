@@ -109,6 +109,10 @@ type popup struct {
 	// keyMenu makes it the key menu: the scopes it was opened in, where
 	// its keys run.
 	keyMenu []string
+	// cover makes it the large cover; live then makes its lines on every
+	// draw, as the image may arrive while it is open.
+	cover bool
+	live  func() []string
 }
 
 func (m *Model) openPopup(title string, lines []string) {
@@ -182,9 +186,13 @@ func (m *Model) renderPopup() string {
 	p := m.popup
 	w := min(m.w-4, 100)
 	rows := m.popupRows()
-	end := min(p.off+rows, len(p.lines))
+	all := p.lines
+	if p.live != nil {
+		all = p.live()
+	}
+	end := min(p.off+rows, len(all))
 	body := make([]string, 0, rows+2)
-	for i, l := range p.lines[p.off:end] {
+	for i, l := range all[min(p.off, end):end] {
 		l = fit(l, w-4)
 		if p.pick != nil && p.off+i == p.sel {
 			l = cursorStyle.Render(l)
@@ -192,8 +200,8 @@ func (m *Model) renderPopup() string {
 		body = append(body, l)
 	}
 	more := ""
-	if len(p.lines) > rows {
-		more = fmt.Sprintf(" %d–%d of %d", p.off+1, end, len(p.lines))
+	if len(all) > rows {
+		more = fmt.Sprintf(" %d–%d of %d", p.off+1, end, len(all))
 	}
 	title := keyStyle.Render(p.title) + dimStyle.Render(more)
 	return popupStyle.Width(w).Render(title + "\n" + strings.Join(body, "\n"))

@@ -24,10 +24,11 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 14. [Offline, errors and messages](#offline-errors-and-messages)
 15. [OS media controls](#os-media-controls)
 16. [Colours](#colours)
-17. [Testing](#testing)
-18. [Licence and dependencies](#licence-and-dependencies)
-19. [Filled in while writing this spec](#filled-in-while-writing-this-spec)
-20. [The walking skeleton and this spec](#the-walking-skeleton-and-this-spec)
+17. [Cover art](#cover-art)
+18. [Testing](#testing)
+19. [Licence and dependencies](#licence-and-dependencies)
+20. [Filled in while writing this spec](#filled-in-while-writing-this-spec)
+21. [The walking skeleton and this spec](#the-walking-skeleton-and-this-spec)
 
 ## Scope
 
@@ -42,7 +43,7 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 - **Added after the first release** ([#48](https://github.com/anopheles/navigo/issues/48)): ReplayGain, Resume (the queue comes back at the next start) and colour roles.
 
 **Out of scope:**
-- **Beyond-parity features:** lyrics, scrobbling settings, multiple servers, cover art in the terminal.
+- **Beyond-parity features:** lyrics, scrobbling settings and multiple servers. Cover art is built ([#60](https://github.com/anopheles/navigo/issues/60)); artist and playlist images are not.
 - **Offline playback** (downloading audio) ([#9](https://github.com/anopheles/navigo/issues/9)).
 - **Release packaging** (goreleaser, package managers).
 - **A single accent colour:** one colour driving several roles; roles are recoloured one by one or by a named theme ([#52](https://github.com/anopheles/navigo/issues/52)).
@@ -161,6 +162,8 @@ player:
 hints: true          # the hint line; :hints on|off for the session
 resume: true         # bring the queue back at the next start (false = off)
 
+cover_art: true      # the playing album's cover: true, false, blocks or kitty
+
 theme: catppuccin-mocha   # a named palette for the roles (optional)
 colors:              # recolour a role on top of it; '#rrggbb' or an ANSI name or 0-15
   playing: green
@@ -271,7 +274,7 @@ keys:
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
 | Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix (`[count]gm` for that many tracks) · `R` repeat off → all → one · `X` stop |
-| Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `*` star/unstar · `yy` `y{motion}` yank |
+| Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |
@@ -363,7 +366,7 @@ The `:` line has Tab completion for command names and arguments.
 
 **Cache-first:** every list and search reads the in-memory library snapshot, online or offline. The server is contacted only for sync, playback (`stream`, `scrobble`), writes (stars, playlist edits) and Home's album lists. Those come from `getAlbumList2` (50 albums) each time one opens, so Recently played is current; offline, a list shows the last answer of the session, or says it needs the server.
 
-**What it holds:** library metadata only: artists, albums, tracks (with their artist lists), playlists with their tracks, stars, play counts, when each track was last played and the user's ratings. No audio, no cover art, and no client state (the [saved queue](#resume) has its own file).
+**What it holds:** library metadata only (the covers are separate files, see [Cover art](#cover-art)): artists, albums, tracks (with their artist lists), playlists with their tracks, stars, play counts, when each track was last played and the user's ratings. No audio, no cover art, and no client state (the [saved queue](#resume) has its own file).
 
 **Store:**
 - One versioned `encoding/gob` file per server and user, in `navigo/` under the user cache directory, written atomically.
@@ -466,6 +469,19 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 
 **Without colour:** no meaning depends on colour alone, so navigo works fully with colours off. Any non-empty `NO_COLOR` turns colours off.
 
+## Cover art
+
+[Cover art in the now-playing bar](https://github.com/anopheles/navigo/issues/60). Tried first as a prototype on the real screen with a real server (`prototype/cover-art`).
+
+- **Where:** the now-playing bar becomes a six-row **card** with the playing album's cover on the left (12×6 cells), then the title, artist, album, the lasting states and the progress bar. The card shows when the terminal is at least 100 columns by 28 rows, and takes four rows from the windows; below that, or with nothing to show, the bar is the two lines it was. `gc` (the `cover` command) shows the cover large in a popup, at any size that fits; `q` closes it.
+- **What is drawn:** with kitty graphics where the terminal has them (kitty, Ghostty, WezTerm; under tmux only with `allow-passthrough on`), by unicode placeholders, which scroll and redraw like text. Otherwise with block characters, two by two pixels a cell, written for navigo: a clear pixel is the terminal's own background, so a cover with transparency works on light, translucent and pictured terminals, and a half-clear pixel is blended against the terminal's background (asked for with OSC 11; without an answer it is drawn from half opaque). A cover that isn't square is centred on a transparent square.
+- **When it is off:** `cover_art: false`, `NO_COLOR`, or a terminal with fewer than 256 colours. `cover_art: blocks` forces the blocks, such as over a slow SSH link; `cover_art: kitty` forces kitty graphics. A bad value is reported like any other.
+- **Fetching:** `getCoverArt` for the album's ID (the song's, if the track has no album), when a track starts, in the background. One fetch serves every track of the album. The server may ignore the `size` it is asked for (Navidrome does), so covers are decoded (WebP, PNG, JPEG) and scaled by navigo to 384 pixels.
+- **Cache:** the files the server sent, in `cache/covers/` under the cache directory, named by a hash of the ID and trimmed to 100 MB by least recent use at start. IDs are trusted not to change under a cover, so a file is never refreshed.
+- **States:** a faint placeholder while it loads; blank cells (the text stays) if the server has no cover or the fetch failed, with no message. A failed fetch is tried again after 30 s, when the cover is next wanted.
+- **Kitty images** are kept in the terminal at the sizes drawn, the eight most recently used; the oldest is freed beyond that.
+- **Not built:** artist and playlist images, kitty graphics other than unicode placeholders, sixel, the cover in the library and queue windows.
+
 ## Testing
 
 [How is navigo tested end to end?](https://github.com/anopheles/navigo/issues/14), [ADR 0003](adr/0003-fake-the-server-at-http.md).
@@ -499,6 +515,7 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
   - **System:** godbus/dbus v5 (MPRIS), go-winio (Windows pipes), go-keyring.
   - **Config:** go.yaml.in/yaml/v3.
   - **Search:** golang.org/x/text (folding accents).
+  - **Cover art:** golang.org/x/image/webp (BSD-3-Clause), to decode what the server sends.
   - **Tests only:** `x/xpty` and `x/vt`.
 
 ## Filled in while writing this spec

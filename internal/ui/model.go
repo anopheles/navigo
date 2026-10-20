@@ -20,6 +20,7 @@ import (
 	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
 	"github.com/anopheles/navigo/internal/config"
+	"github.com/anopheles/navigo/internal/cover"
 	"github.com/anopheles/navigo/internal/creds"
 	"github.com/anopheles/navigo/internal/keymap"
 	"github.com/anopheles/navigo/internal/library"
@@ -51,6 +52,14 @@ type Deps struct {
 	// TrueColor says the terminal shows 24-bit colour, so the default
 	// playing colour can be one the progress bar fades up to.
 	TrueColor bool
+	// CoverArtOK says the terminal shows enough colour for cover art
+	// (256 or more, and not NO_COLOR). CoverKitty says it draws kitty
+	// graphics, InTmux that it is behind tmux, and CoverCache is where
+	// the cover files are kept; nil keeps none.
+	CoverArtOK bool
+	CoverKitty bool
+	InTmux     bool
+	CoverCache *cover.Cache
 }
 
 // PlayerMsg wraps a Player event for Program.Send.
@@ -119,8 +128,9 @@ type frame struct {
 
 // Model is the root Bubble Tea model. It is used by pointer.
 type Model struct {
-	deps  Deps
-	state app.State
+	deps   Deps
+	covers covers
+	state  app.State
 	// pendingSave is the saved queue waiting to be written; saveArmed,
 	// that the timer for it is running.
 	pendingSave *queueWrite
@@ -243,13 +253,17 @@ func (m *Model) Init() tea.Cmd {
 	s := m.deps.Config.Server
 	p, ctx := m.deps.Player, m.ctx
 	check := func() tea.Msg { return eventMsg{app.PlayerChecked{Err: p.Check(ctx), Hint: installHint()}} }
+	var background tea.Cmd
+	if m.coverMode() != "" {
+		background = tea.RequestBackgroundColor // a half-clear cover blends against it
+	}
 	if s.URL == "" {
 		m.openLogin(s.URL, s.User, "")
-		return check
+		return tea.Batch(check, background)
 	}
 	m.setMsg("connecting to "+s.URL+"…", false)
 	m.connecting = m.shown.id
-	return tea.Batch(check, m.dispatch(app.Start{}), func() tea.Msg {
+	return tea.Batch(check, background, m.dispatch(app.Start{}), func() tea.Msg {
 		p, err := creds.Password(m.ctx, s, m.deps.Keyring)
 		return passwordMsg{p, err}
 	})
@@ -257,6 +271,7 @@ func (m *Model) Init() tea.Cmd {
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	_, cmd := m.update(msg)
+	cmd = tea.Batch(cmd, m.coverPost())
 	if len(m.timers) > 0 {
 		cmd = tea.Batch(append(m.timers, cmd)...)
 		m.timers = nil
@@ -268,6 +283,12 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case expireMsg:
 		m.expire(msg.id)
+		return m, nil
+	case coverMsg:
+		m.coverArrived(msg)
+		return m, nil
+	case tea.BackgroundColorMsg:
+		m.covers.bg, m.covers.rendered = msg.Color, nil
 		return m, nil
 	case mediaMsg:
 		return m, m.mediaCommand(msg.Command)
@@ -986,6 +1007,7 @@ func (m *Model) bodyHeight() int {
 	if m.hints {
 		h--
 	}
+	h -= m.coverRows()
 	return max(h, 1)
 }
 

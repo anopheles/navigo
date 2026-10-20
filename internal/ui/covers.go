@@ -339,6 +339,7 @@ func (m *Model) nowPlayingCard() []string {
 			fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
 		}
 		text[5] = fit(" "+progressBar(fill, pw)+times, w)
+		m.bar = barHit{y: m.npRows[0] + 5, x: 1 + cardCols + 2 + 1, w: pw}
 	}
 	out := make([]string, cardRows)
 	for i := range out {

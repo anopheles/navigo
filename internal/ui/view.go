@@ -48,6 +48,7 @@ var (
 func (m *Model) View() tea.View {
 	v := tea.NewView(m.render())
 	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
 	return v
 }
 
@@ -95,11 +96,14 @@ func (m *Model) render() string {
 		lines,
 		dimStyle.Render(strings.Repeat("─", max(m.w, 0))),
 	) // the rule above the bar
+	m.bar = barHit{}
+	m.npRows[0] = len(lines)
 	if m.cardOn() {
 		lines = append(lines, m.nowPlayingCard()...)
 	} else {
 		lines = append(lines, m.nowPlaying()...)
 	}
+	m.npRows[1] = len(lines) - m.npRows[0]
 	lines = append(lines, m.status())
 	if pm := m.prefixMenu(); len(pm) > 0 {
 		at := len(lines) - 1 - len(pm)
@@ -610,6 +614,7 @@ func (m *Model) nowPlaying() []string {
 		fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
 	}
 	l2 := " " + progressBar(fill, pw) + times + " "
+	m.bar = barHit{y: m.npRows[0] + 1, x: 1, w: pw}
 	return []string{(l1), (fit(l2, m.w))}
 }
 

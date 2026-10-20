@@ -158,6 +158,10 @@ type Model struct {
 	registry *command.Registry[*Model]
 	line     textinput.Model
 	seq      int // bumps on every key, to drop stale timeouts
+	// bar and npRows are where the last render put the progress bar and the
+	// now-playing rows, for the mouse; bar.w is 0 with no bar drawn.
+	bar    barHit
+	npRows [2]int // first screen row of the now-playing bar, and its height
 
 	// The ":" line and the search prompt. A search prompt's text is
 	// selected until a key changes it, and beforeSearch is what <Esc>
@@ -352,6 +356,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.result(m.engine.Timeout(m.mode, m.scopes()))
 		}
 		return m, nil
+	case tea.MouseMsg:
+		return m, m.mouse(msg)
 	case tea.KeyPressMsg:
 		m.seq++
 		m.prefixShown = false

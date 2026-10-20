@@ -117,6 +117,7 @@ type Model struct {
 	w, h   int
 
 	focus    window
+	visual   *visualSel // the Visual mode selection, if any
 	lib      []frame
 	paths    map[listKind][]frame // where each section was left
 	queueCur int
@@ -178,6 +179,10 @@ func New(deps Deps) *Model {
 		cmdHist:    loadHistory(deps.StateDir, "cmd_history", "command history"),
 		searchHist: loadHistory(deps.StateDir, "search_history", "search history"),
 	}
+	m.engine.SetKinds(keymap.Kinds{
+		Operator: func(n string) bool { c, ok := m.registry.Get(n); return ok && c.Operator },
+		Motion:   func(n string) bool { c, ok := m.registry.Get(n); return ok && c.Motion },
+	})
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
 		m.setMsg(fmt.Sprintf("%s holds a password and others can read it · chmod 600 it", deps.ConfigPath), true)
@@ -502,8 +507,11 @@ func (m *Model) notice(n app.Notice) {
 	}
 	if n.Command != "" {
 		key := ":" + n.Command
+		// A command for the queue, such as paste, may not be bound here.
 		if ks := m.engine.Table().Keys(keymap.Normal, m.scopes(), n.Command); len(ks) > 0 {
 			key = ks[0]
+		} else if ks := m.engine.Table().Keys(keymap.Normal, []string{"queue", "global"}, n.Command); len(ks) > 0 {
+			key = ks[0] + " in the queue"
 		}
 		text += " · " + key + " " + n.Hint
 	}
@@ -525,7 +533,9 @@ func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
 func (m *Model) result(r keymap.Result) tea.Cmd {
 	switch r.Kind {
 	case keymap.Run:
-		return m.exec(r.Command, r.Count)
+		return m.execCall(r.Command, command.Call{Count: r.Count, Motion: r.Motion, Double: r.Double})
+	case keymap.Rejected:
+		m.setMsg(r.Text, true)
 	case keymap.Pending:
 		if r.Ambiguous {
 			seq := m.seq
@@ -537,8 +547,15 @@ func (m *Model) result(r keymap.Result) tea.Cmd {
 
 // exec runs a command line from a binding or the ":" line.
 func (m *Model) exec(line string, count int) tea.Cmd {
+	return m.execCall(line, command.Call{Count: count})
+}
+
+// execCall runs a command line with an operator's count and motion.
+func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 	m.pendingCmd = nil
-	if err := m.registry.Run(m, line, count); err != nil {
+	err := m.registry.RunCall(m, line, with)
+	m.checkVisual()
+	if err != nil {
 		m.setMsg(err.Error(), true)
 		return nil
 	}

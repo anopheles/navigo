@@ -55,11 +55,19 @@ func commands() *command.Registry[*Model] {
 		{Name: "reconnect", Label: "reconnect", Desc: "Try the server now instead of waiting for the next retry.", Run: func(m *Model, _ command.Call) error { m.event(app.Reconnect{}); return nil }},
 		{Name: "sync", Label: "sync", Desc: "Sync the whole library from the server.", Run: func(m *Model, _ command.Call) error { m.event(app.SyncNow{}); return nil }},
 		{Name: "stop", Label: "stop", Desc: "Stop playback.", Run: func(m *Model, _ command.Call) error { m.event(app.StopPlayback{}); return nil }},
+		{Name: "visual", Label: "select", Desc: "Select rows: start Visual mode, or end it.", Run: func(m *Model, _ command.Call) error { m.startVisual(); return nil }},
+		{Name: "yank", Label: "yank", Desc: "Yank the rows a motion covers (yy: this row) into the register.", Operator: true, Run: (*Model).yank},
+		{Name: "delete", Label: "remove", Desc: "Remove the queue rows a motion covers (dd: this row) into the register.", Operator: true, Run: (*Model).remove},
+		{Name: "remove", Label: "remove", Desc: "Remove the queue row under the cursor, or N rows, into the register.", Run: (*Model).remove},
+		{Name: "paste-after", Label: "paste", Desc: "Paste the register into the queue after the cursor row.", Run: func(m *Model, c command.Call) error { return m.paste(c, true) }},
+		{Name: "paste-before", Label: "paste before", Desc: "Paste the register into the queue before the cursor row.", Run: func(m *Model, c command.Call) error { return m.paste(c, false) }},
+		{Name: "move-down", Label: "move down", Desc: "Move the queue row or the selection down.", Run: func(m *Model, c command.Call) error { return m.moveRows(c, true) }},
+		{Name: "move-up", Label: "move up", Desc: "Move the queue row or the selection up.", Run: func(m *Model, c command.Call) error { return m.moveRows(c, false) }},
 		{Name: "undo", Label: "undo", Desc: "Undo the last change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Undo{}); return nil }},
 		{Name: "redo", Label: "redo", Desc: "Redo the last undone change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Redo{}); return nil }},
 
 		{Name: "cmdline", Label: "command", Desc: "Type a command.", Run: func(m *Model, _ command.Call) error { m.enterLine(); return nil }},
-		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and clear the message.", Run: func(m *Model, _ command.Call) error { m.clearMsg(); return nil }},
+		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and the selection, and clear the message.", Run: func(m *Model, _ command.Call) error { m.endVisual(); m.clearMsg(); return nil }},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
 		{Name: "messages", Label: "messages", Desc: "Show the messages of this session.", Run: func(m *Model, _ command.Call) error { m.showMessages(); return nil }},
@@ -210,22 +218,39 @@ func (m *Model) playNow(command.Call) error {
 	return nil
 }
 
-// add adds the track under the cursor, or all of the album under it,
-// count times.
+// add adds the selection, or the track or album under the cursor, count
+// times. Artist rows are left out with a note.
 func (m *Model) add(c command.Call, next bool) error {
 	var one []library.Track
-	if ts, i, err := m.trackRow(); err == nil {
-		one = ts[i : i+1]
-	} else if a, ok := m.rowAlbum(); ok {
-		one = m.state.Library.AlbumTracks(a.ID)
-	} else if f := m.top(); f.kind == searchList && m.focus == libraryWindow {
-		if _, ok := f.search.artist(f.cur); ok {
-			return errors.New("an artist can't be added · open it and add their albums")
+	artists := 0
+	switch {
+	case m.visual != nil && m.focus == queueWindow:
+		m.endVisual()
+		return errors.New("those are in the queue already · y and p copy them")
+	case m.visual != nil:
+		one, artists = m.rangeTracks(m.selection())
+		m.endVisual()
+	default:
+		if _, _, err := m.trackRow(); errors.Is(err, errNoRows) {
+			return nil
+		}
+		f := m.top()
+		if m.focus != libraryWindow || f.kind == sectionList {
+			return errNotOnTrack
+		}
+		var artist bool
+		one, artist = m.rowTracks(f, f.cur)
+		if artist {
+			artists = 1
+		}
+	}
+	if len(one) == 0 {
+		if artists > 0 {
+			return errArtist
 		}
 		return errNotOnTrack
-	} else {
-		return quiet(err)
 	}
+	defer m.skippedArtists(artists)
 	var add []library.Track
 	for range c.N() {
 		add = append(add, one...)
@@ -260,7 +285,7 @@ func seek(m *Model, c command.Call) error {
 }
 
 func (m *Model) enterLine() {
-	m.mode = keymap.Cmdline
+	m.mode = keymap.Cmdline // a Visual selection stays for the command
 	m.line.Reset()
 	m.line.Prompt = ":"
 	m.fitLine()

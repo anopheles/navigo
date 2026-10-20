@@ -70,8 +70,15 @@ type State struct {
 
 	playing      player.EntryID // the entry the player says is playing
 	playingTrack library.Track  // its track, even if the queue changed since
-	nextID       player.EntryID
-	undo, redo   []snapshot
+	// orphanNext is where the queue goes on after the playing entry was
+	// removed from it while it played.
+	orphanNext player.EntryID
+
+	nextID     player.EntryID
+	undo, redo []snapshot
+
+	// Register is what y and d last took, for p and P to paste.
+	Register []library.Track
 
 	// Scrobbling of the playing entry: time listened, not counting seeks.
 	listened  time.Duration
@@ -346,6 +353,8 @@ func Apply(s State, e Event) (State, []Effect) {
 		s = s.restore(next)
 		return s, append(s.neighbours(), Notice{Text: "redone · " + count(len(s.Queue)) + " in the queue", Command: "undo", Hint: "undoes"})
 
+	case Yank, Remove, Paste, Move:
+		return s.applyEdit(e)
 	case FromPlayer:
 		return s.fromPlayer(e.Event)
 	case Unreachable, StartedOffline, RetryNow, Reconnect, BufferingStalled, ProbeResult:
@@ -370,7 +379,7 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 	}
 	switch e := e.(type) {
 	case player.TrackStarted:
-		s.playing = e.Entry
+		s.playing, s.orphanNext = e.Entry, 0
 		s.Player.Playing, s.Player.Position = true, 0
 		s.listened, s.lastPos, s.scrobbled = 0, 0, false
 		i := s.index(e.Entry)
@@ -487,6 +496,10 @@ func (s State) neighbours() []Effect {
 	}
 	i := s.index(s.playing)
 	if i < 0 {
+		if j := s.index(s.orphanNext); j >= 0 && s.orphanNext != 0 {
+			sp := s.span(j)
+			return []Effect{SetNeighbours{Prev: sp.Prev, Next: sp.Current}}
+		}
 		return []Effect{SetNeighbours{}}
 	}
 	sp := s.span(i)

@@ -2,6 +2,7 @@ package keymap
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -147,6 +148,100 @@ func TestKeys(t *testing.T) {
 	}
 	if got := tb.Keys(Normal, []string{"queue", "global"}, "nothing"); !reflect.DeepEqual(got, []string{"<CR>", "l"}) {
 		t.Errorf("Keys(nothing) in queue = %q", got)
+	}
+}
+
+// opTable has the operators d and y, motions, and Visual bindings.
+func opTable(t *testing.T) *Engine {
+	t.Helper()
+	tb := NewTable()
+	for _, b := range []struct {
+		mode            Mode
+		scope, seq, cmd string
+	}{
+		{Normal, "global", "j", "down"},
+		{Normal, "global", "gg", "first"},
+		{Normal, "global", "G", "last"},
+		{Normal, "global", "ga", "go-album"},
+		{Normal, "global", "y", "yank"},
+		{Normal, "global", "x", "remove"},
+		{Normal, "queue", "d", "delete"},
+		{Visual, "global", "d", "delete"},
+		{Visual, "global", "<Esc>", "cancel"},
+	} {
+		if err := tb.Bind(b.mode, b.scope, b.seq, b.cmd); err != nil {
+			t.Fatal(err)
+		}
+	}
+	e := NewEngine(tb)
+	e.SetKinds(Kinds{
+		Operator: func(n string) bool { return n == "delete" || n == "yank" },
+		Motion:   func(n string) bool { return n == "down" || n == "first" || n == "last" },
+	})
+	return e
+}
+
+func TestOperators(t *testing.T) {
+	q := []string{"queue", "global"}
+	for _, c := range []struct {
+		name string
+		mode Mode
+		keys []string
+		want Result
+	}{
+		{"operator waits", Normal, []string{"d"}, Result{Kind: Pending}},
+		{"with a motion", Normal, []string{"d", "j"}, Result{Kind: Run, Command: "delete", Motion: "down"}},
+		{"doubled", Normal, []string{"y", "y"}, Result{Kind: Run, Command: "yank", Double: true}},
+		{"count before", Normal, []string{"3", "d", "d"}, Result{Kind: Run, Command: "delete", Double: true, Count: 3}},
+		{"counts multiply", Normal, []string{"2", "d", "3", "j"}, Result{Kind: Run, Command: "delete", Motion: "down", Count: 6}},
+		{"count after", Normal, []string{"y", "4", "j"}, Result{Kind: Run, Command: "yank", Motion: "down", Count: 4}},
+		{"prefixed motion", Normal, []string{"d", "g", "g"}, Result{Kind: Run, Command: "delete", Motion: "first"}},
+		{"not a motion", Normal, []string{"d", "g", "a"}, Result{Kind: NoMatch}},
+		{"another command", Normal, []string{"d", "x"}, Result{Kind: NoMatch}},
+		{"Esc cancels", Normal, []string{"d", "<Esc>"}, Result{Kind: NoMatch}},
+		{"operators run at once in Visual", Visual, []string{"d"}, Result{Kind: Run, Command: "delete"}},
+		{"Visual has Normal's motions", Visual, []string{"g", "g"}, Result{Kind: Run, Command: "first"}},
+		{"but not its other commands", Visual, []string{"x"}, Result{Kind: NoMatch}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			e := opTable(t)
+			var got Result
+			for _, k := range c.keys {
+				got = e.Feed(c.mode, q, k)
+			}
+			if got != c.want {
+				t.Errorf("got %+v, want %+v", got, c.want)
+			}
+		})
+	}
+}
+
+func TestOperatorPending(t *testing.T) {
+	e := opTable(t)
+	q := []string{"queue", "global"}
+	for _, k := range []string{"2", "d", "3"} {
+		e.Feed(Normal, q, k)
+	}
+	if p := e.Pending(); p != "2d3" {
+		t.Errorf("Pending = %q, want 2d3", p)
+	}
+	if r := e.Timeout(Normal, q); r.Kind != Pending {
+		t.Errorf("Timeout while an operator waits = %+v", r)
+	}
+	// A register name is understood, and refused.
+	e.Reset()
+	e.Feed(Normal, q, `"`)
+	if r := e.Feed(Normal, q, "a"); r.Kind != Rejected || !strings.Contains(r.Text, "one register") {
+		t.Errorf(`"a = %+v, want Rejected`, r)
+	}
+	if r := e.Feed(Normal, q, "j"); r != (Result{Kind: Run, Command: "down"}) {
+		t.Errorf("after the rejection, j = %+v", r)
+	}
+
+	// d is an operator in the queue only.
+	e.Reset()
+	if r := e.Feed(Normal, []string{"tracks", "global"}, "d"); r.Kind != NoMatch {
+		t.Errorf("d outside the queue = %+v", r)
 	}
 }
 

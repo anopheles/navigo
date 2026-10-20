@@ -34,6 +34,9 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "'s", "search"},
 	{"global", "'q", "queue"},
 	{"global", ":", "cmdline"},
+	{"global", "V", "visual"},
+	{"global", "v", "visual"},
+	{"global", "y", "yank"},
 	{"global", "<Esc>", "cancel"},
 	{"global", "<C-c>", "interrupt"},
 	{"global", "ZZ", "quit"},
@@ -44,6 +47,12 @@ var defaults = []struct{ scope, keys, command string }{
 	{"tracks", "A", "add-end"},
 	{"tracks", "a", "add-next"},
 	{"queue", "<CR>", "play-row"},
+	{"queue", "d", "delete"},
+	{"queue", "x", "remove"},
+	{"queue", "p", "paste-after"},
+	{"queue", "P", "paste-before"},
+	{"queue", "J", "move-down"},
+	{"queue", "K", "move-up"},
 	{"search", "a", "add-next"},
 	{"search", "A", "add-end"},
 	{"popup", "<CR>", "choose"},
@@ -51,12 +60,31 @@ var defaults = []struct{ scope, keys, command string }{
 	{"popup", "<Esc>", "close"},
 }
 
-// defaultTable returns the default bindings in Normal mode.
+// visualDefaults are the Visual mode bindings; Normal mode's motions
+// apply there too. Operators act on the selection at once.
+var visualDefaults = []struct{ scope, keys, command string }{
+	{"global", "A", "add-end"},
+	{"global", "a", "add-next"},
+	{"global", "y", "yank"},
+	{"global", "d", "delete"},
+	{"global", "x", "delete"},
+	{"global", "J", "move-down"},
+	{"global", "K", "move-up"},
+	{"global", ":", "cmdline"},
+	{"global", "V", "visual"},
+	{"global", "v", "visual"},
+	{"global", "<Esc>", "cancel"},
+	{"global", "<C-c>", "cancel"},
+}
+
+// defaultTable returns the default bindings.
 func defaultTable() *keymap.Table {
 	t := keymap.NewTable()
-	for _, b := range defaults {
-		if err := t.Bind(keymap.Normal, b.scope, b.keys, b.command); err != nil {
-			panic("ui: default binding " + b.keys + ": " + err.Error())
+	for mode, list := range map[keymap.Mode][]struct{ scope, keys, command string }{keymap.Normal: defaults, keymap.Visual: visualDefaults} {
+		for _, b := range list {
+			if err := t.Bind(mode, b.scope, b.keys, b.command); err != nil {
+				panic("ui: default binding " + b.keys + ": " + err.Error())
+			}
 		}
 	}
 	return t

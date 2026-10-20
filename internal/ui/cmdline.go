@@ -32,14 +32,18 @@ func (m *Model) cmdKey(k tea.KeyPressMsg) (tea.Cmd, bool) {
 	switch s {
 	case "esc", "ctrl+c":
 		m.leaveLine()
+		m.endVisual()
 		return nil, true
 	case "enter":
 		text := m.line.Value()
 		m.leaveLine()
 		if strings.TrimSpace(text) == "" {
+			m.endVisual()
 			return nil, true
 		}
-		return tea.Batch(m.remember(&m.cmdHist, text), m.runTyped(text)), true
+		cmd := m.runTyped(text) // on the selection, if any
+		m.endVisual()
+		return tea.Batch(m.remember(&m.cmdHist, text), cmd), true
 	case "backspace":
 		if m.line.Value() == "" {
 			m.leaveLine()

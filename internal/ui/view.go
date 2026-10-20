@@ -21,6 +21,7 @@ const narrow = 100
 var (
 	cursorStyle  = lipgloss.NewStyle().Reverse(true)
 	cursorDim    = lipgloss.NewStyle().Background(lipgloss.Color("238"))
+	visualStyle  = lipgloss.NewStyle().Background(lipgloss.Color("24"))
 	dimStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
 	keyStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	accentStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
@@ -126,7 +127,7 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
-		out = append(out, m.styleRow(m.libraryRow(f, i, w), i == f.cur, focused, false))
+		out = append(out, m.styleRow(m.libraryRow(f, i, w), i == f.cur, focused, false, m.inSelection(libraryWindow, i)))
 	}
 	return pad(out, w, h)
 }
@@ -218,7 +219,7 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 				mark = "⏸ "
 			}
 		}
-		out = append(out, m.styleRow(trackRow(mark, fmt.Sprint(i+1), q[i].Track, w), i == m.queueCur, focused, current))
+		out = append(out, m.styleRow(trackRow(mark, fmt.Sprint(i+1), q[i].Track, w), i == m.queueCur, focused, current, m.inSelection(queueWindow, i)))
 	}
 	return pad(out, w, h)
 }
@@ -272,12 +273,14 @@ func (m *Model) emptyQueue(w int) []string {
 	return lines
 }
 
-func (m *Model) styleRow(line string, cursor, focused, current bool) string {
+func (m *Model) styleRow(line string, cursor, focused, current, selected bool) string {
 	switch {
 	case cursor && focused:
 		return cursorStyle.Render(line)
 	case cursor:
 		return cursorDim.Render(line)
+	case selected:
+		return visualStyle.Render(line)
 	case current:
 		return accentStyle.Render(line)
 	}
@@ -302,14 +305,17 @@ func (m *Model) hintLine() string {
 	if m.engine.Pending() != "" {
 		return dimStyle.Render(" waiting for the next key · ") + hint("<Esc>", "cancel")
 	}
+	if m.visual != nil {
+		return m.visualHints()
+	}
 	var names []string
 	switch {
 	case m.focus == queueWindow && len(m.state.Queue) == 0:
 		names = []string{"window", "albums"}
 	case m.focus == queueWindow:
-		names = []string{"play-row", "play-pause", "undo", "window"}
+		names = []string{"play-row", "visual", "play-pause", "undo", "window"}
 	case m.onTrack():
-		names = []string{"play-now", "add-end", "add-next", "back", "window"}
+		names = []string{"play-now", "add-end", "add-next", "visual", "back", "window"}
 	default:
 		names = []string{"open", "back", "window"}
 	}

@@ -11,6 +11,7 @@ package keymap
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -159,6 +160,8 @@ const (
 	Pending
 	// Run: Command should run, Count times where it scales.
 	Run
+	// Rejected: the keys are understood but not supported; Text says why.
+	Rejected
 )
 
 // Result of feeding a key.
@@ -167,42 +170,83 @@ type Result struct {
 	Command   string
 	Count     int // 0 when no count was typed
 	Ambiguous bool
+	// For an operator: the motion command line it applies to, or Double
+	// when it was typed twice (dd, yy) for whole rows.
+	Motion string
+	Double bool
+	Text   string
 }
 
-// Engine accumulates keys until they match a binding.
+// Kinds tells the engine which commands are operators, which wait for a
+// motion, and which are motions; the table only knows command lines.
+type Kinds struct {
+	Operator func(name string) bool
+	Motion   func(name string) bool
+}
+
+// Engine accumulates keys until they match a binding. In Normal mode an
+// operator waits for a motion, its own keys again, or a count before
+// either: [count] operator [count] motion | [count] operator operator.
 type Engine struct {
 	table *Table
+	kinds Kinds
 	count string
 	keys  []string
+
+	op      *Binding // the operator waiting for its motion
+	opCount string   // the count typed before the operator
+	reg     bool     // " was typed: a register name comes next
 }
 
 // NewEngine returns an engine over t.
 func NewEngine(t *Table) *Engine { return &Engine{table: t} }
 
+// SetKinds tells the engine about operators and motions.
+func (e *Engine) SetKinds(k Kinds) { e.kinds = k }
+
 // Table returns the engine's table.
 func (e *Engine) Table() *Table { return e.table }
 
-// Pending returns what has been typed toward a binding, such as "3g", for
-// the status line; empty when nothing is pending.
-func (e *Engine) Pending() string { return e.count + strings.Join(e.keys, "") }
+// Pending returns what has been typed toward a binding, such as "3g" or
+// "2d3", for the status line; empty when nothing is pending.
+func (e *Engine) Pending() string {
+	p := e.count + strings.Join(e.keys, "")
+	if e.op != nil {
+		p = e.opCount + e.op.Seq() + p
+	}
+	if e.reg {
+		p = `"` + p
+	}
+	return p
+}
 
 // Reset drops anything pending.
-func (e *Engine) Reset() { e.count, e.keys = "", nil }
+func (e *Engine) Reset() { e.count, e.keys, e.op, e.opCount, e.reg = "", nil, nil, "", false }
 
 // Feed adds one key in vim notation.
 func (e *Engine) Feed(mode Mode, scopes []string, key string) Result {
+	if e.reg {
+		e.Reset()
+		return Result{Kind: Rejected, Text: `navigo has one register: drop the "` + key + ` and the yank or paste uses it`}
+	}
 	if len(e.keys) == 0 && mode != Cmdline && isCountDigit(key, e.count != "") {
 		e.count += key
 		return Result{Kind: Pending}
 	}
 	keys := append(append([]string(nil), e.keys...), key)
-	exact, prefix := e.table.lookup(mode, scopes, keys)
+	if e.op != nil && slices.Equal(keys, e.op.Keys) {
+		return e.finish(Result{Double: true})
+	}
+	exact, prefix := e.lookup(mode, scopes, keys)
 	switch {
 	case exact != nil && !prefix:
-		return e.run(exact)
+		return e.resolve(mode, exact)
 	case prefix:
 		e.keys = keys
 		return Result{Kind: Pending, Ambiguous: exact != nil}
+	case key == `"` && len(e.keys) == 0 && e.op == nil && mode != Cmdline:
+		e.reg = true
+		return Result{Kind: Pending}
 	default:
 		e.Reset()
 		return Result{Kind: NoMatch}
@@ -213,20 +257,64 @@ func (e *Engine) Feed(mode Mode, scopes []string, key string) Result {
 // returns NoMatch when nothing ambiguous is pending.
 func (e *Engine) Timeout(mode Mode, scopes []string) Result {
 	if len(e.keys) == 0 {
+		if e.op != nil || e.reg {
+			return Result{Kind: Pending}
+		}
 		return Result{Kind: NoMatch}
 	}
-	exact, _ := e.table.lookup(mode, scopes, e.keys)
+	exact, _ := e.lookup(mode, scopes, e.keys)
 	if exact == nil {
 		return Result{Kind: Pending}
 	}
-	return e.run(exact)
+	return e.resolve(mode, exact)
 }
 
-func (e *Engine) run(b *Binding) Result {
+// lookup is Table.lookup, but Visual mode also has Normal mode's motions,
+// and after an operator only motions count.
+func (e *Engine) lookup(mode Mode, scopes []string, keys []string) (*Binding, bool) {
+	exact, prefix := e.table.lookup(mode, scopes, keys)
+	if mode == Visual && exact == nil {
+		ne, np := e.table.lookup(Normal, scopes, keys)
+		if ne != nil && e.isMotion(ne) {
+			exact = ne
+		}
+		prefix = prefix || np
+	}
+	if e.op != nil && exact != nil && !e.isMotion(exact) {
+		exact = nil
+	}
+	return exact, prefix
+}
+
+func (e *Engine) resolve(mode Mode, b *Binding) Result {
+	switch {
+	case e.op != nil:
+		return e.finish(Result{Motion: b.Command})
+	case mode == Normal && e.kinds.Operator != nil && e.kinds.Operator(b.Name()):
+		e.op, e.opCount, e.count, e.keys = b, e.count, "", nil
+		return Result{Kind: Pending}
+	}
 	n := 0
 	fmt.Sscan(e.count, &n)
 	e.Reset()
 	return Result{Kind: Run, Command: b.Command, Count: n}
+}
+
+// finish runs the pending operator; counts before and after it multiply.
+func (e *Engine) finish(r Result) Result {
+	var a, b int
+	fmt.Sscan(e.opCount, &a)
+	fmt.Sscan(e.count, &b)
+	r.Kind, r.Command = Run, e.op.Command
+	if a > 0 || b > 0 {
+		r.Count = max(a, 1) * max(b, 1)
+	}
+	e.Reset()
+	return r
+}
+
+func (e *Engine) isMotion(b *Binding) bool {
+	return e.kinds.Motion != nil && e.kinds.Motion(b.Name())
 }
 
 func isCountDigit(key string, started bool) bool {

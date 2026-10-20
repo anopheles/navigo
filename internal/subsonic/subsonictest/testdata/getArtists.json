@@ -17,9 +17,9 @@
               "musicBrainzId": "",
               "sortName": "森の音",
               "roles": [
+                "albumartist",
                 "artist",
-                "maincredit",
-                "albumartist"
+                "maincredit"
               ]
             }
           ]
@@ -34,9 +34,9 @@
               "musicBrainzId": "",
               "sortName": "aurora lane",
               "roles": [
-                "albumartist",
                 "artist",
-                "maincredit"
+                "maincredit",
+                "albumartist"
               ]
             }
           ]
@@ -51,9 +51,9 @@
               "musicBrainzId": "",
               "sortName": "long haul orchestra",
               "roles": [
+                "albumartist",
                 "artist",
-                "maincredit",
-                "albumartist"
+                "maincredit"
               ]
             }
           ]
@@ -65,13 +65,13 @@
               "id": "2dcbXjSrK8FSXPAQRDCG1H",
               "name": "The Quiet Ones",
               "albumCount": 2,
-              "starred": "2026-10-20T09:29:23.958848822Z",
+              "starred": "2026-10-20T10:30:13.494620459Z",
               "musicBrainzId": "",
               "sortName": "quiet ones",
               "roles": [
+                "albumartist",
                 "artist",
-                "maincredit",
-                "albumartist"
+                "maincredit"
               ]
             }
           ]
@@ -102,15 +102,15 @@
               "musicBrainzId": "",
               "sortName": "zoe brandt",
               "roles": [
+                "albumartist",
                 "artist",
-                "maincredit",
-                "albumartist"
+                "maincredit"
               ]
             }
           ]
         }
       ],
-      "lastModified": 1792488560000,
+      "lastModified": 1792492210000,
       "ignoredArticles": "The El La Los Las Le Les Os As O A"
     }
   }

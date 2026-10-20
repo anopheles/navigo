@@ -24,7 +24,7 @@
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "songCount": 8,
           "duration": 1180,
-          "created": "2026-10-20T09:29:06.040539944Z",
+          "created": "2026-10-20T10:29:55.970392524Z",
           "year": 2019,
           "genre": "Dream Pop",
           "userRating": 0,
@@ -59,10 +59,12 @@
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "songCount": 6,
           "duration": 757,
-          "created": "2026-10-20T09:29:06.064539579Z",
-          "starred": "2026-10-20T09:29:23.958142054Z",
+          "playCount": 1,
+          "created": "2026-10-20T10:29:55.953392762Z",
+          "starred": "2026-10-20T10:30:13.493820831Z",
           "year": 2021,
           "genre": "Dream Pop",
+          "played": "2026-10-20T10:30:13.470311203Z",
           "userRating": 0,
           "genres": [
             {

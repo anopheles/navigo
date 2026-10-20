@@ -88,9 +88,26 @@ func (k memKeyring) Set(service, key, secret string) error {
 	return nil
 }
 
-// newHarness starts navigo at w×h. edit, if set, changes the config,
+// newHarness starts navigo at w×h and, once the main screen shows, goes
+// to Albums, where most tests begin. edit, if set, changes the config,
 // which by default logs in to the fake server with a password in it.
 func newHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.Server)) *harness {
+	t.Helper()
+	hs := homeHarness(t, w, h, edit)
+	hs.toAlbums()
+	return hs
+}
+
+// toAlbums goes to the Albums section unless the login form shows.
+func (h *harness) toAlbums() {
+	h.t.Helper()
+	if h.m.screen == screenMain {
+		h.keys("'b")
+	}
+}
+
+// homeHarness starts navigo at w×h and leaves it where it starts: Home.
+func homeHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.Server)) *harness {
 	t.Helper()
 	srv := subsonictest.NewServer(t)
 	cfg := config.Config{Server: config.Server{URL: srv.URL, User: subsonictest.Username, Password: subsonictest.Password}}
@@ -128,6 +145,7 @@ func (h *harness) restart() *harness {
 	n.m.clock = n.clock
 	n.send(tea.WindowSizeMsg{Width: h.m.w, Height: h.m.h})
 	n.run(n.m.Init())
+	n.toAlbums()
 	return n
 }
 

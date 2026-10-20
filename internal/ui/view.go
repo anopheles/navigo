@@ -124,7 +124,9 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	n := m.rows(f)
 	f.offset = scroll(f.cur, f.offset, h, n)
 	var out []string
-	if n == 0 && f.kind == helpList && f.help != nil {
+	if n == 0 && f.kind == homeAlbums {
+		out = append(out, dimStyle.Render(fit(m.emptyHome(f.homeKind), w)))
+	} else if n == 0 && f.kind == helpList && f.help != nil {
 		out = append(out, dimStyle.Render(fit(m.emptyHelp(f.help), w)))
 	} else if n == 0 && f.kind == searchList && f.search != nil {
 		for _, l := range m.emptySearch(f.search) {
@@ -169,6 +171,10 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 		return dimStyle.Render(fit(" ── Appears on ──", w))
 	case albumList:
 		return m.albumLine(lib.Albums[i], w)
+	case homeList:
+		return fit(" "+homeLists[i].title, w)
+	case homeAlbums:
+		return m.albumLine(m.homeAlbums(f.homeKind)[i], w)
 	case playlistList:
 		p := lib.Playlists[i]
 		n := count(len(p.Tracks))

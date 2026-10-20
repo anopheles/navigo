@@ -33,6 +33,10 @@ import (
 // pageSize matches Navidrome's cap on list endpoints.
 const pageSize = 500
 
+// homeSize is how many albums each of Home's lists asks for; navigo's
+// subsonic.HomeSize.
+const homeSize = 50
+
 func main() {
 	base := flag.String("url", "http://127.0.0.1:14533", "Navidrome base URL")
 	out := flag.String("out", "internal/subsonic/subsonictest/testdata", "fixture directory")
@@ -83,6 +87,10 @@ func run(c *client, out string) error {
 	}
 	for _, typ := range []string{"alphabeticalByName", "newest"} {
 		rec.get("getAlbumList2", url.Values{"type": {typ}, "size": {strconv.Itoa(pageSize)}, "offset": {"0"}})
+	}
+	// Home's lists, one page each.
+	for _, typ := range []string{"newest", "frequent", "recent", "random", "starred"} {
+		rec.get("getAlbumList2", url.Values{"type": {typ}, "size": {strconv.Itoa(homeSize)}})
 	}
 	for _, a := range albums {
 		rec.get("getAlbum", url.Values{"id": {a.ID}})
@@ -194,6 +202,17 @@ func (c *client) seed(albums []album) error {
 	}
 	if err := c.call("getPlaylists", nil, &existing); err != nil {
 		return err
+	}
+	if len(existing.Playlists.Playlist) == 0 { // a fresh server: play the tracks once
+		for _, ref := range fixturelib.Played {
+			_, id, err := find(ref)
+			if err != nil {
+				return err
+			}
+			if err := c.call("scrobble", url.Values{"id": {id}, "submission": {"true"}}, nil); err != nil {
+				return err
+			}
+		}
 	}
 	for _, p := range fixturelib.Playlists {
 		if slices.ContainsFunc(existing.Playlists.Playlist, func(e struct{ Name string }) bool { return e.Name == p.Name }) {

@@ -11,7 +11,7 @@ import (
 
 // sections are the library window's top-level entries, in the spec's
 // order; Home, Playlists, Search and Help come later.
-var sections = []section{{"Artists", artistList}, {"Albums", albumList}, {"Playlists", playlistList}, {"Search", searchList}, {"Help", helpList}}
+var sections = []section{{"Home", homeList}, {"Artists", artistList}, {"Albums", albumList}, {"Playlists", playlistList}, {"Search", searchList}, {"Help", helpList}}
 
 type section struct {
 	title string
@@ -25,8 +25,8 @@ func sectionPath(kind listKind) []frame {
 	return []frame{{kind: sectionList, title: "Library", cur: i}, {kind: kind, title: sections[i].title}}
 }
 
-// startPath is the library window at startup.
-func startPath() []frame { return sectionPath(albumList) }
+// startPath is the library window at startup: Home.
+func startPath() []frame { return sectionPath(homeList) }
 
 // showSection switches the library window to a section, back where it was
 // left; asked for the section it is in, it goes to the section's list.
@@ -246,6 +246,10 @@ func (m *Model) rowAlbum() (library.Album, bool) {
 	case albumList:
 		if f.cur < len(lib.Albums) {
 			return lib.Albums[f.cur], true
+		}
+	case homeAlbums:
+		if as := m.homeAlbums(f.homeKind); f.cur < len(as) {
+			return as[f.cur], true
 		}
 	case artistPage:
 		return m.artistRows(f.artist).album(f.cur)

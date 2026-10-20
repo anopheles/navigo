@@ -75,6 +75,13 @@ var Playlists = []Playlist{
 	{Name: "Empty"},
 }
 
+// Played are tracks recordfixtures plays once (a scrobble with
+// submission), so Home's Most played and Recently played have albums.
+var Played = []TrackRef{
+	{"Aurora Lane", "Blue Hour", 1, 2},
+	{"The Quiet Ones", "Static Bloom", 1, 1},
+}
+
 // Starred names what recordfixtures stars. Album and track stars use
 // TrackRef; Number 0 means the album itself.
 var (

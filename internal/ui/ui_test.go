@@ -198,7 +198,7 @@ func TestFirstRunLogin(t *testing.T) {
 	}
 	h.typeText(subsonictest.Password)
 	h.keys("<CR>")
-	h.contains("logged in as admin", "Ångström Days")
+	h.contains("logged in as admin", "Recently added")
 	if p := h.kr[creds.Service+"/"+creds.Key(url, subsonictest.Username)]; p != subsonictest.Password {
 		t.Errorf("keyring has %q", p)
 	}
@@ -240,7 +240,7 @@ func TestKeyringFailureOffersConfig(t *testing.T) {
 	if saved.Server.Password != subsonictest.Password || saved.Server.URL != url {
 		t.Errorf("saved server = %+v, want the password in config", saved.Server)
 	}
-	h.contains("Ångström Days")
+	h.contains("Recently added")
 }
 
 type brokenKeyring struct{}

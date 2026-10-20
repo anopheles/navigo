@@ -32,14 +32,14 @@ func TestSearchRanking(t *testing.T) {
 		{"blue", nil, []string{"Blue (Aurora Lane)", "Blue (The Quiet Ones)", "Blue Hour (Aurora Lane)"},
 			[]string{"Blue", "Blue Again", "Blue Highway", "Blue Hour", "Blue Static"}, AlbumGroup},
 		// Words start words; tracks on the album match through it, after
-		// the title match.
-		{"blu ho", nil, []string{"Blue Hour (Aurora Lane)"}, []string{"Blue Hour", "Afterglow"}, AlbumGroup},
+		// the title match, the one played first (play count breaks ties).
+		{"blu ho", nil, []string{"Blue Hour (Aurora Lane)"}, []string{"Blue Hour", "Low Tide", "Afterglow"}, AlbumGroup},
 		// Spread over artist and title.
 		{"aurora low", nil, nil, []string{"Low Tide"}, TrackGroup},
 		// Accents and case are ignored.
 		{"angstrom", nil, []string{"Ångström Days (Zoë Brandt)"}, []string{"Ångström"}, TrackGroup},
 		{"ZOE", []string{"Zoë Brandt"}, []string{"Ångström Days (Zoë Brandt)"}, []string{"Ångström"}, ArtistGroup},
-		{"quiet", []string{"The Quiet Ones"}, []string{"Blue (The Quiet Ones)"}, []string{"Quiet Room"}, TrackGroup},
+		{"quiet", []string{"The Quiet Ones"}, []string{"Static Bloom (The Quiet Ones)", "Blue (The Quiet Ones)"}, []string{"Quiet Room"}, TrackGroup},
 		{"夜明", nil, []string{"夜明け (森の音)"}, []string{"夜明け前"}, AlbumGroup},
 	} {
 		r := s.Search(c.query)

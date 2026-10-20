@@ -85,6 +85,8 @@ type listKind int
 
 const (
 	sectionList listKind = iota
+	homeList
+	homeAlbums
 	artistList
 	artistPage
 	albumList
@@ -101,6 +103,7 @@ type frame struct {
 	album       library.AlbumID
 	artist      library.ArtistID
 	playlist    library.PlaylistID
+	homeKind    string // the server's list type, for homeAlbums
 	search      *searchView
 	help        *helpView
 	title       string
@@ -461,6 +464,18 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		m.tick()
 		seq := e.Seq
 		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.RetryNow{Seq: seq}} })
+	case app.FetchAlbumList:
+		return func() tea.Msg {
+			if c == nil {
+				return eventMsg{app.AlbumListLoaded{Kind: e.Kind, Err: errors.New("not logged in")}}
+			}
+			list, err := c.AlbumList(ctx, subsonic.ListType(e.Kind), subsonic.HomeSize)
+			albums := make([]library.Album, len(list))
+			for i, a := range list {
+				albums[i] = library.AlbumFrom(a)
+			}
+			return eventMsg{app.AlbumListLoaded{Kind: e.Kind, Albums: albums, Err: err, Unreachable: subsonic.IsUnreachable(err)}}
+		}
 	case app.WritePlaylist:
 		return func() tea.Msg {
 			if c == nil {
@@ -723,6 +738,10 @@ func (m *Model) scopes() []string {
 		return []string{"albums", "containers", "global"}
 	case artistList, artistPage:
 		return []string{"artists", "containers", "global"}
+	case homeList:
+		return []string{"home", "containers", "global"}
+	case homeAlbums:
+		return []string{"albums", "containers", "global"}
 	case playlistList:
 		return []string{"playlists", "containers", "global"}
 	case playlistTracks:
@@ -755,6 +774,10 @@ func (m *Model) rows(f *frame) int {
 		return len(sections)
 	case f.kind == helpList && f.help != nil:
 		return len(f.help.rows)
+	case f.kind == homeList:
+		return len(homeLists)
+	case f.kind == homeAlbums:
+		return len(m.homeAlbums(f.homeKind))
 	case lib == nil:
 		return 0
 	case f.kind == artistList:
@@ -795,6 +818,10 @@ func (m *Model) cursorIDs() []string {
 func (m *Model) rowID(f *frame, i int) string {
 	lib := m.state.Library
 	switch f.kind {
+	case homeList:
+		return homeLists[i].kind
+	case homeAlbums:
+		return string(m.homeAlbums(f.homeKind)[i].ID)
 	case artistList:
 		return string(lib.Artists[i].ID)
 	case artistPage:

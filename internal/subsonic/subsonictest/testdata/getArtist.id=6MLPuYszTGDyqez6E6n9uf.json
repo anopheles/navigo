@@ -12,9 +12,9 @@
       "musicBrainzId": "",
       "sortName": "森の音",
       "roles": [
-        "albumartist",
         "artist",
-        "maincredit"
+        "maincredit",
+        "albumartist"
       ],
       "album": [
         {
@@ -24,7 +24,7 @@
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "songCount": 3,
           "duration": 565,
-          "created": "2026-10-20T09:29:06.690530064Z",
+          "created": "2026-10-20T10:29:56.586383924Z",
           "year": 2017,
           "genre": "Ambient",
           "userRating": 0,

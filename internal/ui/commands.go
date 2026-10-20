@@ -37,6 +37,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "back", Label: "back", Desc: "Go back out to the list you came from.", Run: func(m *Model, _ command.Call) error { m.back(); return nil }},
 		{Name: "go-album", Label: "album", Desc: "Go to the album of the track or album under the cursor.", Run: (*Model).goAlbum},
 		{Name: "go-artist", Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
+		{Name: "home", Label: "home", Desc: "Show Home: recently added, most and recently played, random and starred albums.", Run: func(m *Model, _ command.Call) error { m.showSection(homeList); return nil }},
 		{Name: "artists", Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
 		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
 		{Name: "playlists", Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
@@ -179,7 +180,9 @@ func (m *Model) open(command.Call) error {
 		if lib := m.state.Library; lib != nil && f.cur < len(lib.Artists) {
 			m.openArtist(lib.Artists[f.cur])
 		}
-	case albumList, artistPage:
+	case homeList:
+		m.openHomeList(f.cur)
+	case albumList, artistPage, homeAlbums:
 		if a, ok := m.rowAlbum(); ok {
 			m.openAlbum(a, f.artist)
 		}

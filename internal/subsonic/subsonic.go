@@ -187,9 +187,27 @@ type ListType string
 
 // The album list orders navigo uses.
 const (
-	ByName ListType = "alphabeticalByName"
-	Newest ListType = "newest"
+	ByName   ListType = "alphabeticalByName"
+	Newest   ListType = "newest"
+	Frequent ListType = "frequent"
+	Recent   ListType = "recent"
+	Random   ListType = "random"
+	Starred2 ListType = "starred"
 )
+
+// HomeSize is how many albums each of Home's lists shows.
+const HomeSize = 50
+
+// AlbumList returns the first size albums of a list, such as the newest.
+func (c *Client) AlbumList(ctx context.Context, list ListType, size int) ([]Album, error) {
+	var r struct {
+		AlbumList2 struct {
+			Album []Album `json:"album"`
+		} `json:"albumList2"`
+	}
+	err := c.call(ctx, "getAlbumList2", url.Values{"type": {string(list)}, "size": {strconv.Itoa(size)}}, &r)
+	return r.AlbumList2.Album, err
+}
 
 // Albums returns every album in the given order, fetching page by page.
 func (c *Client) Albums(ctx context.Context, order ListType) ([]Album, error) {

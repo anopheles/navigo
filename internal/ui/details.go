@@ -64,6 +64,8 @@ func (m *Model) rowItem(f *frame, i int) (item, bool) {
 		}
 	case albumList:
 		return album(lib.Albums[i])
+	case homeAlbums:
+		return album(m.homeAlbums(f.homeKind)[i])
 	case albumTracks:
 		return track(lib.AlbumTracks(f.album)[i])
 	case playlistTracks:

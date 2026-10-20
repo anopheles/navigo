@@ -6,18 +6,18 @@
     "serverVersion": "0.64.2 (10114574)",
     "openSubsonic": true,
     "playlist": {
-      "id": "0pVS1bVgnViQWe0EmBsZ1z",
+      "id": "0lMGASPxQLXVPGDwUvJmtl",
       "name": "Morning Mix",
       "songCount": 5,
       "duration": 988,
       "owner": "admin",
-      "created": "2026-10-20T09:29:23.93946767Z",
-      "changed": "2026-10-20T09:29:23.940639094Z",
-      "coverArt": "pl-0pVS1bVgnViQWe0EmBsZ1z",
+      "created": "2026-10-20T10:30:13.477975576Z",
+      "changed": "2026-10-20T10:30:13.478809916Z",
+      "coverArt": "pl-0lMGASPxQLXVPGDwUvJmtl",
       "readonly": false,
       "entry": [
         {
-          "id": "7dWdYf10vxnFswNrQ9wpwe",
+          "id": "4UKIR0yteFkFUfB3t87tq1",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Blue",
@@ -34,7 +34,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-02 - Blue.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T09:29:21.414515819Z",
+          "created": "2026-10-20T10:30:10.881306032Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -76,7 +76,7 @@
           "movements": []
         },
         {
-          "id": "0uDMsNSpx4DwxFFIJcfQk0",
+          "id": "6p5vhvO5HxBk1XMfNin9Zu",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Undertow",
@@ -93,7 +93,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-01 - Undertow.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T09:29:21.346928285Z",
+          "created": "2026-10-20T10:30:10.769951347Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -135,7 +135,7 @@
           "movements": []
         },
         {
-          "id": "6ylh0Qxcqk5oHc57C8kjQd",
+          "id": "4jptGSUiF0nINwkH4sQHmT",
           "parent": "6dUjXTei5OjF3Dc9vq50Gh",
           "isDir": false,
           "title": "Café Nocturne",
@@ -152,7 +152,7 @@
           "bitRate": 16,
           "path": "Zoë Brandt/Ångström Days/01-02 - Café Nocturne.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T09:29:21.457154138Z",
+          "created": "2026-10-20T10:30:10.923534089Z",
           "albumId": "6dUjXTei5OjF3Dc9vq50Gh",
           "artistId": "2yVh46xHg7UbYmzN38kszb",
           "type": "music",
@@ -194,7 +194,7 @@
           "movements": []
         },
         {
-          "id": "002JcAFDmMujiwOSDOqhTB",
+          "id": "5VuNeEwEvxnsGEO85B07YC",
           "parent": "0sPz4dswpPlhawvYGD5rsx",
           "isDir": false,
           "title": "朝霧",
@@ -211,7 +211,7 @@
           "bitRate": 16,
           "path": "森の音/夜明け/01-01 - 朝霧.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T09:29:21.476696984Z",
+          "created": "2026-10-20T10:30:10.93894153Z",
           "albumId": "0sPz4dswpPlhawvYGD5rsx",
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "type": "music",
@@ -253,7 +253,7 @@
           "movements": []
         },
         {
-          "id": "7dWdYf10vxnFswNrQ9wpwe",
+          "id": "4UKIR0yteFkFUfB3t87tq1",
           "parent": "3ZJQB487hjgDRlECI70I0Z",
           "isDir": false,
           "title": "Blue",
@@ -270,7 +270,7 @@
           "bitRate": 16,
           "path": "Aurora Lane/Blue/01-02 - Blue.mp3",
           "discNumber": 1,
-          "created": "2026-10-20T09:29:21.414515819Z",
+          "created": "2026-10-20T10:30:10.881306032Z",
           "albumId": "3ZJQB487hjgDRlECI70I0Z",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",

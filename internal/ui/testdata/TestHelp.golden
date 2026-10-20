@@ -30,10 +30,10 @@
  <C-r>      redo               Redo the last undone change to the queue.│                                               
  <Tab>      window             Move to the other window.                │                                               
  <C-w>w     window             Move to the other window.                │                                               
+ 'h         home               Show Home: recently added, most and rece…│                                               
  'a         artists            Show the Artists section.                │                                               
  'b         albums             Show the Albums section.                 │                                               
  'p         playlists          Show the Playlists section.              │                                               
- 's         search             Search the library, or type the text to …│                                               
  h back  <Tab> other window  ? keys                                                                                     
  ■ nothing playing                                                                                                      
                                                                                                                         

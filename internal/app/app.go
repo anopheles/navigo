@@ -43,6 +43,8 @@ type State struct {
 	// loaded or the first sync is done.
 	Library *library.Snapshot
 	Sync    SyncStatus
+	// Home is Home's album lists by kind, as the server last sent them.
+	Home map[string]AlbumList
 
 	cacheChecked bool // the cache file has been tried
 	loggedIn     bool
@@ -365,6 +367,8 @@ func Apply(s State, e Event) (State, []Effect) {
 
 	case ChangeVolume, Shuffle, CycleRepeat:
 		return s.applyPlayback(e)
+	case LoadAlbumList, AlbumListLoaded:
+		return s.applyHome(e)
 	case SetStars, StarsWritten:
 		return s.applyStars(e)
 	case Yank, Remove, Paste, Move, ClearQueue:

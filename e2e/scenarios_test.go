@@ -25,10 +25,13 @@ var (
 	trackColsRE = regexp.MustCompile(`^\s+[\d-]*\s+(.+?)\s{2,}(\S.*?)\s+\d+:\d\d$`)
 )
 
-// synced waits until the first run's sync has filled the lists.
+// synced waits for Home, where navigo starts, then goes to Albums and
+// waits until the first run's sync has filled it.
 func (s *session) synced() {
 	s.t.Helper()
-	s.waitText("<CR> open", 30*time.Second)
+	s.waitText("Recently added", 30*time.Second)
+	s.keys("'b")
+	s.waitText(" Albums ", 5*time.Second)
 	s.waitFor("the library to sync", 3*time.Minute, func(scr string) bool {
 		return !strings.Contains(scr, "loading…") && !strings.Contains(scr, "connecting") && !strings.Contains(scr, "Syncing library")
 	})
@@ -180,6 +183,8 @@ func TestColdStart(t *testing.T) {
 	s.stop()
 
 	s = startIn(t, srv, home)
+	s.waitText("Recently added", 5*time.Second)
+	s.keys("'b")
 	s.waitFor("the cached library", 5*time.Second, func(string) bool { return s.line(1) == firstAlbum })
 	run := func() string { // this launch's part of the log
 		l := s.log()

@@ -1,0 +1,51 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "albumList2": {
+      "album": [
+        {
+          "id": "2bI7rWm5e4WInj6kSy9Ehz",
+          "name": "Blue Hour",
+          "artist": "Aurora Lane",
+          "artistId": "1MNu0aqmjGxOZOiezuZPxB",
+          "songCount": 6,
+          "duration": 757,
+          "playCount": 1,
+          "created": "2026-10-20T10:29:55.953392762Z",
+          "starred": "2026-10-20T10:30:13.493820831Z",
+          "year": 2021,
+          "genre": "Dream Pop",
+          "played": "2026-10-20T10:30:13.470311203Z",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Dream Pop"
+            }
+          ],
+          "musicBrainzId": "",
+          "isCompilation": false,
+          "sortName": "blue hour",
+          "discTitles": [],
+          "originalReleaseDate": {},
+          "releaseDate": {},
+          "releaseTypes": [],
+          "recordLabels": [],
+          "moods": [],
+          "artists": [
+            {
+              "id": "1MNu0aqmjGxOZOiezuZPxB",
+              "name": "Aurora Lane"
+            }
+          ],
+          "displayArtist": "Aurora Lane",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

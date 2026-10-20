@@ -449,8 +449,8 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 
 | Element | Look |
 |---|---|
-| Cursor row, focused window / other window | reverse / underline |
-| Playing row, progress fill | bold magenta; the progress bar ends in a `●` head, and when `playing` is a `#rrggbb` colour the fill fades up to it from a darker shade of it |
+| Cursor row, focused window / other window | reverse / underline; with the accent fades (below), the focused window's cursor row is a tint instead of reverse |
+| Playing row, progress fill | bold magenta (the row fades across when the accent fades are on); the progress bar ends in a `●` head, and when `playing` is a `#rrggbb` colour the fill fades up to it from a darker shade of it |
 | Keys (hint line, key menu, empty-queue message, prefix menus) | bold cyan |
 | Error messages | red |
 | Labels, empty states, unfilled progress | faint |
@@ -463,6 +463,7 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 - **The other elements** are attributes (reverse, bold, faint, underline) and follow whatever colours are set.
 - **Themes** (added after the first decision against presets): `theme:` picks a named palette for the four roles, and a role in `colors:` replaces the theme's colour for it. The themes are `catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`, `gruvbox-dark`, `gruvbox-light`, `nord`, `dracula`, `solarized-dark`, `solarized-light`, `tokyo-night`, `tokyo-night-storm`, `tokyo-night-day`, `one-dark`, `one-light`, `rose-pine`, `rose-pine-moon`, `rose-pine-dawn`, `everforest-dark`, `kanagawa`, `monokai`. Names are not case-sensitive, and an unknown one is reported with this list. A theme gives only the four role colours, as `#rrggbb`; the text and background are the terminal's, so a theme looks right in a terminal that uses the same one, and the selection colour is a background chosen to read against that theme's text. With no `theme:`, the roles are the terminal's own palette, which follows whatever theme the terminal has.
 - **No single accent:** one accent colour would merge "playing" with "focus" and, for red, with "error".
+- **Accent fades:** when `playing` is a `#rrggbb` colour (a theme, `colors:`, or the default below) on a terminal with 24-bit colour and colours on, the playing colour also fades towards blue (two hues turned by 35° and 75°), and that single accent drives: the focused window's frame (the middle colour) and its title (the whole fade, instead of reverse), the playing row, the now-playing card's title, and the progress bar. The focused window's cursor row becomes a fifth of the accent over the terminal's own background (asked for with OSC 11; black until the terminal answers) instead of reverse, so it suits light and dark terminals. With `playing` one of the 16 colours, on fewer colours, or with `NO_COLOR`, none of this is drawn and the reverse cursor and plain frame stay: nothing depends on the fades.
 - **Default `playing` on a true-colour terminal:** with no `theme:` and no `playing:`, a terminal that reports 24-bit colour (`COLORTERM=truecolor`) gets `#c25bd8`, a mid-tone magenta that reads on light and dark backgrounds, so the progress bar fades for new users. Every other terminal, and `NO_COLOR`, keeps the terminal's own magenta. Setting `playing:` or `theme:` replaces it.
 - **Low colour depth:** a hex colour snaps to the nearest colour of a 256- or 16-colour terminal.
 - **Safeguard:** the Visual selection stays underlined whatever colour it has, so a `selection` close to the text colour can't hide it, and it shows with colours off. navigo can't know the terminal's text colour, so it cannot check for that.

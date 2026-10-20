@@ -327,7 +327,7 @@ func (m *Model) nowPlayingCard() []string {
 		if s.Player.Buffering {
 			right = append([]string{"buffering"}, right...)
 		}
-		text[1] = fit(" "+accentStyle.Render(icon+" "+t.Title), w)
+		text[1] = fit(" "+m.accent(icon+" "+t.Title), w)
 		text[2] = fit(" "+titleOff.Render(t.Artist), w)
 		text[3] = fit(" "+dimStyle.Render(t.Album), w)
 		text[4] = fit(m.cardRight(right, w), w)

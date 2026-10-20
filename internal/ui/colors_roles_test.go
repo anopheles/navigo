@@ -1,13 +1,17 @@
 package ui
 
 import (
+	"image/color"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 
@@ -210,4 +214,113 @@ func TestTrueColorTerminalsGetAFadingPlayingColourByDefault(t *testing.T) {
 			}
 		})
 	}
+}
+
+// accentHarness starts navigo on a true-colour terminal with a hex playing
+// colour, so the accent fades are drawn, and plays Low Tide.
+func accentHarness(t *testing.T, playing string) *harness {
+	t.Helper()
+	h := setupHarness(t, 120, 40, withColors(config.Colors{Playing: playing}), func(hs *harness) {
+		hs.m.deps.TrueColor = true
+	})
+	h.toAlbums()
+	h.keys("3j<CR>j<CR>")
+	return h
+}
+
+func TestAccentFadesTheFocusedTitleAndFrame(t *testing.T) {
+	h := accentHarness(t, "#c25bd8")
+	top := strings.SplitN(h.m.render(), "\n", 2)[0]
+	title := strings.SplitN(top, "Queue", 2)[0] // the focused library title
+	if n := len(distinct(sgrs(title), "38;2;")); n < 4 {
+		t.Errorf("the focused title has %d colours, want a fade: %q", n, title)
+	}
+	if !strings.Contains(top, "38;2;") ||
+		strings.Contains(strings.SplitN(top, "╭", 2)[1][:30], ";7m") {
+		t.Errorf("the focused title is still reversed: %q", top)
+	}
+	h.keys("<Tab>")
+	top = strings.SplitN(h.m.render(), "\n", 2)[0]
+	lib, queue, _ := strings.Cut(top, "╮") // the library's frame is faint now
+	if !strings.Contains(lib, "\x1b[2m") || strings.Contains(lib, "38;2;") ||
+		!strings.Contains(queue, "38;2;") {
+		t.Errorf("the frames did not follow the focus: %q", top)
+	}
+}
+
+func TestAccentTintsTheCursorAndFadesThePlayingRow(t *testing.T) {
+	h := accentHarness(t, "#c25bd8")
+	h.keys("<Tab>") // the queue is focused, its cursor on Dusk Signal
+	screen := h.m.render()
+	cursor := lineWith(t, screen, "Dusk Signal")
+	if has(cursor, 7) || !strings.Contains(cursor, "48;2;") {
+		t.Errorf("the cursor row should be a tint, not reverse: %q", cursor)
+	}
+	playing := lineWith(t, screen, "▶")
+	if n := len(distinct(sgrs(playing), "38;2;")); n < 5 {
+		t.Errorf("the playing row has %d colours, want a fade: %q", n, playing)
+	}
+}
+
+func TestAccentOnLightAndDarkTerminals(t *testing.T) {
+	h := accentHarness(t, "#c25bd8")
+	h.keys("<Tab>")
+	dark := h.m.tint()
+	h.send(tea.BackgroundColorMsg{Color: color.RGBA{250, 250, 250, 255}})
+	light := h.m.tint()
+	dr, _, _, _ := dark.RGBA()
+	lr, _, _, _ := light.RGBA()
+	if lr <= dr {
+		t.Errorf("the tint should follow the background: dark %v, light %v", dark, light)
+	}
+}
+
+func TestNoAccentFadesWithoutExactColours(t *testing.T) {
+	plain := setupHarness(t, 120, 40, withColors(config.Colors{Playing: "#c25bd8"}), nil)
+	plain.toAlbums()
+	plain.keys("3j<CR>j<CR>")
+	for name, h := range map[string]*harness{
+		"playing is the terminal's magenta": accentHarness(t, "5"),
+		"not a true-colour terminal":        plain,
+	} {
+		h.keys("<Tab>")
+		screen := h.m.render()
+		if q := lineWith(t, screen, "Dusk Signal"); !has(q, 7) {
+			t.Errorf("%s: the cursor row lost its reverse: %q", name, q)
+		}
+		top := strings.SplitN(screen, "\n", 2)[0]
+		if len(distinct(sgrs(top), "38;2;")) > 1 && name != "not a true-colour terminal" {
+			t.Errorf("%s: the title fades: %q", name, top)
+		}
+	}
+}
+
+func TestAccentFrom(t *testing.T) {
+	if accentFrom(ansi.Magenta) != nil {
+		t.Error("the terminal's magenta has no exact value to fade from")
+	}
+	stops := accentFrom(lipgloss.Color("#c25bd8"))
+	if len(stops) != 3 {
+		t.Fatalf("stops = %v", stops)
+	}
+	r0, g0, b0, _ := stops[0].RGBA()
+	r2, g2, b2, _ := stops[2].RGBA()
+	if r0 == r2 && g0 == g2 && b0 == b2 || b2 <= r2 {
+		t.Errorf(
+			"the last stop should be bluer than the playing colour: %v → %v",
+			stops[0],
+			stops[2],
+		)
+	}
+}
+
+// distinct is the SGRs that start with prefix, without repeats.
+func distinct(all []string, prefix string) []string {
+	var out []string
+	for _, s := range all {
+		if strings.HasPrefix(s, prefix) && !slices.Contains(out, s) {
+			out = append(out, s)
+		}
+	}
+	return out
 }

@@ -254,8 +254,8 @@ func (m *Model) Init() tea.Cmd {
 	p, ctx := m.deps.Player, m.ctx
 	check := func() tea.Msg { return eventMsg{app.PlayerChecked{Err: p.Check(ctx), Hint: installHint()}} }
 	var background tea.Cmd
-	if m.coverMode() != "" {
-		background = tea.RequestBackgroundColor // a half-clear cover blends against it
+	if m.coverMode() != "" || m.accentOn() {
+		background = tea.RequestBackgroundColor // a half-clear cover and the cursor tint blend against it
 	}
 	if s.URL == "" {
 		m.openLogin(s.URL, s.User, "")

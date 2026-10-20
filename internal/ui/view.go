@@ -64,21 +64,21 @@ func (m *Model) render() string {
 	if m.w < narrow {
 		if m.focus == libraryWindow {
 			title := m.libTitle() + "   " + m.keyHint("window", "queue")
-			lines = pane(title, m.libraryRows(m.w-2, h, true), m.w, true)
+			lines = m.pane(title, m.libraryRows(m.w-2, h, true), m.w, true)
 		} else {
 			title := m.queueTitle() + "   " + m.keyHint("window", "library")
-			lines = pane(title, m.queueRows(m.w-2, h, true), m.w, true)
+			lines = m.pane(title, m.queueRows(m.w-2, h, true), m.w, true)
 		}
 	} else {
 		lw := m.w * 3 / 5
 		rw := m.w - lw
-		left := pane(
+		left := m.pane(
 			m.libTitle(),
 			m.libraryRows(lw-2, h, m.focus == libraryWindow),
 			lw,
 			m.focus == libraryWindow,
 		)
-		right := pane(
+		right := m.pane(
 			m.queueTitle(),
 			m.queueRows(rw-2, h, m.focus == queueWindow),
 			rw,
@@ -118,17 +118,23 @@ func (m *Model) render() string {
 
 // pane frames rows (w-2 wide) in a rounded border with the title in the top
 // edge. The focused window's border is plain and its title reversed; the
-// other's is faint.
-func pane(title string, rows []string, w int, focused bool) []string {
-	edge, name := dimStyle, titleOff
+// other's is faint. With the accent on, the focused border is the accent's
+// middle colour and its title fades across.
+func (m *Model) pane(title string, rows []string, w int, focused bool) []string {
+	name := func(s string) string { return titleOff.Render(s) }
+	edge := dimStyle
 	if focused {
-		edge, name = lipgloss.NewStyle(), titleOn
+		edge, name = lipgloss.NewStyle(), func(s string) string { return titleOn.Render(s) }
+		if m.accentOn() {
+			edge = lipgloss.NewStyle().Foreground(accentStops[1])
+			name = m.accent
+		}
 	}
 	inner := max(w-2, 0)
 	t := ansi.Truncate(title, max(inner-1, 0), "…") + " "
 	t = ansi.Truncate(t, inner, "")
 	out := []string{
-		edge.Render("╭") + name.Render(t) +
+		edge.Render("╭") + name(t) +
 			edge.Render(strings.Repeat("─", max(inner-lipgloss.Width(t), 0))+"╮"),
 	}
 	for _, r := range rows {
@@ -396,6 +402,8 @@ func (m *Model) emptyQueue(w int) []string {
 
 func (m *Model) styleRow(line string, cursor, focused, current, selected bool) string {
 	switch {
+	case cursor && focused && m.accentOn():
+		return lipgloss.NewStyle().Background(m.tint()).Bold(true).Render(line)
 	case cursor && focused:
 		return cursorStyle.Render(line)
 	case cursor:
@@ -403,7 +411,7 @@ func (m *Model) styleRow(line string, cursor, focused, current, selected bool) s
 	case selected:
 		return visualStyle.Render(line)
 	case current:
-		return accentStyle.Render(line)
+		return m.accent(line)
 	}
 	return line
 }

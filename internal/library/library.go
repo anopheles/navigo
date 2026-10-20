@@ -41,6 +41,7 @@ type Album struct {
 	Artist     string
 	ArtistID   ArtistID
 	Year       int
+	Genre      string
 	TrackCount int
 	Duration   time.Duration
 	PlayCount  int
@@ -58,6 +59,8 @@ type Track struct {
 	AlbumID   AlbumID
 	Disc      int
 	Number    int
+	Year      int
+	Genre     string
 	Duration  time.Duration
 	PlayCount int
 }
@@ -84,6 +87,7 @@ func AlbumFrom(a subsonic.Album) Album {
 		Artist:     a.Artist,
 		ArtistID:   ArtistID(a.ArtistID),
 		Year:       a.Year,
+		Genre:      a.Genre,
 		TrackCount: a.SongCount,
 		Duration:   time.Duration(a.Duration) * time.Second,
 		PlayCount:  a.PlayCount,
@@ -108,6 +112,8 @@ func TrackFrom(s subsonic.Song) Track {
 		AlbumID:   AlbumID(s.AlbumID),
 		Disc:      s.DiscNumber,
 		Number:    s.Track,
+		Year:      s.Year,
+		Genre:     s.Genre,
 		Duration:  time.Duration(s.Duration) * time.Second,
 		PlayCount: s.PlayCount,
 		Artists:   artists,

@@ -118,15 +118,15 @@ func (m *Model) rowTracks(f *frame, i int) (tracks []library.Track, artist bool)
 	case artistList:
 		return nil, true
 	case albumList:
-		return lib.AlbumTracks(lib.Albums[i].ID), false
+		return lib.AlbumTracks(m.albumsOf(f)[i].ID), false
 	case homeAlbums:
-		return lib.AlbumTracks(m.homeAlbums(f.homeKind)[i].ID), false
+		return lib.AlbumTracks(m.albumsOf(f)[i].ID), false
 	case artistPage:
 		if a, ok := m.artistRows(f.artist).album(i); ok {
 			return lib.AlbumTracks(a.ID), false
 		}
 	case albumTracks:
-		return lib.AlbumTracks(f.album)[i : i+1], false
+		return m.tracksOf(f)[i : i+1], false
 	case playlistList:
 		return lib.PlaylistTracks(lib.Playlists[i].ID), false
 	case playlistTracks:

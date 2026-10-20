@@ -20,6 +20,11 @@ func (m memKeyring) Get(service, key string) (string, error) {
 	return "", keyring.ErrNotFound
 }
 
+func (m memKeyring) Delete(service, key string) error {
+	delete(m, service+"/"+key)
+	return nil
+}
+
 func (m memKeyring) Set(service, key, secret string) error {
 	m[service+"/"+key] = secret
 	return nil

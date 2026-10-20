@@ -103,7 +103,8 @@ type frame struct {
 	album       library.AlbumID
 	artist      library.ArtistID
 	playlist    library.PlaylistID
-	homeKind    string // the server's list type, for homeAlbums
+	homeKind    string   // the server's list type, for homeAlbums
+	view        listView // :sort and :filter
 	search      *searchView
 	help        *helpView
 	title       string
@@ -798,17 +799,17 @@ func (m *Model) rows(f *frame) int {
 	case f.kind == homeList:
 		return len(homeLists)
 	case f.kind == homeAlbums:
-		return len(m.homeAlbums(f.homeKind))
+		return len(m.albumsOf(f))
 	case lib == nil:
 		return 0
 	case f.kind == artistList:
-		return len(lib.Artists)
+		return len(m.artistsOf(f))
 	case f.kind == artistPage:
 		return m.artistRows(f.artist).len()
 	case f.kind == albumList:
-		return len(lib.Albums)
+		return len(m.albumsOf(f))
 	case f.kind == albumTracks:
-		return len(lib.AlbumTracks(f.album))
+		return len(m.tracksOf(f))
 	case f.kind == playlistList:
 		return len(lib.Playlists)
 	case f.kind == playlistTracks:
@@ -842,16 +843,16 @@ func (m *Model) rowID(f *frame, i int) string {
 	case homeList:
 		return homeLists[i].kind
 	case homeAlbums:
-		return string(m.homeAlbums(f.homeKind)[i].ID)
+		return string(m.albumsOf(f)[i].ID)
 	case artistList:
-		return string(lib.Artists[i].ID)
+		return string(m.artistsOf(f)[i].ID)
 	case artistPage:
 		a, _ := m.artistRows(f.artist).album(i)
 		return string(a.ID)
 	case albumList:
-		return string(lib.Albums[i].ID)
+		return string(m.albumsOf(f)[i].ID)
 	case albumTracks:
-		return string(lib.AlbumTracks(f.album)[i].ID)
+		return string(m.tracksOf(f)[i].ID)
 	case playlistList:
 		return string(lib.Playlists[i].ID)
 	case playlistTracks:

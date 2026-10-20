@@ -244,11 +244,11 @@ func (m *Model) rowAlbum() (library.Album, bool) {
 	}
 	switch f.kind {
 	case albumList:
-		if f.cur < len(lib.Albums) {
-			return lib.Albums[f.cur], true
+		if as := m.albumsOf(f); f.cur < len(as) {
+			return as[f.cur], true
 		}
 	case homeAlbums:
-		if as := m.homeAlbums(f.homeKind); f.cur < len(as) {
+		if as := m.albumsOf(f); f.cur < len(as) {
 			return as[f.cur], true
 		}
 	case artistPage:

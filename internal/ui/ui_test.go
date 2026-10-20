@@ -247,3 +247,4 @@ type brokenKeyring struct{}
 
 func (brokenKeyring) Get(string, string) (string, error) { return "", os.ErrNotExist }
 func (brokenKeyring) Set(string, string, string) error   { return os.ErrPermission }
+func (brokenKeyring) Delete(string, string) error        { return os.ErrPermission }

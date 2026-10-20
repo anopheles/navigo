@@ -13,7 +13,7 @@ import (
 
 // cacheVersion changes whenever the snapshot's stored shape does; a file
 // with another version is thrown away and a full sync runs.
-const cacheVersion = 1
+const cacheVersion = 2
 
 // ErrNoCache means there is no usable cache file: none yet, another
 // version, or a damaged one. The caller syncs from scratch.

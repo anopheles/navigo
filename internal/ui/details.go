@@ -56,18 +56,18 @@ func (m *Model) rowItem(f *frame, i int) (item, bool) {
 	track := func(t library.Track) (item, bool) { return item{library.TrackGroup, string(t.ID), t.Title}, true }
 	switch f.kind {
 	case artistList:
-		a := lib.Artists[i]
+		a := m.artistsOf(f)[i]
 		return item{library.ArtistGroup, string(a.ID), a.Name}, true
 	case artistPage:
 		if a, ok := m.artistRows(f.artist).album(i); ok {
 			return album(a)
 		}
 	case albumList:
-		return album(lib.Albums[i])
+		return album(m.albumsOf(f)[i])
 	case homeAlbums:
-		return album(m.homeAlbums(f.homeKind)[i])
+		return album(m.albumsOf(f)[i])
 	case albumTracks:
-		return track(lib.AlbumTracks(f.album)[i])
+		return track(m.tracksOf(f)[i])
 	case playlistTracks:
 		return track(lib.PlaylistTracks(f.playlist)[i])
 	case searchList:

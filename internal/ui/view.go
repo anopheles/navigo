@@ -98,7 +98,11 @@ func (m *Model) title(s string, w int, focused bool) string {
 func (m *Model) libTitle() string {
 	var parts []string
 	for _, f := range m.lib[1:] {
-		parts = append(parts, f.title)
+		t := f.title
+		if d := f.view.describe(); d != "" {
+			t += " (" + d + ")"
+		}
+		parts = append(parts, t)
 	}
 	if len(parts) == 0 {
 		return " " + m.lib[0].title
@@ -166,7 +170,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case sectionList:
 		return fit(" "+sections[i].title, w)
 	case artistList:
-		return m.artistLine(lib.Artists[i], w)
+		return m.artistLine(m.artistsOf(f)[i], w)
 	case artistPage:
 		rows := m.artistRows(f.artist)
 		if a, ok := rows.album(i); ok {
@@ -174,11 +178,11 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 		}
 		return dimStyle.Render(fit(" ── Appears on ──", w))
 	case albumList:
-		return m.albumLine(lib.Albums[i], w)
+		return m.albumLine(m.albumsOf(f)[i], w)
 	case homeList:
 		return fit(" "+homeLists[i].title, w)
 	case homeAlbums:
-		return m.albumLine(m.homeAlbums(f.homeKind)[i], w)
+		return m.albumLine(m.albumsOf(f)[i], w)
 	case playlistList:
 		p := lib.Playlists[i]
 		n := count(len(p.Tracks))
@@ -191,7 +195,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case helpList:
 		return m.helpRowText(f.help, i, w)
 	}
-	ts := lib.AlbumTracks(f.album)
+	ts := m.tracksOf(f)
 	return m.trackLine("  ", trackNumber(ts, i), ts[i], w)
 }
 

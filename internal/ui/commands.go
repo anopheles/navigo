@@ -109,6 +109,10 @@ func commands() *command.Registry[*Model] {
 		}},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
+		{Name: "sort", Args: anyArgs, Label: "sort", Desc: "Sort this list by a field, such as sort year desc; alone, put the order back.", Run: (*Model).sortList, Complete: (*Model).sortWords},
+		{Name: "filter", Args: anyArgs, Label: "filter", Desc: "Show only rows of a genre or years: filter genre rock, filter year 1990-1999; alone, show all.", Run: (*Model).filterList, Complete: (*Model).filterWords},
+		{Name: "hints", Args: onOff, Label: "hint line", Desc: "Turn the hint line on or off for this session: hints off.", Run: (*Model).setHints},
+		{Name: "logout", Label: "log out", Desc: "Forget the saved password and go back to the login form.", Run: (*Model).logout},
 		{Name: "nop", Label: "nothing", Desc: "Do nothing: bind it to make a dead key.", Run: func(*Model, command.Call) error { return nil }},
 		{Name: "nmap", Args: anyArgs, Label: "map", Desc: "Bind keys in Normal mode for this session: nmap [--in queue] <leader>x seek +60.", Run: sessionMapIn("normal")},
 		{Name: "vmap", Args: anyArgs, Label: "map", Desc: "Bind keys in Visual mode for this session: vmap [--in scope] keys command.", Run: sessionMapIn("visual")},
@@ -202,7 +206,7 @@ func (m *Model) open(command.Call) error {
 		}
 	case artistList:
 		if lib := m.state.Library; lib != nil && f.cur < len(lib.Artists) {
-			m.openArtist(lib.Artists[f.cur])
+			m.openArtist(m.artistsOf(f)[f.cur])
 		}
 	case homeList:
 		m.openHomeList(f.cur)
@@ -259,7 +263,7 @@ func (m *Model) trackRow() ([]library.Track, int, error) {
 	switch {
 	case lib == nil:
 	case f.kind == albumTracks:
-		ts = lib.AlbumTracks(f.album)
+		ts = m.tracksOf(f)
 	default:
 		ts = lib.PlaylistTracks(f.playlist)
 	}

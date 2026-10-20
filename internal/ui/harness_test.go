@@ -83,6 +83,14 @@ func (k memKeyring) Get(service, key string) (string, error) {
 	return "", keyring.ErrNotFound
 }
 
+func (k memKeyring) Delete(service, key string) error {
+	if _, ok := k[service+"/"+key]; !ok {
+		return keyring.ErrNotFound
+	}
+	delete(k, service+"/"+key)
+	return nil
+}
+
 func (k memKeyring) Set(service, key, secret string) error {
 	k[service+"/"+key] = secret
 	return nil

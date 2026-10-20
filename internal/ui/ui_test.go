@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -294,6 +295,33 @@ func TestProgressBarMovesInHalfCells(t *testing.T) {
 	} {
 		if got := halvesDone(c.pos, c.dur, c.w); got != c.want {
 			t.Errorf("halvesDone(%v, %v, %d) = %d, want %d", c.pos, c.dur, c.w, got, c.want)
+		}
+	}
+}
+
+func TestQueueTitleShowsTheTotalTime(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.contains("Queue (0) ")
+	h.keys("3j<CR><CR>")
+	var total time.Duration
+	for _, e := range h.m.state.Queue {
+		total += e.Track.Duration
+	}
+	if total == 0 {
+		t.Fatal("the fixture's tracks have no length")
+	}
+	h.contains(fmt.Sprintf("Queue (%d) · %s", len(h.m.state.Queue), span(total)))
+}
+
+func TestSpan(t *testing.T) {
+	for d, want := range map[time.Duration]string{
+		0:                               "0:00",
+		59 * time.Second:                "0:59",
+		48*time.Minute + 10*time.Second: "48:10",
+		2*time.Hour + 3*time.Minute + 41*time.Second: "2:03:41",
+	} {
+		if got := span(d); got != want {
+			t.Errorf("span(%v) = %q, want %q", d, got, want)
 		}
 	}
 }

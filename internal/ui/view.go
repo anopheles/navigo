@@ -165,7 +165,18 @@ func (m *Model) libTitle() string {
 	return " " + strings.Join(parts, " › ")
 }
 
-func (m *Model) queueTitle() string { return fmt.Sprintf(" Queue (%d)", len(m.state.Queue)) }
+// queueTitle is " Queue (12) · 48:10": the count, then the total length.
+func (m *Model) queueTitle() string {
+	t := fmt.Sprintf(" Queue (%d)", len(m.state.Queue))
+	if len(m.state.Queue) == 0 {
+		return t
+	}
+	var total time.Duration
+	for _, e := range m.state.Queue {
+		total += e.Track.Duration
+	}
+	return t + " · " + span(total)
+}
 
 // keyHint is "<key> label" for a command, or "" if nothing is bound to it.
 func (m *Model) keyHint(name, label string) string {
@@ -763,6 +774,15 @@ func pad(lines []string, w, h int) []string {
 		lines = append(lines, strings.Repeat(" ", w))
 	}
 	return lines[:h]
+}
+
+// span is a length that may pass an hour: 48:10, or 2:03:41.
+func span(d time.Duration) string {
+	s := int(d.Round(time.Second).Seconds())
+	if s < 3600 {
+		return clock(d)
+	}
+	return fmt.Sprintf("%d:%02d:%02d", s/3600, s/60%60, s%60)
 }
 
 func clock(d time.Duration) string {

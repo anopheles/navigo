@@ -213,7 +213,7 @@ keys:
 [What screens, layout and navigation model does navigo have?](https://github.com/anopheles/navigo/issues/8), [#13](https://github.com/anopheles/navigo/issues/13), [#21](https://github.com/anopheles/navigo/issues/21).
 
 **Layout** (top to bottom):
-- **Two windows** side by side. The **library window** (3/5 of the width) shows one list at a time, drilled into with `l`/`<CR>` and out with `h`. The **queue window** (2/5) always shows the queue.
+- **Two windows** side by side. The **library window** (3/5 of the width) shows one list at a time, drilled into with `l`/`<CR>` and out with `h`. The **queue window** (2/5) always shows the queue; its title gives the count and total length, `Queue (12) · 48:10` ([#61](https://github.com/anopheles/navigo/issues/61)).
 - **The hint line.**
 - **The now-playing bar** (2 lines, never focused). Line 1 has ▶/⏸, title, artist, album and the position in the queue, plus indicators. Line 2 has the progress bar, elapsed/total time and the shuffle/repeat flags.
 - **The status line**, which shows messages, the `:` line and pending keys.

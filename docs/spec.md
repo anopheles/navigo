@@ -252,7 +252,7 @@ keys:
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
 | Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `R` repeat off → all → one · `X` stop |
-| Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `yy` `y{motion}` yank |
+| Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `*` star/unstar · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |
@@ -448,6 +448,7 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 Small gaps no ticket settled, filled in here so the spec is complete; revisit them freely.
 
 - **Where history lives.** The `:` and search histories are saved in a `navigo/` directory: `$XDG_STATE_HOME` (or `~/.local/state`) on Linux, and the user cache directory on macOS and Windows. Go has no per-OS state directory.
+- **The star key.** No ticket gave starring a key; `*` stars the row or the selection, or unstars them when all are starred (`:star`).
 - **Two settings called "hints".** Top-level `hints` turns the **hint line** on or off ([#13](https://github.com/anopheles/navigo/issues/13)). `keys.hints` and `keys.hint-delay` control **prefix menus** ([#7](https://github.com/anopheles/navigo/issues/7)). They stay as decided, but renaming the second to `keys.prefix-menus` would avoid the confusion.
 
 ## The walking skeleton and this spec
@@ -466,13 +467,14 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)�
 - **Visual mode and queue editing:** `V`/`v` with the selection highlighted and counts in the hint line, `:` on the selection, spanning Search groups with artist rows skipped; the `d`/`y` operators with motions, counts and doubling; the one register shared by every view; `p`/`P`, `x`, `J`/`K`, each an undoable step that keeps the player's neighbours right; `"x` rejected ([#35](https://github.com/anopheles/navigo/issues/35)).
 - **The `:` line:** fuzzy matching of names and descriptions with each match's key, what applies here first; `<Tab>`/`<S-Tab>` completion of names and arguments (`:search` from its history); `tip: next time press …`; and the history, saved in the state directory ([#41](https://github.com/anopheles/navigo/issues/41)).
 - **Playlists:** the Playlists list and playlist tracks with `'p`; removals (`dd`, `x`, `d{motion}`, Visual `d`) after a y/n Confirmation, into the register; `p`/`P` and `J`/`K` on the server; `dd` on the list; `:playlist-add`, `:playlist-new`; no undo; edits refused offline ([#37](https://github.com/anopheles/navigo/issues/37)).
+- **Playback extras:** `=`/`+`/`-` volume (kept for mpv started later), `S` shuffle keeping the current track first, `R` repeat off/all/one driving what plays next and shown in the now-playing bar, the `i`/`:info` popup, and `*` stars, refused offline ([#39](https://github.com/anopheles/navigo/issues/39)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A and the first layer B scenario.
 
 Still to build for v1:
 
 - **Sections:** Home (and starting on it), and Help. The skeleton starts on Albums.
-- **Keys:** marks other than `'a`/`'b`/`'p`/`'q`/`'s`, `/` with `n`/`N`, the jump list, the remaining motions, `gp`, volume, shuffle, repeat, info and stars.
+- **Keys:** marks other than `'a`/`'b`/`'p`/`'q`/`'s`, `/` with `n`/`N`, the jump list, the remaining motions, and `gp`.
 - **Discoverability:** the key menu, prefix menus, and the `/`-to-search offer (with `/` find).
 - **Rebinding:** the `keys:` block, its validation popup, `:map` and friends, `:reload-config` and `navigo check-config`.
 - **Crash cap:** the 3-crash cap for mpv (with the mpv slice).

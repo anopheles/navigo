@@ -293,3 +293,24 @@ func TestPlaylistWrites(t *testing.T) {
 		t.Errorf("requests =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
+
+func TestStar(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	if err := c.Star(ctx, true, []string{"ar"}, []string{"al"}, []string{"s1", "s2"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Star(ctx, false, nil, nil, []string{"s1"}); err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, r := range srv.Requests() {
+		if r.Endpoint == "star" || r.Endpoint == "unstar" {
+			got = append(got, r.Endpoint+" "+r.Params.Encode())
+		}
+	}
+	want := []string{"star albumId=al&artistId=ar&id=s1&id=s2", "unstar id=s1"}
+	if !slices.Equal(got, want) {
+		t.Errorf("requests = %q, want %q", got, want)
+	}
+}

@@ -67,6 +67,7 @@ type State struct {
 	// Current is the queue row that is playing, or last played; -1 if none.
 	Current int
 	Player  PlayerState
+	Repeat  Repeat
 
 	playing      player.EntryID // the entry the player says is playing
 	playingTrack library.Track  // its track, even if the queue changed since
@@ -91,8 +92,9 @@ type snapshot struct {
 	current int
 }
 
-// New returns the state navigo starts with: nothing loaded, empty queue.
-func New() State { return State{Current: -1} }
+// New returns the state navigo starts with: nothing loaded, empty queue,
+// and mpv's volume (100 with --no-config) until the player says.
+func New() State { return State{Current: -1, Player: PlayerState{Volume: 100}} }
 
 // NowPlaying returns the track the player is playing and its queue row, or
 // -1 when the queue changed and no longer holds it (it plays on from mpv's
@@ -305,15 +307,23 @@ func Apply(s State, e Event) (State, []Effect) {
 		}
 		return s, []Effect{Notice{Text: "the queue is empty"}}
 	case NextTrack:
-		if s.Current+1 >= len(s.Queue) {
+		next := s.Current + 1
+		if next >= len(s.Queue) && s.Repeat == RepeatAll && len(s.Queue) > 0 {
+			next = 0
+		}
+		if next >= len(s.Queue) {
 			return s, []Effect{Notice{Text: "end of the queue"}}
 		}
-		s.Current++
+		s.Current = next
 		s.skips = 0
 		return s.play(s.Current)
 	case PrevTrack:
-		if s.Player.Playing && (s.Player.Position > 3*time.Second || s.Current <= 0) {
+		first := s.Current <= 0 && s.Repeat != RepeatAll // nothing before it
+		if s.Player.Playing && (s.Player.Position > 3*time.Second || first) {
 			return s, []Effect{SeekTo{}}
+		}
+		if s.Current <= 0 && s.Repeat == RepeatAll && len(s.Queue) > 0 {
+			s.Current = len(s.Queue) // round to the last row
 		}
 		if s.Current <= 0 {
 			return s, nil
@@ -353,6 +363,10 @@ func Apply(s State, e Event) (State, []Effect) {
 		s = s.restore(next)
 		return s, append(s.neighbours(), Notice{Text: "redone · " + count(len(s.Queue)) + " in the queue", Command: "undo", Hint: "undoes"})
 
+	case ChangeVolume, Shuffle, CycleRepeat:
+		return s.applyPlayback(e)
+	case SetStars, StarsWritten:
+		return s.applyStars(e)
 	case Yank, Remove, Paste, Move:
 		return s.applyEdit(e)
 	case PlaylistRemove, PlaylistInsert, PlaylistMove, PlaylistCreate, PlaylistDelete, PlaylistWritten:
@@ -410,8 +424,13 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 			return s.streamFailed(title, e.Err)
 		}
 		// mpv moves on to the next entry by itself; without one, playback
-		// is over.
-		if i := s.index(e.Entry); i < 0 || i == len(s.Queue)-1 {
+		// is over, unless the entry repeats.
+		i := s.index(e.Entry)
+		if i >= 0 && s.replays() {
+			s.Current = i
+			return s.play(i)
+		}
+		if i < 0 || s.nextRow(i) < 0 {
 			s.playing = 0
 			s.Player = PlayerState{Volume: s.Player.Volume}
 		}
@@ -513,8 +532,8 @@ func (s State) span(i int) player.Span {
 	if i > 0 {
 		sp.Prev = s.Queue[i-1].entry()
 	}
-	if i+1 < len(s.Queue) {
-		sp.Next = s.Queue[i+1].entry()
+	if n := s.nextRow(i); n >= 0 {
+		sp.Next = s.Queue[n].entry()
 	}
 	return sp
 }

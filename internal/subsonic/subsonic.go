@@ -317,6 +317,26 @@ func (c *Client) DeletePlaylist(ctx context.Context, id string) error {
 	return c.call(ctx, "deletePlaylist", url.Values{"id": {id}}, nil)
 }
 
+// Star stars artists, albums and songs by ID; with on false it unstars
+// them.
+func (c *Client) Star(ctx context.Context, on bool, artistIDs, albumIDs, songIDs []string) error {
+	q := url.Values{}
+	for _, id := range artistIDs {
+		q.Add("artistId", id)
+	}
+	for _, id := range albumIDs {
+		q.Add("albumId", id)
+	}
+	for _, id := range songIDs {
+		q.Add("id", id)
+	}
+	endpoint := "star"
+	if !on {
+		endpoint = "unstar"
+	}
+	return c.call(ctx, endpoint, q, nil)
+}
+
 // Starred is what the user has starred.
 type Starred struct {
 	Artists []Artist `json:"artist"`

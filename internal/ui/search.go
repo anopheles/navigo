@@ -280,16 +280,14 @@ func (m *Model) searchRowText(v *searchView, i, w int) string {
 		return dimStyle.Render(fit(fmt.Sprintf("   … %d more", r.more), w))
 	}
 	if a, ok := v.artist(i); ok {
-		lib := m.state.Library
-		count := artistCount(a.AlbumCount, lib.AppearsOn(a.ID))
-		return " " + fit(a.Name, w-2-len(count)-2) + "  " + count + " "
+		return m.artistLine(a, w)
 	}
 	if a, ok := v.album(i); ok {
-		return albumRow(a, w)
+		return m.albumLine(a, w)
 	}
 	t, _ := v.track(i)
 	t.Artist += " · " + t.Album // what it matched on
-	return trackRow(" ", "", t, w)
+	return m.trackLine(" ", "", t, w)
 }
 
 // emptySearch says why there are no results.

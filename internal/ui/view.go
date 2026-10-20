@@ -11,6 +11,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/keymap"
 	"github.com/anopheles/navigo/internal/library"
 )
@@ -153,39 +154,50 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case sectionList:
 		return fit(" "+sections[i].title, w)
 	case artistList:
-		a := lib.Artists[i]
-		count := artistCount(a.AlbumCount, lib.AppearsOn(a.ID))
-		return " " + fit(a.Name, w-2-len(count)-2) + "  " + count + " "
+		return m.artistLine(lib.Artists[i], w)
 	case artistPage:
 		rows := m.artistRows(f.artist)
 		if a, ok := rows.album(i); ok {
-			return albumRow(a, w)
+			return m.albumLine(a, w)
 		}
 		return dimStyle.Render(fit(" ── Appears on ──", w))
 	case albumList:
-		return albumRow(lib.Albums[i], w)
+		return m.albumLine(lib.Albums[i], w)
 	case playlistList:
 		p := lib.Playlists[i]
 		n := count(len(p.Tracks))
 		return " " + fit(p.Name, w-2-len(n)-2) + "  " + n + " "
 	case playlistTracks:
 		ts := lib.PlaylistTracks(f.playlist)
-		return trackRow("  ", fmt.Sprint(i+1), ts[i], w)
+		return m.trackLine("  ", fmt.Sprint(i+1), ts[i], w)
 	case searchList:
 		return m.searchRowText(f.search, i, w)
 	}
 	ts := lib.AlbumTracks(f.album)
-	return trackRow("  ", trackNumber(ts, i), ts[i], w)
+	return m.trackLine("  ", trackNumber(ts, i), ts[i], w)
 }
 
-func albumRow(a library.Album, w int) string {
+// starred marks a starred name with ★.
+func (m *Model) starred(id, name string) string {
+	if m.state.Library != nil && m.state.Library.IsStarred(id) {
+		return "★ " + name
+	}
+	return name
+}
+
+func (m *Model) artistLine(a library.Artist, w int) string {
+	n := artistCount(a.AlbumCount, m.state.Library.AppearsOn(a.ID))
+	return " " + fit(m.starred(string(a.ID), a.Name), w-2-len(n)-2) + "  " + n + " "
+}
+
+func (m *Model) albumLine(a library.Album, w int) string {
 	year := ""
 	if a.Year > 0 {
 		year = fmt.Sprint(a.Year)
 	}
 	rest := w - 1 - 6
 	nw := rest * 3 / 5
-	return " " + fit(a.Name, nw) + fit("  "+a.Artist, rest-nw) + fmt.Sprintf("%6s", year)
+	return " " + fit(m.starred(string(a.ID), a.Name), nw) + fit("  "+a.Artist, rest-nw) + fmt.Sprintf("%6s", year)
 }
 
 // trackNumber is "3" or, on albums with several discs, "2-03".
@@ -199,14 +211,15 @@ func trackNumber(ts []library.Track, i int) string {
 	return fmt.Sprint(ts[i].Number)
 }
 
-func trackRow(mark, num string, t library.Track, w int) string {
+func (m *Model) trackLine(mark, num string, t library.Track, w int) string {
+	title := m.starred(string(t.ID), t.Title)
 	if w < 40 {
-		return fit(mark+t.Title, w)
+		return fit(mark+title, w)
 	}
 	numW := max(len(num)+1, 3)
 	rest := w - lipgloss.Width(mark) - numW - 6
 	tw := rest * 5 / 9
-	return mark + fmt.Sprintf("%*s ", numW-1, num) + fit(t.Title, tw) + fit("  "+t.Artist, rest-tw) + fmt.Sprintf("%6s", clock(t.Duration))
+	return mark + fmt.Sprintf("%*s ", numW-1, num) + fit(title, tw) + fit("  "+t.Artist, rest-tw) + fmt.Sprintf("%6s", clock(t.Duration))
 }
 
 func (m *Model) queueRows(w, h int, focused bool) []string {
@@ -226,7 +239,7 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 				mark = "⏸ "
 			}
 		}
-		out = append(out, m.styleRow(trackRow(mark, fmt.Sprint(i+1), q[i].Track, w), i == m.queueCur, focused, current, m.inSelection(queueWindow, i)))
+		out = append(out, m.styleRow(m.trackLine(mark, fmt.Sprint(i+1), q[i].Track, w), i == m.queueCur, focused, current, m.inSelection(queueWindow, i)))
 	}
 	return pad(out, w, h)
 }
@@ -404,12 +417,13 @@ func (m *Model) nowPlaying() []string {
 		r += " "
 	}
 	l1 := fit(left, m.w-lipgloss.Width(r)) + r
+	flags := m.flags()
 	if !playing {
-		return []string{barStyle.Render(l1), barStyle.Render(fit("", m.w))}
+		return []string{barStyle.Render(l1), barStyle.Render(fit("", m.w-lipgloss.Width(flags)) + flags)}
 	}
 
 	dur := s.Player.Duration
-	times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur))
+	times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur)) + flags
 	pw := max(m.w-lipgloss.Width(times)-2, 0)
 	fill := 0
 	if dur > 0 {
@@ -417,6 +431,22 @@ func (m *Model) nowPlaying() []string {
 	}
 	l2 := " " + accentStyle.Render(strings.Repeat("━", fill)) + dimStyle.Render(strings.Repeat("─", pw-fill)) + times + " "
 	return []string{barStyle.Render(l1), barStyle.Render(fit(l2, m.w))}
+}
+
+// flags are the now-playing bar's modes: repeat, and the volume when it
+// isn't full.
+func (m *Model) flags() string {
+	var out []string
+	if r := m.state.Repeat; r != app.RepeatOff {
+		out = append(out, "repeat "+r.String())
+	}
+	if v := m.state.Player.Volume; v != 100 {
+		out = append(out, fmt.Sprintf("vol %d%%", v))
+	}
+	if len(out) == 0 {
+		return ""
+	}
+	return " " + strings.Join(out, " · ") + " "
 }
 
 // status is the bottom line: the ":" line, or a message, and pending keys.

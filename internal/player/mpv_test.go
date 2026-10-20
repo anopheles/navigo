@@ -217,6 +217,19 @@ func TestMPVRestartsAfterDying(t *testing.T) {
 	h.await("entry 2 to start in a new mpv", started(2))
 }
 
+// A volume chosen before mpv runs applies once it starts.
+func TestMPVVolumeBeforeStart(t *testing.T) {
+	h := newMPV(t)
+	ctx := context.Background()
+	if err := h.m.SetVolume(ctx, 35); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.m.Play(ctx, Span{Current: entry(1, "30s")}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("volume 35", func(e Event) bool { v, ok := e.(Volume); return ok && v.Percent == 35 })
+}
+
 func TestMPVBadArgs(t *testing.T) {
 	if _, err := exec.LookPath("mpv"); err != nil {
 		t.Skip("mpv not on PATH")

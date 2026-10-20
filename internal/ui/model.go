@@ -155,6 +155,7 @@ type Model struct {
 	stallSeq int       // the buffering-stall timer; older ones are ignored
 
 	player sequencer
+	seedFn func() uint64 // shuffle seeds; random unless a test sets it
 	// send delivers messages from long-running work, such as sync
 	// progress; Program.Send in navigo, a queue in tests.
 	send func(tea.Msg)
@@ -472,6 +473,14 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 			}
 			return eventMsg{app.PlaylistWritten{Write: e, NewID: library.PlaylistID(newID), Err: err, Unreachable: subsonic.IsUnreachable(err)}}
 		}
+	case app.WriteStar:
+		return func() tea.Msg {
+			if c == nil {
+				return eventMsg{app.StarsWritten{Write: e, Err: errors.New("not logged in")}}
+			}
+			err := c.Star(ctx, e.On, e.Artists, e.Albums, e.Tracks)
+			return eventMsg{app.StarsWritten{Write: e, Err: err, Unreachable: subsonic.IsUnreachable(err)}}
+		}
 	case app.OpenLogin:
 		s := m.deps.Config.Server
 		m.openLogin(s.URL, s.User, "the server rejected the saved username or password")
@@ -494,6 +503,8 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		call = func() error { return p.SeekTo(ctx, e.Pos) }
 	case app.Stop:
 		call = func() error { return p.Stop(ctx) }
+	case app.SetVolume:
+		call = func() error { return p.SetVolume(ctx, e.Percent) }
 	default:
 		return nil
 	}

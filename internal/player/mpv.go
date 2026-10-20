@@ -72,6 +72,9 @@ type MPV struct {
 	duration  time.Duration
 	lastSec   int64
 	volume    int
+	// wantVolume is the volume last asked for, set on every mpv started,
+	// or -1 to leave mpv's own.
+	wantVolume int
 }
 
 var _ Player = (*MPV)(nil)
@@ -85,6 +88,8 @@ func NewMPV(opts MPVOptions) *MPV {
 		entries: map[int64]Entry{},
 		live:    map[int64]bool{},
 		volume:  -1,
+
+		wantVolume: -1,
 	}
 }
 
@@ -132,8 +137,14 @@ func (m *MPV) SetNeighbours(ctx context.Context, prev, next Entry) error {
 func (m *MPV) Pause(ctx context.Context) error  { return m.set(ctx, "pause", true) }
 func (m *MPV) Resume(ctx context.Context) error { return m.set(ctx, "pause", false) }
 
+// SetVolume sets the volume now if mpv runs, and on any mpv started
+// later, so a volume chosen before the first track still applies.
 func (m *MPV) SetVolume(ctx context.Context, percent int) error {
-	return m.set(ctx, "volume", min(max(percent, 0), 100))
+	v := min(max(percent, 0), 100)
+	m.mu.Lock()
+	m.wantVolume = v
+	m.mu.Unlock()
+	return m.set(ctx, "volume", v)
 }
 
 func (m *MPV) SeekTo(ctx context.Context, pos time.Duration) error {
@@ -212,6 +223,15 @@ func (m *MPV) ensure(ctx context.Context) (*mpv.Process, error) {
 	if !versionOK(version) {
 		_ = p.Close()
 		return nil, fmt.Errorf("%w, found %s", ErrMPVTooOld, version)
+	}
+	m.mu.Lock()
+	want := m.wantVolume
+	m.mu.Unlock()
+	if want >= 0 {
+		if err := p.Set(ctx, "volume", want); err != nil {
+			_ = p.Close()
+			return nil, err
+		}
 	}
 	for id, name := range observed {
 		if err := p.Observe(ctx, id, name); err != nil {

@@ -292,7 +292,10 @@ func explain(err *dbus.Error, iface, name string) *dbus.Error {
 	if name != "" {
 		what += "." + name
 	}
-	return dbus.NewError(err.Name, []any{what + ": " + strings.TrimPrefix(err.Name, propsIface+".Error.")})
+	return dbus.NewError(
+		err.Name,
+		[]any{what + ": " + strings.TrimPrefix(err.Name, propsIface+".Error.")},
+	)
 }
 
 // root is org.mpris.MediaPlayer2: navigo can't be raised or quit from

@@ -13,7 +13,9 @@ import (
 	"github.com/anopheles/navigo/internal/keymap"
 )
 
-var findStyle = lipgloss.NewStyle().Background(lipgloss.Color("136")).Foreground(lipgloss.Color("0"))
+// findStyle marks find matches: yellow, and underlined for when colours
+// are off.
+var findStyle = lipgloss.NewStyle().Background(ansi.Yellow).Foreground(ansi.Black).Underline(true)
 
 // finder is / and its last pattern. Highlight is cleared by :noh and
 // <Esc>; n and N still use the pattern.

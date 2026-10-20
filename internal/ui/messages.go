@@ -152,9 +152,9 @@ func (m *Model) closePopup() { m.popup = nil }
 // the hint line: it starts on row 2 and adds a title and two borders.
 func (m *Model) popupRows() int {
 	if m.popup != nil && m.popup.keyMenu != nil {
-		return min(max(m.h-9, 3), keyMenuRows)
+		return min(max(m.h-10, 3), keyMenuRows)
 	}
-	return max(m.h-9, 3)
+	return max(m.h-10, 3)
 }
 
 func (m *Model) scrollPopup(d int) {

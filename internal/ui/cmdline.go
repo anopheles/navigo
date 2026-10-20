@@ -178,7 +178,7 @@ func (m *Model) matchList() []string {
 		if m.compl != nil && m.compl.head == "" && m.compl.items[m.compl.idx] == c.Name {
 			row = cursorStyle.Render(fit(" "+fit(c.Name, nameW)+"  "+c.Desc, m.w-lipgloss.Width(key)-1) + key + " ")
 		}
-		out = append(out, barStyle.Render(row))
+		out = append(out, (row))
 	}
 	return out
 }

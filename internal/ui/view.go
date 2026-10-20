@@ -19,19 +19,23 @@ import (
 // narrow is the width below which only one window is shown.
 const narrow = 100
 
+// Styles use only the terminal's 16 colours and text attributes, so
+// navigo follows the terminal's theme. Each colour means one thing:
+// magenta playing, cyan a key, red an error. With colours off (NO_COLOR)
+// the attributes and marks (▶, ★, ──) still tell everything apart.
 var (
-	cursorStyle  = lipgloss.NewStyle().Reverse(true)
-	cursorDim    = lipgloss.NewStyle().Background(lipgloss.Color("238"))
-	visualStyle  = lipgloss.NewStyle().Background(lipgloss.Color("24"))
-	dimStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
-	keyStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	accentStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-	errStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
-	barStyle     = lipgloss.NewStyle().Background(lipgloss.Color("236"))
+	cursorStyle  = lipgloss.NewStyle().Reverse(true)   // the cursor in the focused window
+	cursorDim    = lipgloss.NewStyle().Underline(true) // the cursor in the other one
+	visualStyle  = lipgloss.NewStyle().Background(ansi.Blue).Underline(true)
+	dimStyle     = lipgloss.NewStyle().Faint(true)
+	keyStyle     = lipgloss.NewStyle().Foreground(ansi.Cyan).Bold(true)
+	accentStyle  = lipgloss.NewStyle().Foreground(ansi.Magenta).Bold(true) // playing
+	errStyle     = lipgloss.NewStyle().Foreground(ansi.Red).Bold(true)
 	titleOn      = lipgloss.NewStyle().Reverse(true).Bold(true)
-	boxStyle     = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("81")).Padding(1, 2)
-	popupStyle   = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("244")).Padding(0, 1)
-	focusedInput = lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
+	titleOff     = lipgloss.NewStyle().Bold(true)
+	boxStyle     = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(ansi.BrightBlack).Padding(1, 2)
+	popupStyle   = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(ansi.BrightBlack).Padding(0, 1)
+	focusedInput = lipgloss.NewStyle().Foreground(ansi.Cyan)
 )
 
 func (m *Model) View() tea.View {
@@ -69,8 +73,9 @@ func (m *Model) render() string {
 		}
 	}
 	if m.hints {
-		lines = append(lines, barStyle.Render(fit(m.hintLine(), m.w)))
+		lines = append(lines, fit(m.hintLine(), m.w))
 	}
+	lines = append(lines, dimStyle.Render(strings.Repeat("─", max(m.w, 0)))) // the rule above the bar
 	lines = append(lines, m.nowPlaying()...)
 	lines = append(lines, m.status())
 	if pm := m.prefixMenu(); len(pm) > 0 {
@@ -92,7 +97,7 @@ func (m *Model) title(s string, w int, focused bool) string {
 	if focused {
 		return titleOn.Render(fit(s, w))
 	}
-	return barStyle.Render(fit(s, w))
+	return titleOff.Render(fit(s, w))
 }
 
 func (m *Model) libTitle() string {
@@ -466,7 +471,7 @@ func (m *Model) nowPlaying() []string {
 	l1 := fit(left, m.w-lipgloss.Width(r)) + r
 	flags := m.flags()
 	if !playing {
-		return []string{barStyle.Render(l1), barStyle.Render(fit("", m.w-lipgloss.Width(flags)) + flags)}
+		return []string{(l1), (fit("", m.w-lipgloss.Width(flags)) + flags)}
 	}
 
 	dur := s.Player.Duration
@@ -477,7 +482,7 @@ func (m *Model) nowPlaying() []string {
 		fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
 	}
 	l2 := " " + accentStyle.Render(strings.Repeat("━", fill)) + dimStyle.Render(strings.Repeat("─", pw-fill)) + times + " "
-	return []string{barStyle.Render(l1), barStyle.Render(fit(l2, m.w))}
+	return []string{(l1), (fit(l2, m.w))}
 }
 
 // flags are the now-playing bar's modes: repeat, and the volume when it

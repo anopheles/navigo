@@ -14,6 +14,7 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/colorprofile"
 
 	"github.com/anopheles/navigo/internal/config"
 	"github.com/anopheles/navigo/internal/creds"
@@ -91,7 +92,13 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}
-	p := tea.NewProgram(m)
+	var opts []tea.ProgramOption
+	if os.Getenv("NO_COLOR") != "" {
+		// Any value turns colours off (no-color.org); colorprofile alone
+		// would only take a true one. Bold, reverse and the rest stay.
+		opts = append(opts, tea.WithColorProfile(colorprofile.ASCII))
+	}
+	p := tea.NewProgram(m, opts...)
 	m.SetSend(p.Send)
 	go func() {
 		for e := range mpv.Events() {

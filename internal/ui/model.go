@@ -905,7 +905,7 @@ func (m *Model) clamp() {
 
 // bodyHeight is the number of list rows each window shows.
 func (m *Model) bodyHeight() int {
-	h := m.h - 4 // title row, now-playing bar (2), status line
+	h := m.h - 5 // title row, the rule, now-playing bar (2), status line
 	if m.hints {
 		h--
 	}

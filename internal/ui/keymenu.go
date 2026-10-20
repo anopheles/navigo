@@ -103,14 +103,14 @@ func (m *Model) prefixMenu() []string {
 		return nil
 	}
 	entries = entries[:min(len(entries), max(m.h-6, 1))]
-	out := []string{barStyle.Render(fit(dimStyle.Render(" after "+m.engine.Pending()+":"), m.w))}
+	out := []string{(fit(dimStyle.Render(" after "+m.engine.Pending()+":"), m.w))}
 	for _, e := range entries {
 		label := e.args
 		if c, ok := m.registry.Get(e.name); ok {
 			label = strings.TrimSpace(c.Label + " " + e.args)
 		}
 		row := "   " + keyStyle.Render(fit(keyLabel(e.keys), 6)) + " " + label
-		out = append(out, barStyle.Render(fit(row, m.w)))
+		out = append(out, (fit(row, m.w)))
 	}
 	return out
 }

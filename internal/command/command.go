@@ -46,7 +46,9 @@ type Command[T any] struct {
 	Motion bool
 	// Operator marks commands that act on the rows a motion covers.
 	Operator bool
-	Run      func(target T, c Call) error
+	// Jump marks commands whose move goes on the jump list, such as gg.
+	Jump bool
+	Run  func(target T, c Call) error
 	// Complete, if set, lists the argument texts <Tab> offers, such as
 	// playlist names.
 	Complete func(target T) []string

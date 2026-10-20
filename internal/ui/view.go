@@ -136,7 +136,11 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
-		out = append(out, m.styleRow(m.libraryRow(f, i, w), i == f.cur, focused, false, m.inSelection(libraryWindow, i)))
+		row := m.libraryRow(f, i, w)
+		if focused {
+			row = m.highlight(row)
+		}
+		out = append(out, m.styleRow(row, i == f.cur, focused, false, m.inSelection(libraryWindow, i)))
 	}
 	return pad(out, w, h)
 }
@@ -253,7 +257,11 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 				mark = "⏸ "
 			}
 		}
-		out = append(out, m.styleRow(m.trackLine(mark, fmt.Sprint(i+1), q[i].Track, w), i == m.queueCur, focused, current, m.inSelection(queueWindow, i)))
+		line := m.trackLine(mark, fmt.Sprint(i+1), q[i].Track, w)
+		if focused {
+			line = m.highlight(line)
+		}
+		out = append(out, m.styleRow(line, i == m.queueCur, focused, current, m.inSelection(queueWindow, i)))
 	}
 	return pad(out, w, h)
 }
@@ -326,6 +334,9 @@ func (m *Model) styleRow(line string, cursor, focused, current, selected bool) s
 func (m *Model) hintLine() string {
 	if m.mode == keymap.Cmdline {
 		return " " + hint("<CR>", "run") + "  " + hint("<Tab>", "complete") + "  " + hint("<Up>/<Down>", "history") + "  " + hint("<Esc>", "cancel")
+	}
+	if m.finding.prompting {
+		return " " + hint("<CR>", "find") + "  " + hint("<Esc>", "cancel") + dimStyle.Render("  a capital letter matches case")
 	}
 	if m.promptHelp {
 		return " " + hint("<CR>", "keep the filter") + "  " + hint("<Esc>", "put it back")

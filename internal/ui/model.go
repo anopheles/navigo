@@ -149,6 +149,14 @@ type Model struct {
 	helpBefore string
 	// prefixShown: a pure prefix has waited long enough for its menu.
 	prefixShown bool
+	finding     finder
+	// offerSearch is a pattern / didn't find: <CR> next searches the
+	// library for it.
+	offerSearch string
+	// jumps is the jump list; jumpAt is where <C-o> and <C-i> are in it,
+	// len(jumps) when not walking it.
+	jumps  []location
+	jumpAt int
 
 	shown   message // in the status line; zero when empty
 	history []message
@@ -602,6 +610,12 @@ func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
 			return cmd
 		}
 	}
+	if q := m.offerSearch; q != "" {
+		m.offerSearch = ""
+		if token == "<CR>" && m.engine.Pending() == "" {
+			return m.exec("search "+q, 0)
+		}
+	}
 	return m.result(m.engine.Feed(m.mode, m.scopes(), token))
 }
 
@@ -634,6 +648,11 @@ func (m *Model) exec(line string, count int) tea.Cmd {
 // execCall runs a command line with an operator's count and motion.
 func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 	m.pendingCmd = nil
+	if call, err := command.Parse(line); err == nil && m.popup == nil {
+		if c, ok := m.registry.Get(call.Name); ok && c.Jump {
+			m.recordJump()
+		}
+	}
 	err := m.registry.RunCall(m, line, with)
 	m.checkVisual()
 	if err != nil {
@@ -675,6 +694,8 @@ func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
 	var cmd tea.Cmd
 	var done bool
 	switch {
+	case m.finding.prompting:
+		cmd, done = m.findKey(key)
 	case m.promptHelp:
 		cmd, done = m.helpKey(key)
 	case m.mode == keymap.Search:
@@ -704,7 +725,7 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 // lineChanged filters Help or searches again when a prompt's text changed.
 func (m *Model) lineChanged(before string) {
 	switch {
-	case m.line.Value() == before:
+	case m.line.Value() == before, m.finding.prompting:
 	case m.promptHelp:
 		m.filterHelp(m.line.Value())
 	case m.mode == keymap.Search:
@@ -715,7 +736,7 @@ func (m *Model) lineChanged(before string) {
 
 func (m *Model) leaveLine() {
 	m.mode = keymap.Normal
-	m.selected, m.compl, m.promptHelp = false, nil, false
+	m.selected, m.compl, m.promptHelp, m.finding.prompting = false, nil, false, false
 	m.line.Reset()
 	m.line.Blur()
 }

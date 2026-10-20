@@ -26,31 +26,50 @@ func commands() *command.Registry[*Model] {
 	for _, c := range []cmd{
 		{Name: "down", Label: "down", Desc: "Move the cursor down.", Motion: true, Run: func(m *Model, c command.Call) error { m.move(c.N()); return nil }},
 		{Name: "up", Label: "up", Desc: "Move the cursor up.", Motion: true, Run: func(m *Model, c command.Call) error { m.move(-c.N()); return nil }},
-		{Name: "first", Label: "first row", Desc: "Go to the first row, or to row N with a count.", Motion: true, Run: func(m *Model, c command.Call) error { m.goRow(c.Count, 0); return nil }},
-		{Name: "last", Label: "last row", Desc: "Go to the last row, or to row N with a count.", Motion: true, Run: func(m *Model, c command.Call) error { m.goRow(c.Count, -1); return nil }},
+		{Name: "first", Jump: true, Label: "first row", Desc: "Go to the first row, or to row N with a count.", Motion: true, Run: func(m *Model, c command.Call) error { m.goRow(c.Count, 0); return nil }},
+		{Name: "last", Jump: true, Label: "last row", Desc: "Go to the last row, or to row N with a count.", Motion: true, Run: func(m *Model, c command.Call) error { m.goRow(c.Count, -1); return nil }},
 		{Name: "half-page-down", Label: "half page down", Desc: "Move down half a page.", Motion: true, Run: func(m *Model, c command.Call) error { m.move(c.N() * m.bodyHeight() / 2); return nil }},
 		{Name: "half-page-up", Label: "half page up", Desc: "Move up half a page.", Motion: true, Run: func(m *Model, c command.Call) error { m.move(-c.N() * m.bodyHeight() / 2); return nil }},
+		{Name: "page-down", Label: "page down", Desc: "Move down a page.", Motion: true, Run: func(m *Model, c command.Call) error { m.page(c, 1); return nil }},
+		{Name: "page-up", Label: "page up", Desc: "Move up a page.", Motion: true, Run: func(m *Model, c command.Call) error { m.page(c, -1); return nil }},
+		{Name: "scroll-down", Label: "scroll down", Desc: "Scroll the list down a row; the cursor stays unless it would leave the screen.", Motion: true, Run: func(m *Model, c command.Call) error { m.scrollBy(c, 1); return nil }},
+		{Name: "scroll-up", Label: "scroll up", Desc: "Scroll the list up a row; the cursor stays unless it would leave the screen.", Motion: true, Run: func(m *Model, c command.Call) error { m.scrollBy(c, -1); return nil }},
+		{Name: "screen-top", Label: "top of screen", Desc: "Go to the top row on screen, or the Nth from the top.", Motion: true, Run: func(m *Model, c command.Call) error { m.screenRow(c, -1); return nil }},
+		{Name: "screen-middle", Label: "middle of screen", Desc: "Go to the middle row on screen.", Motion: true, Run: func(m *Model, c command.Call) error { m.screenRow(c, 0); return nil }},
+		{Name: "screen-bottom", Label: "bottom of screen", Desc: "Go to the bottom row on screen, or the Nth from the bottom.", Motion: true, Run: func(m *Model, c command.Call) error { m.screenRow(c, 1); return nil }},
+		{Name: "scroll-center", Label: "cursor to middle", Desc: "Scroll so the cursor row is in the middle of the screen.", Run: func(m *Model, _ command.Call) error { m.scrollTo(0); return nil }},
+		{Name: "scroll-top", Label: "cursor to top", Desc: "Scroll so the cursor row is at the top of the screen.", Run: func(m *Model, _ command.Call) error { m.scrollTo(-1); return nil }},
+		{Name: "scroll-bottom", Label: "cursor to bottom", Desc: "Scroll so the cursor row is at the bottom of the screen.", Run: func(m *Model, _ command.Call) error { m.scrollTo(1); return nil }},
+		{Name: "percent", Label: "percent", Desc: "Go to the row N percent of the way down: 50%.", Motion: true, Run: (*Model).percent},
+		{Name: "find", Label: "find", Desc: "Find a row in this list by its text; a capital letter matches case.", Run: func(m *Model, _ command.Call) error { m.startFind(false); return nil }},
+		{Name: "find-back", Label: "find back", Desc: "Find a row by its text, searching up the list.", Run: func(m *Model, _ command.Call) error { m.startFind(true); return nil }},
+		{Name: "find-next", Jump: true, Label: "next match", Desc: "Go to the next match of the last find.", Motion: true, Run: func(m *Model, c command.Call) error { return m.findAgain(c, false) }},
+		{Name: "find-prev", Jump: true, Label: "previous match", Desc: "Go to the previous match of the last find.", Motion: true, Run: func(m *Model, c command.Call) error { return m.findAgain(c, true) }},
+		{Name: "noh", Label: "clear highlights", Desc: "Clear the highlights of the last find; n and N still use it.", Run: func(m *Model, _ command.Call) error { m.finding.highlight = false; return nil }},
+		{Name: "jump-back", Label: "go back", Desc: "Go back to where you were before the last jump.", Run: (*Model).jumpBack},
+		{Name: "forward", Label: "go forward", Desc: "Go forward again in the jump list, after going back.", Run: (*Model).jumpForward},
+		{Name: "go-playing", Jump: true, Label: "playing", Desc: "Go to the entry that plays, in the queue.", Run: (*Model).goPlaying},
 		{Name: "next-group", Label: "next group", Desc: "Go to the start of the next group, such as an artist's Appears on albums.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(1, c.N()); return nil }},
 		{Name: "prev-group", Label: "previous group", Desc: "Go to the start of this group, or of the one before.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(-1, c.N()); return nil }},
 
 		{Name: "open", Label: "open", Desc: "Go into the row under the cursor.", Run: (*Model).open},
 		{Name: "back", Label: "back", Desc: "Go back out to the list you came from.", Run: func(m *Model, _ command.Call) error { m.back(); return nil }},
-		{Name: "go-album", Label: "album", Desc: "Go to the album of the track or album under the cursor.", Run: (*Model).goAlbum},
-		{Name: "go-artist", Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
-		{Name: "home", Label: "home", Desc: "Show Home: recently added, most and recently played, random and starred albums.", Run: func(m *Model, _ command.Call) error { m.showSection(homeList); return nil }},
-		{Name: "artists", Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
-		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
-		{Name: "playlists", Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
+		{Name: "go-album", Jump: true, Label: "album", Desc: "Go to the album of the track or album under the cursor.", Run: (*Model).goAlbum},
+		{Name: "go-artist", Jump: true, Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
+		{Name: "home", Jump: true, Label: "home", Desc: "Show Home: recently added, most and recently played, random and starred albums.", Run: func(m *Model, _ command.Call) error { m.showSection(homeList); return nil }},
+		{Name: "artists", Jump: true, Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
+		{Name: "albums", Jump: true, Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
+		{Name: "playlists", Jump: true, Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
 		{Name: "playlist-add", Args: someArgs, Label: "add to playlist", Desc: "Add the selection or the row under the cursor to the end of a playlist: playlist-add Rock.", Run: (*Model).playlistAdd, Complete: (*Model).playlistNames},
 		{Name: "playlist-new", Args: someArgs, Label: "new playlist", Desc: "Make a playlist of the selection or the row under the cursor: playlist-new Rock.", Run: (*Model).playlistNew},
 		{Name: "playlist-delete", Label: "delete playlist", Desc: "Delete the playlist under the cursor, after asking.", Run: (*Model).deletePlaylist},
 		{Name: "playlist-undo", Label: "undo", Desc: "Explain that playlist changes can't be undone, and how to put a removal back.", Run: (*Model).playlistUndo},
-		{Name: "search", Args: anyArgs, Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search, Complete: func(m *Model) []string {
+		{Name: "search", Jump: true, Args: anyArgs, Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search, Complete: func(m *Model) []string {
 			s := slices.Clone(m.searchHist.items)
 			slices.Reverse(s) // newest first
 			return s
 		}},
-		{Name: "queue", Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focus = queueWindow; return nil }},
+		{Name: "queue", Jump: true, Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focus = queueWindow; return nil }},
 		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error { m.focus = 1 - m.focus; return nil }},
 
 		{Name: "play-now", Label: "play", Desc: "Replace the queue with this list and play from the track under the cursor.", Run: (*Model).playNow},
@@ -82,7 +101,12 @@ func commands() *command.Registry[*Model] {
 		{Name: "redo", Label: "redo", Desc: "Redo the last undone change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Redo{}); return nil }},
 
 		{Name: "cmdline", Label: "command", Desc: "Type a command.", Run: func(m *Model, _ command.Call) error { m.enterLine(); return nil }},
-		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and the selection, and clear the message.", Run: func(m *Model, _ command.Call) error { m.endVisual(); m.clearMsg(); return nil }},
+		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and the selection, and clear the message.", Run: func(m *Model, _ command.Call) error {
+			m.endVisual()
+			m.clearMsg()
+			m.finding.highlight = false
+			return nil
+		}},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
 		{Name: "nop", Label: "nothing", Desc: "Do nothing: bind it to make a dead key.", Run: func(*Model, command.Call) error { return nil }},
@@ -94,7 +118,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "cunmap", Args: anyArgs, Label: "unmap", Desc: "Unbind a command-line key for this session: cunmap <C-k>.", Run: sessionUnmapIn("cmdline")},
 		{Name: "map", Label: "bindings", Desc: "List the bindings that differ from the defaults.", Run: (*Model).showMap},
 		{Name: "reload-config", Label: "reload config", Desc: "Read config.yaml again and rebuild the bindings, dropping this session's mappings.", Run: (*Model).reloadConfig},
-		{Name: "help", Label: "help", Desc: "Show every key and command, from the bindings in effect.", Run: func(m *Model, _ command.Call) error { m.showHelp(); return nil }},
+		{Name: "help", Jump: true, Label: "help", Desc: "Show every key and command, from the bindings in effect.", Run: func(m *Model, _ command.Call) error { m.showHelp(); return nil }},
 		{Name: "help-filter", Label: "filter", Desc: "Filter Help to the keys and commands that match what you type.", Run: func(m *Model, _ command.Call) error { m.startHelpFilter(); return nil }},
 		{Name: "key-menu", Label: "keys", Desc: "Show the keys for what is under the cursor; press one to run it.", Run: func(m *Model, _ command.Call) error { m.openKeyMenu(); return nil }},
 		{Name: "messages", Label: "messages", Desc: "Show the messages of this session.", Run: func(m *Model, _ command.Call) error { m.showMessages(); return nil }},

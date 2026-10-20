@@ -100,10 +100,10 @@ func (m *Model) opRange(c command.Call) (from, to int) {
 	}
 	// Run the motion, see where it lands, and put the cursor back.
 	f := m.top()
-	saved, savedOff, savedQueue := f.cur, f.offset, m.queueCur
+	saved, savedOff, savedQueue, savedQueueOff := f.cur, f.offset, m.queueCur, m.queueOff
 	_ = m.registry.Run(m, c.Motion, c.Count)
 	target := m.cursor()
-	f.cur, f.offset, m.queueCur = saved, savedOff, savedQueue
+	f.cur, f.offset, m.queueCur, m.queueOff = saved, savedOff, savedQueue, savedQueueOff
 	return min(cur, target), max(cur, target) + 1
 }
 

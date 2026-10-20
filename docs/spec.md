@@ -449,6 +449,7 @@ Small gaps no ticket settled, filled in here so the spec is complete; revisit th
 
 - **Where history lives.** The `:` and search histories are saved in a `navigo/` directory: `$XDG_STATE_HOME` (or `~/.local/state`) on Linux, and the user cache directory on macOS and Windows. Go has no per-OS state directory.
 - **`/` in Help** filters the rows as you type rather than finding the next match, since Help is a reference to narrow down; `<Esc>` puts the old filter back. The key menu leaves motions out, so they scroll it.
+- **The scroll wheel.** The motions row lists it, but v1 has no mouse support (Startup), so it is left out; the keys do the same.
 - **The star key.** No ticket gave starring a key; `*` stars the row or the selection, or unstars them when all are starred (`:star`).
 - **Two settings called "hints".** Top-level `hints` turns the **hint line** on or off ([#13](https://github.com/anopheles/navigo/issues/13)). `keys.hints` and `keys.hint-delay` control **prefix menus** ([#7](https://github.com/anopheles/navigo/issues/7)). They stay as decided, but renaming the second to `keys.prefix-menus` would avoid the confusion.
 
@@ -472,13 +473,12 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **Help and menus:** the Help section (`'?`, `<F1>`, `:help`) built from the bindings in effect, by scope, with Visual mode and the commands no key runs, and `/` filtering it; the `?` key menu grouped Play, Queue, Select, Go, Help, where a listed key runs, motions scroll, and `<F1>` goes to Help; prefix menus after 500 ms, including after an operator ([#40](https://github.com/anopheles/navigo/issues/40)).
 - **Rebinding:** the `keys:` block with its options, `~` and `nop`, validation with every problem in a popup as `config.yaml:LINE:COL: message`, the can't-quit refusal, `navigo check-config`, the table-driven `:` line (`cmdline:`), `:nmap`/`:vmap`/`:cmap` and the `unmap` forms, `:map`, `:reload-config`, and `:queue-clear` from the example ([#42](https://github.com/anopheles/navigo/issues/42)).
 - **Home:** startup on Home, its five album lists from the server with the last answer kept for offline, `'h` and `:home` ([#33](https://github.com/anopheles/navigo/issues/33)).
+- **Motions, find and jumps:** `<C-f>`/`<C-b>`, `<C-e>`/`<C-y>`, `H`/`M`/`L`, `zz`/`zt`/`zb`, `[count]%`; `/` and `:find-back` (smart-case, highlights, wrapping `n`/`N`, `:noh`/`<Esc>`), and a `/` that finds nothing offering `<CR>` to search the library; the jump list (`<C-o>`, `<C-i>`, `:forward`) recording marks, section commands, `ga`/`gr`/`gp`, `gg`/`G` and finds; `gp` ([#36](https://github.com/anopheles/navigo/issues/36)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A, and the three layer B scenarios (the new-user path from search to playing, transport, cold start from the cache) on the fixture library and live ([#45](https://github.com/anopheles/navigo/issues/45)).
 
 Still to build for v1:
 
-- **Keys:** `/` with `n`/`N`, the jump list, the remaining motions, and `gp`.
-- **Discoverability:** the `/`-to-search offer (with `/` find).
 - **Crash cap:** the 3-crash cap for mpv (with the mpv slice).
 - **mpv:** the startup check with install hints, `player.mpv_path`, and resuming after a crash.
 - **Media controls:** MPRIS on Linux, and `force-media-title` for macOS and Windows.

@@ -8,8 +8,25 @@
  G          last               Go to the last row, or to row N with a c…│                                               
  <C-d>      half-page-down     Move down half a page.                   │ On a track:                                   
  <C-u>      half-page-up       Move up half a page.                     │   <CR> play it   A add to queue               
+ <C-f>      page-down          Move down a page.                        │                                               
+ <C-b>      page-up            Move up a page.                          │   :q quit                                     
+ <C-e>      scroll-down        Scroll the list down a row; the cursor s…│                                               
+ <C-y>      scroll-up          Scroll the list up a row; the cursor sta…│                                               
+ H          screen-top         Go to the top row on screen, or the Nth …│                                               
+ M          screen-middle      Go to the middle row on screen.          │                                               
+ L          screen-bottom      Go to the bottom row on screen, or the N…│                                               
+ zz         scroll-center      Scroll so the cursor row is in the middl…│                                               
+ zt         scroll-top         Scroll so the cursor row is at the top o…│                                               
+ zb         scroll-bottom      Scroll so the cursor row is at the botto…│                                               
+ %          percent            Go to the row N percent of the way down:…│                                               
+ /          find               Find a row in this list by its text; a c…│                                               
+ n          find-next          Go to the next match of the last find.   │                                               
+ N          find-prev          Go to the previous match of the last fin…│                                               
+ <C-o>      jump-back          Go back to where you were before the las…│                                               
+ <C-i>      forward            Go forward again in the jump list, after…│                                               
+ gp         go-playing         Go to the entry that plays, in the queue.│                                               
  }          next-group         Go to the start of the next group, such …│                                               
- {          prev-group         Go to the start of this group, or of the…│   :q quit                                     
+ {          prev-group         Go to the start of this group, or of the…│                                               
  ga         go-album           Go to the album of the track or album un…│                                               
  gr         go-artist          Go to the artist of the track or album u…│                                               
  h          back               Go back out to the list you came from.   │                                               
@@ -17,23 +34,6 @@
  >          next-track         Play the next track in the queue.        │                                               
  <          prev-track         Play the previous track, or restart this…│                                               
  .          seek +10           Seek by a number of seconds, such as see…│                                               
- ,          seek -10           Seek by a number of seconds, such as see…│                                               
- X          stop               Stop playback.                           │                                               
- =          volume +5          Change the volume by points, such as vol…│                                               
- +          volume +5          Change the volume by points, such as vol…│                                               
- -          volume -5          Change the volume by points, such as vol…│                                               
- S          shuffle            Shuffle the queue once, keeping the curr…│                                               
- R          repeat             Cycle repeat: off, all (the queue again)…│                                               
- i          info               Show details of the track, album or arti…│                                               
- *          star               Star the track, album or artist under th…│                                               
- u          undo               Undo the last change to the queue.       │                                               
- <C-r>      redo               Redo the last undone change to the queue.│                                               
- <Tab>      window             Move to the other window.                │                                               
- <C-w>w     window             Move to the other window.                │                                               
- 'h         home               Show Home: recently added, most and rece…│                                               
- 'a         artists            Show the Artists section.                │                                               
- 'b         albums             Show the Albums section.                 │                                               
- 'p         playlists          Show the Playlists section.              │                                               
  h back  <Tab> other window  ? keys                                                                                     
  ■ nothing playing                                                                                                      
                                                                                                                         

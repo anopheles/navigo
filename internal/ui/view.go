@@ -139,21 +139,35 @@ func (m *Model) emptyList() string {
 }
 
 func (m *Model) libraryRow(f *frame, i, w int) string {
+	lib := m.state.Library
 	switch f.kind {
 	case sectionList:
-		return fit(" "+sections[i], w)
-	case albumList:
-		a := m.state.Library.Albums[i]
-		year := ""
-		if a.Year > 0 {
-			year = fmt.Sprint(a.Year)
+		return fit(" "+sections[i].title, w)
+	case artistList:
+		a := lib.Artists[i]
+		count := artistCount(a.AlbumCount, lib.AppearsOn(a.ID))
+		return " " + fit(a.Name, w-2-len(count)-2) + "  " + count + " "
+	case artistPage:
+		rows := m.artistRows(f.artist)
+		if a, ok := rows.album(i); ok {
+			return albumRow(a, w)
 		}
-		rest := w - 1 - 6
-		nw := rest * 3 / 5
-		return " " + fit(a.Name, nw) + fit("  "+a.Artist, rest-nw) + fmt.Sprintf("%6s", year)
+		return dimStyle.Render(fit(" ── Appears on ──", w))
+	case albumList:
+		return albumRow(lib.Albums[i], w)
 	}
-	ts := m.state.Library.AlbumTracks(f.album)
+	ts := lib.AlbumTracks(f.album)
 	return trackRow("  ", trackNumber(ts, i), ts[i], w)
+}
+
+func albumRow(a library.Album, w int) string {
+	year := ""
+	if a.Year > 0 {
+		year = fmt.Sprint(a.Year)
+	}
+	rest := w - 1 - 6
+	nw := rest * 3 / 5
+	return " " + fit(a.Name, nw) + fit("  "+a.Artist, rest-nw) + fmt.Sprintf("%6s", year)
 }
 
 // trackNumber is "3" or, on albums with several discs, "2-03".
@@ -265,6 +279,9 @@ func (m *Model) styleRow(line string, cursor, focused, current bool) string {
 func (m *Model) hintLine() string {
 	if m.mode == keymap.Cmdline {
 		return " " + hint("<CR>", "run") + "  " + hint("<Esc>", "cancel")
+	}
+	if m.popup != nil && m.popup.pick != nil {
+		return " " + hint("j/k", "move") + "  " + hint("<CR>", "choose") + "  " + hint("q", "close")
 	}
 	if m.popup != nil {
 		return " " + hint("j/k", "scroll") + "  " + hint("q", "close")

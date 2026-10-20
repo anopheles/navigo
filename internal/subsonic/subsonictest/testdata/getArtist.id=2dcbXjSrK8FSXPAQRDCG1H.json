@@ -10,14 +10,14 @@
       "name": "The Quiet Ones",
       "coverArt": "ar-2dcbXjSrK8FSXPAQRDCG1H",
       "albumCount": 2,
-      "starred": "2026-10-19T21:36:54.968029561Z",
-      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJkY2JYalNySzhGU1hQQVFSRENHMUgiLCJpc3MiOiJORCJ9.rW0cdFfOWxd8stzidPoRUS5FTjqKgxex_OaEgqiL1z0?size=600",
+      "starred": "2026-10-20T08:43:34.253050914Z",
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTJkY2JYalNySzhGU1hQQVFSRENHMUgiLCJpc3MiOiJORCJ9.y-J35FxI4BBNzqcCMOT21bZ8plOvbf0J1dIcKspea5Q?size=600",
       "musicBrainzId": "",
       "sortName": "quiet ones",
       "roles": [
-        "maincredit",
         "albumartist",
-        "artist"
+        "artist",
+        "maincredit"
       ],
       "album": [
         {
@@ -28,7 +28,7 @@
           "coverArt": "al-6UWKhAgWB7o93Z7z1faRnA",
           "songCount": 5,
           "duration": 615,
-          "created": "2026-10-19T21:36:31.214154299Z",
+          "created": "2026-10-20T08:43:14.883604811Z",
           "year": 2015,
           "genre": "Indie",
           "userRating": 0,
@@ -64,7 +64,7 @@
           "coverArt": "al-51phjRiLqZdCi0H4Fk7Vgx",
           "songCount": 7,
           "duration": 788,
-          "created": "2026-10-19T21:36:31.469150361Z",
+          "created": "2026-10-20T08:43:15.074602432Z",
           "year": 2018,
           "genre": "Indie",
           "userRating": 0,

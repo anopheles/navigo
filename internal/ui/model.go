@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -87,6 +86,8 @@ type listKind int
 
 const (
 	sectionList listKind = iota
+	artistList
+	artistPage
 	albumList
 	albumTracks
 )
@@ -95,6 +96,7 @@ const (
 type frame struct {
 	kind        listKind
 	album       library.AlbumID
+	artist      library.ArtistID
 	title       string
 	cur, offset int
 }
@@ -112,6 +114,7 @@ type Model struct {
 
 	focus    window
 	lib      []frame
+	paths    map[listKind][]frame // where each section was left
 	queueCur int
 	queueOff int
 
@@ -150,7 +153,8 @@ func New(deps Deps) *Model {
 		deps:     deps,
 		state:    app.New(),
 		ctx:      context.Background(),
-		lib:      []frame{{kind: sectionList, title: "Library"}, {kind: albumList, title: "Albums"}},
+		lib:      startPath(),
+		paths:    map[listKind][]frame{},
 		mode:     keymap.Normal,
 		engine:   keymap.NewEngine(defaultTable()),
 		registry: commands(),
@@ -300,7 +304,7 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 	if m.client != nil {
 		stop = tea.Batch(m.dispatch(app.StopPlayback{}))
 		m.state = app.New()
-		m.lib = []frame{{kind: sectionList, title: "Library"}, {kind: albumList, title: "Albums"}}
+		m.lib, m.paths = startPath(), map[listKind][]frame{}
 		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
 		stop = tea.Batch(stop, m.dispatch(app.Start{}))
 	} else if m.screen == screenLogin && !m.state.Sync.Running && m.state.Library == nil {
@@ -568,6 +572,8 @@ func (m *Model) scopes() []string {
 		return []string{"album-tracks", "tracks", "global"}
 	case albumList:
 		return []string{"albums", "containers", "global"}
+	case artistList, artistPage:
+		return []string{"artists", "containers", "global"}
 	}
 	return []string{"sections", "containers", "global"}
 }
@@ -582,6 +588,10 @@ func (m *Model) rows(f *frame) int {
 		return len(sections)
 	case lib == nil:
 		return 0
+	case f.kind == artistList:
+		return len(lib.Artists)
+	case f.kind == artistPage:
+		return m.artistRows(f.artist).len()
 	case f.kind == albumList:
 		return len(lib.Albums)
 	case f.kind == albumTracks:
@@ -598,19 +608,29 @@ func (m *Model) cursorIDs() []string {
 	if lib == nil {
 		return ids
 	}
-	for i, f := range m.lib {
-		switch f.kind {
-		case albumList:
-			if f.cur < len(lib.Albums) {
-				ids[i] = string(lib.Albums[f.cur].ID)
-			}
-		case albumTracks:
-			if ts := lib.AlbumTracks(f.album); f.cur < len(ts) {
-				ids[i] = string(ts[f.cur].ID)
-			}
+	for i := range m.lib {
+		if f := &m.lib[i]; f.cur < m.rows(f) {
+			ids[i] = m.rowID(f, f.cur)
 		}
 	}
 	return ids
+}
+
+// rowID is the ID of what row i of a list shows, or "".
+func (m *Model) rowID(f *frame, i int) string {
+	lib := m.state.Library
+	switch f.kind {
+	case artistList:
+		return string(lib.Artists[i].ID)
+	case artistPage:
+		a, _ := m.artistRows(f.artist).album(i)
+		return string(a.ID)
+	case albumList:
+		return string(lib.Albums[i].ID)
+	case albumTracks:
+		return string(lib.AlbumTracks(f.album)[i].ID)
+	}
+	return ""
 }
 
 func (m *Model) restoreCursors(ids []string) {
@@ -623,29 +643,22 @@ func (m *Model) restoreCursors(ids []string) {
 		if i >= len(ids) || ids[i] == "" {
 			continue
 		}
-		switch f.kind {
-		case albumList:
-			if j := slices.IndexFunc(lib.Albums, func(a library.Album) bool { return string(a.ID) == ids[i] }); j >= 0 {
+		for j := range m.rows(f) {
+			if m.rowID(f, j) == ids[i] {
 				f.cur = j
-			}
-		case albumTracks:
-			if j := slices.IndexFunc(lib.AlbumTracks(f.album), func(t library.Track) bool { return string(t.ID) == ids[i] }); j >= 0 {
-				f.cur = j
+				break
 			}
 		}
 	}
 	m.clamp()
 }
 
-// sections are the library window's top-level entries. The skeleton has
-// Albums only; Home, Artists, Playlists, Search and Help come later.
-var sections = []string{"Albums"}
-
 // clamp keeps cursors inside lists that changed length.
 func (m *Model) clamp() {
 	for i := range m.lib {
 		f := &m.lib[i]
 		f.cur = min(f.cur, max(m.rows(f)-1, 0))
+		m.settle(f, 1)
 	}
 	m.queueCur = min(m.queueCur, max(len(m.state.Queue)-1, 0))
 }

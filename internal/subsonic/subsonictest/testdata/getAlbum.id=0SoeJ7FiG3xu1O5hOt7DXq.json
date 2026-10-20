@@ -13,7 +13,7 @@
       "coverArt": "al-0SoeJ7FiG3xu1O5hOt7DXq",
       "songCount": 4,
       "duration": 334,
-      "created": "2026-10-19T21:36:44.143954699Z",
+      "created": "2026-10-20T08:43:25.364474177Z",
       "year": 2023,
       "genre": "Synthwave",
       "userRating": 0,
@@ -42,7 +42,7 @@
       "version": "",
       "song": [
         {
-          "id": "29BFytMBDD31SpC09SZksM",
+          "id": "2rmXtJHlxGRHiLQHyjZf5k",
           "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
           "isDir": false,
           "title": "Neon Coast",
@@ -59,7 +59,7 @@
           "bitRate": 16,
           "path": "Various Artists/Night Drive Vol. 1/01-01 - Neon Coast.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.700798537Z",
+          "created": "2026-10-20T08:43:31.919954815Z",
           "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
           "artistId": "1MNu0aqmjGxOZOiezuZPxB",
           "type": "music",
@@ -101,7 +101,7 @@
           "movements": []
         },
         {
-          "id": "4c23B2zNd4rcbZwYo4NbPO",
+          "id": "1rmjPkrntjnn2jVUDlOAOu",
           "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
           "isDir": false,
           "title": "Exit 14",
@@ -118,7 +118,7 @@
           "bitRate": 16,
           "path": "Various Artists/Night Drive Vol. 1/01-02 - Exit 14.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.684286391Z",
+          "created": "2026-10-20T08:43:31.922845922Z",
           "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -160,7 +160,7 @@
           "movements": []
         },
         {
-          "id": "5ySX3NUsEP7uwgoH4udQN2",
+          "id": "4m3U6UzJzPGgh1VfogCkQK",
           "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
           "isDir": false,
           "title": "Night Drive",
@@ -173,12 +173,12 @@
           "size": 194561,
           "contentType": "audio/mpeg",
           "suffix": "mp3",
-          "starred": "2026-10-19T21:36:54.964805851Z",
+          "starred": "2026-10-20T08:43:34.250199873Z",
           "duration": 97,
           "bitRate": 16,
           "path": "Various Artists/Night Drive Vol. 1/01-03 - Night Drive.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.688074441Z",
+          "created": "2026-10-20T08:43:31.913084269Z",
           "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
           "artistId": "77xJO0lZ9YMevx8NMOguzQ",
           "type": "music",
@@ -220,24 +220,24 @@
           "movements": []
         },
         {
-          "id": "1YlMnHWu1YvEc47YhcLftZ",
+          "id": "0eMuibV7G54DgNhVM8i5X8",
           "parent": "0SoeJ7FiG3xu1O5hOt7DXq",
           "isDir": false,
           "title": "Blue Highway",
           "album": "Night Drive Vol. 1",
-          "artist": "Pell Mell",
+          "artist": "Pell Mell feat. Zoë Brandt",
           "track": 4,
           "year": 2023,
           "genre": "Synthwave",
           "coverArt": "dc-0SoeJ7FiG3xu1O5hOt7DXq:1",
-          "size": 284528,
+          "size": 284574,
           "contentType": "audio/mpeg",
           "suffix": "mp3",
           "duration": 142,
           "bitRate": 16,
           "path": "Various Artists/Night Drive Vol. 1/01-04 - Blue Highway.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.696221532Z",
+          "created": "2026-10-20T08:43:31.916581836Z",
           "albumId": "0SoeJ7FiG3xu1O5hOt7DXq",
           "artistId": "77xJO0lZ9YMevx8NMOguzQ",
           "type": "music",
@@ -261,9 +261,13 @@
             {
               "id": "77xJO0lZ9YMevx8NMOguzQ",
               "name": "Pell Mell"
+            },
+            {
+              "id": "2yVh46xHg7UbYmzN38kszb",
+              "name": "Zoë Brandt"
             }
           ],
-          "displayArtist": "Pell Mell",
+          "displayArtist": "Pell Mell feat. Zoë Brandt",
           "albumArtists": [
             {
               "id": "63sqASlAfjbGMuLP4JhnZU",

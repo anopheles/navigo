@@ -31,12 +31,15 @@ type Snapshot struct {
 	albumByID  map[AlbumID]int
 	trackByID  map[TrackID]int
 	albumSpan  map[AlbumID][2]int // the album's range in Tracks
+	own        map[ArtistID][]int // indexes in Albums, as album artist
+	appearsOn  map[ArtistID][]int // indexes in Albums, credited on tracks only
 	starred    map[string]bool
 }
 
 // Build sorts the synced data, derives what the server doesn't send, and
-// returns a ready snapshot. Artists named only on tracks are added, and
-// each artist's AlbumCount counts the albums they are album artist of.
+// returns a ready snapshot. Artists named only on tracks are added,
+// artists with neither a track nor an album are dropped, and each
+// artist's AlbumCount counts the albums they are album artist of.
 func Build(server, user string, lastScan time.Time, artists []Artist, albums []Album, tracks []Track, playlists []Playlist, starred []string) *Snapshot {
 	s := &Snapshot{
 		Server: server, User: user, LastScan: lastScan, SyncedAt: time.Now(),
@@ -48,8 +51,10 @@ func Build(server, user string, lastScan time.Time, artists []Artist, albums []A
 	for _, a := range s.Artists {
 		seen[a.ID] = true
 	}
+	credited := map[ArtistID]bool{}
 	for _, t := range s.Tracks {
 		for _, a := range t.Artists {
+			credited[a.ID] = true
 			if !seen[a.ID] && a.ID != "" {
 				seen[a.ID] = true
 				s.Artists = append(s.Artists, Artist{ID: a.ID, Name: a.Name})
@@ -60,6 +65,7 @@ func Build(server, user string, lastScan time.Time, artists []Artist, albums []A
 	for _, a := range s.Albums {
 		own[a.ArtistID]++
 	}
+	s.Artists = slices.DeleteFunc(s.Artists, func(a Artist) bool { return own[a.ID] == 0 && !credited[a.ID] })
 	for i := range s.Artists {
 		s.Artists[i].AlbumCount = own[s.Artists[i].ID]
 	}
@@ -112,6 +118,19 @@ func (s *Snapshot) index() {
 		sp[1] = i + 1
 		s.albumSpan[t.AlbumID] = sp
 	}
+	s.own, s.appearsOn = map[ArtistID][]int{}, map[ArtistID][]int{}
+	for i, a := range s.Albums {
+		s.own[a.ArtistID] = append(s.own[a.ArtistID], i)
+		seen := map[ArtistID]bool{a.ArtistID: true}
+		for _, t := range s.AlbumTracks(a.ID) {
+			for _, c := range t.Artists {
+				if !seen[c.ID] {
+					seen[c.ID] = true
+					s.appearsOn[c.ID] = append(s.appearsOn[c.ID], i)
+				}
+			}
+		}
+	}
 	s.starred = make(map[string]bool, len(s.Starred))
 	for _, id := range s.Starred {
 		s.starred[id] = true
@@ -154,6 +173,23 @@ func (s *Snapshot) AlbumTracks(id AlbumID) []Track {
 	}
 	return s.Tracks[sp[0]:sp[1]:sp[1]]
 }
+
+// ArtistAlbums returns the albums an artist is album artist of, and the
+// ones they appear on: credited on a track but not the album artist.
+// Both are in the order of Albums.
+func (s *Snapshot) ArtistAlbums(id ArtistID) (own, appearsOn []Album) {
+	for _, i := range s.own[id] {
+		own = append(own, s.Albums[i])
+	}
+	for _, i := range s.appearsOn[id] {
+		appearsOn = append(appearsOn, s.Albums[i])
+	}
+	return own, appearsOn
+}
+
+// AppearsOn is the number of albums an artist appears on without being
+// their album artist.
+func (s *Snapshot) AppearsOn(id ArtistID) int { return len(s.appearsOn[id]) }
 
 // PlaylistTracks returns a playlist's tracks in order, skipping any the
 // library no longer has.

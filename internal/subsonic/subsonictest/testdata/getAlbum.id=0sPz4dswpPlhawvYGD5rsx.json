@@ -13,7 +13,7 @@
       "coverArt": "al-0sPz4dswpPlhawvYGD5rsx",
       "songCount": 3,
       "duration": 565,
-      "created": "2026-10-19T21:36:31.706146701Z",
+      "created": "2026-10-20T08:43:15.36459882Z",
       "year": 2017,
       "genre": "Ambient",
       "userRating": 0,
@@ -42,7 +42,7 @@
       "version": "",
       "song": [
         {
-          "id": "6H2qZejHNrAriRdruLr01Y",
+          "id": "3xP8Xw4ZX74d5Y8ziHnws3",
           "parent": "0sPz4dswpPlhawvYGD5rsx",
           "isDir": false,
           "title": "朝霧",
@@ -59,7 +59,7 @@
           "bitRate": 16,
           "path": "森の音/夜明け/01-01 - 朝霧.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.761882165Z",
+          "created": "2026-10-20T08:43:31.965290105Z",
           "albumId": "0sPz4dswpPlhawvYGD5rsx",
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "type": "music",
@@ -101,7 +101,7 @@
           "movements": []
         },
         {
-          "id": "28BO2iwC0Pr7VMa3ZzTn4D",
+          "id": "15Z9UsdgZF82bmaaBcawCr",
           "parent": "0sPz4dswpPlhawvYGD5rsx",
           "isDir": false,
           "title": "川の歌",
@@ -118,7 +118,7 @@
           "bitRate": 16,
           "path": "森の音/夜明け/01-02 - 川の歌.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.76450008Z",
+          "created": "2026-10-20T08:43:31.960166382Z",
           "albumId": "0sPz4dswpPlhawvYGD5rsx",
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "type": "music",
@@ -160,7 +160,7 @@
           "movements": []
         },
         {
-          "id": "4U3SYOs31RjD1eBKEXPn3L",
+          "id": "58yyIIc6lKqeeXQxppCNoF",
           "parent": "0sPz4dswpPlhawvYGD5rsx",
           "isDir": false,
           "title": "夜明け前",
@@ -177,7 +177,7 @@
           "bitRate": 16,
           "path": "森の音/夜明け/01-03 - 夜明け前.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.756246523Z",
+          "created": "2026-10-20T08:43:31.962911537Z",
           "albumId": "0sPz4dswpPlhawvYGD5rsx",
           "artistId": "6MLPuYszTGDyqez6E6n9uf",
           "type": "music",

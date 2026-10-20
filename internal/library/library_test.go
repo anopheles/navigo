@@ -94,6 +94,35 @@ func TestSync(t *testing.T) {
 	}
 }
 
+func TestArtistAlbums(t *testing.T) {
+	s, _, _ := synced(t)
+	names := func(as []Album) []string {
+		var out []string
+		for _, a := range as {
+			out = append(out, a.Name)
+		}
+		return out
+	}
+	for _, c := range []struct {
+		artist         string
+		own, appearsOn []string
+	}{
+		{"Aurora Lane", []string{"Blue", "Blue Hour"}, []string{"Night Drive Vol. 1"}},
+		{"Pell Mell", nil, []string{"Night Drive Vol. 1"}},
+		{"Various Artists", []string{"Night Drive Vol. 1"}, nil},
+		{"Zoë Brandt", []string{"Ångström Days"}, []string{"Night Drive Vol. 1"}}, // a guest on one track
+	} {
+		a := artist(t, s, c.artist)
+		own, appears := s.ArtistAlbums(a.ID)
+		if !slices.Equal(names(own), c.own) || !slices.Equal(names(appears), c.appearsOn) {
+			t.Errorf("%s: own %q, appears on %q; want %q, %q", c.artist, names(own), names(appears), c.own, c.appearsOn)
+		}
+		if s.AppearsOn(a.ID) != len(c.appearsOn) {
+			t.Errorf("%s appears on %d, want %d", c.artist, s.AppearsOn(a.ID), len(c.appearsOn))
+		}
+	}
+}
+
 func TestPlaylistsAndStars(t *testing.T) {
 	s, _, _ := synced(t)
 	var mix Playlist

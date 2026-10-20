@@ -84,16 +84,36 @@ func (m *Model) showMessages() {
 	m.popup.off = max(len(lines)-m.popupRows(), 0)
 }
 
-// popup is a box over both windows. Motions scroll it; q and <Esc> close it.
+// popup is a box over both windows. Motions scroll it; q and <Esc> close
+// it. A popup with pick is a choice: motions move its cursor, sel, and
+// <CR> picks the row.
 type popup struct {
 	title string
 	lines []string
 	off   int
+	sel   int
+	pick  func(int) error
 }
 
 func (m *Model) openPopup(title string, lines []string) {
 	m.popup = &popup{title: title, lines: lines}
 	m.engine.Reset()
+}
+
+// openChoice asks the user to pick one of lines.
+func (m *Model) openChoice(title string, lines []string, pick func(int) error) {
+	m.openPopup(title, lines)
+	m.popup.pick = pick
+}
+
+// choose picks the choice under the popup's cursor and closes it.
+func (m *Model) choose() error {
+	p := m.popup
+	if p == nil || p.pick == nil {
+		return nil
+	}
+	m.closePopup()
+	return p.pick(p.sel)
 }
 
 func (m *Model) closePopup() { m.popup = nil }
@@ -104,6 +124,11 @@ func (m *Model) popupRows() int { return max(m.h-9, 3) }
 
 func (m *Model) scrollPopup(d int) {
 	p := m.popup
+	if p.pick != nil {
+		p.sel = min(max(p.sel+d, 0), len(p.lines)-1)
+		p.off = scroll(p.sel, p.off, m.popupRows(), len(p.lines))
+		return
+	}
 	p.off = min(max(p.off+d, 0), max(len(p.lines)-m.popupRows(), 0))
 }
 
@@ -114,8 +139,12 @@ func (m *Model) renderPopup() string {
 	rows := m.popupRows()
 	end := min(p.off+rows, len(p.lines))
 	body := make([]string, 0, rows+2)
-	for _, l := range p.lines[p.off:end] {
-		body = append(body, fit(l, w-4))
+	for i, l := range p.lines[p.off:end] {
+		l = fit(l, w-4)
+		if p.pick != nil && p.off+i == p.sel {
+			l = cursorStyle.Render(l)
+		}
+		body = append(body, l)
 	}
 	more := ""
 	if len(p.lines) > rows {

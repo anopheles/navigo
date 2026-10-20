@@ -49,7 +49,7 @@ var durations = []int{31, 64, 97, 142, 185, 238}
 
 // Albums is the whole fixture library. It has two albums called "Blue" and
 // a "Blue Hour" (search), a compilation with a guest artist (album artist
-// differs from track artist), wide and accented names (layout), and one
+// differs from track artist) and a track credited to two artists, wide and accented names (layout), and one
 // album with more than 500 tracks (paging).
 var Albums = []Album{
 	album("Aurora Lane", "Blue", 2019, "Dream Pop", "Tidewater", "Blue", "Paper Lanterns", "Slow Orbit", "Harbour Lights", "Blue Again", "Glass Garden", "Last Ferry"),
@@ -124,7 +124,7 @@ func compilation() Album {
 		{"Aurora Lane", "Neon Coast"},
 		{"The Quiet Ones", "Exit 14"},
 		{"Pell Mell", "Night Drive"},
-		{"Pell Mell", "Blue Highway"},
+		{"Pell Mell feat. Zoë Brandt", "Blue Highway"}, // Navidrome splits on " feat. "
 	} {
 		a.Tracks = append(a.Tracks, Track{Title: t.title, Artist: t.artist, Disc: 1, Number: i + 1, Seconds: durations[i%len(durations)]})
 	}

@@ -13,7 +13,7 @@
       "coverArt": "al-6UWKhAgWB7o93Z7z1faRnA",
       "songCount": 5,
       "duration": 615,
-      "created": "2026-10-19T21:36:31.214154299Z",
+      "created": "2026-10-20T08:43:14.883604811Z",
       "year": 2015,
       "genre": "Indie",
       "userRating": 0,
@@ -42,7 +42,7 @@
       "version": "",
       "song": [
         {
-          "id": "3GHBIMT3uUN52dJwRBg8Mq",
+          "id": "0cPrrgkdhSESVETeqnlYOz",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Undertow",
@@ -59,7 +59,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-01 - Undertow.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.505839482Z",
+          "created": "2026-10-20T08:43:31.781303204Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -101,7 +101,7 @@
           "movements": []
         },
         {
-          "id": "6bNh4ibrV0CrdKTOagndd2",
+          "id": "4bMwRHBOJVHl1xtrRFq6TC",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Quiet Room",
@@ -118,7 +118,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-02 - Quiet Room.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.508666643Z",
+          "created": "2026-10-20T08:43:31.761966515Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -160,7 +160,7 @@
           "movements": []
         },
         {
-          "id": "0AeB5z8GtVzfPDFj1Vn6xT",
+          "id": "74WMNnW3gu1wlG83JDKuwD",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Blue Static",
@@ -177,7 +177,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-03 - Blue Static.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.511373102Z",
+          "created": "2026-10-20T08:43:31.76755071Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -219,7 +219,7 @@
           "movements": []
         },
         {
-          "id": "0rjjz7qAkswHBktPuPlNz0",
+          "id": "3I08ta5L5E45YVd9HvRFv0",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Radio Silence",
@@ -236,7 +236,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-04 - Radio Silence.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.495643323Z",
+          "created": "2026-10-20T08:43:31.770973755Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",
@@ -278,7 +278,7 @@
           "movements": []
         },
         {
-          "id": "76cUULYSwf7f5L4GoPHgVp",
+          "id": "7gei3bqMJjFjy9Wm7frt8F",
           "parent": "6UWKhAgWB7o93Z7z1faRnA",
           "isDir": false,
           "title": "Homeward",
@@ -295,7 +295,7 @@
           "bitRate": 16,
           "path": "The Quiet Ones/Blue/01-05 - Homeward.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.503080451Z",
+          "created": "2026-10-20T08:43:31.776924956Z",
           "albumId": "6UWKhAgWB7o93Z7z1faRnA",
           "artistId": "2dcbXjSrK8FSXPAQRDCG1H",
           "type": "music",

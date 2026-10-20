@@ -10,13 +10,13 @@
       "name": "Long Haul Orchestra",
       "coverArt": "ar-5qpNtcsC6DKi73YhXjLBY4",
       "albumCount": 1,
-      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTVxcE50Y3NDNkRLaTczWWhYakxCWTQiLCJpc3MiOiJORCJ9.WV-b-xkL8rQCGX3qVHC2UBYu-pB8gCAzFOMvymsJCdc?size=600",
+      "artistImageUrl": "http://127.0.0.1:14533/share/img/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFyLTVxcE50Y3NDNkRLaTczWWhYakxCWTQiLCJpc3MiOiJORCJ9.2BR5W3pswaVIrIcCB35mo2PVMXiD7kPa6zSP6Sd7rj8?size=600",
       "musicBrainzId": "",
       "sortName": "long haul orchestra",
       "roles": [
+        "maincredit",
         "albumartist",
-        "artist",
-        "maincredit"
+        "artist"
       ],
       "album": [
         {
@@ -27,7 +27,7 @@
           "coverArt": "al-1SJnfrI6VtIDLvy74TQoOJ",
           "songCount": 510,
           "duration": 10230,
-          "created": "2026-10-19T21:36:31.764145805Z",
+          "created": "2026-10-20T08:43:15.369598757Z",
           "year": 2022,
           "genre": "Classical",
           "userRating": 0,

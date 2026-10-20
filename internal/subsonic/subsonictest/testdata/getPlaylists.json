@@ -8,25 +8,25 @@
     "playlists": {
       "playlist": [
         {
-          "id": "7c9s6in7GMf4TQ8GPuPBFi",
+          "id": "3Jmo0uzXfmOPgwyGiNW5gB",
           "name": "Empty",
           "songCount": 0,
           "duration": 0,
           "owner": "admin",
-          "created": "2026-10-19T21:36:54.944230878Z",
-          "changed": "2026-10-19T21:36:54.945214435Z",
-          "coverArt": "pl-7c9s6in7GMf4TQ8GPuPBFi",
+          "created": "2026-10-20T08:43:34.231952448Z",
+          "changed": "2026-10-20T08:43:34.232744667Z",
+          "coverArt": "pl-3Jmo0uzXfmOPgwyGiNW5gB",
           "readonly": false
         },
         {
-          "id": "0haYCALAWXZEl6qPx1C2Ri",
+          "id": "5bmIbmFtXPoHexb3ajSCIi",
           "name": "Morning Mix",
           "songCount": 5,
           "duration": 988,
           "owner": "admin",
-          "created": "2026-10-19T21:36:54.931419094Z",
-          "changed": "2026-10-19T21:36:54.932998031Z",
-          "coverArt": "pl-0haYCALAWXZEl6qPx1C2Ri",
+          "created": "2026-10-20T08:43:34.220165803Z",
+          "changed": "2026-10-20T08:43:34.222118282Z",
+          "coverArt": "pl-5bmIbmFtXPoHexb3ajSCIi",
           "readonly": false
         }
       ]

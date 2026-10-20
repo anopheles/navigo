@@ -13,7 +13,7 @@
       "coverArt": "al-6dUjXTei5OjF3Dc9vq50Gh",
       "songCount": 4,
       "duration": 596,
-      "created": "2026-10-19T21:36:31.650147566Z",
+      "created": "2026-10-20T08:43:15.20160085Z",
       "year": 2020,
       "genre": "Electronic",
       "userRating": 0,
@@ -42,7 +42,7 @@
       "version": "",
       "song": [
         {
-          "id": "0yv5r17Zzr8J7ukrdUacDU",
+          "id": "4fB7IKlMjFmqM7yoz2HxGw",
           "parent": "6dUjXTei5OjF3Dc9vq50Gh",
           "isDir": false,
           "title": "Ångström",
@@ -59,7 +59,7 @@
           "bitRate": 16,
           "path": "Zoë Brandt/Ångström Days/01-01 - Ångström.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.734914322Z",
+          "created": "2026-10-20T08:43:31.947383412Z",
           "albumId": "6dUjXTei5OjF3Dc9vq50Gh",
           "artistId": "2yVh46xHg7UbYmzN38kszb",
           "type": "music",
@@ -101,7 +101,7 @@
           "movements": []
         },
         {
-          "id": "4hHFy7jMR9RGWSssges3lp",
+          "id": "2UhTATKcwr51UkAR3dnRFt",
           "parent": "6dUjXTei5OjF3Dc9vq50Gh",
           "isDir": false,
           "title": "Café Nocturne",
@@ -118,7 +118,7 @@
           "bitRate": 16,
           "path": "Zoë Brandt/Ångström Days/01-02 - Café Nocturne.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.720474377Z",
+          "created": "2026-10-20T08:43:31.937682443Z",
           "albumId": "6dUjXTei5OjF3Dc9vq50Gh",
           "artistId": "2yVh46xHg7UbYmzN38kszb",
           "type": "music",
@@ -160,7 +160,7 @@
           "movements": []
         },
         {
-          "id": "1A0XAAuctDdB5pVxQhGW1Y",
+          "id": "5iRthFq8SWStvAyLNsMoKk",
           "parent": "6dUjXTei5OjF3Dc9vq50Gh",
           "isDir": false,
           "title": "Über Alles Still",
@@ -177,7 +177,7 @@
           "bitRate": 16,
           "path": "Zoë Brandt/Ångström Days/01-03 - Über Alles Still.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.727295838Z",
+          "created": "2026-10-20T08:43:31.94118925Z",
           "albumId": "6dUjXTei5OjF3Dc9vq50Gh",
           "artistId": "2yVh46xHg7UbYmzN38kszb",
           "type": "music",
@@ -219,7 +219,7 @@
           "movements": []
         },
         {
-          "id": "60jWryDZjOn13evpIbGAPn",
+          "id": "1tzJspNKuWln48dyflj1LS",
           "parent": "6dUjXTei5OjF3Dc9vq50Gh",
           "isDir": false,
           "title": "Ça Va",
@@ -236,7 +236,7 @@
           "bitRate": 16,
           "path": "Zoë Brandt/Ångström Days/01-04 - Ça Va.mp3",
           "discNumber": 1,
-          "created": "2026-10-19T21:36:51.731666113Z",
+          "created": "2026-10-20T08:43:31.943803161Z",
           "albumId": "6dUjXTei5OjF3Dc9vq50Gh",
           "artistId": "2yVh46xHg7UbYmzN38kszb",
           "type": "music",

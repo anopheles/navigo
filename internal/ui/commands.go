@@ -25,10 +25,15 @@ func commands() *command.Registry[*Model] {
 		{Name: "last", Label: "last row", Desc: "Go to the last row, or to row N with a count.", Motion: true, Run: func(m *Model, c command.Call) error { m.goRow(c.Count, -1); return nil }},
 		{Name: "half-page-down", Label: "half page down", Desc: "Move down half a page.", Motion: true, Run: func(m *Model, c command.Call) error { m.move(c.N() * m.bodyHeight() / 2); return nil }},
 		{Name: "half-page-up", Label: "half page up", Desc: "Move up half a page.", Motion: true, Run: func(m *Model, c command.Call) error { m.move(-c.N() * m.bodyHeight() / 2); return nil }},
+		{Name: "next-group", Label: "next group", Desc: "Go to the start of the next group, such as an artist's Appears on albums.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(1, c.N()); return nil }},
+		{Name: "prev-group", Label: "previous group", Desc: "Go to the start of this group, or of the one before.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(-1, c.N()); return nil }},
 
 		{Name: "open", Label: "open", Desc: "Go into the row under the cursor.", Run: (*Model).open},
 		{Name: "back", Label: "back", Desc: "Go back out to the list you came from.", Run: func(m *Model, _ command.Call) error { m.back(); return nil }},
-		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showAlbums(); return nil }},
+		{Name: "go-album", Label: "album", Desc: "Go to the album of the track or album under the cursor.", Run: (*Model).goAlbum},
+		{Name: "go-artist", Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
+		{Name: "artists", Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
+		{Name: "albums", Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
 		{Name: "queue", Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focus = queueWindow; return nil }},
 		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error { m.focus = 1 - m.focus; return nil }},
 
@@ -49,6 +54,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "cmdline", Label: "command", Desc: "Type a command.", Run: func(m *Model, _ command.Call) error { m.enterLine(); return nil }},
 		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and clear the message.", Run: func(m *Model, _ command.Call) error { m.clearMsg(); return nil }},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
+		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
 		{Name: "messages", Label: "messages", Desc: "Show the messages of this session.", Run: func(m *Model, _ command.Call) error { m.showMessages(); return nil }},
 		{Name: "interrupt", Label: "cancel", Desc: "Like cancel; reminds you how to quit.", Run: func(m *Model, _ command.Call) error { m.setMsg("type :q to quit", false); return nil }},
 		{Name: "login", Label: "log in", Desc: "Log in to a server, or as another user.", Run: func(m *Model, _ command.Call) error {
@@ -80,6 +86,7 @@ func (m *Model) move(d int) {
 	}
 	f := m.top()
 	f.cur = min(max(f.cur+d, 0), max(m.rows(f)-1, 0))
+	m.settle(f, d)
 }
 
 // goRow moves to row count (1-based) when a count was typed, else to def
@@ -107,6 +114,11 @@ func (m *Model) goRow(count, def int) {
 		m.queueCur = row
 	} else {
 		m.top().cur = row
+		dir := 1
+		if def < 0 {
+			dir = -1
+		}
+		m.settle(m.top(), dir)
 	}
 }
 
@@ -114,16 +126,15 @@ func (m *Model) open(command.Call) error {
 	f := m.top()
 	switch f.kind {
 	case sectionList:
-		if f.cur == 0 {
-			m.lib = append(m.lib, frame{kind: albumList, title: "Albums"})
+		m.showSection(sections[f.cur].kind)
+	case artistList:
+		if lib := m.state.Library; lib != nil && f.cur < len(lib.Artists) {
+			m.openArtist(lib.Artists[f.cur])
 		}
-	case albumList:
-		lib := m.state.Library
-		if lib == nil || f.cur >= len(lib.Albums) {
-			return nil
+	case albumList, artistPage:
+		if a, ok := m.rowAlbum(); ok {
+			m.openAlbum(a, f.artist)
 		}
-		a := lib.Albums[f.cur]
-		m.lib = append(m.lib, frame{kind: albumTracks, album: a.ID, title: a.Name})
 	}
 	return nil
 }
@@ -132,17 +143,6 @@ func (m *Model) back() {
 	if m.focus == libraryWindow && len(m.lib) > 1 {
 		m.lib = m.lib[:len(m.lib)-1]
 	}
-}
-
-func (m *Model) showAlbums() {
-	m.focus = libraryWindow
-	for i, f := range m.lib {
-		if f.kind == albumList {
-			m.lib = m.lib[:i+1]
-			return
-		}
-	}
-	m.lib = append(m.lib[:1], frame{kind: albumList, title: "Albums"})
 }
 
 // trackRow returns the album tracks shown and the cursor row, if the

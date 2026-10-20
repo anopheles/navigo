@@ -5,6 +5,7 @@
 package library
 
 import (
+	"slices"
 	"time"
 
 	"github.com/anopheles/navigo/internal/subsonic"
@@ -60,6 +61,11 @@ type Track struct {
 	Number    int
 	Duration  time.Duration
 	PlayCount int
+}
+
+// Credits reports whether a track credits an artist.
+func (t Track) Credits(id ArtistID) bool {
+	return slices.ContainsFunc(t.Artists, func(a ArtistRef) bool { return a.ID == id })
 }
 
 // Playlist is a server playlist; one track can appear in it several times.

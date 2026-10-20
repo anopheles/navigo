@@ -6,14 +6,14 @@
     "serverVersion": "0.64.2 (10114574)",
     "openSubsonic": true,
     "playlist": {
-      "id": "7c9s6in7GMf4TQ8GPuPBFi",
+      "id": "3Jmo0uzXfmOPgwyGiNW5gB",
       "name": "Empty",
       "songCount": 0,
       "duration": 0,
       "owner": "admin",
-      "created": "2026-10-19T21:36:54.944230878Z",
-      "changed": "2026-10-19T21:36:54.945214435Z",
-      "coverArt": "pl-7c9s6in7GMf4TQ8GPuPBFi",
+      "created": "2026-10-20T08:43:34.231952448Z",
+      "changed": "2026-10-20T08:43:34.232744667Z",
+      "coverArt": "pl-3Jmo0uzXfmOPgwyGiNW5gB",
       "readonly": false
     }
   }

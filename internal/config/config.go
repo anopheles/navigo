@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -23,7 +24,37 @@ type Config struct {
 	Player Player `yaml:"player"`
 	// Hints shows the hint line; on unless set to false.
 	Hints *bool `yaml:"hints"`
-	Keys  Keys  `yaml:"keys"`
+	// Resume keeps the queue between runs; on unless set to false.
+	Resume Resume `yaml:"resume"`
+	Keys   Keys   `yaml:"keys"`
+}
+
+// Resume is the resume: setting.
+type Resume struct {
+	Off      bool
+	Problems []Problem
+}
+
+// UnmarshalYAML reads true or false; anything else is a Problem and
+// leaves Resume on.
+func (r *Resume) UnmarshalYAML(n *yaml.Node) error {
+	var v bool
+	if n.Kind != yaml.ScalarNode || n.Decode(&v) != nil {
+		r.Problems = append(r.Problems, Problem{pos(n), "resume: give true or false"})
+		return nil
+	}
+	r.Off = !v
+	return nil
+}
+
+// ResumeOn reports whether the queue is kept between runs.
+func (c Config) ResumeOn() bool { return !c.Resume.Off }
+
+// Problems are what was wrong with the values of the settings outside the
+// keys block, each at its place; the settings concerned keep their
+// defaults.
+func (c Config) Problems() []Problem {
+	return append(slices.Clone(c.Player.Problems), c.Resume.Problems...)
 }
 
 // Server is the one server navigo connects to. The password comes from

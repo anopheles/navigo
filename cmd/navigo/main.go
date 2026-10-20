@@ -141,6 +141,7 @@ func run() error {
 		os.Stderr = logFile
 	}
 	_, err = p.Run()
+	m.FlushSaved()
 	os.Stderr = stderr
 	if errors.Is(err, tea.ErrProgramPanic) {
 		slog.Error("navigo crashed")

@@ -195,3 +195,31 @@ func TestParseReplayGainProblems(t *testing.T) {
 		}
 	}
 }
+
+func TestParseResume(t *testing.T) {
+	for _, tc := range []struct {
+		yaml string
+		on   bool
+		msg  string
+	}{
+		{"", true, ""},
+		{"resume: true\n", true, ""},
+		{"resume: false\n", false, ""},
+		{"resume: maybe\n", true, "resume: give true or false"},
+		{"resume: [1]\n", true, "resume: give true or false"},
+	} {
+		c, err := Parse([]byte(tc.yaml))
+		if err != nil {
+			t.Errorf("%q: %v", tc.yaml, err)
+			continue
+		}
+		if c.ResumeOn() != tc.on {
+			t.Errorf("%q: ResumeOn = %v", tc.yaml, c.ResumeOn())
+		}
+		ps := c.Problems()
+		if tc.msg == "" && len(ps) != 0 ||
+			tc.msg != "" && (len(ps) != 1 || ps[0].Msg != tc.msg || ps[0].Line != 1) {
+			t.Errorf("%q: problems = %v", tc.yaml, ps)
+		}
+	}
+}

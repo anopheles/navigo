@@ -39,6 +39,7 @@ func (m *Model) setHints(c command.Call) error {
 // and the login form opens. Logging in again starts a fresh session.
 func (m *Model) logout(command.Call) error {
 	s := m.deps.Config.Server
+	m.event(app.LoggedOut{})
 	m.event(app.StopPlayback{})
 	note := "logged out · the password is forgotten"
 	switch err := m.deps.Keyring.Delete(creds.Service, creds.Key(s.URL, s.User)); {

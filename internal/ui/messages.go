@@ -64,6 +64,13 @@ func (m *Model) setMsg(text string, isErr bool) {
 // clearMsg empties the status line; the history keeps the message.
 func (m *Model) clearMsg() { m.shown = message{} }
 
+// clearConnecting removes the "connecting to…" message if it still shows.
+func (m *Model) clearConnecting() {
+	if m.connecting != 0 && m.shown.id == m.connecting {
+		m.clearMsg()
+	}
+}
+
 func (m *Model) expire(id int) {
 	if m.shown.id == id && !m.shown.err {
 		m.clearMsg()

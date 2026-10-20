@@ -116,10 +116,17 @@ type frame struct {
 
 // Model is the root Bubble Tea model. It is used by pointer.
 type Model struct {
-	deps   Deps
-	state  app.State
-	client *subsonic.Client
-	ctx    context.Context
+	deps  Deps
+	state app.State
+	// pendingSave is the saved queue waiting to be written; saveArmed,
+	// that the timer for it is running.
+	pendingSave *queueWrite
+	// connecting is the ID of the "connecting to…" message, which login
+	// removes and nothing else.
+	connecting int
+	saveArmed  bool
+	client     *subsonic.Client
+	ctx        context.Context
 
 	screen screen
 	login  loginForm
@@ -191,7 +198,7 @@ func New(deps Deps) (*Model, error) {
 	line.Prompt = ":"
 	m := &Model{
 		deps:     deps,
-		state:    app.New(),
+		state:    newState(deps.Config),
 		ctx:      context.Background(),
 		lib:      startPath(),
 		paths:    map[listKind][]frame{},
@@ -210,8 +217,7 @@ func New(deps Deps) (*Model, error) {
 	}
 	m.keys = set
 	m.setTable(t)
-	m.state.ReplayGain = gainOf(deps.Config.Player)
-	m.showProblems(append(problems, deps.Config.Player.Problems...))
+	m.showProblems(append(problems, deps.Config.Problems()...))
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
 		m.setMsg(
@@ -238,6 +244,7 @@ func (m *Model) Init() tea.Cmd {
 		return check
 	}
 	m.setMsg("connecting to "+s.URL+"…", false)
+	m.connecting = m.shown.id
 	return tea.Batch(check, m.dispatch(app.Start{}), func() tea.Msg {
 		p, err := creds.Password(m.ctx, s, m.deps.Keyring)
 		return passwordMsg{p, err}
@@ -260,6 +267,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case mediaMsg:
 		return m, m.mediaCommand(msg.Command)
+	case saveMsg:
+		return m, m.saveDue()
 	case secondMsg:
 		m.ticking = false
 		m.tick()
@@ -356,7 +365,7 @@ func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
 		if m.deps.OnLogin != nil {
 			m.deps.OnLogin(msg.client)
 		}
-		m.clearMsg()
+		m.clearConnecting()
 		return m.dispatch(app.StartedOffline{})
 	}
 	if msg.err != nil {
@@ -371,8 +380,12 @@ func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
 func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 	var stop tea.Cmd
 	if m.client != nil {
+		// The old session's queue is saved under its own server and user,
+		// and nothing more of it is: the config already names the new one.
+		m.flushPending()
+		m.state = m.state.StopSaving()
 		stop = tea.Batch(m.dispatch(app.StopPlayback{}))
-		m.state = app.New()
+		m.state = newState(m.deps.Config)
 		m.lib, m.paths = startPath(), map[listKind][]frame{}
 		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
 		stop = tea.Batch(stop, m.dispatch(app.Start{}))
@@ -385,9 +398,7 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 	if m.deps.OnLogin != nil {
 		m.deps.OnLogin(c)
 	}
-	if !m.shown.err {
-		m.clearMsg()
-	}
+	m.clearConnecting()
 	return tea.Batch(stop, m.dispatch(app.LoggedIn{}))
 }
 
@@ -409,6 +420,9 @@ func (m *Model) dispatch(e app.Event) tea.Cmd {
 // even though Bubble Tea runs commands concurrently.
 func (m *Model) run(e app.Effect) tea.Cmd {
 	ctx, c, p := m.ctx, m.client, m.deps.Player
+	if cmd, ok := m.runResume(e); ok {
+		return cmd
+	}
 	switch e := e.(type) {
 	case app.Notice:
 		m.notice(e)

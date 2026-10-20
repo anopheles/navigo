@@ -238,7 +238,6 @@ func (s State) playFrom(i int, start time.Duration) (State, []Effect) {
 	if out := s.cantPlay(); out != nil {
 		return s, out
 	}
-	s.resume = nil
 	if s.Offline {
 		s, out := s.probe(ProbeUser)
 		return s, append(
@@ -250,6 +249,7 @@ func (s State) playFrom(i int, start time.Duration) (State, []Effect) {
 			},
 		)
 	}
+	s.resume = nil
 	s.halted = false
 	s = s.rekeyStale()
 	sp := s.span(i)

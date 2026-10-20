@@ -72,3 +72,12 @@ func (m *Model) gainText() string {
 	}
 	return text
 }
+
+// newState is the core's state at the start of a session, with what the
+// config sets: ReplayGain and Resume.
+func newState(cfg config.Config) app.State {
+	s := app.New()
+	s.ReplayGain = gainOf(cfg.Player)
+	s.ResumeOn = cfg.ResumeOn()
+	return s
+}

@@ -263,7 +263,7 @@ func mapKeys[V any](m map[string]V) func(func(string) bool) {
 func CheckConfig(cfg config.Config, path string) ([]string, error) {
 	_, _, problems, err := buildKeys(cfg.Keys, commands())
 	var out []string
-	for _, p := range append(problems, cfg.Player.Problems...) {
+	for _, p := range append(problems, cfg.Problems()...) {
 		out = append(out, p.Format(path))
 	}
 	return out, err
@@ -375,11 +375,12 @@ func (m *Model) reloadConfig(command.Call) error {
 		return fmt.Errorf("%s: %w; the old bindings stay", m.deps.ConfigPath, err)
 	}
 	m.deps.Config.Keys, m.keys = cfg.Keys, set
-	m.deps.Config.Player = cfg.Player
+	m.deps.Config.Player, m.deps.Config.Resume = cfg.Player, cfg.Resume
 	m.setTable(t)
 	m.event(app.ConfigureReplayGain{ReplayGain: gainOf(cfg.Player)})
+	m.event(app.ConfigureResume{On: cfg.ResumeOn()})
 	m.setMsg("config reloaded", false)
-	m.showProblems(append(problems, cfg.Player.Problems...))
+	m.showProblems(append(problems, cfg.Problems()...))
 	return nil
 }
 

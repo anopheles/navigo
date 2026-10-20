@@ -13,6 +13,7 @@ import (
 
 	"github.com/anopheles/navigo/internal/library"
 	"github.com/anopheles/navigo/internal/player"
+	"github.com/anopheles/navigo/internal/resume"
 )
 
 // QueueEntry is one row of the queue.
@@ -50,11 +51,19 @@ type State struct {
 	// Gain holds the ReplayGain tags of the playing file, once the player
 	// has read them.
 	Gain player.GainTags
+	// ResumeOn says the queue is kept between runs (see resume.go).
+	ResumeOn bool
 	// Home is Home's album lists by kind, as the server last sent them.
 	Home map[string]AlbumList
 
 	cacheChecked bool // the cache file has been tried
-	loggedIn     bool
+
+	// Resume: the saved queue read at startup waits in pending for the
+	// library; saving starts once it is restored or known to be none, so
+	// the file isn't overwritten before it is read.
+	savedLoaded, restored, saving bool
+	pending                       *resume.Saved
+	loggedIn                      bool
 
 	// Offline: the server can't be reached (see offline.go). Probing is
 	// set while a check of the server is running.
@@ -230,6 +239,7 @@ const scrobbleAfter = 4 * time.Minute
 // the OS's media controls show changed, it adds PublishNowPlaying.
 func Apply(s State, e Event) (State, []Effect) {
 	n, out := apply(s, e)
+	n, out = withSaving(s, n, out)
 	if np := n.nowPlaying(); !reflect.DeepEqual(np, s.nowPlaying()) {
 		out = append(out, PublishNowPlaying{np})
 	}
@@ -239,7 +249,12 @@ func Apply(s State, e Event) (State, []Effect) {
 func apply(s State, e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case Start:
+		if s.ResumeOn {
+			return s, []Effect{LoadCache{}, LoadSaved{}}
+		}
 		return s, []Effect{LoadCache{}}
+	case SavedLoaded, ConfigureResume, LoggedOut:
+		return s.applyResume(e)
 	case CacheLoaded:
 		s.cacheChecked = true
 		if s.Library == nil {

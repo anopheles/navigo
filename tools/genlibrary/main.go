@@ -24,7 +24,11 @@ import (
 const marker = ".navigo-fixtures"
 
 func main() {
-	out := flag.String("out", "", "directory to write the library into (must be empty or written by genlibrary)")
+	out := flag.String(
+		"out",
+		"",
+		"directory to write the library into (must be empty or written by genlibrary)",
+	)
 	flag.Parse()
 	if *out == "" {
 		log.Fatal("genlibrary: -out is required")
@@ -53,7 +57,19 @@ func run(out string) error {
 				continue
 			}
 			p := filepath.Join(silence, strconv.Itoa(t.Seconds)+".mp3")
-			if err := ffmpeg("-f", "lavfi", "-i", "anullsrc=r=22050:cl=mono", "-t", strconv.Itoa(t.Seconds), "-c:a", "libmp3lame", "-b:a", "16k", p); err != nil {
+			if err := ffmpeg(
+				"-f",
+				"lavfi",
+				"-i",
+				"anullsrc=r=22050:cl=mono",
+				"-t",
+				strconv.Itoa(t.Seconds),
+				"-c:a",
+				"libmp3lame",
+				"-b:a",
+				"16k",
+				p,
+			); err != nil {
 				return err
 			}
 			bases[t.Seconds] = p
@@ -93,7 +109,12 @@ func run(out string) error {
 		return err
 	default:
 	}
-	fmt.Printf("wrote %d tracks in %d albums to %s\n", fixturelib.TrackCount(), len(fixturelib.Albums), out)
+	fmt.Printf(
+		"wrote %d tracks in %d albums to %s\n",
+		fixturelib.TrackCount(),
+		len(fixturelib.Albums),
+		out,
+	)
 	return nil
 }
 
@@ -149,7 +170,9 @@ func writeTrack(out, base string, a fixturelib.Album, t fixturelib.Track) error 
 }
 
 func ffmpeg(args ...string) error {
-	cmd := exec.Command("ffmpeg", append([]string{"-nostdin", "-loglevel", "error", "-y"}, args...)...)
+	cmd := exec.Command(
+		"ffmpeg",
+		append([]string{"-nostdin", "-loglevel", "error", "-y"}, args...)...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("ffmpeg %s: %v\n%s", strings.Join(args, " "), err, out)
 	}

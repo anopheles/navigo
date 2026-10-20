@@ -19,7 +19,11 @@ import (
 func ipcPath() (string, func(), error) {
 	b := make([]byte, 8)
 	_, _ = rand.Read(b)
-	return fmt.Sprintf(`\\.\pipe\navigo-mpv-%d-%s`, os.Getpid(), hex.EncodeToString(b)), func() {}, nil
+	return fmt.Sprintf(
+		`\\.\pipe\navigo-mpv-%d-%s`,
+		os.Getpid(),
+		hex.EncodeToString(b),
+	), func() {}, nil
 }
 
 func dialIPC(ctx context.Context, path string) (net.Conn, error) {

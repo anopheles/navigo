@@ -76,15 +76,32 @@ func (s State) died(err error, at time.Time) (State, []Effect) {
 	s.playing = 0
 	s.Player = PlayerState{Volume: s.Player.Volume}
 	s.PlayerDown = true
-	s.deaths = append(slices.DeleteFunc(slices.Clone(s.deaths), func(t time.Time) bool { return at.Sub(t) >= crashWindow }), at)
+	s.deaths = append(
+		slices.DeleteFunc(
+			slices.Clone(s.deaths),
+			func(t time.Time) bool { return at.Sub(t) >= crashWindow },
+		),
+		at,
+	)
 	if len(s.deaths) >= crashCap {
 		s.deaths, s.PlayerCapped = nil, true
-		return s, []Effect{ScheduleUncap{After: crashWindow}, Notice{
-			Text: "mpv crashed 3 times in a minute · it can start again in a minute, or now with :reconnect",
-			Err:  true, Unexpected: true,
-		}}
+		return s, []Effect{
+			ScheduleUncap{After: crashWindow},
+			Notice{
+				Text:       "mpv crashed 3 times in a minute · it can start again in a minute, or now with :reconnect",
+				Err:        true,
+				Unexpected: true,
+			},
+		}
 	}
-	return s, []Effect{Notice{Text: "the player stopped (" + err.Error() + ")", Command: "play-pause", Hint: "starts it again where it stopped", Err: true}}
+	return s, []Effect{
+		Notice{
+			Text:    "the player stopped (" + err.Error() + ")",
+			Command: "play-pause",
+			Hint:    "starts it again where it stopped",
+			Err:     true,
+		},
+	}
 }
 
 // resumePoint is where playback was when mpv died.
@@ -103,7 +120,12 @@ func (s State) cantPlay() []Effect {
 		}
 		return []Effect{Notice{Text: text, Err: true}}
 	case s.PlayerCapped:
-		return []Effect{Notice{Text: "mpv crashed 3 times in a minute · it can start again in a minute, or now with :reconnect", Err: true}}
+		return []Effect{
+			Notice{
+				Text: "mpv crashed 3 times in a minute · it can start again in a minute, or now with :reconnect",
+				Err:  true,
+			},
+		}
 	}
 	return nil
 }

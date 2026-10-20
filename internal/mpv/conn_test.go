@@ -85,7 +85,9 @@ func TestEventsInterleaveWithReplies(t *testing.T) {
 	c, _ := newFake(t, func(f *fakeMPV, id int64, cmd []any) {
 		f.send(`{"event":"start-file","playlist_entry_id":7}`)
 		f.send(`not json at all`)
-		f.send("{\"event\":\"property-change\",\"id\":3,\"name\":\"media-title\",\"data\":\"bad \xff utf8\"}")
+		f.send(
+			"{\"event\":\"property-change\",\"id\":3,\"name\":\"media-title\",\"data\":\"bad \xff utf8\"}",
+		)
 		f.send(`{"event":"property-change","id":2,"name":"duration"}`)
 		f.reply(id, "success", 1)
 	})
@@ -94,12 +96,18 @@ func TestEventsInterleaveWithReplies(t *testing.T) {
 	}
 	want := []Event{
 		{Name: "start-file", PlaylistEntryID: 7},
-		{Name: "property-change", ID: 3, Property: "media-title", Data: json.RawMessage("\"bad \xff utf8\"")},
+		{
+			Name:     "property-change",
+			ID:       3,
+			Property: "media-title",
+			Data:     json.RawMessage("\"bad \xff utf8\""),
+		},
 		{Name: "property-change", ID: 2, Property: "duration"},
 	}
 	for _, w := range want {
 		got := <-c.Events()
-		if got.Name != w.Name || got.ID != w.ID || got.PlaylistEntryID != w.PlaylistEntryID || string(got.Data) != string(w.Data) {
+		if got.Name != w.Name || got.ID != w.ID || got.PlaylistEntryID != w.PlaylistEntryID ||
+			string(got.Data) != string(w.Data) {
 			t.Errorf("event = %+v, want %+v", got, w)
 		}
 	}
@@ -133,16 +141,31 @@ func TestLargeLine(t *testing.T) {
 }
 
 func TestMPVError(t *testing.T) {
-	c, _ := newFake(t, func(f *fakeMPV, id int64, cmd []any) { f.reply(id, "property unavailable", nil) })
+	c, _ := newFake(
+		t,
+		func(f *fakeMPV, id int64, cmd []any) { f.reply(id, "property unavailable", nil) },
+	)
 	var v float64
-	if err := c.Get(context.Background(), "duration", &v); err == nil || !strings.Contains(err.Error(), "property unavailable") {
+	if err := c.Get(
+		context.Background(),
+		"duration",
+		&v,
+	); err == nil ||
+		!strings.Contains(err.Error(), "property unavailable") {
 		t.Fatalf("Get = %v, want mpv's error", err)
 	}
 }
 
 func TestNamedCommand(t *testing.T) {
-	c, f := newFake(t, func(f *fakeMPV, id int64, cmd []any) { f.reply(id, "success", map[string]int{"playlist_entry_id": 4}) })
-	data, err := c.Named(context.Background(), "loadfile", map[string]any{"url": "http://x", "flags": "append"})
+	c, f := newFake(
+		t,
+		func(f *fakeMPV, id int64, cmd []any) { f.reply(id, "success", map[string]int{"playlist_entry_id": 4}) },
+	)
+	data, err := c.Named(
+		context.Background(),
+		"loadfile",
+		map[string]any{"url": "http://x", "flags": "append"},
+	)
 	if err != nil || string(data) != `{"playlist_entry_id":4}` {
 		t.Fatalf("Named = %s, %v", data, err)
 	}

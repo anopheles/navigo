@@ -105,7 +105,10 @@ func Parse(b []byte) (Config, error) {
 	}
 	for _, a := range c.Player.MPVArgs {
 		if !strings.HasPrefix(a, "--") {
-			return Config{}, fmt.Errorf("player.mpv_args: %q is not an mpv option; options start with --", a)
+			return Config{}, fmt.Errorf(
+				"player.mpv_args: %q is not an mpv option; options start with --",
+				a,
+			)
 		}
 		name, _, _ := strings.Cut(a, "=")
 		for _, r := range reserved {
@@ -190,7 +193,11 @@ func set(m *yaml.Node, key, value string) {
 			return
 		}
 	}
-	m.Content = append(m.Content, &yaml.Node{Kind: yaml.ScalarNode, Value: key}, &yaml.Node{Kind: yaml.ScalarNode, Value: value})
+	m.Content = append(
+		m.Content,
+		&yaml.Node{Kind: yaml.ScalarNode, Value: key},
+		&yaml.Node{Kind: yaml.ScalarNode, Value: value},
+	)
 }
 
 func remove(m *yaml.Node, key string) {

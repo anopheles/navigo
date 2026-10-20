@@ -59,13 +59,29 @@ type facts struct {
 }
 
 func albumFacts(a library.Album) facts {
-	return facts{name: a.SortName, artist: a.Artist, genre: a.Genre, year: a.Year, plays: a.PlayCount, n: a.TrackCount, length: a.Duration}
+	return facts{
+		name:   a.SortName,
+		artist: a.Artist,
+		genre:  a.Genre,
+		year:   a.Year,
+		plays:  a.PlayCount,
+		n:      a.TrackCount,
+		length: a.Duration,
+	}
 }
 
 func artistFacts(a library.Artist) facts { return facts{name: a.SortName, n: a.AlbumCount} }
 
 func trackFacts(t library.Track) facts {
-	return facts{name: t.Title, artist: t.Artist, genre: t.Genre, year: t.Year, plays: t.PlayCount, number: t.Disc*10000 + t.Number, length: t.Duration}
+	return facts{
+		name:   t.Title,
+		artist: t.Artist,
+		genre:  t.Genre,
+		year:   t.Year,
+		plays:  t.PlayCount,
+		number: t.Disc*10000 + t.Number,
+		length: t.Duration,
+	}
 }
 
 // sortFields are the fields :sort takes on each kind of list, the first
@@ -190,7 +206,9 @@ func (m *Model) tracksOf(f *frame) []library.Track {
 	return f.view.tracks
 }
 
-var errNotSortable = errors.New("only Albums, Artists, Home's lists and an album's tracks can be sorted and filtered")
+var errNotSortable = errors.New(
+	"only Albums, Artists, Home's lists and an album's tracks can be sorted and filtered",
+)
 
 // viewFrame is the list :sort and :filter work on.
 func (m *Model) viewFrame() (*frame, error) {
@@ -234,9 +252,14 @@ func (m *Model) sortList(c command.Call) error {
 	field := strings.ToLower(c.Args[0])
 	fields := fieldsFor(f.kind)
 	if !slices.Contains(fields, field) {
-		return fmt.Errorf("sort: %q isn't a field here; try %s", c.Args[0], strings.Join(fields, ", "))
+		return fmt.Errorf(
+			"sort: %q isn't a field here; try %s",
+			c.Args[0],
+			strings.Join(fields, ", "),
+		)
 	}
-	desc := len(c.Args) > 1 && slices.Contains([]string{"desc", "down", "reverse"}, strings.ToLower(c.Args[1]))
+	desc := len(c.Args) > 1 &&
+		slices.Contains([]string{"desc", "down", "reverse"}, strings.ToLower(c.Args[1]))
 	m.changeView(f, func(v *listView) { v.sortBy, v.desc = field, desc })
 	m.setMsg("sorted by "+field+" · :sort alone puts the order back", false)
 	return nil

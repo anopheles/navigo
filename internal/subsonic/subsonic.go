@@ -205,7 +205,12 @@ func (c *Client) AlbumList(ctx context.Context, list ListType, size int) ([]Albu
 			Album []Album `json:"album"`
 		} `json:"albumList2"`
 	}
-	err := c.call(ctx, "getAlbumList2", url.Values{"type": {string(list)}, "size": {strconv.Itoa(size)}}, &r)
+	err := c.call(
+		ctx,
+		"getAlbumList2",
+		url.Values{"type": {string(list)}, "size": {strconv.Itoa(size)}},
+		&r,
+	)
 	return r.AlbumList2.Album, err
 }
 
@@ -218,7 +223,11 @@ func (c *Client) Albums(ctx context.Context, order ListType) ([]Album, error) {
 				Album []Album `json:"album"`
 			} `json:"albumList2"`
 		}
-		params := url.Values{"type": {string(order)}, "size": {strconv.Itoa(pageSize)}, "offset": {strconv.Itoa(offset)}}
+		params := url.Values{
+			"type":   {string(order)},
+			"size":   {strconv.Itoa(pageSize)},
+			"offset": {strconv.Itoa(offset)},
+		}
 		if err := c.call(ctx, "getAlbumList2", params, &r); err != nil {
 			return nil, err
 		}
@@ -260,10 +269,15 @@ func (c *Client) Search3(ctx context.Context, query string, n SearchCounts) (Sea
 		SearchResult3 SearchResult `json:"searchResult3"`
 	}
 	params := url.Values{
-		"query":       {query},
-		"artistCount": {strconv.Itoa(n.ArtistCount)}, "artistOffset": {strconv.Itoa(n.ArtistOffset)},
-		"albumCount": {strconv.Itoa(n.AlbumCount)}, "albumOffset": {strconv.Itoa(n.AlbumOffset)},
-		"songCount": {strconv.Itoa(n.SongCount)}, "songOffset": {strconv.Itoa(n.SongOffset)},
+		"query": {query},
+		"artistCount": {
+			strconv.Itoa(n.ArtistCount),
+		},
+		"artistOffset": {strconv.Itoa(n.ArtistOffset)},
+		"albumCount":   {strconv.Itoa(n.AlbumCount)},
+		"albumOffset":  {strconv.Itoa(n.AlbumOffset)},
+		"songCount":    {strconv.Itoa(n.SongCount)},
+		"songOffset":   {strconv.Itoa(n.SongOffset)},
 	}
 	err := c.call(ctx, "search3", params, &r)
 	return r.SearchResult3, err
@@ -301,7 +315,11 @@ func (c *Client) Playlist(ctx context.Context, id string) (Playlist, error) {
 // CreatePlaylist makes a playlist of songs, in order, and returns its ID.
 // With id set it replaces that playlist's songs instead, which is how
 // navigo reorders one.
-func (c *Client) CreatePlaylist(ctx context.Context, name, id string, songIDs []string) (string, error) {
+func (c *Client) CreatePlaylist(
+	ctx context.Context,
+	name, id string,
+	songIDs []string,
+) (string, error) {
 	q := url.Values{"songId": songIDs}
 	if id != "" {
 		q.Set("playlistId", id)
@@ -392,7 +410,12 @@ func (c *Client) ScanStatus(ctx context.Context) (ScanStatus, error) {
 // Scrobble reports a song as started (submission false) or as played
 // (submission true).
 func (c *Client) Scrobble(ctx context.Context, id string, submission bool) error {
-	return c.call(ctx, "scrobble", url.Values{"id": {id}, "submission": {strconv.FormatBool(submission)}}, nil)
+	return c.call(
+		ctx,
+		"scrobble",
+		url.Values{"id": {id}, "submission": {strconv.FormatBool(submission)}},
+		nil,
+	)
 }
 
 // StreamURL returns a URL that streams the song, signed with a fresh salt.
@@ -435,12 +458,22 @@ func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v
 	var req *http.Request
 	var err error
 	if c.formPost.Load() {
-		req, err = http.NewRequestWithContext(ctx, http.MethodPost, c.base+endpoint, strings.NewReader(q.Encode()))
+		req, err = http.NewRequestWithContext(
+			ctx,
+			http.MethodPost,
+			c.base+endpoint,
+			strings.NewReader(q.Encode()),
+		)
 		if req != nil {
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		}
 	} else {
-		req, err = http.NewRequestWithContext(ctx, http.MethodGet, c.base+endpoint+"?"+q.Encode(), nil)
+		req, err = http.NewRequestWithContext(
+			ctx,
+			http.MethodGet,
+			c.base+endpoint+"?"+q.Encode(),
+			nil,
+		)
 	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", endpoint, err)

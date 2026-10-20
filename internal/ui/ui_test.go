@@ -30,12 +30,18 @@ func TestBrowseOpenPlay(t *testing.T) {
 	h.contains("Albums › Blue Hour", "Dusk Signal", "<CR> play", "A add to queue", "a play next")
 
 	h.keys("j<CR>")
-	if calls := h.fake.Calls(); len(calls) < 2 || calls[0] != "Play(1 2 3)" || calls[1] != "SetNeighbours(1 3)" {
+	if calls := h.fake.Calls(); len(calls) < 2 || calls[0] != "Play(1 2 3)" ||
+		calls[1] != "SetNeighbours(1 3)" {
 		t.Fatalf("player calls = %q", calls)
 	}
 	h.fake.Tick(42 * time.Second)
 	h.pump()
-	h.contains("▶ Low Tide — Aurora Lane · Blue Hour", "2/6 in queue", "0:42 / 3:05", "playing · 6 tracks in the queue")
+	h.contains(
+		"▶ Low Tide — Aurora Lane · Blue Hour",
+		"2/6 in queue",
+		"0:42 / 3:05",
+		"playing · 6 tracks in the queue",
+	)
 
 	// The start of the track was reported, without counting it as played.
 	var scrobbles []string
@@ -206,7 +212,8 @@ func TestFirstRunLogin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if saved.Server.URL != url || saved.Server.User != subsonictest.Username || saved.Server.Password != "" {
+	if saved.Server.URL != url || saved.Server.User != subsonictest.Username ||
+		saved.Server.Password != "" {
 		t.Errorf("saved server = %+v, want URL and user but no password", saved.Server)
 	}
 	if info, err := os.Stat(h.path); err != nil || info.Mode().Perm() != 0o600 {
@@ -215,9 +222,15 @@ func TestFirstRunLogin(t *testing.T) {
 }
 
 func TestRejectedSavedPasswordOpensForm(t *testing.T) {
-	h := newHarness(t, 120, 40, func(c *config.Config, _ *subsonictest.Server) { c.Server.Password = "stale" })
+	h := newHarness(
+		t,
+		120,
+		40,
+		func(c *config.Config, _ *subsonictest.Server) { c.Server.Password = "stale" },
+	)
 	h.contains("the server rejected the saved username or password", "Password")
-	if h.m.login.fields[fieldURL].Value() == "" || h.m.login.fields[fieldUser].Value() != subsonictest.Username {
+	if h.m.login.fields[fieldURL].Value() == "" ||
+		h.m.login.fields[fieldUser].Value() != subsonictest.Username {
 		t.Error("form not filled in with the saved URL and user")
 	}
 	if h.m.login.focus != fieldPassword {

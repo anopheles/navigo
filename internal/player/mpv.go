@@ -309,13 +309,26 @@ func atLeast(v string, major, minor int) bool {
 
 // load appends e's stream to mpv's playlist with the given loadfile flags
 // and returns its mpv ID.
-func (m *MPV) load(ctx context.Context, p *mpv.Process, e Entry, flags string, index any) (int64, error) {
+func (m *MPV) load(
+	ctx context.Context,
+	p *mpv.Process,
+	e Entry,
+	flags string,
+	index any,
+) (int64, error) {
 	return m.loadAt(ctx, p, e, flags, index, 0)
 }
 
 // loadAt is load starting at a position. Each file also gets its title
 // (force-media-title) for mpv's Now Playing on macOS and SMTC on Windows.
-func (m *MPV) loadAt(ctx context.Context, p *mpv.Process, e Entry, flags string, index any, start time.Duration) (int64, error) {
+func (m *MPV) loadAt(
+	ctx context.Context,
+	p *mpv.Process,
+	e Entry,
+	flags string,
+	index any,
+	start time.Duration,
+) (int64, error) {
 	args := map[string]any{"url": m.opts.StreamURL(e.Track), "flags": flags}
 	if index != nil {
 		args["index"] = index

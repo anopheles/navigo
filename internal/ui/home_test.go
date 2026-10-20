@@ -9,8 +9,25 @@ import (
 
 func TestStartsOnHome(t *testing.T) {
 	h := homeHarness(t, 120, 40, nil)
-	h.contains(" Home ", "Recently added", "Most played", "Recently played", "Random", "Starred", "<CR> open")
-	if got := h.order("Recently added", "Most played", "Recently played", "Random", "Starred"); strings.Join(got, ",") != "Recently added,Most played,Recently played,Random,Starred" {
+	h.contains(
+		" Home ",
+		"Recently added",
+		"Most played",
+		"Recently played",
+		"Random",
+		"Starred",
+		"<CR> open",
+	)
+	if got := h.order(
+		"Recently added",
+		"Most played",
+		"Recently played",
+		"Random",
+		"Starred",
+	); strings.Join(
+		got,
+		",",
+	) != "Recently added,Most played,Recently played,Random,Starred" {
 		t.Errorf("Home's lists in order %q", got)
 	}
 	golden.RequireEqual(t, h.screen())

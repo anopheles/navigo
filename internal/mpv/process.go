@@ -81,7 +81,11 @@ func Start(ctx context.Context, opts Options) (*Process, error) {
 		select {
 		case <-p.exited:
 			p.cleanup()
-			return nil, fmt.Errorf("mpv exited before it was ready (%v)%s", p.waitErr, diagnose(path, opts.Args))
+			return nil, fmt.Errorf(
+				"mpv exited before it was ready (%v)%s",
+				p.waitErr,
+				diagnose(path, opts.Args),
+			)
 		case <-ctx.Done():
 			_ = p.kill()
 			return nil, fmt.Errorf("mpv: no IPC connection: %w", ctx.Err())
@@ -132,7 +136,10 @@ func (p *Process) kill() error {
 func diagnose(path string, args []string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, path, append([]string{"--no-config", "--idle=no", "--no-video", "--ao=null"}, args...)...)
+	cmd := exec.CommandContext(
+		ctx,
+		path,
+		append([]string{"--no-config", "--idle=no", "--no-video", "--ao=null"}, args...)...)
 	out, _ := cmd.CombinedOutput()
 	var errs []string
 	for line := range strings.Lines(string(out)) {

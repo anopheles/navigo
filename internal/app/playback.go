@@ -48,7 +48,10 @@ func (s State) applyPlayback(e Event) (State, []Effect) {
 			v = e.To
 		}
 		s.Player.Volume = min(max(v, 0), 100)
-		return s, []Effect{SetVolume{Percent: s.Player.Volume}, Notice{Text: fmt.Sprintf("volume %d%%", s.Player.Volume)}}
+		return s, []Effect{
+			SetVolume{Percent: s.Player.Volume},
+			Notice{Text: fmt.Sprintf("volume %d%%", s.Player.Volume)},
+		}
 
 	case Shuffle:
 		if len(s.Queue) < 2 {
@@ -65,7 +68,10 @@ func (s State) applyPlayback(e Event) (State, []Effect) {
 		rest := q[start:]
 		r.Shuffle(len(rest), func(i, j int) { rest[i], rest[j] = rest[j], rest[i] })
 		s = s.editRows(q, -1)
-		return s, append(s.neighbours(), Notice{Text: "queue shuffled", Command: "undo", Hint: "undoes"})
+		return s, append(
+			s.neighbours(),
+			Notice{Text: "queue shuffled", Command: "undo", Hint: "undoes"},
+		)
 
 	case CycleRepeat:
 		s.Repeat = (s.Repeat + 1) % 3

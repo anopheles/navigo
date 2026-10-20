@@ -62,7 +62,23 @@ func TestBindingProblems(t *testing.T) {
 		"config.yaml:14:7: gz isn't bound in normal.global, so there is nothing to delete",
 		"config.yaml:15:12: g: give a command line, nop for a dead key, or ~ to delete the binding",
 		"config.yaml:17:5: jk: command-line bindings are single keys",
-		`config.yaml:18:5: "stop" isn't a command-line command; they are ` + strings.Join([]string{"accept", "cancel", "complete", "complete-back", "history-back", "history-forward", "kill-to-end", "kill-to-start", "kill-word", "line-end", "line-start", "nop"}, ", "),
+		`config.yaml:18:5: "stop" isn't a command-line command; they are ` + strings.Join(
+			[]string{
+				"accept",
+				"cancel",
+				"complete",
+				"complete-back",
+				"history-back",
+				"history-forward",
+				"kill-to-end",
+				"kill-to-start",
+				"kill-word",
+				"line-end",
+				"line-start",
+				"nop",
+			},
+			", ",
+		),
 	}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Errorf("problems:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
@@ -90,18 +106,33 @@ func TestBindingsApply(t *testing.T) {
 	if err != nil || len(problems) > 0 {
 		t.Fatalf("problems %v, %v", problems, err)
 	}
-	if set.timeout != 300*time.Millisecond || set.hintDelay != 200*time.Millisecond || set.prefixMenus || set.leader != "," {
+	if set.timeout != 300*time.Millisecond || set.hintDelay != 200*time.Millisecond ||
+		set.prefixMenus ||
+		set.leader != "," {
 		t.Errorf("settings = %+v", set)
 	}
-	if ks := tb.KeysFor(keymap.Normal, []string{"global"}, "seek +60"); len(ks) != 1 || ks[0] != ",x" {
+	if ks := tb.KeysFor(
+		keymap.Normal,
+		[]string{"global"},
+		"seek +60",
+	); len(ks) != 1 ||
+		ks[0] != ",x" {
 		t.Errorf("leader binding = %q", ks)
 	}
 	// ~ falls through to the wider scope; nop is a dead key.
 	e := keymap.NewEngine(tb)
-	if r := e.Feed(keymap.Normal, []string{"album-tracks", "tracks", "global"}, "A"); r.Kind != keymap.NoMatch {
+	if r := e.Feed(
+		keymap.Normal,
+		[]string{"album-tracks", "tracks", "global"},
+		"A",
+	); r.Kind != keymap.NoMatch {
 		t.Errorf("A after ~ = %+v", r)
 	}
-	if r := e.Feed(keymap.Normal, []string{"albums", "containers", "global"}, "l"); r.Command != "nop" {
+	if r := e.Feed(
+		keymap.Normal,
+		[]string{"albums", "containers", "global"},
+		"l",
+	); r.Command != "nop" {
 		t.Errorf("l = %+v, want nop", r)
 	}
 	// A motion bound in normal works in Visual mode too.
@@ -125,7 +156,11 @@ func TestNoQuitRefusesToStart(t *testing.T) {
 	if _, _, _, err := buildKeys(k, commands()); err != nil {
 		t.Errorf("with : bound: %v", err)
 	}
-	if problems, err := CheckConfig(config.Config{Keys: k}, "c.yaml"); len(problems) != 0 || err != nil {
+	if problems, err := CheckConfig(
+		config.Config{Keys: k},
+		"c.yaml",
+	); len(problems) != 0 ||
+		err != nil {
 		t.Errorf("CheckConfig = %v, %v", problems, err)
 	}
 }

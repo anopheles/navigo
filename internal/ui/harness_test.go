@@ -64,7 +64,10 @@ func (h *harness) advance(d time.Duration) {
 	h.t.Helper()
 	h.clock.now = h.clock.now.Add(d)
 	for {
-		i := slices.IndexFunc(h.clock.timers, func(t timer) bool { return !t.at.After(h.clock.now) })
+		i := slices.IndexFunc(
+			h.clock.timers,
+			func(t timer) bool { return !t.at.After(h.clock.now) },
+		)
 		if i < 0 {
 			return
 		}
@@ -122,17 +125,45 @@ func homeHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest
 
 // setupHarness is homeHarness with setup run before Init, such as to make
 // the fake player's startup check fail.
-func setupHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictest.Server), setup func(*harness)) *harness {
+func setupHarness(
+	t *testing.T,
+	w, h int,
+	edit func(*config.Config, *subsonictest.Server),
+	setup func(*harness),
+) *harness {
 	t.Helper()
 	srv := subsonictest.NewServer(t)
-	cfg := config.Config{Server: config.Server{URL: srv.URL, User: subsonictest.Username, Password: subsonictest.Password}}
+	cfg := config.Config{
+		Server: config.Server{
+			URL:      srv.URL,
+			User:     subsonictest.Username,
+			Password: subsonictest.Password,
+		},
+	}
 	if edit != nil {
 		edit(&cfg, srv)
 	}
-	hs := &harness{t: t, srv: srv, fake: player.NewFake(), kr: memKeyring{}, path: filepath.Join(t.TempDir(), "navigo", "config.yaml")}
+	hs := &harness{
+		t:    t,
+		srv:  srv,
+		fake: player.NewFake(),
+		kr:   memKeyring{},
+		path: filepath.Join(t.TempDir(), "navigo", "config.yaml"),
+	}
 	hs.cache = filepath.Join(filepath.Dir(hs.path), "cache")
 	hs.state = filepath.Join(filepath.Dir(hs.path), "state")
-	m, err := New(Deps{Config: cfg, ConfigPath: hs.path, Player: hs.fake, Keyring: hs.kr, CacheDir: hs.cache, StateDir: hs.state, LogPath: "/logs/navigo.log", OnLogin: func(*subsonic.Client) { hs.logins++ }})
+	m, err := New(
+		Deps{
+			Config:     cfg,
+			ConfigPath: hs.path,
+			Player:     hs.fake,
+			Keyring:    hs.kr,
+			CacheDir:   hs.cache,
+			StateDir:   hs.state,
+			LogPath:    "/logs/navigo.log",
+			OnLogin:    func(*subsonic.Client) { hs.logins++ },
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,8 +183,26 @@ func setupHarness(t *testing.T, w, h int, edit func(*config.Config, *subsonictes
 // second launch would.
 func (h *harness) restart() *harness {
 	h.t.Helper()
-	n := &harness{t: h.t, srv: h.srv, fake: player.NewFake(), kr: h.kr, path: h.path, cache: h.cache, state: h.state}
-	m, err := New(Deps{Config: h.m.deps.Config, ConfigPath: h.path, Player: n.fake, Keyring: n.kr, CacheDir: n.cache, StateDir: n.state, OnLogin: func(*subsonic.Client) { n.logins++ }})
+	n := &harness{
+		t:     h.t,
+		srv:   h.srv,
+		fake:  player.NewFake(),
+		kr:    h.kr,
+		path:  h.path,
+		cache: h.cache,
+		state: h.state,
+	}
+	m, err := New(
+		Deps{
+			Config:     h.m.deps.Config,
+			ConfigPath: h.path,
+			Player:     n.fake,
+			Keyring:    n.kr,
+			CacheDir:   n.cache,
+			StateDir:   n.state,
+			OnLogin:    func(*subsonic.Client) { n.logins++ },
+		},
+	)
 	if err != nil {
 		h.t.Fatal(err)
 	}

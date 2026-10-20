@@ -15,8 +15,22 @@ import (
 )
 
 // scopeNames are the scopes a binding can name.
-var scopeNames = []string{"global", "popup", "sections", "home", "artists", "albums", "playlists", "containers",
-	"album-tracks", "playlist-tracks", "tracks", "queue", "help", "search"}
+var scopeNames = []string{
+	"global",
+	"popup",
+	"sections",
+	"home",
+	"artists",
+	"albums",
+	"playlists",
+	"containers",
+	"album-tracks",
+	"playlist-tracks",
+	"tracks",
+	"queue",
+	"help",
+	"search",
+}
 
 // lineCommands are what Command-line, Search and Prompt keys run: line
 // editing, with what Help says of them.
@@ -44,7 +58,12 @@ type keySettings struct {
 }
 
 func settingsFrom(k config.Keys) keySettings {
-	s := keySettings{timeout: time.Second, hintDelay: 500 * time.Millisecond, prefixMenus: k.HintsOn(), leader: k.LeaderKey()}
+	s := keySettings{
+		timeout:     time.Second,
+		hintDelay:   500 * time.Millisecond,
+		prefixMenus: k.HintsOn(),
+		leader:      k.LeaderKey(),
+	}
 	if k.Timeout > 0 {
 		s.timeout = time.Duration(k.Timeout) * time.Millisecond
 	}
@@ -55,13 +74,18 @@ func settingsFrom(k config.Keys) keySettings {
 }
 
 // errNoQuit is why navigo won't start with a table that can't quit.
-var errNoQuit = errors.New("no key quits navigo: bind quit, or cmdline for :q, in keys: normal: global:")
+var errNoQuit = errors.New(
+	"no key quits navigo: bind quit, or cmdline for :q, in keys: normal: global:",
+)
 
 // buildKeys makes the binding table: the defaults unless defaults: false,
 // then each binding of the keys: block. A bad binding is skipped and
 // becomes a problem at its place. errNoQuit means the table must not be
 // used.
-func buildKeys(k config.Keys, reg *command.Registry[*Model]) (*keymap.Table, keySettings, []config.Problem, error) {
+func buildKeys(
+	k config.Keys,
+	reg *command.Registry[*Model],
+) (*keymap.Table, keySettings, []config.Problem, error) {
 	t := keymap.NewTable()
 	if k.DefaultsOn() {
 		t = defaultTable()
@@ -78,12 +102,27 @@ func buildKeys(k config.Keys, reg *command.Registry[*Model]) (*keymap.Table, key
 		if tokens, err := keymap.Parse(expandLeader(b.Keys, set.leader)); err == nil {
 			p := place{b.Mode, scope, strings.Join(tokens, "")}
 			if first, dup := seen[p]; dup {
-				problems = append(problems, config.Problem{Pos: b.Pos, Msg: fmt.Sprintf("%s is bound already, at line %d", b.Keys, first.Line)})
+				problems = append(
+					problems,
+					config.Problem{
+						Pos: b.Pos,
+						Msg: fmt.Sprintf("%s is bound already, at line %d", b.Keys, first.Line),
+					},
+				)
 				continue
 			}
 			seen[p] = b.Pos
 		}
-		if err := bindOne(t, reg, set.leader, b.Mode, b.Scope, b.Keys, b.Command, b.Delete); err != nil {
+		if err := bindOne(
+			t,
+			reg,
+			set.leader,
+			b.Mode,
+			b.Scope,
+			b.Keys,
+			b.Command,
+			b.Delete,
+		); err != nil {
 			problems = append(problems, config.Problem{Pos: b.Pos, Msg: err.Error()})
 		}
 	}
@@ -97,9 +136,12 @@ func buildKeys(k config.Keys, reg *command.Registry[*Model]) (*keymap.Table, key
 // canQuit reports whether some key quits from anywhere: quit itself, or
 // : for :q.
 func canQuit(t *keymap.Table) bool {
-	return slices.ContainsFunc(t.Effective(keymap.Normal, []string{"global"}), func(b keymap.Binding) bool {
-		return b.Name() == "quit" || b.Name() == "cmdline"
-	})
+	return slices.ContainsFunc(
+		t.Effective(keymap.Normal, []string{"global"}),
+		func(b keymap.Binding) bool {
+			return b.Name() == "quit" || b.Name() == "cmdline"
+		},
+	)
 }
 
 // expandLeader writes the leader for <leader>, in any case.
@@ -118,7 +160,12 @@ func expandLeader(seq, leader string) string {
 
 // bindOne checks one binding and applies it to t: mode, scope, keys,
 // then the command and its arguments; del removes it instead.
-func bindOne(t *keymap.Table, reg *command.Registry[*Model], leader, mode, scope, keys, line string, del bool) error {
+func bindOne(
+	t *keymap.Table,
+	reg *command.Registry[*Model],
+	leader, mode, scope, keys, line string,
+	del bool,
+) error {
 	var m keymap.Mode
 	switch mode {
 	case "normal":
@@ -143,7 +190,10 @@ func bindOne(t *keymap.Table, reg *command.Registry[*Model], leader, mode, scope
 	}
 	switch {
 	case tokens[0] == `"`:
-		return fmt.Errorf(`%s: keys can't start with ", which names a register; navigo has one`, keys)
+		return fmt.Errorf(
+			`%s: keys can't start with ", which names a register; navigo has one`,
+			keys,
+		)
 	case m == keymap.Cmdline && len(tokens) > 1:
 		return fmt.Errorf("%s: command-line bindings are single keys", keys)
 	}
@@ -164,7 +214,11 @@ func bindOne(t *keymap.Table, reg *command.Registry[*Model], leader, mode, scope
 	}
 	if m == keymap.Cmdline {
 		if _, ok := lineCommands[call.Name]; !ok {
-			return fmt.Errorf("%q isn't a command-line command; they are %s", call.Name, strings.Join(slices.Sorted(mapKeys(lineCommands)), ", "))
+			return fmt.Errorf(
+				"%q isn't a command-line command; they are %s",
+				call.Name,
+				strings.Join(slices.Sorted(mapKeys(lineCommands)), ", "),
+			)
 		}
 		if len(call.Args) > 0 {
 			return fmt.Errorf("%s takes no arguments", call.Name)
@@ -220,7 +274,13 @@ func (m *Model) showProblems(problems []config.Problem) {
 	for i, p := range problems {
 		lines[i] = errStyle.Render(p.Format(m.deps.ConfigPath))
 	}
-	lines = append(lines, "", dimStyle.Render("These bindings were skipped; the rest apply. :reload-config reads the file again."))
+	lines = append(
+		lines,
+		"",
+		dimStyle.Render(
+			"These bindings were skipped; the rest apply. :reload-config reads the file again.",
+		),
+	)
 	m.openPopup("config.yaml has problems", lines)
 }
 
@@ -241,7 +301,11 @@ func sessionMapIn(mode string) func(*Model, command.Call) error {
 			return err
 		}
 		if len(args) < 2 {
-			return fmt.Errorf("%s: give keys and a command, such as %s <leader>x seek +60", c.Name, c.Name)
+			return fmt.Errorf(
+				"%s: give keys and a command, such as %s <leader>x seek +60",
+				c.Name,
+				c.Name,
+			)
 		}
 		line := strings.Join(args[1:], " ")
 		return m.changeTable(func(t *keymap.Table) error {
@@ -318,7 +382,9 @@ func (m *Model) showMap(command.Call) error {
 	cur, def := m.engine.Table(), defaultTable()
 	var lines []string
 	for _, mode := range []keymap.Mode{keymap.Normal, keymap.Visual, keymap.Cmdline} {
-		scopes := slices.Compact(slices.Sorted(slices.Values(append(cur.Scopes(mode), def.Scopes(mode)...))))
+		scopes := slices.Compact(
+			slices.Sorted(slices.Values(append(cur.Scopes(mode), def.Scopes(mode)...))),
+		)
 		for _, scope := range scopes {
 			where := string(mode) + "." + scope
 			if mode == keymap.Cmdline {
@@ -326,19 +392,43 @@ func (m *Model) showMap(command.Call) error {
 			}
 			now, was := cur.Bindings(mode, scope), def.Bindings(mode, scope)
 			for _, b := range now {
-				if !slices.ContainsFunc(was, func(o keymap.Binding) bool { return o.Seq() == b.Seq() && o.Command == b.Command }) {
-					lines = append(lines, fmt.Sprintf("%-22s %s  %s", where, keyStyle.Render(fit(keyLabel(b.Seq()), 10)), b.Command))
+				if !slices.ContainsFunc(
+					was,
+					func(o keymap.Binding) bool { return o.Seq() == b.Seq() && o.Command == b.Command },
+				) {
+					lines = append(
+						lines,
+						fmt.Sprintf(
+							"%-22s %s  %s",
+							where,
+							keyStyle.Render(fit(keyLabel(b.Seq()), 10)),
+							b.Command,
+						),
+					)
 				}
 			}
 			for _, b := range was {
-				if !slices.ContainsFunc(now, func(o keymap.Binding) bool { return o.Seq() == b.Seq() }) {
-					lines = append(lines, fmt.Sprintf("%-22s %s  %s", where, keyStyle.Render(fit(keyLabel(b.Seq()), 10)), dimStyle.Render("deleted (was "+b.Command+")")))
+				if !slices.ContainsFunc(
+					now,
+					func(o keymap.Binding) bool { return o.Seq() == b.Seq() },
+				) {
+					lines = append(
+						lines,
+						fmt.Sprintf(
+							"%-22s %s  %s",
+							where,
+							keyStyle.Render(fit(keyLabel(b.Seq()), 10)),
+							dimStyle.Render("deleted (was "+b.Command+")"),
+						),
+					)
 				}
 			}
 		}
 	}
 	if len(lines) == 0 {
-		lines = []string{dimStyle.Render("no bindings differ from the defaults · '? lists them all")}
+		lines = []string{
+			dimStyle.Render("no bindings differ from the defaults · '? lists them all"),
+		}
 	}
 	m.openPopup("Bindings changed from the defaults", lines)
 	return nil

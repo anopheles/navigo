@@ -37,7 +37,10 @@ func TestSecondStartUsesTheCache(t *testing.T) {
 	if h2.requests("getPlaylists") < 2 || h2.requests("getStarred2") < 2 {
 		t.Error("second start didn't refresh playlists and stars")
 	}
-	if slices.ContainsFunc(h2.progress, func(p string) bool { return strings.Contains(p, "Syncing") }) {
+	if slices.ContainsFunc(
+		h2.progress,
+		func(p string) bool { return strings.Contains(p, "Syncing") },
+	) {
 		t.Errorf("second start showed sync progress: %q", h2.progress)
 	}
 }
@@ -76,7 +79,16 @@ func TestNewSnapshotKeepsCursorsByID(t *testing.T) {
 	}
 	// A sync where Blue Hour now sorts first.
 	blueHour.SortName = "aaa"
-	fresh := library.Build(old.Server, old.User, old.LastScan, old.Artists, append(rest, blueHour), old.Tracks, old.Playlists, old.Starred)
+	fresh := library.Build(
+		old.Server,
+		old.User,
+		old.LastScan,
+		old.Artists,
+		append(rest, blueHour),
+		old.Tracks,
+		old.Playlists,
+		old.Starred,
+	)
 	h.send(eventMsg{appSynced(fresh)})
 	if h.m.top().cur != 0 || !strings.Contains(h.cursorRow(), "Blue Hour") {
 		t.Errorf("cursor at row %d (%q), want Blue Hour at row 0", h.m.top().cur, h.cursorRow())

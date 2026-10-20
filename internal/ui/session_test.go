@@ -30,7 +30,9 @@ func TestSortAlbums(t *testing.T) {
 	h.cursorOn("Ångström Days")
 
 	h.keys(":sort bogus<CR>")
-	h.contains(`sort: "bogus" isn't a field here; try name, artist, year, plays, tracks, length, genre`)
+	h.contains(
+		`sort: "bogus" isn't a field here; try name, artist, year, plays, tracks, length, genre`,
+	)
 }
 
 func TestFilterAlbums(t *testing.T) {
@@ -91,7 +93,10 @@ func TestLogout(t *testing.T) {
 	h.kr[creds.Service+"/"+creds.Key(srv.URL, srv.User)] = subsonictest.Password
 	h.keys("3j<CR><CR>")
 	h.keys(":logout<CR>")
-	h.contains("Log in to your Navidrome or Subsonic server", "logged out · the password is forgotten")
+	h.contains(
+		"Log in to your Navidrome or Subsonic server",
+		"logged out · the password is forgotten",
+	)
 	if _, ok := h.kr[creds.Service+"/"+creds.Key(srv.URL, srv.User)]; ok {
 		t.Error("the keyring still has the password")
 	}

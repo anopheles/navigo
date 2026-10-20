@@ -90,14 +90,18 @@ func (m *Model) moveInPlaylist(c command.Call, down bool) error {
 func (m *Model) deletePlaylist(command.Call) error {
 	f := m.top()
 	lib := m.state.Library
-	if m.focus != libraryWindow || f.kind != playlistList || lib == nil || f.cur >= len(lib.Playlists) {
+	if m.focus != libraryWindow || f.kind != playlistList || lib == nil ||
+		f.cur >= len(lib.Playlists) {
 		return errors.New("not on a playlist")
 	}
 	if m.state.Offline {
 		return errOffline
 	}
 	p := lib.Playlists[f.cur]
-	m.confirm(fmt.Sprintf("Delete the playlist %s?", p.Name), func() { m.event(app.PlaylistDelete{ID: p.ID}) })
+	m.confirm(
+		fmt.Sprintf("Delete the playlist %s?", p.Name),
+		func() { m.event(app.PlaylistDelete{ID: p.ID}) },
+	)
 	return nil
 }
 
@@ -146,7 +150,9 @@ func (m *Model) chosenTracks() (tracks []library.Track, artists int, err error) 
 func (m *Model) playlistAdd(c command.Call) error {
 	name := strings.Join(c.Args, " ")
 	if name == "" {
-		return errors.New("playlist-add: give the playlist's name, such as playlist-add Morning Mix")
+		return errors.New(
+			"playlist-add: give the playlist's name, such as playlist-add Morning Mix",
+		)
 	}
 	var p library.Playlist
 	found := false

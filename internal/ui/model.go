@@ -213,7 +213,13 @@ func New(deps Deps) (*Model, error) {
 	m.showProblems(problems)
 	m.player.init()
 	if config.LooseWithPassword(deps.ConfigPath, deps.Config) {
-		m.setMsg(fmt.Sprintf("%s holds a password and others can read it · chmod 600 it", deps.ConfigPath), true)
+		m.setMsg(
+			fmt.Sprintf(
+				"%s holds a password and others can read it · chmod 600 it",
+				deps.ConfigPath,
+			),
+			true,
+		)
 	}
 	return m, nil
 }
@@ -287,7 +293,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if d, ok := fp.Event.(player.Died); ok { // the crash cap counts in time
 				return m, m.dispatch(app.PlayerDied{Err: d.Err, At: m.clock.Now()})
 			}
-			if b, ok := fp.Event.(player.Buffering); ok && b.Buffering && !m.state.Player.Buffering {
+			if b, ok := fp.Event.(player.Buffering); ok && b.Buffering &&
+				!m.state.Player.Buffering {
 				m.armStall()
 			}
 		}
@@ -489,7 +496,10 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		m.retryAt = m.clock.Now().Add(e.After)
 		m.tick()
 		seq := e.Seq
-		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.RetryNow{Seq: seq}} })
+		return m.clock.After(
+			e.After,
+			func(time.Time) tea.Msg { return eventMsg{app.RetryNow{Seq: seq}} },
+		)
 	case app.FetchAlbumList:
 		return func() tea.Msg {
 			if c == nil {
@@ -500,7 +510,14 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 			for i, a := range list {
 				albums[i] = library.AlbumFrom(a)
 			}
-			return eventMsg{app.AlbumListLoaded{Kind: e.Kind, Albums: albums, Err: err, Unreachable: subsonic.IsUnreachable(err)}}
+			return eventMsg{
+				app.AlbumListLoaded{
+					Kind:        e.Kind,
+					Albums:      albums,
+					Err:         err,
+					Unreachable: subsonic.IsUnreachable(err),
+				},
+			}
 		}
 	case app.WritePlaylist:
 		return func() tea.Msg {
@@ -525,7 +542,14 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 			case app.DeletePlaylist:
 				err = c.DeletePlaylist(ctx, string(e.ID))
 			}
-			return eventMsg{app.PlaylistWritten{Write: e, NewID: library.PlaylistID(newID), Err: err, Unreachable: subsonic.IsUnreachable(err)}}
+			return eventMsg{
+				app.PlaylistWritten{
+					Write:       e,
+					NewID:       library.PlaylistID(newID),
+					Err:         err,
+					Unreachable: subsonic.IsUnreachable(err),
+				},
+			}
 		}
 	case app.WriteStar:
 		return func() tea.Msg {
@@ -533,7 +557,9 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 				return eventMsg{app.StarsWritten{Write: e, Err: errors.New("not logged in")}}
 			}
 			err := c.Star(ctx, e.On, e.Artists, e.Albums, e.Tracks)
-			return eventMsg{app.StarsWritten{Write: e, Err: err, Unreachable: subsonic.IsUnreachable(err)}}
+			return eventMsg{
+				app.StarsWritten{Write: e, Err: err, Unreachable: subsonic.IsUnreachable(err)},
+			}
 		}
 	case app.OpenLogin:
 		s := m.deps.Config.Server
@@ -579,14 +605,20 @@ func (m *Model) tick() {
 		return
 	}
 	m.ticking = true
-	m.timers = append(m.timers, m.clock.After(time.Second, func(time.Time) tea.Msg { return secondMsg{} }))
+	m.timers = append(
+		m.timers,
+		m.clock.After(time.Second, func(time.Time) tea.Msg { return secondMsg{} }),
+	)
 }
 
 // armStall checks again in 10 s whether playback is still buffering.
 func (m *Model) armStall() {
 	m.stallSeq++
 	seq := m.stallSeq
-	m.timers = append(m.timers, m.clock.After(stallAfter, func(time.Time) tea.Msg { return stallMsg{seq} }))
+	m.timers = append(
+		m.timers,
+		m.clock.After(stallAfter, func(time.Time) tea.Msg { return stallMsg{seq} }),
+	)
 }
 
 // notice shows a core message, with the key for its command if it has one.
@@ -641,11 +673,17 @@ func (m *Model) result(r keymap.Result) tea.Cmd {
 	switch r.Kind {
 	case keymap.Run:
 		if p := m.popup; p != nil && p.keyMenu != nil {
-			if c, ok := m.registry.Get(keymap.Binding{Command: r.Command}.Name()); !ok || !c.Motion {
+			if c, ok := m.registry.Get(
+				keymap.Binding{Command: r.Command}.Name(),
+			); !ok ||
+				!c.Motion {
 				m.closePopup() // a listed key runs where the menu was opened
 			}
 		}
-		return m.execCall(r.Command, command.Call{Count: r.Count, Motion: r.Motion, Double: r.Double})
+		return m.execCall(
+			r.Command,
+			command.Call{Count: r.Count, Motion: r.Motion, Double: r.Double},
+		)
 	case keymap.Rejected:
 		m.setMsg(r.Text, true)
 	case keymap.Pending:

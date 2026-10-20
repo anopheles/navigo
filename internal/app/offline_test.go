@@ -13,7 +13,13 @@ var errDown = errors.New("connection refused")
 
 // online is a logged-in session with a synced library.
 func online() State {
-	s, _ := run(New(), Start{}, CacheLoaded{Library: snap("x")}, LoggedIn{}, Synced{Library: snap("x")})
+	s, _ := run(
+		New(),
+		Start{},
+		CacheLoaded{Library: snap("x")},
+		LoggedIn{},
+		Synced{Library: snap("x")},
+	)
 	return s
 }
 
@@ -22,7 +28,10 @@ func TestGoOfflineOnce(t *testing.T) {
 	if !s.Offline {
 		t.Fatal("not offline after an unreachable request")
 	}
-	want := []Effect{ScheduleRetry{After: 2 * time.Second, Seq: 1}, Notice{Text: "can't reach the server · browsing from the cache"}}
+	want := []Effect{
+		ScheduleRetry{After: 2 * time.Second, Seq: 1},
+		Notice{Text: "can't reach the server · browsing from the cache"},
+	}
 	if !reflect.DeepEqual(out, want) {
 		t.Errorf("effects = %#v, want %#v", out, want)
 	}
@@ -111,19 +120,33 @@ func TestOfflineDropsScrobblesAndRefusesSync(t *testing.T) {
 	if len(only[Scrobble](out)) != 0 {
 		t.Error("scrobbled while offline")
 	}
-	if _, out = run(s, SyncNow{}); only[Notice](out)[0].Text != "offline · the library syncs once the server is back" {
+	if _, out = run(
+		s,
+		SyncNow{},
+	); only[Notice](out)[0].Text != "offline · the library syncs once the server is back" {
 		t.Errorf(":sync offline = %#v", out)
 	}
 }
 
 func TestStreamFailureStopsAndProbes(t *testing.T) {
-	s, _ := run(online(), PlayNow{Tracks: tracks(3), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
-	s, out := run(s, FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Failed, Err: "loading failed"}})
+	s, _ := run(
+		online(),
+		PlayNow{Tracks: tracks(3), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
+	s, out := run(
+		s,
+		FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Failed, Err: "loading failed"}},
+	)
 	if !reflect.DeepEqual(out, []Effect{Stop{}, Probe{Why: ProbeStream}}) {
 		t.Fatalf("effects = %#v", out)
 	}
 	// mpv ran on to the next entry before it stopped: ignored.
-	s, out = run(s, FromPlayer{player.TrackStarted{Entry: 2}}, FromPlayer{player.TrackEnded{Entry: 2, Reason: player.Failed}})
+	s, out = run(
+		s,
+		FromPlayer{player.TrackStarted{Entry: 2}},
+		FromPlayer{player.TrackEnded{Entry: 2, Reason: player.Failed}},
+	)
 	if out != nil || s.Current != 0 || s.Player.Playing {
 		t.Errorf("events after the failure changed things: %#v, current %d", out, s.Current)
 	}
@@ -141,7 +164,10 @@ func TestBrokenFilesAreSkippedThreeTimes(t *testing.T) {
 		var out []Effect
 		id := s.Queue[s.Current].ID
 		s, _ = run(s, FromPlayer{player.TrackStarted{Entry: id}})
-		s, _ = run(s, FromPlayer{player.TrackEnded{Entry: id, Reason: player.Failed, Err: "loading failed"}})
+		s, _ = run(
+			s,
+			FromPlayer{player.TrackEnded{Entry: id, Reason: player.Failed, Err: "loading failed"}},
+		)
 		s, out = run(s, ProbeResult{Why: ProbeStream})
 		notices = append(notices, only[Notice](out)[0].Text)
 		if i < 2 && (len(only[Play](out)) != 1 || s.Current != i+1) {
@@ -162,7 +188,11 @@ func TestBrokenFilesAreSkippedThreeTimes(t *testing.T) {
 	// Playing the track mpv had run on to works, and a track that really
 	// plays resets the count.
 	s, _ = run(s, PlayRow{Index: 3})
-	s, _ = run(s, FromPlayer{player.TrackStarted{Entry: s.Queue[3].ID}}, FromPlayer{player.Position{Entry: s.Queue[3].ID, Position: time.Second}})
+	s, _ = run(
+		s,
+		FromPlayer{player.TrackStarted{Entry: s.Queue[3].ID}},
+		FromPlayer{player.Position{Entry: s.Queue[3].ID, Position: time.Second}},
+	)
 	if !s.Player.Playing || s.Current != 3 {
 		t.Errorf("row 4 didn't play: current %d", s.Current)
 	}
@@ -172,7 +202,11 @@ func TestBrokenFilesAreSkippedThreeTimes(t *testing.T) {
 }
 
 func TestBufferingStall(t *testing.T) {
-	s, _ := run(online(), PlayNow{Tracks: tracks(2), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
+	s, _ := run(
+		online(),
+		PlayNow{Tracks: tracks(2), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
 	s, out := run(s, BufferingStalled{})
 	if !reflect.DeepEqual(out, []Effect{Probe{Why: ProbeStall}}) {
 		t.Fatalf("stall = %#v", out)
@@ -204,7 +238,10 @@ func TestReconnect(t *testing.T) {
 	if p := only[Probe](out); len(p) != 1 || p[0].Why != ProbeReconnect {
 		t.Fatalf("reconnect = %#v", out)
 	}
-	if _, out = run(s, ProbeResult{Why: ProbeReconnect}); only[Notice](out)[0].Text != "connected to the server" {
+	if _, out = run(
+		s,
+		ProbeResult{Why: ProbeReconnect},
+	); only[Notice](out)[0].Text != "connected to the server" {
 		t.Errorf("reconnect result = %#v", out)
 	}
 }
@@ -212,14 +249,25 @@ func TestReconnect(t *testing.T) {
 // mpv's late report about the entry it ran on to must not fail the track
 // navigo replays in its place.
 func TestLateEventsAfterASkipAreIgnored(t *testing.T) {
-	s, _ := run(online(), PlayNow{Tracks: tracks(3), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
-	s, _ = run(s, FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Failed, Err: "loading failed"}})
+	s, _ := run(
+		online(),
+		PlayNow{Tracks: tracks(3), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
+	s, _ = run(
+		s,
+		FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Failed, Err: "loading failed"}},
+	)
 	s, out := run(s, ProbeResult{Why: ProbeStream})
 	replay := only[Play](out)[0].Span.Current.ID
 	if replay == 2 {
 		t.Fatal("the skipped-to entry kept its old ID")
 	}
-	s, out = run(s, FromPlayer{player.TrackStarted{Entry: 2}}, FromPlayer{player.TrackEnded{Entry: 2, Reason: player.Failed}})
+	s, out = run(
+		s,
+		FromPlayer{player.TrackStarted{Entry: 2}},
+		FromPlayer{player.TrackEnded{Entry: 2, Reason: player.Failed}},
+	)
 	if out != nil || s.skips != 1 {
 		t.Errorf("late events for the old entry: %#v, skips %d", out, s.skips)
 	}
@@ -231,8 +279,16 @@ func TestLateEventsAfterASkipAreIgnored(t *testing.T) {
 
 // mpv advancing gaplessly onto a neighbour that was stale still counts.
 func TestReplayedNeighboursAreFresh(t *testing.T) {
-	s, _ := run(online(), PlayNow{Tracks: tracks(3), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
-	s, _ = run(s, FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Failed, Err: "loading failed"}}, ProbeResult{Why: ProbeStream, Err: errDown})
+	s, _ := run(
+		online(),
+		PlayNow{Tracks: tracks(3), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
+	s, _ = run(
+		s,
+		FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Failed, Err: "loading failed"}},
+		ProbeResult{Why: ProbeStream, Err: errDown},
+	)
 	// Back online, the user plays row 1 again: its next (entry 2) was stale.
 	s, _ = run(s, RetryNow{Seq: s.retrySeq}, ProbeResult{Why: ProbeRetry})
 	s, out := run(s, PlayRow{Index: 0})
@@ -240,8 +296,17 @@ func TestReplayedNeighboursAreFresh(t *testing.T) {
 	if sp.Current.ID == 1 || sp.Next.ID == 2 {
 		t.Fatalf("span still has stale IDs: %+v", sp)
 	}
-	s, _ = run(s, FromPlayer{player.TrackStarted{Entry: sp.Current.ID}}, FromPlayer{player.TrackEnded{Entry: sp.Current.ID, Reason: player.Finished}}, FromPlayer{player.TrackStarted{Entry: sp.Next.ID}})
+	s, _ = run(
+		s,
+		FromPlayer{player.TrackStarted{Entry: sp.Current.ID}},
+		FromPlayer{player.TrackEnded{Entry: sp.Current.ID, Reason: player.Finished}},
+		FromPlayer{player.TrackStarted{Entry: sp.Next.ID}},
+	)
 	if s.Current != 1 || !s.Player.Playing {
-		t.Errorf("advancing to the fresh neighbour: current %d, playing %v", s.Current, s.Player.Playing)
+		t.Errorf(
+			"advancing to the fresh neighbour: current %d, playing %v",
+			s.Current,
+			s.Player.Playing,
+		)
 	}
 }

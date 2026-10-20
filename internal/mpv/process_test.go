@@ -21,7 +21,12 @@ func TestStartRealMPV(t *testing.T) {
 		t.Fatal(err)
 	}
 	var version string
-	if err := p.Get(context.Background(), "mpv-version", &version); err != nil || !strings.HasPrefix(version, "mpv") {
+	if err := p.Get(
+		context.Background(),
+		"mpv-version",
+		&version,
+	); err != nil ||
+		!strings.HasPrefix(version, "mpv") {
 		t.Errorf("mpv-version = %q, %v", version, err)
 	}
 	var idle bool

@@ -36,7 +36,12 @@ type osKeyring struct{}
 
 func (osKeyring) Get(service, key string) (string, error) { return keyring.Get(service, key) }
 func (osKeyring) Delete(service, key string) error        { return keyring.Delete(service, key) }
-func (osKeyring) Set(service, key, secret string) error   { return keyring.Set(service, key, secret) }
+
+func (osKeyring) Set(
+	service, key, secret string,
+) error {
+	return keyring.Set(service, key, secret)
+}
 
 // Key is the keyring key for a server and user.
 func Key(url, user string) string { return user + "@" + url }

@@ -40,7 +40,11 @@ const homeSize = 50
 func main() {
 	base := flag.String("url", "http://127.0.0.1:14533", "Navidrome base URL")
 	out := flag.String("out", "internal/subsonic/subsonictest/testdata", "fixture directory")
-	seedOnly := flag.Bool("seed-only", false, "wait for the scan and seed playlists and stars, but record nothing (for e2e runs)")
+	seedOnly := flag.Bool(
+		"seed-only",
+		false,
+		"wait for the scan and seed playlists and stars, but record nothing (for e2e runs)",
+	)
 	flag.Parse()
 	c := &client{base: *base, user: subsonictest.Username, password: subsonictest.Password}
 	if *seedOnly {
@@ -86,7 +90,10 @@ func run(c *client, out string) error {
 		}
 	}
 	for _, typ := range []string{"alphabeticalByName", "newest"} {
-		rec.get("getAlbumList2", url.Values{"type": {typ}, "size": {strconv.Itoa(pageSize)}, "offset": {"0"}})
+		rec.get(
+			"getAlbumList2",
+			url.Values{"type": {typ}, "size": {strconv.Itoa(pageSize)}, "offset": {"0"}},
+		)
 	}
 	// Home's lists, one page each.
 	for _, typ := range []string{"newest", "frequent", "recent", "random", "starred"} {
@@ -132,8 +139,18 @@ func run(c *client, out string) error {
 	var made struct {
 		Playlist struct{ ID string }
 	}
-	rec.decode(rec.get("createPlaylist", url.Values{"name": {"navigo-recorded"}, "songId": {first}}), &made)
-	rec.get("updatePlaylist", url.Values{"playlistId": {made.Playlist.ID}, "songIdToAdd": {first}, "songIndexToRemove": {"0"}})
+	rec.decode(
+		rec.get("createPlaylist", url.Values{"name": {"navigo-recorded"}, "songId": {first}}),
+		&made,
+	)
+	rec.get(
+		"updatePlaylist",
+		url.Values{
+			"playlistId":        {made.Playlist.ID},
+			"songIdToAdd":       {first},
+			"songIndexToRemove": {"0"},
+		},
+	)
 	rec.get("deletePlaylist", url.Values{"id": {made.Playlist.ID}})
 
 	bad := *c
@@ -161,7 +178,11 @@ func (c *client) albums() ([]album, error) {
 	var list struct {
 		AlbumList2 struct{ Album []struct{ ID string } }
 	}
-	if err := c.call("getAlbumList2", url.Values{"type": {"alphabeticalByName"}, "size": {strconv.Itoa(pageSize)}}, &list); err != nil {
+	if err := c.call(
+		"getAlbumList2",
+		url.Values{"type": {"alphabeticalByName"}, "size": {strconv.Itoa(pageSize)}},
+		&list,
+	); err != nil {
 		return nil, err
 	}
 	var albums []album
@@ -173,7 +194,11 @@ func (c *client) albums() ([]album, error) {
 		albums = append(albums, r.Album)
 	}
 	if len(albums) != len(fixturelib.Albums) {
-		return nil, fmt.Errorf("server has %d albums, fixture library has %d", len(albums), len(fixturelib.Albums))
+		return nil, fmt.Errorf(
+			"server has %d albums, fixture library has %d",
+			len(albums),
+			len(fixturelib.Albums),
+		)
 	}
 	return albums, nil
 }
@@ -209,13 +234,20 @@ func (c *client) seed(albums []album) error {
 			if err != nil {
 				return err
 			}
-			if err := c.call("scrobble", url.Values{"id": {id}, "submission": {"true"}}, nil); err != nil {
+			if err := c.call(
+				"scrobble",
+				url.Values{"id": {id}, "submission": {"true"}},
+				nil,
+			); err != nil {
 				return err
 			}
 		}
 	}
 	for _, p := range fixturelib.Playlists {
-		if slices.ContainsFunc(existing.Playlists.Playlist, func(e struct{ Name string }) bool { return e.Name == p.Name }) {
+		if slices.ContainsFunc(
+			existing.Playlists.Playlist,
+			func(e struct{ Name string }) bool { return e.Name == p.Name },
+		) {
 			continue
 		}
 		params := url.Values{"name": {p.Name}}
@@ -365,7 +397,14 @@ func (c *client) raw(endpoint string, params url.Values) ([]byte, error) {
 	_, _ = rand.Read(salt)
 	s := hex.EncodeToString(salt)
 	sum := md5.Sum([]byte(c.password + s))
-	q := url.Values{"u": {c.user}, "t": {hex.EncodeToString(sum[:])}, "s": {s}, "v": {"1.16.1"}, "c": {"navigo-recordfixtures"}, "f": {"json"}}
+	q := url.Values{
+		"u": {c.user},
+		"t": {hex.EncodeToString(sum[:])},
+		"s": {s},
+		"v": {"1.16.1"},
+		"c": {"navigo-recordfixtures"},
+		"f": {"json"},
+	}
 	for k, v := range params {
 		q[k] = v
 	}

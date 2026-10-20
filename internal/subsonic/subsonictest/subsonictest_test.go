@@ -19,7 +19,14 @@ var saltSeq atomic.Int64
 func signed(user, password string, params url.Values) url.Values {
 	salt := fmt.Sprintf("salt%d", saltSeq.Add(1))
 	sum := md5.Sum([]byte(password + salt))
-	q := url.Values{"u": {user}, "t": {hex.EncodeToString(sum[:])}, "s": {salt}, "v": {"1.16.1"}, "c": {"test"}, "f": {"json"}}
+	q := url.Values{
+		"u": {user},
+		"t": {hex.EncodeToString(sum[:])},
+		"s": {salt},
+		"v": {"1.16.1"},
+		"c": {"test"},
+		"f": {"json"},
+	}
 	for k, v := range params {
 		q[k] = v
 	}
@@ -77,7 +84,14 @@ func TestServesRecordedFixtures(t *testing.T) {
 		if id == NotFoundID {
 			continue
 		}
-		if a := get(t, s, "getAlbum", signed(Username, Password, url.Values{"id": {id}})); len(a.Album.Song) > 500 {
+		if a := get(
+			t,
+			s,
+			"getAlbum",
+			signed(Username, Password, url.Values{"id": {id}}),
+		); len(
+			a.Album.Song,
+		) > 500 {
 			long = a.Album.Name
 		}
 	}
@@ -85,14 +99,23 @@ func TestServesRecordedFixtures(t *testing.T) {
 		t.Errorf("album with more than 500 tracks = %q, want The Long Haul", long)
 	}
 
-	if r := get(t, s, "getAlbum", signed(Username, Password, url.Values{"id": {NotFoundID}})); r.Status != "failed" || r.Error.Code != 70 {
+	if r := get(
+		t,
+		s,
+		"getAlbum",
+		signed(Username, Password, url.Values{"id": {NotFoundID}}),
+	); r.Status != "failed" ||
+		r.Error.Code != 70 {
 		t.Errorf("getAlbum %s = %+v, want error 70", NotFoundID, r)
 	}
 }
 
 func TestFormPost(t *testing.T) {
 	s := NewServer(t)
-	resp, err := http.PostForm(s.URL+"/rest/scrobble", signed(Username, Password, url.Values{"id": {"x"}, "submission": {"false"}}))
+	resp, err := http.PostForm(
+		s.URL+"/rest/scrobble",
+		signed(Username, Password, url.Values{"id": {"x"}, "submission": {"false"}}),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,8 +124,13 @@ func TestFormPost(t *testing.T) {
 		t.Fatalf("scrobble = %+v, want ok", r)
 	}
 	reqs := s.Requests()
-	if len(reqs) != 1 || reqs[0].Endpoint != "scrobble" || reqs[0].Params.Get("submission") != "false" || reqs[0].Params.Has("t") {
-		t.Errorf("Requests() = %+v, want one scrobble with submission=false and no auth params", reqs)
+	if len(reqs) != 1 || reqs[0].Endpoint != "scrobble" ||
+		reqs[0].Params.Get("submission") != "false" ||
+		reqs[0].Params.Has("t") {
+		t.Errorf(
+			"Requests() = %+v, want one scrobble with submission=false and no auth params",
+			reqs,
+		)
 	}
 }
 
@@ -135,7 +163,11 @@ func TestMisuseFailsTheTest(t *testing.T) {
 	}{
 		{"reused salt", []url.Values{q, q}, "salt"},
 		{"plain password", []url.Values{plain}, "plain password"},
-		{"missing fixture", []url.Values{signed(Username, Password, url.Values{"id": {"nope"}})}, "no fixture"},
+		{
+			"missing fixture",
+			[]url.Values{signed(Username, Password, url.Values{"id": {"nope"}})},
+			"no fixture",
+		},
 		{"xml", []url.Values{signed(Username, Password, url.Values{"f": {"xml"}})}, "want json"},
 	}
 	for _, tt := range tests {

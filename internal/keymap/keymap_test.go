@@ -95,7 +95,12 @@ func TestEngine(t *testing.T) {
 	}{
 		{"single key", tracks, []string{"j"}, Result{Kind: Run, Command: "down"}},
 		{"count", tracks, []string{"1", "2", "j"}, Result{Kind: Run, Command: "down", Count: 12}},
-		{"count with zero", tracks, []string{"1", "0", "G"}, Result{Kind: Run, Command: "last", Count: 10}},
+		{
+			"count with zero",
+			tracks,
+			[]string{"1", "0", "G"},
+			Result{Kind: Run, Command: "last", Count: 10},
+		},
 		{"zero alone is no count", tracks, []string{"0"}, Result{Kind: NoMatch}},
 		{"pure prefix waits", tracks, []string{"g"}, Result{Kind: Pending}},
 		{"pure prefix runs", tracks, []string{"g", "g"}, Result{Kind: Run, Command: "first"}},
@@ -107,7 +112,12 @@ func TestEngine(t *testing.T) {
 		{"wide scope otherwise", queue, []string{"<CR>"}, Result{Kind: Run, Command: "nothing"}},
 		{"not in this scope", queue, []string{"a"}, Result{Kind: NoMatch}},
 		{"ambiguous prefix waits", queue, []string{"d"}, Result{Kind: Pending, Ambiguous: true}},
-		{"ambiguous prefix completes", queue, []string{"d", "d"}, Result{Kind: Run, Command: "remove"}},
+		{
+			"ambiguous prefix completes",
+			queue,
+			[]string{"d", "d"},
+			Result{Kind: Run, Command: "remove"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -126,7 +136,10 @@ func TestEngineTimeoutAndPending(t *testing.T) {
 	if p := e.Pending(); p != "3d" {
 		t.Errorf("Pending = %q, want 3d", p)
 	}
-	if got := e.Timeout(Normal, queue); got != (Result{Kind: Run, Command: "remove-one", Count: 3}) {
+	if got := e.Timeout(
+		Normal,
+		queue,
+	); got != (Result{Kind: Run, Command: "remove-one", Count: 3}) {
 		t.Errorf("Timeout = %+v", got)
 	}
 	if e.Pending() != "" {
@@ -143,10 +156,24 @@ func TestKeys(t *testing.T) {
 	if err := tb.Bind(Normal, "global", "l", "nothing"); err != nil {
 		t.Fatal(err)
 	}
-	if got := tb.Keys(Normal, []string{"tracks", "global"}, "nothing"); !reflect.DeepEqual(got, []string{"l"}) {
+	if got := tb.Keys(
+		Normal,
+		[]string{"tracks", "global"},
+		"nothing",
+	); !reflect.DeepEqual(
+		got,
+		[]string{"l"},
+	) {
 		t.Errorf("Keys(nothing) = %q, want only l: <CR> is shadowed by tracks", got)
 	}
-	if got := tb.Keys(Normal, []string{"queue", "global"}, "nothing"); !reflect.DeepEqual(got, []string{"<CR>", "l"}) {
+	if got := tb.Keys(
+		Normal,
+		[]string{"queue", "global"},
+		"nothing",
+	); !reflect.DeepEqual(
+		got,
+		[]string{"<CR>", "l"},
+	) {
 		t.Errorf("Keys(nothing) in queue = %q", got)
 	}
 }
@@ -231,7 +258,12 @@ func TestOperatorPending(t *testing.T) {
 	// A register name is understood, and refused.
 	e.Reset()
 	e.Feed(Normal, q, `"`)
-	if r := e.Feed(Normal, q, "a"); r.Kind != Rejected || !strings.Contains(r.Text, "one register") {
+	if r := e.Feed(
+		Normal,
+		q,
+		"a",
+	); r.Kind != Rejected ||
+		!strings.Contains(r.Text, "one register") {
 		t.Errorf(`"a = %+v, want Rejected`, r)
 	}
 	if r := e.Feed(Normal, q, "j"); r != (Result{Kind: Run, Command: "down"}) {
@@ -281,15 +313,36 @@ func TestEffectiveAndContinuations(t *testing.T) {
 		return out
 	}
 	// <CR> in tracks shadows the global one.
-	if got := seqs(tb.Effective(Normal, []string{"tracks", "global"})); !reflect.DeepEqual(got, []string{
-		"<CR>=play-now", "a=add-next", "j=down", "gg=first", "G=last", "<C-w>w=window", "'b=albums",
-	}) {
+	if got := seqs(
+		tb.Effective(Normal, []string{"tracks", "global"}),
+	); !reflect.DeepEqual(
+		got,
+		[]string{
+			"<CR>=play-now",
+			"a=add-next",
+			"j=down",
+			"gg=first",
+			"G=last",
+			"<C-w>w=window",
+			"'b=albums",
+		},
+	) {
 		t.Errorf("Effective = %q", got)
 	}
-	if got := seqs(tb.Continuations(Normal, []string{"queue", "global"}, []string{"d"})); !reflect.DeepEqual(got, []string{"dd=remove"}) {
+	if got := seqs(
+		tb.Continuations(Normal, []string{"queue", "global"}, []string{"d"}),
+	); !reflect.DeepEqual(
+		got,
+		[]string{"dd=remove"},
+	) {
 		t.Errorf("Continuations(d) = %q", got)
 	}
-	if got := seqs(tb.Continuations(Normal, []string{"global"}, []string{"g"})); !reflect.DeepEqual(got, []string{"gg=first"}) {
+	if got := seqs(
+		tb.Continuations(Normal, []string{"global"}, []string{"g"}),
+	); !reflect.DeepEqual(
+		got,
+		[]string{"gg=first"},
+	) {
 		t.Errorf("Continuations(g) = %q", got)
 	}
 	if got := tb.Scopes(Normal); !reflect.DeepEqual(got, []string{"global", "queue", "tracks"}) {
@@ -306,7 +359,8 @@ func TestUnbindCloneCheck(t *testing.T) {
 	if ok, _ := c.Unbind(Normal, "global", "gg"); ok {
 		t.Error("unbound gg twice")
 	}
-	if len(c.Keys(Normal, []string{"global"}, "first")) != 0 || len(tb.Keys(Normal, []string{"global"}, "first")) != 1 {
+	if len(c.Keys(Normal, []string{"global"}, "first")) != 0 ||
+		len(tb.Keys(Normal, []string{"global"}, "first")) != 1 {
 		t.Error("Unbind on the clone changed the original, or didn't unbind")
 	}
 	for seq, ok := range map[string]bool{"gg": true, "<C-d>": true, "<leader>x": true, "<lt>b": true, "<F12>": true, "<nope>": false, "": false} {

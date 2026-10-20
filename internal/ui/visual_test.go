@@ -114,7 +114,9 @@ func TestOperatorsInTheQueue(t *testing.T) {
 	h.keys("P")
 	h.queueIs("Streetlamp, Blue Hour, Wintering, Afterglow")
 	h.keys("ggyGGp")
-	h.queueIs("Streetlamp, Blue Hour, Wintering, Afterglow, Streetlamp, Blue Hour, Wintering, Afterglow")
+	h.queueIs(
+		"Streetlamp, Blue Hour, Wintering, Afterglow, Streetlamp, Blue Hour, Wintering, Afterglow",
+	)
 	h.contains("4 tracks pasted (8 in queue)")
 	h.keys("gg3dd")
 	h.queueIs("Afterglow, Streetlamp, Blue Hour, Wintering, Afterglow")

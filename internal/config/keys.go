@@ -97,7 +97,13 @@ func (k *Keys) UnmarshalYAML(n *yaml.Node) error {
 		case "cmdline":
 			k.bindings("cmdline", "", val)
 		default:
-			k.problem(key, fmt.Sprintf("unknown option or mode %q; modes are normal, visual and cmdline", key.Value))
+			k.problem(
+				key,
+				fmt.Sprintf(
+					"unknown option or mode %q; modes are normal, visual and cmdline",
+					key.Value,
+				),
+			)
 		}
 	}
 	return nil
@@ -114,12 +120,24 @@ func (k *Keys) bindings(mode, scope string, n *yaml.Node) {
 		b := Binding{Mode: mode, Scope: scope, Keys: key.Value, Pos: pos(key)}
 		switch {
 		case val.Kind != yaml.ScalarNode:
-			k.problem(val, fmt.Sprintf("%s: give a command line, nop for a dead key, or ~ to delete the binding", key.Value))
+			k.problem(
+				val,
+				fmt.Sprintf(
+					"%s: give a command line, nop for a dead key, or ~ to delete the binding",
+					key.Value,
+				),
+			)
 			continue
 		case val.Tag == "!!null":
 			b.Delete = true
 		case val.Value == "":
-			k.problem(val, fmt.Sprintf("%s: empty command; use nop for a dead key or ~ to delete the binding", key.Value))
+			k.problem(
+				val,
+				fmt.Sprintf(
+					"%s: empty command; use nop for a dead key or ~ to delete the binding",
+					key.Value,
+				),
+			)
 			continue
 		default:
 			b.Command = val.Value

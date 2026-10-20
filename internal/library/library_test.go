@@ -13,7 +13,13 @@ import (
 func client(t *testing.T) (*subsonic.Client, string) {
 	t.Helper()
 	srv := subsonictest.NewServer(t)
-	c := subsonic.New(subsonic.Credentials{URL: srv.URL, Username: subsonictest.Username, Password: subsonictest.Password})
+	c := subsonic.New(
+		subsonic.Credentials{
+			URL:      srv.URL,
+			Username: subsonictest.Username,
+			Password: subsonictest.Password,
+		},
+	)
 	if err := c.Login(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +35,14 @@ func synced(t *testing.T) (*Snapshot, *subsonic.Client, string) {
 		t.Fatalf("Due with no snapshot = %v, %v", due, err)
 	}
 	var calls [][2]int
-	s, err := Sync(ctx, c, url, subsonictest.Username, st, func(done, total int) { calls = append(calls, [2]int{done, total}) })
+	s, err := Sync(
+		ctx,
+		c,
+		url,
+		subsonictest.Username,
+		st,
+		func(done, total int) { calls = append(calls, [2]int{done, total}) },
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +73,18 @@ func TestSync(t *testing.T) {
 	for _, a := range s.Artists {
 		names = append(names, a.Name)
 	}
-	if want := []string{"Aurora Lane", "Long Haul Orchestra", "Pell Mell", "The Quiet Ones", "Various Artists", "Zoë Brandt", "森の音"}; !slices.Equal(names, want) {
+	if want := []string{
+		"Aurora Lane",
+		"Long Haul Orchestra",
+		"Pell Mell",
+		"The Quiet Ones",
+		"Various Artists",
+		"Zoë Brandt",
+		"森の音",
+	}; !slices.Equal(
+		names,
+		want,
+	) {
 		t.Errorf("artists = %q, want %q", names, want)
 	}
 	for name, want := range map[string]int{"Aurora Lane": 2, "Pell Mell": 0, "Various Artists": 1, "The Quiet Ones": 2} {
@@ -76,8 +100,16 @@ func TestSync(t *testing.T) {
 		}
 	}
 	ts := s.AlbumTracks(long.ID)
-	if len(ts) != 510 || ts[0].Title != "Mile 001" || ts[255].Disc != 2 || ts[255].Number != 1 || ts[509].Title != "Mile 510" {
-		t.Errorf("The Long Haul: %d tracks, first %q, 256th %d-%d, last %q", len(ts), ts[0].Title, ts[255].Disc, ts[255].Number, ts[509].Title)
+	if len(ts) != 510 || ts[0].Title != "Mile 001" || ts[255].Disc != 2 || ts[255].Number != 1 ||
+		ts[509].Title != "Mile 510" {
+		t.Errorf(
+			"The Long Haul: %d tracks, first %q, 256th %d-%d, last %q",
+			len(ts),
+			ts[0].Title,
+			ts[255].Disc,
+			ts[255].Number,
+			ts[509].Title,
+		)
 	}
 	// Each credited artist is kept on the track.
 	pell := artist(t, s, "Pell Mell")
@@ -115,7 +147,14 @@ func TestArtistAlbums(t *testing.T) {
 		a := artist(t, s, c.artist)
 		own, appears := s.ArtistAlbums(a.ID)
 		if !slices.Equal(names(own), c.own) || !slices.Equal(names(appears), c.appearsOn) {
-			t.Errorf("%s: own %q, appears on %q; want %q, %q", c.artist, names(own), names(appears), c.own, c.appearsOn)
+			t.Errorf(
+				"%s: own %q, appears on %q; want %q, %q",
+				c.artist,
+				names(own),
+				names(appears),
+				c.own,
+				c.appearsOn,
+			)
 		}
 		if s.AppearsOn(a.ID) != len(c.appearsOn) {
 			t.Errorf("%s appears on %d, want %d", c.artist, s.AppearsOn(a.ID), len(c.appearsOn))
@@ -135,7 +174,8 @@ func TestPlaylistsAndStars(t *testing.T) {
 	if len(ts) != 5 || ts[0].ID != ts[4].ID {
 		t.Errorf("Morning Mix = %d tracks, want 5 with the first one twice", len(ts))
 	}
-	if !s.IsStarred(string(artist(t, s, "The Quiet Ones").ID)) || s.IsStarred(string(artist(t, s, "Pell Mell").ID)) {
+	if !s.IsStarred(string(artist(t, s, "The Quiet Ones").ID)) ||
+		s.IsStarred(string(artist(t, s, "Pell Mell").ID)) {
 		t.Error("stars wrong for artists")
 	}
 	if len(s.Starred) != 4 {
@@ -154,7 +194,13 @@ func TestDueAndRefresh(t *testing.T) {
 	}
 	r, err := Refresh(ctx, c, s)
 	if err != nil || len(r.Playlists) != 2 || len(r.Tracks) != len(s.Tracks) || r == s {
-		t.Errorf("Refresh = %d playlists, %d tracks, same=%v, %v", len(r.Playlists), len(r.Tracks), r == s, err)
+		t.Errorf(
+			"Refresh = %d playlists, %d tracks, same=%v, %v",
+			len(r.Playlists),
+			len(r.Tracks),
+			r == s,
+			err,
+		)
 	}
 }
 
@@ -182,7 +228,9 @@ func TestCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got.Tracks) != 547 || !got.LastScan.Equal(s.LastScan) || len(got.AlbumTracks(s.Albums[0].ID)) == 0 || !got.IsStarred(s.Starred[0]) {
+	if len(got.Tracks) != 547 || !got.LastScan.Equal(s.LastScan) ||
+		len(got.AlbumTracks(s.Albums[0].ID)) == 0 ||
+		!got.IsStarred(s.Starred[0]) {
 		t.Error("the loaded snapshot differs or has no indexes")
 	}
 	if _, err := Load(dir, url, "someone-else"); err != ErrNoCache {
@@ -201,8 +249,18 @@ func TestCache(t *testing.T) {
 }
 
 func TestNext(t *testing.T) {
-	n := next(subsonic.SearchCounts{ArtistCount: 500, AlbumCount: 500, SongCount: 500}, 500, 30, 500)
-	want := subsonic.SearchCounts{ArtistCount: 500, ArtistOffset: 500, SongCount: 500, SongOffset: 500}
+	n := next(
+		subsonic.SearchCounts{ArtistCount: 500, AlbumCount: 500, SongCount: 500},
+		500,
+		30,
+		500,
+	)
+	want := subsonic.SearchCounts{
+		ArtistCount:  500,
+		ArtistOffset: 500,
+		SongCount:    500,
+		SongOffset:   500,
+	}
 	if n != want {
 		t.Errorf("next = %+v, want %+v", n, want)
 	}

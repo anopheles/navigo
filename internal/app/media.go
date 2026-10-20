@@ -39,7 +39,11 @@ func (SeekAt) isEvent()    {}
 func (SetRepeat) isEvent() {}
 
 func (s State) nowPlaying() NowPlayingInfo {
-	np := NowPlayingInfo{Volume: s.Player.Volume, Repeat: s.Repeat, CanPlay: len(s.Queue) > 0 && s.cantPlay() == nil}
+	np := NowPlayingInfo{
+		Volume:  s.Player.Volume,
+		Repeat:  s.Repeat,
+		CanPlay: len(s.Queue) > 0 && s.cantPlay() == nil,
+	}
 	if t, row, ok := s.NowPlaying(); ok {
 		np.Track, np.Playing, np.Paused = t, true, s.Player.Paused
 		np.Position, np.Length = s.Player.Position, s.Player.Duration

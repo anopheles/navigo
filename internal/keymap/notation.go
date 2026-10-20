@@ -8,12 +8,31 @@ import (
 
 // names are the bracketed key names, keyed by their lower-case spelling.
 var names = map[string]string{
-	"cr": "<CR>", "enter": "<CR>", "return": "<CR>",
-	"esc": "<Esc>", "space": "<Space>", "tab": "<Tab>", "s-tab": "<S-Tab>",
-	"bs": "<BS>", "backspace": "<BS>", "del": "<Del>", "delete": "<Del>", "lt": "<lt>", "bar": "<Bar>", "bslash": "<Bslash>",
-	"up": "<Up>", "down": "<Down>", "left": "<Left>", "right": "<Right>",
-	"home": "<Home>", "end": "<End>", "pageup": "<PageUp>", "pagedown": "<PageDown>", "pgup": "<PageUp>", "pgdown": "<PageDown>",
-	"leader": "<leader>",
+	"cr":        "<CR>",
+	"enter":     "<CR>",
+	"return":    "<CR>",
+	"esc":       "<Esc>",
+	"space":     "<Space>",
+	"tab":       "<Tab>",
+	"s-tab":     "<S-Tab>",
+	"bs":        "<BS>",
+	"backspace": "<BS>",
+	"del":       "<Del>",
+	"delete":    "<Del>",
+	"lt":        "<lt>",
+	"bar":       "<Bar>",
+	"bslash":    "<Bslash>",
+	"up":        "<Up>",
+	"down":      "<Down>",
+	"left":      "<Left>",
+	"right":     "<Right>",
+	"home":      "<Home>",
+	"end":       "<End>",
+	"pageup":    "<PageUp>",
+	"pagedown":  "<PageDown>",
+	"pgup":      "<PageUp>",
+	"pgdown":    "<PageDown>",
+	"leader":    "<leader>",
 }
 
 func init() {

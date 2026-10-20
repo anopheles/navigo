@@ -33,7 +33,15 @@ func TestArtistsList(t *testing.T) {
 	h.keys("'a")
 	h.contains(" Artists ", "Aurora Lane", "2 albums", "appears on 1")
 	// By sort name: The Quiet Ones under Q; Various Artists is listed.
-	want := []string{"Aurora Lane", "Long Haul Orchestra", "Pell Mell", "The Quiet Ones", "Various Artists", "Zoë Brandt", "森の音"}
+	want := []string{
+		"Aurora Lane",
+		"Long Haul Orchestra",
+		"Pell Mell",
+		"The Quiet Ones",
+		"Various Artists",
+		"Zoë Brandt",
+		"森の音",
+	}
 	if got := h.order(want...); strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("artists in order %q, want %q", got, want)
 	}
@@ -59,7 +67,14 @@ func TestArtistPageBothGroups(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("'a<CR>")
 	h.contains("Artists › Aurora Lane", "── Appears on ──", "Night Drive Vol. 1")
-	if got := h.order("Blue Hour", "Appears on", "Night Drive"); strings.Join(got, ",") != "Blue Hour,Appears on,Night Drive" {
+	if got := h.order(
+		"Blue Hour",
+		"Appears on",
+		"Night Drive",
+	); strings.Join(
+		got,
+		",",
+	) != "Blue Hour,Appears on,Night Drive" {
 		t.Errorf("page order %q", got)
 	}
 	h.cursorOn("Blue")

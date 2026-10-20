@@ -32,11 +32,18 @@ func TestParseKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	k := c.Keys
-	if k.LeaderKey() != "<Space>" || k.Timeout != 800 || k.HintsOn() || k.HintDelay != 300 || !k.DefaultsOn() {
+	if k.LeaderKey() != "<Space>" || k.Timeout != 800 || k.HintsOn() || k.HintDelay != 300 ||
+		!k.DefaultsOn() {
 		t.Errorf("options = %+v", k)
 	}
 	want := []Binding{
-		{Mode: "normal", Scope: "global", Keys: "<C-d>", Command: "half-page-down", Pos: Pos{11, 7}},
+		{
+			Mode:    "normal",
+			Scope:   "global",
+			Keys:    "<C-d>",
+			Command: "half-page-down",
+			Pos:     Pos{11, 7},
+		},
 		{Mode: "normal", Scope: "global", Keys: "<leader>x", Command: "seek +60", Pos: Pos{12, 7}},
 		{Mode: "normal", Scope: "queue", Keys: "J", Delete: true, Pos: Pos{14, 7}},
 		{Mode: "cmdline", Keys: "<C-k>", Command: "kill-to-end", Pos: Pos{18, 5}},

@@ -41,7 +41,15 @@ type Snapshot struct {
 // returns a ready snapshot. Artists named only on tracks are added,
 // artists with neither a track nor an album are dropped, and each
 // artist's AlbumCount counts the albums they are album artist of.
-func Build(server, user string, lastScan time.Time, artists []Artist, albums []Album, tracks []Track, playlists []Playlist, starred []string) *Snapshot {
+func Build(
+	server, user string,
+	lastScan time.Time,
+	artists []Artist,
+	albums []Album,
+	tracks []Track,
+	playlists []Playlist,
+	starred []string,
+) *Snapshot {
 	s := &Snapshot{
 		Server: server, User: user, LastScan: lastScan, SyncedAt: time.Now(),
 		Artists: slices.Clone(artists), Albums: slices.Clone(albums), Tracks: slices.Clone(tracks),
@@ -66,21 +74,34 @@ func Build(server, user string, lastScan time.Time, artists []Artist, albums []A
 	for _, a := range s.Albums {
 		own[a.ArtistID]++
 	}
-	s.Artists = slices.DeleteFunc(s.Artists, func(a Artist) bool { return own[a.ID] == 0 && !credited[a.ID] })
+	s.Artists = slices.DeleteFunc(
+		s.Artists,
+		func(a Artist) bool { return own[a.ID] == 0 && !credited[a.ID] },
+	)
 	for i := range s.Artists {
 		s.Artists[i].AlbumCount = own[s.Artists[i].ID]
 	}
 
-	slices.SortStableFunc(s.Artists, func(a, b Artist) int { return compareNames(a.SortName, a.Name, b.SortName, b.Name) })
+	slices.SortStableFunc(
+		s.Artists,
+		func(a, b Artist) int { return compareNames(a.SortName, a.Name, b.SortName, b.Name) },
+	)
 	slices.SortStableFunc(s.Albums, func(a, b Album) int {
-		return cmp.Or(compareNames(a.SortName, a.Name, b.SortName, b.Name), cmp.Compare(a.Artist, b.Artist))
+		return cmp.Or(
+			compareNames(a.SortName, a.Name, b.SortName, b.Name),
+			cmp.Compare(a.Artist, b.Artist),
+		)
 	})
 	order := map[AlbumID]int{}
 	for i, a := range s.Albums {
 		order[a.ID] = i
 	}
 	slices.SortStableFunc(s.Tracks, func(a, b Track) int {
-		return cmp.Or(cmp.Compare(order[a.AlbumID], order[b.AlbumID]), cmp.Compare(a.Disc, b.Disc), cmp.Compare(a.Number, b.Number))
+		return cmp.Or(
+			cmp.Compare(order[a.AlbumID], order[b.AlbumID]),
+			cmp.Compare(a.Disc, b.Disc),
+			cmp.Compare(a.Number, b.Number),
+		)
 	})
 	s.index()
 	return s
@@ -241,7 +262,10 @@ func (s *Snapshot) WithPlaylist(p Playlist) *Snapshot {
 // WithoutPlaylist returns a copy without a playlist.
 func (s *Snapshot) WithoutPlaylist(id PlaylistID) *Snapshot {
 	n := *s
-	n.Playlists = slices.DeleteFunc(slices.Clone(s.Playlists), func(p Playlist) bool { return p.ID == id })
+	n.Playlists = slices.DeleteFunc(
+		slices.Clone(s.Playlists),
+		func(p Playlist) bool { return p.ID == id },
+	)
 	return &n
 }
 

@@ -40,7 +40,10 @@ func TestMPVDiesAndResumes(t *testing.T) {
 	h.pump()
 	h.fake.Die(errors.New("exit status 1"))
 	h.pump()
-	h.contains("mpv stopped · <Space> restarts it", "the player stopped (exit status 1) · <Space> starts it again where it stopped")
+	h.contains(
+		"mpv stopped · <Space> restarts it",
+		"the player stopped (exit status 1) · <Space> starts it again where it stopped",
+	)
 	h.keys("<Space>")
 	if !slices.Contains(h.fake.Calls(), "Play(1 2 3 from 42s)") {
 		t.Errorf("no resume at 42s in %q", h.fake.Calls())
@@ -60,7 +63,11 @@ func TestMPVCrashCap(t *testing.T) {
 			h.keys("<Space>")
 		}
 	}
-	h.contains("mpv keeps crashing · :reconnect", "mpv crashed 3 times in a minute", "details in /logs/navigo.log")
+	h.contains(
+		"mpv keeps crashing · :reconnect",
+		"mpv crashed 3 times in a minute",
+		"details in /logs/navigo.log",
+	)
 	before := len(h.fake.Calls())
 	h.keys("<Space>")
 	if len(h.fake.Calls()) != before {

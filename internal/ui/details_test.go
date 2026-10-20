@@ -30,7 +30,8 @@ func TestShuffleAndRepeatKeys(t *testing.T) {
 	h.keys("3j<CR>jj<CR>") // Blue Hour from Streetlamp
 	h.keys("S")
 	h.contains("queue shuffled · u undoes")
-	if got := h.queueTitles(); !strings.HasPrefix(got, "Streetlamp, ") || got == "Streetlamp, Blue Hour, Wintering, Afterglow, Dusk Signal, Low Tide" {
+	if got := h.queueTitles(); !strings.HasPrefix(got, "Streetlamp, ") ||
+		got == "Streetlamp, Blue Hour, Wintering, Afterglow, Dusk Signal, Low Tide" {
 		t.Errorf("shuffled queue %s", got)
 	}
 	h.keys("u")
@@ -58,7 +59,13 @@ func TestInfoPopup(t *testing.T) {
 	h.keys("i")
 	h.contains("Blue Hour", "Aurora Lane", "2021", "6 · ", "Starred    ★ yes")
 	h.keys("q<CR>j:info<CR>")
-	h.contains("Low Tide", "Artists    Aurora Lane", "Track      2 on disc 1", "Length     3:05", "Starred    no")
+	h.contains(
+		"Low Tide",
+		"Artists    Aurora Lane",
+		"Track      2 on disc 1",
+		"Length     3:05",
+		"Starred    no",
+	)
 	h.keys("q")
 
 	// A track with two artists lists both; an artist shows its counts.

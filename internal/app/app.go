@@ -248,7 +248,10 @@ func apply(s State, e Event) (State, []Effect) {
 		switch {
 		case s.Offline:
 			s, out := s.probe(ProbeUser)
-			return s, append(out, Notice{Text: "offline · the library syncs once the server is back"})
+			return s, append(
+				out,
+				Notice{Text: "offline · the library syncs once the server is back"},
+			)
 		case !s.loggedIn:
 			return s, []Effect{Notice{Text: "not connected to the server yet", Err: true}}
 		case s.Sync.Running:
@@ -264,7 +267,13 @@ func apply(s State, e Event) (State, []Effect) {
 	case Synced:
 		s.Sync = SyncStatus{}
 		if e.Err != nil {
-			return s, []Effect{Notice{Text: "couldn't sync the library: " + e.Err.Error(), Err: true, Unexpected: true}}
+			return s, []Effect{
+				Notice{
+					Text:       "couldn't sync the library: " + e.Err.Error(),
+					Err:        true,
+					Unexpected: true,
+				},
+			}
 		}
 		s.Library = e.Library
 		return s, []Effect{SaveCache{Library: e.Library}}
@@ -282,7 +291,11 @@ func apply(s State, e Event) (State, []Effect) {
 		}
 		n := Notice{Text: "playing · " + count(len(e.Tracks)) + " in the queue"}
 		if had {
-			n = Notice{Text: "playing · queue replaced with " + count(len(e.Tracks)), Command: "undo", Hint: "brings the old queue back"}
+			n = Notice{
+				Text:    "playing · queue replaced with " + count(len(e.Tracks)),
+				Command: "undo",
+				Hint:    "brings the old queue back",
+			}
 		}
 		s, out := s.play(s.Current)
 		return s, append(out, n)
@@ -292,8 +305,14 @@ func apply(s State, e Event) (State, []Effect) {
 		}
 		var added []QueueEntry
 		added, s.nextID = entries(s.nextID, e.Tracks)
-		s = s.edit(func(q []QueueEntry) ([]QueueEntry, int) { return append(slices.Clone(q), added...), s.Current })
-		text := fmt.Sprintf("%s added to the end of the queue (%d in queue)", count(len(added)), len(s.Queue))
+		s = s.edit(
+			func(q []QueueEntry) ([]QueueEntry, int) { return append(slices.Clone(q), added...), s.Current },
+		)
+		text := fmt.Sprintf(
+			"%s added to the end of the queue (%d in queue)",
+			count(len(added)),
+			len(s.Queue),
+		)
 		return s, append(s.neighbours(), Notice{Text: text, Command: "undo", Hint: "undoes"})
 	case AddNext:
 		if len(e.Tracks) == 0 {
@@ -309,7 +328,10 @@ func apply(s State, e Event) (State, []Effect) {
 		if len(added) == 1 {
 			verb = "plays next"
 		}
-		return s, append(s.neighbours(), Notice{Text: count(len(added)) + " " + verb, Command: "undo", Hint: "undoes"})
+		return s, append(
+			s.neighbours(),
+			Notice{Text: count(len(added)) + " " + verb, Command: "undo", Hint: "undoes"},
+		)
 	case PlayRow:
 		if e.Index < 0 || e.Index >= len(s.Queue) {
 			return s, nil
@@ -378,7 +400,14 @@ func apply(s State, e Event) (State, []Effect) {
 		s.redo = append(slices.Clone(s.redo), snapshot{s.Queue, s.Current})
 		s.undo = s.undo[:len(s.undo)-1]
 		s = s.restore(last)
-		return s, append(s.neighbours(), Notice{Text: "undone · " + count(len(s.Queue)) + " in the queue", Command: "redo", Hint: "redoes"})
+		return s, append(
+			s.neighbours(),
+			Notice{
+				Text:    "undone · " + count(len(s.Queue)) + " in the queue",
+				Command: "redo",
+				Hint:    "redoes",
+			},
+		)
 	case Redo:
 		if len(s.redo) == 0 {
 			return s, []Effect{Notice{Text: "nothing to redo"}}
@@ -387,7 +416,14 @@ func apply(s State, e Event) (State, []Effect) {
 		s.undo = append(slices.Clone(s.undo), snapshot{s.Queue, s.Current})
 		s.redo = s.redo[:len(s.redo)-1]
 		s = s.restore(next)
-		return s, append(s.neighbours(), Notice{Text: "redone · " + count(len(s.Queue)) + " in the queue", Command: "undo", Hint: "undoes"})
+		return s, append(
+			s.neighbours(),
+			Notice{
+				Text:    "redone · " + count(len(s.Queue)) + " in the queue",
+				Command: "undo",
+				Hint:    "undoes",
+			},
+		)
 
 	case ChangeVolume, Shuffle, CycleRepeat:
 		return s.applyPlayback(e)
@@ -397,7 +433,12 @@ func apply(s State, e Event) (State, []Effect) {
 		return s.applyStars(e)
 	case Yank, Remove, Paste, Move, ClearQueue:
 		return s.applyEdit(e)
-	case PlaylistRemove, PlaylistInsert, PlaylistMove, PlaylistCreate, PlaylistDelete, PlaylistWritten:
+	case PlaylistRemove,
+		PlaylistInsert,
+		PlaylistMove,
+		PlaylistCreate,
+		PlaylistDelete,
+		PlaylistWritten:
 		return s.applyPlaylist(e)
 	case FromPlayer:
 		if d, ok := e.Event.(player.Died); ok {

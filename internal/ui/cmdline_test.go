@@ -19,7 +19,10 @@ func TestCmdlineMatches(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys(":")
 	h.typeText("que")
-	if l := h.lineIndex("Move to the queue window."); l < 0 || !strings.Contains(strings.Split(h.screen(), "\n")[l], " queue ") || !strings.Contains(strings.Split(h.screen(), "\n")[l], "'q") {
+	if l := h.lineIndex(
+		"Move to the queue window.",
+	); l < 0 || !strings.Contains(strings.Split(h.screen(), "\n")[l], " queue ") ||
+		!strings.Contains(strings.Split(h.screen(), "\n")[l], "'q") {
 		t.Errorf("no queue row with its key:\n%s", h.screen())
 	}
 
@@ -29,7 +32,12 @@ func TestCmdlineMatches(t *testing.T) {
 	h.typeText("queue")
 	addEnd, queue := h.lineIndex("add-end"), h.lineIndex("Move to the queue window.")
 	if addEnd < 0 || queue < 0 || addEnd > queue {
-		t.Errorf("add-end on line %d, queue on %d: want what applies here first:\n%s", addEnd, queue, h.screen())
+		t.Errorf(
+			"add-end on line %d, queue on %d: want what applies here first:\n%s",
+			addEnd,
+			queue,
+			h.screen(),
+		)
 	}
 	if !strings.HasSuffix(strings.Split(h.screen(), "\n")[addEnd], " A ") {
 		t.Errorf("add-end's key A not listed:\n%s", h.screen())
@@ -55,7 +63,8 @@ func TestCmdlineComplete(t *testing.T) {
 	h.keys("<Tab>")
 	second := h.m.line.Value()
 	h.keys("<S-Tab>")
-	if first == second || h.m.line.Value() != first || !strings.HasPrefix(first, "se") || !strings.HasPrefix(second, "se") {
+	if first == second || h.m.line.Value() != first || !strings.HasPrefix(first, "se") ||
+		!strings.HasPrefix(second, "se") {
 		t.Errorf("<Tab> gave %q then %q, <S-Tab> back to %q", first, second, h.m.line.Value())
 	}
 	h.keys("<Esc>")
@@ -84,7 +93,9 @@ func TestCmdlineTips(t *testing.T) {
 
 	// After what the command says itself.
 	h.keys("<CR>:add-end<CR>")
-	h.contains("1 track added to the end of the queue (1 in queue) · u undoes · tip: next time press A")
+	h.contains(
+		"1 track added to the end of the queue (1 in queue) · u undoes · tip: next time press A",
+	)
 	h.keys(":messages<CR>")
 	h.contains("u undoes · tip: next time press A")
 	h.keys("q<Esc>")

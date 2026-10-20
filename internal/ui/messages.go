@@ -54,7 +54,10 @@ func (m *Model) setMsg(text string, isErr bool) {
 	m.shown = msg
 	if !isErr {
 		id := msg.id
-		m.timers = append(m.timers, m.clock.After(infoFor, func(time.Time) tea.Msg { return expireMsg{id} }))
+		m.timers = append(
+			m.timers,
+			m.clock.After(infoFor, func(time.Time) tea.Msg { return expireMsg{id} }),
+		)
 	}
 }
 

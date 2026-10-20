@@ -29,7 +29,11 @@ func TestServerGoesAwayAndComesBack(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.srv.SetDown(true)
 	h.cmd("sync")
-	h.contains("can't reach the server · browsing from the cache", "offline · next try in 2s", "Ångström Days")
+	h.contains(
+		"can't reach the server · browsing from the cache",
+		"offline · next try in 2s",
+		"Ångström Days",
+	)
 	h.advance(time.Second)
 	h.contains("offline · next try in 1s")
 	// The first retry fails: the wait doubles.
@@ -46,7 +50,10 @@ func TestPlayWhileOfflineWaits(t *testing.T) {
 	h.srv.SetDown(true)
 	h.cmd("sync")
 	h.keys("3j<CR><CR>")
-	h.contains("Queue (6)", "offline · the queue is ready · <Space> plays it once the server is back")
+	h.contains(
+		"Queue (6)",
+		"offline · the queue is ready · <Space> plays it once the server is back",
+	)
 	if calls := h.fake.Calls(); len(calls) != 0 {
 		t.Errorf("player calls while offline: %q", calls)
 	}

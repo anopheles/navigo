@@ -9,7 +9,10 @@ import (
 
 func TestHomeLists(t *testing.T) {
 	s, out := run(New(), LoadAlbumList{Kind: "recent"})
-	if f := only[FetchAlbumList](out); len(f) != 1 || f[0].Kind != "recent" || !s.Home["recent"].Loading {
+	if f := only[FetchAlbumList](
+		out,
+	); len(f) != 1 || f[0].Kind != "recent" ||
+		!s.Home["recent"].Loading {
 		t.Fatalf("load: %#v, %+v", out, s.Home)
 	}
 	albums := []library.Album{{ID: "a1", Name: "One"}}
@@ -21,7 +24,11 @@ func TestHomeLists(t *testing.T) {
 	// Offline nothing is asked, and the last answer stays.
 	off := s
 	off.Offline = true
-	if off, out = run(off, LoadAlbumList{Kind: "recent"}); len(out) != 0 || len(off.Home["recent"].Albums) != 1 {
+	if off, out = run(
+		off,
+		LoadAlbumList{Kind: "recent"},
+	); len(out) != 0 ||
+		len(off.Home["recent"].Albums) != 1 {
 		t.Errorf("offline: %#v, %+v", out, off.Home)
 	}
 

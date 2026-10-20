@@ -53,7 +53,10 @@ func (s State) applyHome(e Event) (State, []Effect) {
 			if e.Unreachable {
 				s, out = s.applyOffline(Unreachable{Err: e.Err})
 			}
-			return s, append(out, Notice{Text: fmt.Sprintf("couldn't load the list: %v", e.Err), Err: true})
+			return s, append(
+				out,
+				Notice{Text: fmt.Sprintf("couldn't load the list: %v", e.Err), Err: true},
+			)
 		}
 		l.Albums, l.Loaded = e.Albums, true
 		s.Home = withList(s.Home, e.Kind, l)

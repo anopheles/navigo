@@ -15,9 +15,15 @@ func MediaMsg(c mediactl.Command) tea.Msg { return mediaMsg{c} }
 // mediaStatus is what the media controls show, from the core's.
 func mediaStatus(np app.NowPlayingInfo) mediactl.Status {
 	s := mediactl.Status{
-		Playing: np.Playing, Paused: np.Paused, Position: np.Position, Length: np.Length,
-		CanNext: np.CanNext, CanPrev: np.CanPrev, CanPlay: np.CanPlay, Volume: np.Volume,
-		Loop: [...]mediactl.Loop{app.RepeatOff: mediactl.LoopNone, app.RepeatAll: mediactl.LoopPlaylist, app.RepeatOne: mediactl.LoopTrack}[np.Repeat],
+		Playing:  np.Playing,
+		Paused:   np.Paused,
+		Position: np.Position,
+		Length:   np.Length,
+		CanNext:  np.CanNext,
+		CanPrev:  np.CanPrev,
+		CanPlay:  np.CanPlay,
+		Volume:   np.Volume,
+		Loop:     [...]mediactl.Loop{app.RepeatOff: mediactl.LoopNone, app.RepeatAll: mediactl.LoopPlaylist, app.RepeatOne: mediactl.LoopTrack}[np.Repeat],
 	}
 	if t := np.Track; t.ID != "" {
 		s.TrackID, s.Title, s.Album = string(t.ID), t.Title, t.Album

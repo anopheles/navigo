@@ -11,7 +11,14 @@ import (
 
 // sections are the library window's top-level entries, in the spec's
 // order; Home, Playlists, Search and Help come later.
-var sections = []section{{"Home", homeList}, {"Artists", artistList}, {"Albums", albumList}, {"Playlists", playlistList}, {"Search", searchList}, {"Help", helpList}}
+var sections = []section{
+	{"Home", homeList},
+	{"Artists", artistList},
+	{"Albums", albumList},
+	{"Playlists", playlistList},
+	{"Search", searchList},
+	{"Help", helpList},
+}
 
 type section struct {
 	title string
@@ -22,7 +29,10 @@ type section struct {
 // that section's list.
 func sectionPath(kind listKind) []frame {
 	i := slices.IndexFunc(sections, func(s section) bool { return s.kind == kind })
-	return []frame{{kind: sectionList, title: "Library", cur: i}, {kind: kind, title: sections[i].title}}
+	return []frame{
+		{kind: sectionList, title: "Library", cur: i},
+		{kind: kind, title: sections[i].title},
+	}
 }
 
 // startPath is the library window at startup: Home.
@@ -211,7 +221,10 @@ func (m *Model) openArtist(a library.Artist) {
 func (m *Model) openAlbum(a library.Album, artist library.ArtistID) {
 	f := frame{kind: albumTracks, album: a.ID, title: a.Name}
 	if artist != "" && a.ArtistID != artist && m.state.Library != nil {
-		if i := slices.IndexFunc(m.state.Library.AlbumTracks(a.ID), func(t library.Track) bool { return t.Credits(artist) }); i >= 0 {
+		if i := slices.IndexFunc(
+			m.state.Library.AlbumTracks(a.ID),
+			func(t library.Track) bool { return t.Credits(artist) },
+		); i >= 0 {
 			f.cur = i
 		}
 	}
@@ -279,10 +292,20 @@ func (m *Model) goAlbum(command.Call) error {
 		return errors.New("that album isn't in the library")
 	}
 	tracks := frame{kind: albumTracks, album: a.ID, title: a.Name}
-	if i := slices.IndexFunc(lib.AlbumTracks(a.ID), func(t library.Track) bool { return t.ID == track }); i >= 0 {
+	if i := slices.IndexFunc(
+		lib.AlbumTracks(a.ID),
+		func(t library.Track) bool { return t.ID == track },
+	); i >= 0 {
 		tracks.cur = i
 	}
-	m.goTo(frame{kind: albumList, title: "Albums", cur: slices.IndexFunc(lib.Albums, func(b library.Album) bool { return b.ID == a.ID })}, tracks)
+	m.goTo(
+		frame{
+			kind:  albumList,
+			title: "Albums",
+			cur:   slices.IndexFunc(lib.Albums, func(b library.Album) bool { return b.ID == a.ID }),
+		},
+		tracks,
+	)
 	return nil
 }
 
@@ -311,7 +334,11 @@ func (m *Model) goArtist(command.Call) error {
 	for i, r := range refs {
 		names[i] = r.Name
 	}
-	m.openChoice("Go to which artist?", names, func(i int) error { return m.showArtist(refs[i].ID, album) })
+	m.openChoice(
+		"Go to which artist?",
+		names,
+		func(i int) error { return m.showArtist(refs[i].ID, album) },
+	)
 	return nil
 }
 
@@ -327,8 +354,23 @@ func (m *Model) showArtist(id library.ArtistID, album library.AlbumID) error {
 	if !ok {
 		return errors.New("that artist isn't in the library")
 	}
-	page := frame{kind: artistPage, artist: a.ID, title: a.Name, cur: max(m.artistRows(a.ID).index(album), 0)}
-	m.goTo(frame{kind: artistList, title: "Artists", cur: slices.IndexFunc(lib.Artists, func(b library.Artist) bool { return b.ID == a.ID })}, page)
+	page := frame{
+		kind:   artistPage,
+		artist: a.ID,
+		title:  a.Name,
+		cur:    max(m.artistRows(a.ID).index(album), 0),
+	}
+	m.goTo(
+		frame{
+			kind:  artistList,
+			title: "Artists",
+			cur: slices.IndexFunc(
+				lib.Artists,
+				func(b library.Artist) bool { return b.ID == a.ID },
+			),
+		},
+		page,
+	)
 	m.settle(m.top(), 1)
 	return nil
 }

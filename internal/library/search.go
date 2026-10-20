@@ -56,7 +56,11 @@ type rank struct {
 }
 
 func (a rank) compare(b rank) int {
-	return cmp.Or(cmp.Compare(a.tier, b.tier), cmp.Compare(b.plays, a.plays), cmp.Compare(a.name, b.name))
+	return cmp.Or(
+		cmp.Compare(a.tier, b.tier),
+		cmp.Compare(b.plays, a.plays),
+		cmp.Compare(a.name, b.name),
+	)
 }
 
 // keys is a name prepared for matching: folded words, and them joined.
@@ -195,11 +199,35 @@ func allStart(q []string, a, b []string) bool {
 // at anything that isn't a letter or digit. Apostrophes join: "don't"
 // is "dont".
 func words(s string) []string {
-	return strings.FieldsFunc(fold(s), func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) })
+	return strings.FieldsFunc(
+		fold(s),
+		func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) },
+	)
 }
 
 // letters that don't decompose into a base letter and an accent.
-var special = strings.NewReplacer("ß", "ss", "æ", "ae", "œ", "oe", "ø", "o", "ł", "l", "đ", "d", "ð", "d", "þ", "th", "'", "", "’", "")
+var special = strings.NewReplacer(
+	"ß",
+	"ss",
+	"æ",
+	"ae",
+	"œ",
+	"oe",
+	"ø",
+	"o",
+	"ł",
+	"l",
+	"đ",
+	"d",
+	"ð",
+	"d",
+	"þ",
+	"th",
+	"'",
+	"",
+	"’",
+	"",
+)
 
 func fold(s string) string {
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)

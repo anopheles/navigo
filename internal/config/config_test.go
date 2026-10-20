@@ -14,7 +14,13 @@ func TestParseMPVArgs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := []string{"--ao=null", "--volume-max=150"}; !reflect.DeepEqual(c.Player.MPVArgs, want) {
+	if want := []string{
+		"--ao=null",
+		"--volume-max=150",
+	}; !reflect.DeepEqual(
+		c.Player.MPVArgs,
+		want,
+	) {
 		t.Errorf("mpv_args = %q, want %q", c.Player.MPVArgs, want)
 	}
 }
@@ -96,7 +102,12 @@ func TestSaveServerKeepsTheRest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := Server{URL: "https://music.example", User: "ann", Password: "s3cret", PasswordCommand: "pass show navidrome"}
+	want := Server{
+		URL:             "https://music.example",
+		User:            "ann",
+		Password:        "s3cret",
+		PasswordCommand: "pass show navidrome",
+	}
 	if c.Server != want || len(c.Player.MPVArgs) != 1 {
 		t.Errorf("loaded %+v", c)
 	}

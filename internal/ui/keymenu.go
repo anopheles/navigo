@@ -20,10 +20,56 @@ var menuGroups = []struct {
 	title string
 	names []string
 }{
-	{"Play", []string{"play-now", "play-row", "play-pause", "next-track", "prev-track", "seek", "stop", "volume", "shuffle", "repeat"}},
-	{"Queue", []string{"add-end", "add-next", "delete", "remove", "yank", "paste-after", "paste-before", "move-down", "move-up", "undo", "redo", "playlist-undo", "playlist-delete"}},
+	{
+		"Play",
+		[]string{
+			"play-now",
+			"play-row",
+			"play-pause",
+			"next-track",
+			"prev-track",
+			"seek",
+			"stop",
+			"volume",
+			"shuffle",
+			"repeat",
+		},
+	},
+	{
+		"Queue",
+		[]string{
+			"add-end",
+			"add-next",
+			"delete",
+			"remove",
+			"yank",
+			"paste-after",
+			"paste-before",
+			"move-down",
+			"move-up",
+			"undo",
+			"redo",
+			"playlist-undo",
+			"playlist-delete",
+		},
+	},
 	{"Select", []string{"visual", "star"}},
-	{"Go", []string{"open", "back", "go-album", "go-artist", "window", "queue", "artists", "albums", "playlists", "search", "help-filter"}},
+	{
+		"Go",
+		[]string{
+			"open",
+			"back",
+			"go-album",
+			"go-artist",
+			"window",
+			"queue",
+			"artists",
+			"albums",
+			"playlists",
+			"search",
+			"help-filter",
+		},
+	},
 	{"Help", []string{"info", "key-menu", "help", "messages", "cmdline", "quit"}},
 }
 
@@ -48,7 +94,17 @@ func (m *Model) openKeyMenu() {
 				if _, args, ok := strings.Cut(b.Command, " "); ok {
 					label += " " + args
 				}
-				rows = append(rows, "  "+keyStyle.Render(fit(keyLabel(b.Seq()), 8))+" "+fit(label, 18)+" "+dimStyle.Render(c.Desc))
+				rows = append(
+					rows,
+					"  "+keyStyle.Render(
+						fit(keyLabel(b.Seq()), 8),
+					)+" "+fit(
+						label,
+						18,
+					)+" "+dimStyle.Render(
+						c.Desc,
+					),
+				)
 			}
 		}
 		if len(rows) > 0 {

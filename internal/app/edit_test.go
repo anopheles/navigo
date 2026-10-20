@@ -30,7 +30,11 @@ func sameIDs(a []player.EntryID, b ...player.EntryID) bool {
 // playing4 is a queue of four entries with the second one playing.
 func playing4(t *testing.T) State {
 	t.Helper()
-	s, _ := run(New(), PlayNow{Tracks: tracks(4), Start: 1}, FromPlayer{player.TrackStarted{Entry: 2}})
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(4), Start: 1},
+		FromPlayer{player.TrackStarted{Entry: 2}},
+	)
 	return s
 }
 
@@ -41,10 +45,16 @@ func TestRemoveAndPaste(t *testing.T) {
 	if !sameIDs(ids(s), 1, 2, 4) || s.Current != 1 {
 		t.Fatalf("queue %v current %d", ids(s), s.Current)
 	}
-	if sn := only[SetNeighbours](out); len(sn) != 1 || sn[0] != (SetNeighbours{Prev: entry(1, "t1"), Next: entry(4, "t4")}) {
+	if sn := only[SetNeighbours](
+		out,
+	); len(sn) != 1 ||
+		sn[0] != (SetNeighbours{Prev: entry(1, "t1"), Next: entry(4, "t4")}) {
 		t.Errorf("neighbours = %#v", sn)
 	}
-	if n := only[Notice](out); n[0].Text != "1 track removed (3 in queue)" || n[0].Command != "undo" {
+	if n := only[Notice](
+		out,
+	); n[0].Text != "1 track removed (3 in queue)" ||
+		n[0].Command != "undo" {
 		t.Errorf("notice = %#v", n)
 	}
 	if len(s.Register) != 1 || s.Register[0].ID != "t3" {
@@ -74,7 +84,10 @@ func TestRemoveThePlayingEntry(t *testing.T) {
 		t.Fatalf("queue %v current %d", ids(s), s.Current)
 	}
 	// It plays on, then the queue goes on with what followed it.
-	if sn := only[SetNeighbours](out); len(sn) != 1 || sn[0] != (SetNeighbours{Prev: entry(1, "t1"), Next: entry(4, "t4")}) {
+	if sn := only[SetNeighbours](
+		out,
+	); len(sn) != 1 ||
+		sn[0] != (SetNeighbours{Prev: entry(1, "t1"), Next: entry(4, "t4")}) {
 		t.Errorf("neighbours = %#v", sn)
 	}
 	s, _ = run(s, FromPlayer{player.TrackStarted{Entry: 4}})
@@ -95,7 +108,10 @@ func TestYankAndPasteEmpty(t *testing.T) {
 		t.Errorf("paste with an empty register: %#v", n)
 	}
 	s, out = run(s, Yank{Tracks: tracks(3)})
-	if n := only[Notice](out); n[0].Text != "3 tracks yanked" || n[0].Command != "paste-after" || s.CanUndo() {
+	if n := only[Notice](
+		out,
+	); n[0].Text != "3 tracks yanked" || n[0].Command != "paste-after" ||
+		s.CanUndo() {
 		t.Errorf("yank: %#v", n)
 	}
 	s, _ = run(s, Paste{At: 0})
@@ -110,7 +126,9 @@ func TestMove(t *testing.T) {
 	if !sameIDs(ids(s), 1, 4, 2, 3) || s.Current != 2 {
 		t.Fatalf("queue %v current %d", ids(s), s.Current)
 	}
-	if sn := only[SetNeighbours](out); sn[0] != (SetNeighbours{Prev: entry(4, "t4"), Next: entry(3, "t3")}) {
+	if sn := only[SetNeighbours](
+		out,
+	); sn[0] != (SetNeighbours{Prev: entry(4, "t4"), Next: entry(3, "t3")}) {
 		t.Errorf("neighbours = %#v", sn)
 	}
 	if n := only[Notice](out); n[0].Text != "moved 2 tracks down" {

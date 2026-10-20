@@ -42,7 +42,8 @@ func (m *Model) checkVisual() {
 	if v == nil {
 		return
 	}
-	if m.focus != v.win || v.win == libraryWindow && (len(m.lib) != v.depth || m.top().kind != v.kind) {
+	if m.focus != v.win ||
+		v.win == libraryWindow && (len(m.lib) != v.depth || m.top().kind != v.kind) {
 		m.endVisual()
 	}
 }
@@ -271,11 +272,22 @@ func (m *Model) visualHints() string {
 	var items []item
 	if m.focus == queueWindow {
 		n := count(to - from)
-		items = []item{{"delete", "remove " + n}, {"yank", "yank " + n}, {"move-down", "move down"}, {"move-up", "move up"}, {"cancel", "cancel"}}
+		items = []item{
+			{"delete", "remove " + n},
+			{"yank", "yank " + n},
+			{"move-down", "move down"},
+			{"move-up", "move up"},
+			{"cancel", "cancel"},
+		}
 	} else {
 		tracks, _ := m.rangeTracks(from, to)
 		n := count(len(tracks))
-		items = []item{{"add-end", "add " + n + " to queue"}, {"add-next", "play " + n + " next"}, {"yank", "yank " + n}, {"cancel", "cancel"}}
+		items = []item{
+			{"add-end", "add " + n + " to queue"},
+			{"add-next", "play " + n + " next"},
+			{"yank", "yank " + n},
+			{"cancel", "cancel"},
+		}
 	}
 	var parts []string
 	for _, it := range items {

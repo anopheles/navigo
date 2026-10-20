@@ -66,7 +66,9 @@ func TestMessagesPopup(t *testing.T) {
 
 func TestUnexpectedErrorsPointToTheLog(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
-	h.send(eventMsg{app.Failed{What: "couldn't save the library cache", Err: errors.New("disk full")}})
+	h.send(
+		eventMsg{app.Failed{What: "couldn't save the library cache", Err: errors.New("disk full")}},
+	)
 	h.contains("couldn't save the library cache: disk full · details in /logs/navigo.log")
 }
 

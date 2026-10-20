@@ -10,7 +10,13 @@ import (
 )
 
 func TestMissingMPV(t *testing.T) {
-	s, _ := run(New(), PlayerChecked{Err: fmt.Errorf("%w at mpv", player.ErrMPVMissing), Hint: "sudo apt install mpv"})
+	s, _ := run(
+		New(),
+		PlayerChecked{
+			Err:  fmt.Errorf("%w at mpv", player.ErrMPVMissing),
+			Hint: "sudo apt install mpv",
+		},
+	)
 	if s.PlayerProblem != "mpv not found · install mpv 0.38 or newer to play" {
 		t.Fatalf("problem %q", s.PlayerProblem)
 	}
@@ -19,7 +25,10 @@ func TestMissingMPV(t *testing.T) {
 	if len(s.Queue) != 3 || len(only[Play](out)) != 0 {
 		t.Errorf("queue %d, plays %#v", len(s.Queue), only[Play](out))
 	}
-	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mpv not found · install mpv 0.38 or newer to play · sudo apt install mpv" {
+	if n := only[Notice](
+		out,
+	); len(n) != 1 ||
+		n[0].Text != "mpv not found · install mpv 0.38 or newer to play · sudo apt install mpv" {
 		t.Errorf("notice = %#v", n)
 	}
 	if _, out = run(s, PlayPause{}); len(only[Play](out)) != 0 || !only[Notice](out)[0].Err {
@@ -34,12 +43,20 @@ func TestMissingMPV(t *testing.T) {
 
 func TestResumeAfterDied(t *testing.T) {
 	s := playing4(t)
-	s, _ = run(s, FromPlayer{player.Position{Entry: 2, Position: 42 * time.Second, Duration: 100 * time.Second}})
+	s, _ = run(
+		s,
+		FromPlayer{
+			player.Position{Entry: 2, Position: 42 * time.Second, Duration: 100 * time.Second},
+		},
+	)
 	s, out := run(s, PlayerDied{Err: errors.New("exit 1"), At: time.Unix(0, 0)})
 	if s.Player.Playing || !s.PlayerDown {
 		t.Fatalf("after Died: playing %v down %v", s.Player.Playing, s.PlayerDown)
 	}
-	if n := only[Notice](out); n[0].Command != "play-pause" || n[0].Hint != "starts it again where it stopped" {
+	if n := only[Notice](
+		out,
+	); n[0].Command != "play-pause" ||
+		n[0].Hint != "starts it again where it stopped" {
 		t.Errorf("notice = %#v", n)
 	}
 	s, out = run(s, PlayPause{})
@@ -82,7 +99,10 @@ func TestCrashCap(t *testing.T) {
 	if u := only[ScheduleUncap](out); len(u) != 1 || u[0].After != time.Minute {
 		t.Errorf("uncap = %#v", u)
 	}
-	if n := only[Notice](out); !n[0].Unexpected || n[0].Text != "mpv crashed 3 times in a minute · it can start again in a minute, or now with :reconnect" {
+	if n := only[Notice](
+		out,
+	); !n[0].Unexpected ||
+		n[0].Text != "mpv crashed 3 times in a minute · it can start again in a minute, or now with :reconnect" {
 		t.Errorf("notice = %#v", n)
 	}
 	// Capped: <Space> doesn't restart it.
@@ -99,11 +119,17 @@ func TestCrashCap(t *testing.T) {
 }
 
 func TestOldMPVWithoutMediaControls(t *testing.T) {
-	s, out := run(New(), PlayerChecked{Err: fmt.Errorf("%w; found mpv v0.38.0", player.ErrNoMediaControls)})
+	s, out := run(
+		New(),
+		PlayerChecked{Err: fmt.Errorf("%w; found mpv v0.38.0", player.ErrNoMediaControls)},
+	)
 	if s.PlayerProblem != "" {
 		t.Errorf("a problem for a warning: %q", s.PlayerProblem)
 	}
-	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mpv plays, but the OS's media controls need mpv 0.39 or newer; found mpv v0.38.0" {
+	if n := only[Notice](
+		out,
+	); len(n) != 1 ||
+		n[0].Text != "mpv plays, but the OS's media controls need mpv 0.39 or newer; found mpv v0.38.0" {
 		t.Errorf("notice = %#v", n)
 	}
 	if _, out = run(s, PlayNow{Tracks: tracks(1), Start: 0}); len(only[Play](out)) != 1 {

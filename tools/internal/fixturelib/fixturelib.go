@@ -52,11 +52,66 @@ var durations = []int{31, 64, 97, 142, 185, 238}
 // differs from track artist) and a track credited to two artists, wide and accented names (layout), and one
 // album with more than 500 tracks (paging).
 var Albums = []Album{
-	album("Aurora Lane", "Blue", 2019, "Dream Pop", "Tidewater", "Blue", "Paper Lanterns", "Slow Orbit", "Harbour Lights", "Blue Again", "Glass Garden", "Last Ferry"),
-	album("Aurora Lane", "Blue Hour", 2021, "Dream Pop", "Dusk Signal", "Low Tide", "Streetlamp", "Blue Hour", "Wintering", "Afterglow"),
-	album("The Quiet Ones", "Blue", 2015, "Indie", "Undertow", "Quiet Room", "Blue Static", "Radio Silence", "Homeward"),
-	album("The Quiet Ones", "Static Bloom", 2018, "Indie", "Static Bloom", "Fieldnotes", "Small Hours", "Copper Wire", "Overpass", "Weathervane", "Coda"),
-	album("Zoë Brandt", "Ångström Days", 2020, "Electronic", "Ångström", "Café Nocturne", "Über Alles Still", "Ça Va"),
+	album(
+		"Aurora Lane",
+		"Blue",
+		2019,
+		"Dream Pop",
+		"Tidewater",
+		"Blue",
+		"Paper Lanterns",
+		"Slow Orbit",
+		"Harbour Lights",
+		"Blue Again",
+		"Glass Garden",
+		"Last Ferry",
+	),
+	album(
+		"Aurora Lane",
+		"Blue Hour",
+		2021,
+		"Dream Pop",
+		"Dusk Signal",
+		"Low Tide",
+		"Streetlamp",
+		"Blue Hour",
+		"Wintering",
+		"Afterglow",
+	),
+	album(
+		"The Quiet Ones",
+		"Blue",
+		2015,
+		"Indie",
+		"Undertow",
+		"Quiet Room",
+		"Blue Static",
+		"Radio Silence",
+		"Homeward",
+	),
+	album(
+		"The Quiet Ones",
+		"Static Bloom",
+		2018,
+		"Indie",
+		"Static Bloom",
+		"Fieldnotes",
+		"Small Hours",
+		"Copper Wire",
+		"Overpass",
+		"Weathervane",
+		"Coda",
+	),
+	album(
+		"Zoë Brandt",
+		"Ångström Days",
+		2020,
+		"Electronic",
+		"Ångström",
+		"Café Nocturne",
+		"Über Alles Still",
+		"Ça Va",
+	),
 	album("森の音", "夜明け", 2017, "Ambient", "朝霧", "川の歌", "夜明け前"),
 	longAlbum(),
 	compilation(),
@@ -105,14 +160,28 @@ func TrackCount() int {
 func album(artist, title string, year int, genre string, tracks ...string) Album {
 	a := Album{Title: title, AlbumArtist: artist, Year: year, Genre: genre, Discs: 1}
 	for i, t := range tracks {
-		a.Tracks = append(a.Tracks, Track{Title: t, Disc: 1, Number: i + 1, Seconds: durations[(i*7+len(title))%len(durations)]})
+		a.Tracks = append(
+			a.Tracks,
+			Track{
+				Title:   t,
+				Disc:    1,
+				Number:  i + 1,
+				Seconds: durations[(i*7+len(title))%len(durations)],
+			},
+		)
 	}
 	return a
 }
 
 // longAlbum is split over two discs so disc numbers are exercised too.
 func longAlbum() Album {
-	a := Album{Title: "The Long Haul", AlbumArtist: "Long Haul Orchestra", Year: 2022, Genre: "Classical", Discs: 2}
+	a := Album{
+		Title:       "The Long Haul",
+		AlbumArtist: "Long Haul Orchestra",
+		Year:        2022,
+		Genre:       "Classical",
+		Discs:       2,
+	}
 	perDisc := LongAlbumTracks / 2
 	for i := range LongAlbumTracks {
 		a.Tracks = append(a.Tracks, Track{
@@ -126,14 +195,30 @@ func longAlbum() Album {
 }
 
 func compilation() Album {
-	a := Album{Title: "Night Drive Vol. 1", AlbumArtist: "Various Artists", Year: 2023, Genre: "Synthwave", Compilation: true, Discs: 1}
+	a := Album{
+		Title:       "Night Drive Vol. 1",
+		AlbumArtist: "Various Artists",
+		Year:        2023,
+		Genre:       "Synthwave",
+		Compilation: true,
+		Discs:       1,
+	}
 	for i, t := range []struct{ artist, title string }{
 		{"Aurora Lane", "Neon Coast"},
 		{"The Quiet Ones", "Exit 14"},
 		{"Pell Mell", "Night Drive"},
 		{"Pell Mell feat. Zoë Brandt", "Blue Highway"}, // Navidrome splits on " feat. "
 	} {
-		a.Tracks = append(a.Tracks, Track{Title: t.title, Artist: t.artist, Disc: 1, Number: i + 1, Seconds: durations[i%len(durations)]})
+		a.Tracks = append(
+			a.Tracks,
+			Track{
+				Title:   t.title,
+				Artist:  t.artist,
+				Disc:    1,
+				Number:  i + 1,
+				Seconds: durations[i%len(durations)],
+			},
+		)
 	}
 	return a
 }

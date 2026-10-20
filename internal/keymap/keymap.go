@@ -316,7 +316,10 @@ func (e *Engine) Reset() { e.count, e.keys, e.op, e.opCount, e.reg = "", nil, ni
 func (e *Engine) Feed(mode Mode, scopes []string, key string) Result {
 	if e.reg {
 		e.Reset()
-		return Result{Kind: Rejected, Text: `navigo has one register: drop the "` + key + ` and the yank or paste uses it`}
+		return Result{
+			Kind: Rejected,
+			Text: `navigo has one register: drop the "` + key + ` and the yank or paste uses it`,
+		}
 	}
 	if len(e.keys) == 0 && mode != Cmdline && isCountDigit(key, e.count != "") {
 		e.count += key

@@ -40,13 +40,23 @@ func (s State) applyStars(e Event) (State, []Effect) {
 			return s, nil
 		}
 		if s.Offline {
-			return s, []Effect{Notice{Text: "offline · stars can be changed once the server is back", Err: true}}
+			return s, []Effect{
+				Notice{Text: "offline · stars can be changed once the server is back", Err: true},
+			}
 		}
 		verb := "unstarred "
 		if e.On {
 			verb = "starred "
 		}
-		return s, []Effect{WriteStar{On: e.On, Artists: e.Artists, Albums: e.Albums, Tracks: e.Tracks, Done: Notice{Text: verb + e.Name}}}
+		return s, []Effect{
+			WriteStar{
+				On:      e.On,
+				Artists: e.Artists,
+				Albums:  e.Albums,
+				Tracks:  e.Tracks,
+				Done:    Notice{Text: verb + e.Name},
+			},
+		}
 
 	case StarsWritten:
 		w := e.Write
@@ -55,13 +65,19 @@ func (s State) applyStars(e Event) (State, []Effect) {
 			if e.Unreachable {
 				s, out = s.applyOffline(Unreachable{Err: e.Err})
 			}
-			return s, append(out, Notice{Text: fmt.Sprintf("couldn't change the stars: %v", e.Err), Err: true})
+			return s, append(
+				out,
+				Notice{Text: fmt.Sprintf("couldn't change the stars: %v", e.Err), Err: true},
+			)
 		}
 		if s.Library == nil {
 			return s, nil
 		}
 		ids := slices.Concat(w.Artists, w.Albums, w.Tracks)
-		starred := slices.DeleteFunc(slices.Clone(s.Library.Starred), func(id string) bool { return slices.Contains(ids, id) })
+		starred := slices.DeleteFunc(
+			slices.Clone(s.Library.Starred),
+			func(id string) bool { return slices.Contains(ids, id) },
+		)
 		if w.On {
 			starred = append(starred, ids...)
 		}

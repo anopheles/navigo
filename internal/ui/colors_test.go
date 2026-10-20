@@ -45,7 +45,8 @@ func TestOnlySixteenColours(t *testing.T) {
 	h := playingScreen(t)
 	for _, screen := range []string{h.m.render(), func() string { h.keys("?"); return h.m.render() }()} {
 		for _, p := range sgrs(screen) {
-			if strings.Contains(p, "38;") || strings.Contains(p, "48;") || strings.Contains(p, "58;") {
+			if strings.Contains(p, "38;") || strings.Contains(p, "48;") ||
+				strings.Contains(p, "58;") {
 				t.Fatalf("extended colour in SGR %q", p)
 			}
 		}
@@ -85,7 +86,8 @@ func TestColoursOff(t *testing.T) {
 	// first SGR is the library title's, the last before "Queue" the queue's.
 	title := lines[0]
 	before := sgrs(title[:strings.Index(title, "Queue (6)")])
-	if len(before) < 2 || strings.Contains(";"+before[0]+";", ";7;") || !strings.Contains(";"+before[len(before)-1]+";", ";7;") {
+	if len(before) < 2 || strings.Contains(";"+before[0]+";", ";7;") ||
+		!strings.Contains(";"+before[len(before)-1]+";", ";7;") {
 		t.Errorf("titles don't show the focus: %q", title)
 	}
 	// The cursor is reverse in the focused queue (on its first row),

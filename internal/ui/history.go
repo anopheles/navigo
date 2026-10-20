@@ -35,7 +35,10 @@ func loadHistory(dir, file, what string) lineHistory {
 	if err != nil {
 		return h
 	}
-	h.items = slices.DeleteFunc(strings.Split(string(b), "\n"), func(s string) bool { return strings.TrimSpace(s) == "" })
+	h.items = slices.DeleteFunc(
+		strings.Split(string(b), "\n"),
+		func(s string) bool { return strings.TrimSpace(s) == "" },
+	)
 	h.idx = len(h.items)
 	return h
 }

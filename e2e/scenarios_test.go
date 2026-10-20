@@ -33,7 +33,8 @@ func (s *session) synced() {
 	s.keys("'b")
 	s.waitText(" Albums ", 5*time.Second)
 	s.waitFor("the library to sync", 3*time.Minute, func(scr string) bool {
-		return !strings.Contains(scr, "loading…") && !strings.Contains(scr, "connecting") && !strings.Contains(scr, "Syncing library")
+		return !strings.Contains(scr, "loading…") && !strings.Contains(scr, "connecting") &&
+			!strings.Contains(scr, "Syncing library")
 	})
 }
 
@@ -71,9 +72,17 @@ func (s *session) position() time.Duration {
 // and returns its title.
 func (s *session) playing() string {
 	s.t.Helper()
-	scr := s.waitFor("the now-playing bar", 30*time.Second, func(scr string) bool { return playingRE.MatchString(scr) })
+	scr := s.waitFor(
+		"the now-playing bar",
+		30*time.Second,
+		func(scr string) bool { return playingRE.MatchString(scr) },
+	)
 	title := strings.TrimSpace(playingRE.FindStringSubmatch(scr)[1])
-	s.waitFor("the position to pass 0:02", 30*time.Second, func(string) bool { return s.position() >= 2*time.Second })
+	s.waitFor(
+		"the position to pass 0:02",
+		30*time.Second,
+		func(string) bool { return s.position() >= 2*time.Second },
+	)
 	return title
 }
 
@@ -125,7 +134,11 @@ func TestNewUserPath(t *testing.T) {
 	s.keys("\r")
 	s.keys("ga")
 	s.waitText("Albums › ", 10*time.Second)
-	s.waitFor("the album's tracks", 10*time.Second, func(scr string) bool { return trackRowRE.MatchString(scr) })
+	s.waitFor(
+		"the album's tracks",
+		10*time.Second,
+		func(scr string) bool { return trackRowRE.MatchString(scr) },
+	)
 
 	s.keys("Vj")
 	s.waitText("add ", 5*time.Second) // "A add 2 tracks to queue"
@@ -169,7 +182,11 @@ func TestTransport(t *testing.T) {
 
 	from := s.position()
 	s.keys(".")
-	s.waitFor("a seek of 10 s", 10*time.Second, func(string) bool { return s.position() >= from+8*time.Second })
+	s.waitFor(
+		"a seek of 10 s",
+		10*time.Second,
+		func(string) bool { return s.position() >= from+8*time.Second },
+	)
 }
 
 // Cold start: the second launch shows the library from the cache file at
@@ -185,14 +202,23 @@ func TestColdStart(t *testing.T) {
 	s = startIn(t, srv, home)
 	s.waitText("Recently added", 5*time.Second)
 	s.keys("'b")
-	s.waitFor("the cached library", 5*time.Second, func(string) bool { return s.line(1) == firstAlbum })
+	s.waitFor(
+		"the cached library",
+		5*time.Second,
+		func(string) bool { return s.line(1) == firstAlbum },
+	)
 	run := func() string { // this launch's part of the log
 		l := s.log()
 		return l[strings.LastIndex(l, "# navigo started"):]
 	}
-	s.waitFor("the sync check", 30*time.Second, func(string) bool { return strings.Contains(run(), "endpoint=getScanStatus") })
+	s.waitFor(
+		"the sync check",
+		30*time.Second,
+		func(string) bool { return strings.Contains(run(), "endpoint=getScanStatus") },
+	)
 	time.Sleep(2 * time.Second) // a full sync would start right after it
-	if log := run(); strings.Contains(log, "endpoint=search3") || strings.Contains(log, "endpoint=getAlbumList2") {
+	if log := run(); strings.Contains(log, "endpoint=search3") ||
+		strings.Contains(log, "endpoint=getAlbumList2") {
 		t.Errorf("the second launch synced the whole library:\n%s", log)
 	}
 	if strings.Contains(s.screen(), "Syncing library") {

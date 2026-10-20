@@ -14,7 +14,14 @@ import (
 // and right away when the user does something that needs the server.
 
 // backoff is the wait before each retry while offline.
-var backoff = []time.Duration{2 * time.Second, 4 * time.Second, 8 * time.Second, 16 * time.Second, 32 * time.Second, 60 * time.Second}
+var backoff = []time.Duration{
+	2 * time.Second,
+	4 * time.Second,
+	8 * time.Second,
+	16 * time.Second,
+	32 * time.Second,
+	60 * time.Second,
+}
 
 // maxSkips is how many broken files in a row are skipped before playback
 // stops, so a broken album can't spin through.
@@ -83,7 +90,9 @@ func (s State) applyOffline(e Event) (State, []Effect) {
 		if s.PlayerCapped { // :reconnect also lets mpv start again
 			s.PlayerCapped = false
 			if !s.Offline {
-				return s, []Effect{Notice{Text: "mpv can start again", Command: "play-pause", Hint: "starts it"}}
+				return s, []Effect{
+					Notice{Text: "mpv can start again", Command: "play-pause", Hint: "starts it"},
+				}
 			}
 		}
 		s, out := s.probe(ProbeReconnect)
@@ -193,7 +202,16 @@ func (s State) skipBroken() (State, []Effect) {
 	what := fmt.Sprintf("couldn't play %s (%s)", s.failedTitle, s.failedErr)
 	switch {
 	case s.skips >= maxSkips:
-		return s, []Effect{Notice{Text: fmt.Sprintf("%s · %d tracks in a row failed, so playback stopped", what, s.skips), Err: true}}
+		return s, []Effect{
+			Notice{
+				Text: fmt.Sprintf(
+					"%s · %d tracks in a row failed, so playback stopped",
+					what,
+					s.skips,
+				),
+				Err: true,
+			},
+		}
 	case s.Current+1 >= len(s.Queue):
 		return s, []Effect{Notice{Text: what, Err: true}}
 	}
@@ -223,7 +241,14 @@ func (s State) playFrom(i int, start time.Duration) (State, []Effect) {
 	s.resume = nil
 	if s.Offline {
 		s, out := s.probe(ProbeUser)
-		return s, append(out, Notice{Text: "offline · the queue is ready", Command: "play-pause", Hint: "plays it once the server is back"})
+		return s, append(
+			out,
+			Notice{
+				Text:    "offline · the queue is ready",
+				Command: "play-pause",
+				Hint:    "plays it once the server is back",
+			},
+		)
 	}
 	s.halted = false
 	s = s.rekeyStale()
@@ -235,7 +260,11 @@ func (s State) playFrom(i int, start time.Duration) (State, []Effect) {
 // rekeyStale gives queue entries mpv may still report on new IDs, so its
 // late events about the old ones can't be mistaken for the new play.
 func (s State) rekeyStale() State {
-	if len(s.stale) == 0 || !slices.ContainsFunc(s.Queue, func(q QueueEntry) bool { return slices.Contains(s.stale, q.ID) }) {
+	if len(s.stale) == 0 ||
+		!slices.ContainsFunc(
+			s.Queue,
+			func(q QueueEntry) bool { return slices.Contains(s.stale, q.ID) },
+		) {
 		return s
 	}
 	q := slices.Clone(s.Queue)

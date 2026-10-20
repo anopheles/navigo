@@ -13,8 +13,18 @@ import (
 // playlist "Rock" of t1, t2, t3.
 func withPlaylist() State {
 	ts := tracks(4)
-	lib := library.Build("https://m.example", "ann", time.Time{}, nil, nil, ts,
-		[]library.Playlist{{ID: "pl", Name: "Rock", Tracks: []library.TrackID{"t1", "t2", "t3"}}}, nil)
+	lib := library.Build(
+		"https://m.example",
+		"ann",
+		time.Time{},
+		nil,
+		nil,
+		ts,
+		[]library.Playlist{
+			{ID: "pl", Name: "Rock", Tracks: []library.TrackID{"t1", "t2", "t3"}},
+		},
+		nil,
+	)
 	s := New()
 	s.Library = lib
 	return s
@@ -50,7 +60,10 @@ func TestPlaylistRemove(t *testing.T) {
 	if got := rock(s); !reflect.DeepEqual(got, []library.TrackID{"t3"}) {
 		t.Errorf("after: %v", got)
 	}
-	if n := only[Notice](out); n[0].Text != "2 tracks removed from Rock" || n[0].Command != "paste-before" {
+	if n := only[Notice](
+		out,
+	); n[0].Text != "2 tracks removed from Rock" ||
+		n[0].Command != "paste-before" {
 		t.Errorf("notice = %#v", n)
 	}
 	if len(only[SaveCache](out)) != 1 {
@@ -60,14 +73,16 @@ func TestPlaylistRemove(t *testing.T) {
 
 func TestPlaylistInsertMoveCreateDelete(t *testing.T) {
 	s, out := run(withPlaylist(), PlaylistInsert{ID: "pl", At: -1, Tracks: tracks(4)[3:]})
-	if w := only[WritePlaylist](out)[0]; w.Kind != UpdatePlaylist || !reflect.DeepEqual(w.Add, []library.TrackID{"t4"}) {
+	if w := only[WritePlaylist](out)[0]; w.Kind != UpdatePlaylist ||
+		!reflect.DeepEqual(w.Add, []library.TrackID{"t4"}) {
 		t.Errorf("append = %+v", w)
 	}
 	s, _ = written(s, out, "")
 
 	// In the middle, or moving: the whole list is sent.
 	s, out = run(s, PlaylistInsert{ID: "pl", At: 1, Tracks: tracks(1)})
-	if w := only[WritePlaylist](out)[0]; w.Kind != ReplacePlaylist || !reflect.DeepEqual(w.Songs, []library.TrackID{"t1", "t1", "t2", "t3", "t4"}) {
+	if w := only[WritePlaylist](out)[0]; w.Kind != ReplacePlaylist ||
+		!reflect.DeepEqual(w.Songs, []library.TrackID{"t1", "t1", "t2", "t3", "t4"}) {
 		t.Errorf("insert = %+v", w)
 	}
 	s, out = written(s, out, "")
@@ -102,7 +117,11 @@ func TestPlaylistInsertMoveCreateDelete(t *testing.T) {
 func TestPlaylistEditsOfflineAndFailing(t *testing.T) {
 	s := withPlaylist()
 	s.Offline = true
-	if _, out := run(s, PlaylistRemove{ID: "pl", From: 0, To: 1}); len(only[WritePlaylist](out)) != 0 || !only[Notice](out)[0].Err {
+	if _, out := run(
+		s,
+		PlaylistRemove{ID: "pl", From: 0, To: 1},
+	); len(only[WritePlaylist](out)) != 0 ||
+		!only[Notice](out)[0].Err {
 		t.Errorf("offline: %#v", out)
 	}
 

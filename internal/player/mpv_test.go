@@ -145,7 +145,10 @@ func TestMPVPlaysTheNextEntryByItself(t *testing.T) {
 func TestMPVSetNeighboursReplacesNext(t *testing.T) {
 	h := newMPV(t)
 	ctx := context.Background()
-	if err := h.m.Play(ctx, Span{Prev: entry(1, "1s"), Current: entry(2, "1s"), Next: entry(3, "1s")}); err != nil {
+	if err := h.m.Play(
+		ctx,
+		Span{Prev: entry(1, "1s"), Current: entry(2, "1s"), Next: entry(3, "1s")},
+	); err != nil {
 		t.Fatal(err)
 	}
 	h.await("entry 2 to start", started(2))
@@ -184,7 +187,10 @@ func TestMPVPauseAndSeek(t *testing.T) {
 	if err := h.m.Play(ctx, Span{Current: entry(1, "30s")}); err != nil {
 		t.Fatal(err)
 	}
-	h.await("entry 1 to play", func(e Event) bool { p, ok := e.(Position); return ok && p.Entry == 1 })
+	h.await(
+		"entry 1 to play",
+		func(e Event) bool { p, ok := e.(Position); return ok && p.Entry == 1 },
+	)
 	if err := h.m.Pause(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -238,7 +244,12 @@ func TestMPVBadArgs(t *testing.T) {
 	if _, err := exec.LookPath("mpv"); err != nil {
 		t.Skip("mpv not on PATH")
 	}
-	m := NewMPV(MPVOptions{Args: []string{"--no-such-option"}, StreamURL: func(library.TrackID) string { return "" }})
+	m := NewMPV(
+		MPVOptions{
+			Args:      []string{"--no-such-option"},
+			StreamURL: func(library.TrackID) string { return "" },
+		},
+	)
 	defer m.Close()
 	err := m.Play(context.Background(), Span{Current: entry(1, "1s")})
 	if err == nil || !strings.Contains(err.Error(), "no-such-option") {
@@ -267,12 +278,18 @@ func TestVersionOK(t *testing.T) {
 func TestMPVIgnoresReplacedEntries(t *testing.T) {
 	h := newMPV(t)
 	ctx := context.Background()
-	bad := MPVOptions{Args: []string{"--ao=null"}, StreamURL: func(id library.TrackID) string { return "http://127.0.0.1:1/" + string(id) }}
+	bad := MPVOptions{
+		Args:      []string{"--ao=null"},
+		StreamURL: func(id library.TrackID) string { return "http://127.0.0.1:1/" + string(id) },
+	}
 	h.m.opts.StreamURL = bad.StreamURL
 	if err := h.m.Play(ctx, Span{Current: entry(1, "x"), Next: entry(2, "x")}); err != nil {
 		t.Fatal(err)
 	}
-	h.await("entry 1 to fail", func(e Event) bool { x, ok := e.(TrackEnded); return ok && x.Entry == 1 && x.Reason == Failed })
+	h.await(
+		"entry 1 to fail",
+		func(e Event) bool { x, ok := e.(TrackEnded); return ok && x.Entry == 1 && x.Reason == Failed },
+	)
 	if err := h.m.Stop(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -307,7 +324,13 @@ func TestMPVCheck(t *testing.T) {
 		t.Skip("the fake mpv is a shell script")
 	}
 	old := filepath.Join(t.TempDir(), "mpv")
-	if err := os.WriteFile(old, []byte("#!/bin/sh\necho 'mpv v0.37.0 Copyright © 2000-2023 mpv/MPlayer/mplayer2 projects'\n"), 0o755); err != nil {
+	if err := os.WriteFile(
+		old,
+		[]byte(
+			"#!/bin/sh\necho 'mpv v0.37.0 Copyright © 2000-2023 mpv/MPlayer/mplayer2 projects'\n",
+		),
+		0o755,
+	); err != nil {
 		t.Fatal(err)
 	}
 	err := NewMPV(MPVOptions{Path: old}).Check(ctx)
@@ -361,10 +384,21 @@ func TestMPVCheckMediaControls(t *testing.T) {
 	defer func(was bool) { mediaByMPV = was }(mediaByMPV)
 	mediaByMPV = true
 	fake := filepath.Join(t.TempDir(), "mpv")
-	if err := os.WriteFile(fake, []byte("#!/bin/sh\necho 'mpv v0.38.0 Copyright © 2000-2024 mpv/MPlayer/mplayer2 projects'\n"), 0o755); err != nil {
+	if err := os.WriteFile(
+		fake,
+		[]byte(
+			"#!/bin/sh\necho 'mpv v0.38.0 Copyright © 2000-2024 mpv/MPlayer/mplayer2 projects'\n",
+		),
+		0o755,
+	); err != nil {
 		t.Fatal(err)
 	}
-	if err := NewMPV(MPVOptions{Path: fake}).Check(context.Background()); !errors.Is(err, ErrNoMediaControls) {
+	if err := NewMPV(
+		MPVOptions{Path: fake},
+	).Check(context.Background()); !errors.Is(
+		err,
+		ErrNoMediaControls,
+	) {
 		t.Errorf("mpv 0.38 with mpv's media controls: %v", err)
 	}
 	mediaByMPV = false

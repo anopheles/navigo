@@ -45,7 +45,14 @@ var authParams = []string{"u", "t", "s", "p", "v", "c", "f", "apiKey"}
 // ignoresParams are write endpoints replayed the same whatever they are
 // called with: a plain "ok", or for createPlaylist the playlist the
 // recording made. Check their parameters with Requests.
-var ignoresParams = []string{"scrobble", "star", "unstar", "createPlaylist", "updatePlaylist", "deletePlaylist"}
+var ignoresParams = []string{
+	"scrobble",
+	"star",
+	"unstar",
+	"createPlaylist",
+	"updatePlaylist",
+	"deletePlaylist",
+}
 
 // FixtureName is the testdata file name a request is replayed from:
 // "getAlbum.id=xyz.json", or "getArtists.json" without parameters.
@@ -157,7 +164,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 
 	body, err := fixtures.ReadFile("testdata/" + name)
 	if err != nil {
-		s.t.Errorf("subsonictest: no fixture %s; add the request to tools/recordfixtures and re-record", name)
+		s.t.Errorf(
+			"subsonictest: no fixture %s; add the request to tools/recordfixtures and re-record",
+			name,
+		)
 		body, _ = fixtures.ReadFile("testdata/error-70.json")
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -181,7 +191,11 @@ func (s *Server) authorized(endpoint string, params url.Values) bool {
 	s.salts[salt] = true
 	s.mu.Unlock()
 	if reused {
-		s.t.Errorf("subsonictest: %s: salt %q reused; every request needs a fresh salt", endpoint, salt)
+		s.t.Errorf(
+			"subsonictest: %s: salt %q reused; every request needs a fresh salt",
+			endpoint,
+			salt,
+		)
 	}
 	sum := md5.Sum([]byte(Password + salt))
 	return params.Get("u") == Username && token == hex.EncodeToString(sum[:])

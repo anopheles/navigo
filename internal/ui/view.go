@@ -24,17 +24,23 @@ const narrow = 100
 // magenta playing, cyan a key, red an error. With colours off (NO_COLOR)
 // the attributes and marks (▶, ★, ──) still tell everything apart.
 var (
-	cursorStyle  = lipgloss.NewStyle().Reverse(true)   // the cursor in the focused window
-	cursorDim    = lipgloss.NewStyle().Underline(true) // the cursor in the other one
-	visualStyle  = lipgloss.NewStyle().Background(ansi.Blue).Underline(true)
-	dimStyle     = lipgloss.NewStyle().Faint(true)
-	keyStyle     = lipgloss.NewStyle().Foreground(ansi.Cyan).Bold(true)
-	accentStyle  = lipgloss.NewStyle().Foreground(ansi.Magenta).Bold(true) // playing
-	errStyle     = lipgloss.NewStyle().Foreground(ansi.Red).Bold(true)
-	titleOn      = lipgloss.NewStyle().Reverse(true).Bold(true)
-	titleOff     = lipgloss.NewStyle().Bold(true)
-	boxStyle     = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(ansi.BrightBlack).Padding(1, 2)
-	popupStyle   = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(ansi.BrightBlack).Padding(0, 1)
+	cursorStyle = lipgloss.NewStyle().Reverse(true)   // the cursor in the focused window
+	cursorDim   = lipgloss.NewStyle().Underline(true) // the cursor in the other one
+	visualStyle = lipgloss.NewStyle().Background(ansi.Blue).Underline(true)
+	dimStyle    = lipgloss.NewStyle().Faint(true)
+	keyStyle    = lipgloss.NewStyle().Foreground(ansi.Cyan).Bold(true)
+	accentStyle = lipgloss.NewStyle().Foreground(ansi.Magenta).Bold(true) // playing
+	errStyle    = lipgloss.NewStyle().Foreground(ansi.Red).Bold(true)
+	titleOn     = lipgloss.NewStyle().Reverse(true).Bold(true)
+	titleOff    = lipgloss.NewStyle().Bold(true)
+	boxStyle    = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ansi.BrightBlack).
+			Padding(1, 2)
+	popupStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ansi.BrightBlack).
+			Padding(0, 1)
 	focusedInput = lipgloss.NewStyle().Foreground(ansi.Cyan)
 )
 
@@ -56,16 +62,33 @@ func (m *Model) render() string {
 	var lines []string
 	if m.w < narrow {
 		if m.focus == libraryWindow {
-			lines = append(lines, titleOn.Render(fit(m.libTitle()+"   "+m.keyHint("window", "queue"), m.w)))
+			lines = append(
+				lines,
+				titleOn.Render(fit(m.libTitle()+"   "+m.keyHint("window", "queue"), m.w)),
+			)
 			lines = append(lines, m.libraryRows(m.w, h, true)...)
 		} else {
-			lines = append(lines, titleOn.Render(fit(m.queueTitle()+"   "+m.keyHint("window", "library"), m.w)))
+			lines = append(
+				lines,
+				titleOn.Render(fit(m.queueTitle()+"   "+m.keyHint("window", "library"), m.w)),
+			)
 			lines = append(lines, m.queueRows(m.w, h, true)...)
 		}
 	} else {
 		lw := m.w * 3 / 5
 		rw := m.w - lw - 1
-		lines = append(lines, m.title(m.libTitle(), lw, m.focus == libraryWindow)+" "+m.title(m.queueTitle(), rw, m.focus == queueWindow))
+		lines = append(
+			lines,
+			m.title(
+				m.libTitle(),
+				lw,
+				m.focus == libraryWindow,
+			)+" "+m.title(
+				m.queueTitle(),
+				rw,
+				m.focus == queueWindow,
+			),
+		)
 		left := m.libraryRows(lw, h, m.focus == libraryWindow)
 		right := m.queueRows(rw, h, m.focus == queueWindow)
 		for i := range h {
@@ -75,7 +98,10 @@ func (m *Model) render() string {
 	if m.hints {
 		lines = append(lines, fit(m.hintLine(), m.w))
 	}
-	lines = append(lines, dimStyle.Render(strings.Repeat("─", max(m.w, 0)))) // the rule above the bar
+	lines = append(
+		lines,
+		dimStyle.Render(strings.Repeat("─", max(m.w, 0))),
+	) // the rule above the bar
 	lines = append(lines, m.nowPlaying()...)
 	lines = append(lines, m.status())
 	if pm := m.prefixMenu(); len(pm) > 0 {
@@ -149,7 +175,10 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		if focused {
 			row = m.highlight(row)
 		}
-		out = append(out, m.styleRow(row, i == f.cur, focused, false, m.inSelection(libraryWindow, i)))
+		out = append(
+			out,
+			m.styleRow(row, i == f.cur, focused, false, m.inSelection(libraryWindow, i)),
+		)
 	}
 	return pad(out, w, h)
 }
@@ -224,7 +253,16 @@ func (m *Model) albumLine(a library.Album, w int) string {
 	}
 	rest := w - 1 - 6
 	nw := rest * 3 / 5
-	return " " + fit(m.starred(string(a.ID), a.Name), nw) + fit("  "+a.Artist, rest-nw) + fmt.Sprintf("%6s", year)
+	return " " + fit(
+		m.starred(string(a.ID), a.Name),
+		nw,
+	) + fit(
+		"  "+a.Artist,
+		rest-nw,
+	) + fmt.Sprintf(
+		"%6s",
+		year,
+	)
 }
 
 // trackNumber is "3" or, on albums with several discs, "2-03".
@@ -246,7 +284,20 @@ func (m *Model) trackLine(mark, num string, t library.Track, w int) string {
 	numW := max(len(num)+1, 3)
 	rest := w - lipgloss.Width(mark) - numW - 6
 	tw := rest * 5 / 9
-	return mark + fmt.Sprintf("%*s ", numW-1, num) + fit(title, tw) + fit("  "+t.Artist, rest-tw) + fmt.Sprintf("%6s", clock(t.Duration))
+	return mark + fmt.Sprintf(
+		"%*s ",
+		numW-1,
+		num,
+	) + fit(
+		title,
+		tw,
+	) + fit(
+		"  "+t.Artist,
+		rest-tw,
+	) + fmt.Sprintf(
+		"%6s",
+		clock(t.Duration),
+	)
 }
 
 func (m *Model) queueRows(w, h int, focused bool) []string {
@@ -270,7 +321,10 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 		if focused {
 			line = m.highlight(line)
 		}
-		out = append(out, m.styleRow(line, i == m.queueCur, focused, current, m.inSelection(queueWindow, i)))
+		out = append(
+			out,
+			m.styleRow(line, i == m.queueCur, focused, current, m.inSelection(queueWindow, i)),
+		)
 	}
 	return pad(out, w, h)
 }
@@ -310,7 +364,10 @@ func (m *Model) emptyQueue(w int) []string {
 		" " + accentStyle.Render("The queue is empty."),
 		"",
 		dimStyle.Render(" Find something to play:"),
-		join(k(containers, "albums", "albums"), pair(k(containers, "down", ""), k(containers, "up", "move"))),
+		join(
+			k(containers, "albums", "albums"),
+			pair(k(containers, "down", ""), k(containers, "up", "move")),
+		),
 		join(k(containers, "open", "open"), k(containers, "back", "back")),
 		"",
 		dimStyle.Render(" On a track:"),
@@ -342,22 +399,62 @@ func (m *Model) styleRow(line string, cursor, focused, current, selected bool) s
 // mode, from the bindings in effect.
 func (m *Model) hintLine() string {
 	if m.mode == keymap.Cmdline {
-		return " " + hint("<CR>", "run") + "  " + hint("<Tab>", "complete") + "  " + hint("<Up>/<Down>", "history") + "  " + hint("<Esc>", "cancel")
+		return " " + hint(
+			"<CR>",
+			"run",
+		) + "  " + hint(
+			"<Tab>",
+			"complete",
+		) + "  " + hint(
+			"<Up>/<Down>",
+			"history",
+		) + "  " + hint(
+			"<Esc>",
+			"cancel",
+		)
 	}
 	if m.finding.prompting {
-		return " " + hint("<CR>", "find") + "  " + hint("<Esc>", "cancel") + dimStyle.Render("  a capital letter matches case")
+		return " " + hint(
+			"<CR>",
+			"find",
+		) + "  " + hint(
+			"<Esc>",
+			"cancel",
+		) + dimStyle.Render(
+			"  a capital letter matches case",
+		)
 	}
 	if m.promptHelp {
 		return " " + hint("<CR>", "keep the filter") + "  " + hint("<Esc>", "put it back")
 	}
 	if m.mode == keymap.Search {
-		return " " + hint("<CR>", "go to the results") + "  " + hint("<Esc>", "cancel") + "  " + hint("<Up>/<Down>", "history")
+		return " " + hint(
+			"<CR>",
+			"go to the results",
+		) + "  " + hint(
+			"<Esc>",
+			"cancel",
+		) + "  " + hint(
+			"<Up>/<Down>",
+			"history",
+		)
 	}
 	if m.popup != nil && m.popup.yes != nil {
 		return " " + hint("y", "yes") + "  " + hint("n", "no")
 	}
 	if m.popup != nil && m.popup.keyMenu != nil {
-		return " " + dimStyle.Render("press a key to run it") + "  " + hint("j/k", "scroll") + "  " + hint("<F1>", "help") + "  " + hint("q", "close")
+		return " " + dimStyle.Render(
+			"press a key to run it",
+		) + "  " + hint(
+			"j/k",
+			"scroll",
+		) + "  " + hint(
+			"<F1>",
+			"help",
+		) + "  " + hint(
+			"q",
+			"close",
+		)
 	}
 	if m.popup != nil && m.popup.pick != nil {
 		return " " + hint("j/k", "move") + "  " + hint("<CR>", "choose") + "  " + hint("q", "close")
@@ -407,7 +504,10 @@ func (m *Model) indicators() []string {
 	case s.PlayerCapped:
 		out = append(out, "mpv keeps crashing · :reconnect")
 	case s.PlayerDown:
-		if ks := m.engine.Table().Keys(keymap.Normal, []string{"global"}, "play-pause"); len(ks) > 0 {
+		if ks := m.engine.Table().
+			Keys(keymap.Normal, []string{"global"}, "play-pause"); len(
+			ks,
+		) > 0 {
 			out = append(out, "mpv stopped · "+keyLabel(ks[0])+" restarts it")
 		} else {
 			out = append(out, "mpv stopped")
@@ -481,7 +581,11 @@ func (m *Model) nowPlaying() []string {
 	if dur > 0 {
 		fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
 	}
-	l2 := " " + accentStyle.Render(strings.Repeat("━", fill)) + dimStyle.Render(strings.Repeat("─", pw-fill)) + times + " "
+	l2 := " " + accentStyle.Render(
+		strings.Repeat("━", fill),
+	) + dimStyle.Render(
+		strings.Repeat("─", pw-fill),
+	) + times + " "
 	return []string{(l1), (fit(l2, m.w))}
 }
 
@@ -537,7 +641,17 @@ func (m *Model) loginView() string {
 	rows = append(rows, "")
 	switch {
 	case f.askPlain:
-		rows = append(rows, errStyle.Render(f.err), "Save the password in "+m.deps.ConfigPath+" instead? "+hint("y", "yes")+" "+hint("n", "only for this session"))
+		rows = append(
+			rows,
+			errStyle.Render(f.err),
+			"Save the password in "+m.deps.ConfigPath+" instead? "+hint(
+				"y",
+				"yes",
+			)+" "+hint(
+				"n",
+				"only for this session",
+			),
+		)
 	case f.busy:
 		rows = append(rows, dimStyle.Render("checking with the server…"))
 	case f.err != "":
@@ -545,7 +659,11 @@ func (m *Model) loginView() string {
 	default:
 		rows = append(rows, "")
 	}
-	rows = append(rows, "", hint("<Tab>", "next field")+"  "+hint("<CR>", "log in")+"  "+hint("<Esc>", "quit"))
+	rows = append(
+		rows,
+		"",
+		hint("<Tab>", "next field")+"  "+hint("<CR>", "log in")+"  "+hint("<Esc>", "quit"),
+	)
 	box := boxStyle.Render(strings.Join(rows, "\n"))
 	return lipgloss.Place(m.w, m.h, lipgloss.Center, lipgloss.Center, box)
 }

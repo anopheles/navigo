@@ -75,7 +75,10 @@ func (PlaylistDelete) isEvent()  {}
 func (PlaylistWritten) isEvent() {}
 func (WritePlaylist) isEffect()  {}
 
-var offlineEdit = Notice{Text: "offline · playlists can be changed once the server is back", Err: true}
+var offlineEdit = Notice{
+	Text: "offline · playlists can be changed once the server is back",
+	Err:  true,
+}
 
 func (s State) applyPlaylist(e Event) (State, []Effect) {
 	if w, ok := e.(PlaylistWritten); ok {
@@ -126,7 +129,11 @@ func (s State) applyPlaylist(e Event) (State, []Effect) {
 		for i := from; i < to; i++ {
 			w.Remove = append(w.Remove, i)
 		}
-		w.Done = Notice{Text: fmt.Sprintf("%s removed from %s", count(to-from), p.Name), Command: "paste-before", Hint: "puts them back"}
+		w.Done = Notice{
+			Text:    fmt.Sprintf("%s removed from %s", count(to-from), p.Name),
+			Command: "paste-before",
+			Hint:    "puts them back",
+		}
 	case PlaylistInsert:
 		if len(e.Tracks) == 0 {
 			return s, nil
@@ -142,7 +149,14 @@ func (s State) applyPlaylist(e Event) (State, []Effect) {
 		} else {
 			w.Kind, w.Songs = ReplacePlaylist, after.Tracks
 		}
-		w.Done = Notice{Text: fmt.Sprintf("%s added to %s (%d in it)", count(len(ids)), p.Name, len(after.Tracks))}
+		w.Done = Notice{
+			Text: fmt.Sprintf(
+				"%s added to %s (%d in it)",
+				count(len(ids)),
+				p.Name,
+				len(after.Tracks),
+			),
+		}
 	case PlaylistMove:
 		from, to := max(e.From, 0), min(e.To, len(p.Tracks))
 		by := min(max(e.By, -from), len(p.Tracks)-to)
@@ -150,7 +164,10 @@ func (s State) applyPlaylist(e Event) (State, []Effect) {
 			return s, nil
 		}
 		block := slices.Clone(p.Tracks[from:to])
-		after.Tracks = slices.Insert(slices.Concat(p.Tracks[:from], p.Tracks[to:]), from+by, block...)
+		after.Tracks = slices.Insert(
+			slices.Concat(p.Tracks[:from], p.Tracks[to:]),
+			from+by,
+			block...)
 		w.Kind, w.Songs = ReplacePlaylist, after.Tracks
 		dir := "down"
 		if by < 0 {
@@ -171,7 +188,10 @@ func (s State) playlistWritten(w PlaylistWritten) (State, []Effect) {
 		if w.Unreachable {
 			s, out = s.applyOffline(Unreachable{Err: w.Err})
 		}
-		return s, append(out, Notice{Text: fmt.Sprintf("couldn't change %s: %v", w.Write.Name, w.Err), Err: true})
+		return s, append(
+			out,
+			Notice{Text: fmt.Sprintf("couldn't change %s: %v", w.Write.Name, w.Err), Err: true},
+		)
 	}
 	if s.Library == nil {
 		return s, nil

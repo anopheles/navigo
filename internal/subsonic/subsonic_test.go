@@ -19,7 +19,13 @@ import (
 func newClient(t *testing.T) (*Client, *subsonictest.Server) {
 	t.Helper()
 	srv := subsonictest.NewServer(t)
-	c := New(Credentials{URL: srv.URL + "/", Username: subsonictest.Username, Password: subsonictest.Password})
+	c := New(
+		Credentials{
+			URL:      srv.URL + "/",
+			Username: subsonictest.Username,
+			Password: subsonictest.Password,
+		},
+	)
 	if err := c.Login(context.Background()); err != nil {
 		t.Fatalf("Login: %v", err)
 	}
@@ -93,7 +99,9 @@ func TestAlbum(t *testing.T) {
 		t.Fatalf("The Long Haul has %d songs, want 510", len(long.Songs))
 	}
 	last := long.Songs[509]
-	if last.Title != "Mile 510" || last.DiscNumber != 2 || last.Track != 255 || last.Duration != 20 || last.AlbumID != long.ID {
+	if last.Title != "Mile 510" || last.DiscNumber != 2 || last.Track != 255 ||
+		last.Duration != 20 ||
+		last.AlbumID != long.ID {
 		t.Errorf("last song = %+v", last)
 	}
 }
@@ -114,7 +122,8 @@ func TestScrobble(t *testing.T) {
 	}
 	reqs := srv.Requests()
 	last := reqs[len(reqs)-1]
-	if last.Endpoint != "scrobble" || last.Params.Get("id") != "song1" || last.Params.Get("submission") != "false" {
+	if last.Endpoint != "scrobble" || last.Params.Get("id") != "song1" ||
+		last.Params.Get("submission") != "false" {
 		t.Errorf("request = %+v, want scrobble id=song1 submission=false", last)
 	}
 }
@@ -132,7 +141,8 @@ func TestStreamURL(t *testing.T) {
 	}
 	q := ua.Query()
 	sum := md5.Sum([]byte("secret" + q.Get("s")))
-	if q.Get("id") != "tr1" || q.Get("u") != "ann" || q.Get("t") != hex.EncodeToString(sum[:]) || q.Has("p") {
+	if q.Get("id") != "tr1" || q.Get("u") != "ann" || q.Get("t") != hex.EncodeToString(sum[:]) ||
+		q.Has("p") {
 		t.Errorf("query = %v, want id, user and a valid token, and no password", q)
 	}
 	if strings.Contains(a, "secret") {
@@ -168,16 +178,30 @@ func TestHTTPError(t *testing.T) {
 func TestSearch3FullLibrary(t *testing.T) {
 	c, _ := newClient(t)
 	ctx := context.Background()
-	first, err := c.Search3(ctx, "", SearchCounts{ArtistCount: 500, AlbumCount: 500, SongCount: 500})
+	first, err := c.Search3(
+		ctx,
+		"",
+		SearchCounts{ArtistCount: 500, AlbumCount: 500, SongCount: 500},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(first.Artists) != 7 || len(first.Albums) != 8 || len(first.Songs) != 500 {
-		t.Fatalf("first page: %d artists, %d albums, %d songs", len(first.Artists), len(first.Albums), len(first.Songs))
+		t.Fatalf(
+			"first page: %d artists, %d albums, %d songs",
+			len(first.Artists),
+			len(first.Albums),
+			len(first.Songs),
+		)
 	}
 	second, err := c.Search3(ctx, "", SearchCounts{SongCount: 500, SongOffset: 500})
 	if err != nil || len(second.Songs) != 47 || len(second.Artists) != 0 {
-		t.Fatalf("second page: %d songs, %d artists, %v", len(second.Songs), len(second.Artists), err)
+		t.Fatalf(
+			"second page: %d songs, %d artists, %v",
+			len(second.Songs),
+			len(second.Artists),
+			err,
+		)
 	}
 	var guest bool
 	for _, s := range append(first.Songs, second.Songs...) {
@@ -202,7 +226,8 @@ func TestPlaylistsStarredScanStatus(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Name == "Morning Mix" && (len(full.Songs) != 5 || full.Songs[0].ID != full.Songs[4].ID) {
+		if p.Name == "Morning Mix" &&
+			(len(full.Songs) != 5 || full.Songs[0].ID != full.Songs[4].ID) {
 			t.Errorf("Morning Mix = %d songs, want 5 with the first one twice", len(full.Songs))
 		}
 	}
@@ -228,7 +253,11 @@ func TestUnreachable(t *testing.T) {
 		t.Errorf("back up: %v", err)
 	}
 	// A Subsonic error means the server is there.
-	if _, err := c.Album(ctx, subsonictest.NotFoundID); IsUnreachable(err) || !IsCode(err, CodeNotFound) {
+	if _, err := c.Album(
+		ctx,
+		subsonictest.NotFoundID,
+	); IsUnreachable(err) ||
+		!IsCode(err, CodeNotFound) {
 		t.Errorf("not found = %v", err)
 	}
 	// 5xx and replies that aren't from a Subsonic server are unreachable.
@@ -244,13 +273,19 @@ func TestUnreachable(t *testing.T) {
 		}
 	}
 	// No server at all.
-	if err := New(Credentials{URL: "http://127.0.0.1:1", Username: "a", Password: "b"}).Ping(ctx); !IsUnreachable(err) {
+	if err := New(
+		Credentials{URL: "http://127.0.0.1:1", Username: "a", Password: "b"},
+	).Ping(ctx); !IsUnreachable(
+		err,
+	) {
 		t.Errorf("refused: %v", err)
 	}
 }
 
 func TestDefaultTimeout(t *testing.T) {
-	hs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { <-r.Context().Done() }))
+	hs := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { <-r.Context().Done() }),
+	)
 	defer hs.Close()
 	c := New(Credentials{URL: hs.URL, Username: "a", Password: "b"})
 	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)

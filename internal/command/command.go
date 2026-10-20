@@ -148,7 +148,11 @@ func (r *Registry[T]) Match(query string, here func(*Command[T]) bool) []*Comman
 		hits = append(hits, hit{c, h, tier, i})
 	}
 	slices.SortFunc(hits, func(a, b hit) int {
-		return cmp.Or(cmp.Compare(a.here, b.here), cmp.Compare(a.tier, b.tier), cmp.Compare(a.order, b.order))
+		return cmp.Or(
+			cmp.Compare(a.here, b.here),
+			cmp.Compare(a.tier, b.tier),
+			cmp.Compare(a.order, b.order),
+		)
 	})
 	out := make([]*Command[T], len(hits))
 	for i, h := range hits {
@@ -181,7 +185,10 @@ func matchTier[T any](q string, c *Command[T]) (int, bool) {
 }
 
 func splitWords(s string) []string {
-	return strings.FieldsFunc(strings.ToLower(s), func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) })
+	return strings.FieldsFunc(
+		strings.ToLower(s),
+		func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) },
+	)
 }
 
 // subsequence reports whether q's letters appear in s in order.

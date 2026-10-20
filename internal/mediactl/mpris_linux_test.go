@@ -24,7 +24,8 @@ func privateBus(t *testing.T) string {
 	}
 	dir := t.TempDir()
 	cfg := filepath.Join(dir, "bus.conf")
-	conf := fmt.Sprintf(`<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+	conf := fmt.Sprintf(
+		`<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
 <busconfig>
   <type>session</type>
@@ -35,7 +36,9 @@ func privateBus(t *testing.T) string {
     <allow eavesdrop="true"/>
     <allow own="*"/>
   </policy>
-</busconfig>`, filepath.Join(dir, "bus"))
+</busconfig>`,
+		filepath.Join(dir, "bus"),
+	)
 	if err := os.WriteFile(cfg, []byte(conf), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -90,24 +93,48 @@ func TestMPRIS(t *testing.T) {
 	}
 
 	// Watch for PropertiesChanged.
-	if err := client.AddMatchSignal(dbus.WithMatchInterface("org.freedesktop.DBus.Properties"), dbus.WithMatchMember("PropertiesChanged")); err != nil {
+	if err := client.AddMatchSignal(
+		dbus.WithMatchInterface("org.freedesktop.DBus.Properties"),
+		dbus.WithMatchMember("PropertiesChanged"),
+	); err != nil {
 		t.Fatal(err)
 	}
 	signals := make(chan *dbus.Signal, 10)
 	client.Signal(signals)
 
-	ctl.Update(Status{TrackID: "t-1", Title: "Low Tide", Artists: []string{"Aurora Lane"}, Album: "Blue Hour",
-		Length: 185 * time.Second, Playing: true, Position: 42 * time.Second, CanNext: true, CanPlay: true, Volume: 80, Loop: LoopPlaylist})
+	ctl.Update(
+		Status{
+			TrackID:  "t-1",
+			Title:    "Low Tide",
+			Artists:  []string{"Aurora Lane"},
+			Album:    "Blue Hour",
+			Length:   185 * time.Second,
+			Playing:  true,
+			Position: 42 * time.Second,
+			CanNext:  true,
+			CanPlay:  true,
+			Volume:   80,
+			Loop:     LoopPlaylist,
+		},
+	)
 	if st := get(playerIface, "PlaybackStatus"); st != "Playing" {
 		t.Errorf("PlaybackStatus = %v", st)
 	}
 	md, _ := get(playerIface, "Metadata").(map[string]dbus.Variant)
-	if md["xesam:title"].Value() != "Low Tide" || md["mpris:length"].Value() != int64(185_000_000) ||
-		md["mpris:trackid"].Value() != dbus.ObjectPath("/navigo/track/t_2d1") || fmt.Sprint(md["xesam:artist"].Value()) != "[Aurora Lane]" {
+	if md["xesam:title"].Value() != "Low Tide" ||
+		md["mpris:length"].Value() != int64(185_000_000) ||
+		md["mpris:trackid"].Value() != dbus.ObjectPath("/navigo/track/t_2d1") ||
+		fmt.Sprint(md["xesam:artist"].Value()) != "[Aurora Lane]" {
 		t.Errorf("Metadata = %v", md)
 	}
-	if get(playerIface, "Position") != int64(42_000_000) || get(playerIface, "Volume") != 0.8 || get(playerIface, "LoopStatus") != "Playlist" {
-		t.Errorf("Position %v, Volume %v, LoopStatus %v", get(playerIface, "Position"), get(playerIface, "Volume"), get(playerIface, "LoopStatus"))
+	if get(playerIface, "Position") != int64(42_000_000) || get(playerIface, "Volume") != 0.8 ||
+		get(playerIface, "LoopStatus") != "Playlist" {
+		t.Errorf(
+			"Position %v, Volume %v, LoopStatus %v",
+			get(playerIface, "Position"),
+			get(playerIface, "Volume"),
+			get(playerIface, "LoopStatus"),
+		)
 	}
 	select {
 	case s := <-signals:
@@ -168,7 +195,9 @@ func TestMPRIS(t *testing.T) {
 	}
 	defer second.Close()
 	var names []string
-	if err := client.BusObject().Call("org.freedesktop.DBus.ListNames", 0).Store(&names); err != nil {
+	if err := client.BusObject().
+		Call("org.freedesktop.DBus.ListNames", 0).
+		Store(&names); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(strings.Join(names, " "), busName+".instance") {

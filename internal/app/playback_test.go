@@ -42,13 +42,19 @@ func TestShuffleAndUndo(t *testing.T) {
 }
 
 func TestRepeatAll(t *testing.T) {
-	s, _ := run(New(), PlayNow{Tracks: tracks(3), Start: 2}, FromPlayer{player.TrackStarted{Entry: 3}})
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(3), Start: 2},
+		FromPlayer{player.TrackStarted{Entry: 3}},
+	)
 	s, out := run(s, CycleRepeat{})
 	if s.Repeat != RepeatAll || only[Notice](out)[0].Text != "repeat all" {
 		t.Fatalf("repeat %v, %#v", s.Repeat, out)
 	}
 	// The last row's next is the first.
-	if sn := only[SetNeighbours](out); sn[0] != (SetNeighbours{Prev: entry(2, "t2"), Next: entry(1, "t1")}) {
+	if sn := only[SetNeighbours](
+		out,
+	); sn[0] != (SetNeighbours{Prev: entry(2, "t2"), Next: entry(1, "t1")}) {
 		t.Errorf("neighbours = %#v", sn)
 	}
 	// At the end of the queue mpv runs on to it; the core keeps playing.
@@ -72,7 +78,11 @@ func TestRepeatAll(t *testing.T) {
 }
 
 func TestRepeatOne(t *testing.T) {
-	s, _ := run(New(), PlayNow{Tracks: tracks(3), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(3), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
 	s, out := run(s, CycleRepeat{}, CycleRepeat{})
 	if s.Repeat != RepeatOne {
 		t.Fatalf("repeat %v", s.Repeat)
@@ -92,19 +102,26 @@ func TestRepeatOne(t *testing.T) {
 	}
 	// Also at the end of the queue.
 	s, _ = run(s, PlayRow{Index: 2}, FromPlayer{player.TrackStarted{Entry: 3}})
-	if _, out = run(s, FromPlayer{player.TrackEnded{Entry: 3, Reason: player.Finished}}); only[Play](out)[0].Span.Current.ID != 3 {
+	if _, out = run(
+		s,
+		FromPlayer{player.TrackEnded{Entry: 3, Reason: player.Finished}},
+	); only[Play](out)[0].Span.Current.ID != 3 {
 		t.Errorf("at the end of the queue: %#v", out)
 	}
 	// Off again: the end of the queue ends playback.
 	s, _ = run(s, CycleRepeat{}, FromPlayer{player.TrackStarted{Entry: 3}})
-	if s, _ = run(s, FromPlayer{player.TrackEnded{Entry: 3, Reason: player.Finished}}); s.Player.Playing {
+	if s, _ = run(
+		s,
+		FromPlayer{player.TrackEnded{Entry: 3, Reason: player.Finished}},
+	); s.Player.Playing {
 		t.Error("still playing with repeat off")
 	}
 }
 
 func TestVolume(t *testing.T) {
 	s, out := run(New(), ChangeVolume{By: -5})
-	if s.Player.Volume != 95 || only[SetVolume](out)[0].Percent != 95 || only[Notice](out)[0].Text != "volume 95%" {
+	if s.Player.Volume != 95 || only[SetVolume](out)[0].Percent != 95 ||
+		only[Notice](out)[0].Text != "volume 95%" {
 		t.Errorf("volume %d, %#v", s.Player.Volume, out)
 	}
 	if s, _ = run(s, ChangeVolume{By: 50}); s.Player.Volume != 100 {
@@ -127,7 +144,8 @@ func TestStars(t *testing.T) {
 		t.Fatalf("write = %#v; starred before the server agreed: %v", w, s.Library.IsStarred("t1"))
 	}
 	s, out = run(s, StarsWritten{Write: w[0]})
-	if !s.Library.IsStarred("t1") || !s.Library.IsStarred("t2") || only[Notice](out)[0].Text != "starred Track 1" {
+	if !s.Library.IsStarred("t1") || !s.Library.IsStarred("t2") ||
+		only[Notice](out)[0].Text != "starred Track 1" {
 		t.Errorf("after: %v %v %#v", s.Library.IsStarred("t1"), s.Library.IsStarred("t2"), out)
 	}
 	s, out = run(s, SetStars{Tracks: []string{"t2"}, Name: "Track 2"})
@@ -139,24 +157,37 @@ func TestStars(t *testing.T) {
 	// Refused offline; a failure changes nothing.
 	off := s
 	off.Offline = true
-	if _, out = run(off, SetStars{On: true, Tracks: []string{"t2"}}); len(only[WriteStar](out)) != 0 {
+	if _, out = run(
+		off,
+		SetStars{On: true, Tracks: []string{"t2"}},
+	); len(
+		only[WriteStar](out),
+	) != 0 {
 		t.Error("starred while offline")
 	}
 	s, out = run(s, SetStars{On: true, Tracks: []string{"t2"}})
-	s, _ = run(s, StarsWritten{Write: only[WriteStar](out)[0], Err: errors.New("gone"), Unreachable: true})
+	s, _ = run(
+		s,
+		StarsWritten{Write: only[WriteStar](out)[0], Err: errors.New("gone"), Unreachable: true},
+	)
 	if s.Library.IsStarred("t2") || !s.Offline {
 		t.Errorf("after a failure: starred %v offline %v", s.Library.IsStarred("t2"), s.Offline)
 	}
 }
 
 func TestPublishNowPlaying(t *testing.T) {
-	s, out := publish(New(), PlayNow{Tracks: tracks(3), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
+	s, out := publish(
+		New(),
+		PlayNow{Tracks: tracks(3), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
 	p := only[PublishNowPlaying](out)
 	if len(p) == 0 {
 		t.Fatal("nothing published")
 	}
 	last := p[len(p)-1]
-	if last.Track.ID != "t1" || !last.Playing || last.Paused || !last.CanNext || !last.CanPlay || last.Volume != 100 {
+	if last.Track.ID != "t1" || !last.Playing || last.Paused || !last.CanNext || !last.CanPlay ||
+		last.Volume != 100 {
 		t.Errorf("published %+v", last.NowPlayingInfo)
 	}
 	// Each change publishes once; nothing new publishes nothing.
@@ -164,7 +195,12 @@ func TestPublishNowPlaying(t *testing.T) {
 	if p := only[PublishNowPlaying](out); len(p) != 1 || !p[0].Paused {
 		t.Errorf("after pausing: %+v", p)
 	}
-	if _, out = publish(s, FromPlayer{player.Paused{Paused: true}}); len(only[PublishNowPlaying](out)) != 0 {
+	if _, out = publish(
+		s,
+		FromPlayer{player.Paused{Paused: true}},
+	); len(
+		only[PublishNowPlaying](out),
+	) != 0 {
 		t.Error("published without a change")
 	}
 	// The last row can't go next, unless the queue repeats.

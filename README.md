@@ -96,7 +96,12 @@ On Linux, navigo appears on the session bus as an MPRIS player, so media
 keys, desktop widgets and `playerctl` work. On macOS and Windows, mpv's
 own media integration does this (mpv 0.39 or newer).
 
-## Development
+## Contributing
+
+Contributions are welcome, from people and coding agents alike. Every
+change has to come with evidence that it works: a test that fails
+without it, the gate's output, and screens for anything visible.
+[CONTRIBUTING.md](CONTRIBUTING.md) says what counts.
 
 `docs/spec.md` is the specification, `GLOSSARY.md` the terms, and
 `docs/adr/` the decisions. `tools/ci/local.sh` runs the same checks as CI;

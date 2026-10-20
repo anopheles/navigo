@@ -19,8 +19,12 @@ func TestMediaControls(t *testing.T) {
 	h := setupHarness(t, 120, 40, nil, func(h *harness) { h.m.deps.Media = media })
 	h.toAlbums()
 	h.keys("3j<CR>j<CR>")
-	if s := media.last; s.Title != "Low Tide" || s.Album != "Blue Hour" || len(s.Artists) != 1 || s.Artists[0] != "Aurora Lane" ||
-		!s.Playing || s.Paused || !s.CanNext || s.Length != 185*time.Second {
+	if s := media.last; s.Title != "Low Tide" || s.Album != "Blue Hour" || len(s.Artists) != 1 ||
+		s.Artists[0] != "Aurora Lane" ||
+		!s.Playing ||
+		s.Paused ||
+		!s.CanNext ||
+		s.Length != 185*time.Second {
 		t.Errorf("published %+v", s)
 	}
 

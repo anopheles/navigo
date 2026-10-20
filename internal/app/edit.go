@@ -37,7 +37,13 @@ func (s State) applyEdit(e Event) (State, []Effect) {
 			return s, nil
 		}
 		s.Register = slices.Clone(e.Tracks)
-		return s, []Effect{Notice{Text: count(len(e.Tracks)) + " yanked", Command: "paste-after", Hint: "pastes them"}}
+		return s, []Effect{
+			Notice{
+				Text:    count(len(e.Tracks)) + " yanked",
+				Command: "paste-after",
+				Hint:    "pastes them",
+			},
+		}
 
 	case Remove:
 		from, to := max(e.From, 0), min(e.To, len(s.Queue))
@@ -49,7 +55,8 @@ func (s State) applyEdit(e Event) (State, []Effect) {
 		for i, q := range gone {
 			s.Register[i] = q.Track
 		}
-		if slices.ContainsFunc(gone, func(q QueueEntry) bool { return q.ID == s.playing }) && to < len(s.Queue) {
+		if slices.ContainsFunc(gone, func(q QueueEntry) bool { return q.ID == s.playing }) &&
+			to < len(s.Queue) {
 			// It plays on, then the queue goes on where it was.
 			s.orphanNext = s.Queue[to].ID
 		}
@@ -78,7 +85,14 @@ func (s State) applyEdit(e Event) (State, []Effect) {
 		}
 		n := len(s.Queue)
 		s = s.editRows(nil, -1)
-		return s, append(s.neighbours(), Notice{Text: "queue cleared (" + count(n) + ")", Command: "undo", Hint: "brings it back"})
+		return s, append(
+			s.neighbours(),
+			Notice{
+				Text:    "queue cleared (" + count(n) + ")",
+				Command: "undo",
+				Hint:    "brings it back",
+			},
+		)
 
 	case Move:
 		from, to := max(e.From, 0), min(e.To, len(s.Queue))

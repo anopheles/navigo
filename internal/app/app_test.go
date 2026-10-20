@@ -16,7 +16,11 @@ import (
 func tracks(n int) []library.Track {
 	out := make([]library.Track, n)
 	for i := range out {
-		out[i] = library.Track{ID: library.TrackID(fmt.Sprintf("t%d", i+1)), Title: fmt.Sprintf("Track %d", i+1), Duration: 100 * time.Second}
+		out[i] = library.Track{
+			ID:       library.TrackID(fmt.Sprintf("t%d", i+1)),
+			Title:    fmt.Sprintf("Track %d", i+1),
+			Duration: 100 * time.Second,
+		}
 	}
 	return out
 }
@@ -25,7 +29,10 @@ func tracks(n int) []library.Track {
 // PublishNowPlaying, which publish (and TestPublishNowPlaying) checks.
 func run(s State, events ...Event) (State, []Effect) {
 	s, all := publish(s, events...)
-	return s, slices.DeleteFunc(all, func(e Effect) bool { _, ok := e.(PublishNowPlaying); return ok })
+	return s, slices.DeleteFunc(
+		all,
+		func(e Effect) bool { _, ok := e.(PublishNowPlaying); return ok },
+	)
 }
 
 // publish is run with every effect.
@@ -42,7 +49,11 @@ func publish(s State, events ...Event) (State, []Effect) {
 // entry is the player entry for queue entry id of track "tN", whose
 // title is "Track N".
 func entry(id player.EntryID, track string) player.Entry {
-	return player.Entry{ID: id, Track: library.TrackID(track), Title: "Track " + strings.TrimPrefix(track, "t")}
+	return player.Entry{
+		ID:    id,
+		Track: library.TrackID(track),
+		Title: "Track " + strings.TrimPrefix(track, "t"),
+	}
 }
 
 func only[T Effect](effects []Effect) []T {
@@ -56,7 +67,16 @@ func only[T Effect](effects []Effect) []T {
 }
 
 func snap(name string) *library.Snapshot {
-	return library.Build("https://m.example", "ann", time.Time{}, nil, []library.Album{{ID: "al", Name: name}}, nil, nil, nil)
+	return library.Build(
+		"https://m.example",
+		"ann",
+		time.Time{},
+		nil,
+		[]library.Album{{ID: "al", Name: name}},
+		nil,
+		nil,
+		nil,
+	)
 }
 
 func TestStartupSync(t *testing.T) {
@@ -67,7 +87,8 @@ func TestStartupSync(t *testing.T) {
 		t.Fatalf("effects = %#v, want only LoadCache", out)
 	}
 	s, out = run(s, CacheLoaded{Library: cached})
-	if s.Library != cached || !reflect.DeepEqual(out, []Effect{StartSync{Old: cached}}) || !s.Sync.Running {
+	if s.Library != cached || !reflect.DeepEqual(out, []Effect{StartSync{Old: cached}}) ||
+		!s.Sync.Running {
 		t.Fatalf("after the cache: library %v, effects %#v", s.Library, out)
 	}
 	s, _ = run(s, SyncProgress{Done: 500, Total: 547})
@@ -76,7 +97,8 @@ func TestStartupSync(t *testing.T) {
 	}
 	fresh := snap("fresh")
 	s, out = run(s, Synced{Library: fresh})
-	if s.Library != fresh || s.Sync.Running || !reflect.DeepEqual(out, []Effect{SaveCache{Library: fresh}}) {
+	if s.Library != fresh || s.Sync.Running ||
+		!reflect.DeepEqual(out, []Effect{SaveCache{Library: fresh}}) {
 		t.Errorf("after the sync: %v, %#v", s.Sync, out)
 	}
 	// A cache that loads late never replaces a synced library.
@@ -114,11 +136,16 @@ func TestSyncNow(t *testing.T) {
 
 func TestPlayNow(t *testing.T) {
 	s, out := run(New(), PlayNow{Tracks: tracks(3), Start: 1})
-	want := Play{Span: player.Span{Prev: entry(1, "t1"), Current: entry(2, "t2"), Next: entry(3, "t3")}}
+	want := Play{
+		Span: player.Span{Prev: entry(1, "t1"), Current: entry(2, "t2"), Next: entry(3, "t3")},
+	}
 	if p := only[Play](out); len(p) != 1 || p[0] != want {
 		t.Fatalf("play = %#v, want %#v", p, want)
 	}
-	if n := only[Notice](out); n[0].Text != "playing · 3 tracks in the queue" || n[0].Command != "" {
+	if n := only[Notice](
+		out,
+	); n[0].Text != "playing · 3 tracks in the queue" ||
+		n[0].Command != "" {
 		t.Errorf("notice = %#v", n)
 	}
 	if s.Current != 1 || len(s.Queue) != 3 {
@@ -127,7 +154,10 @@ func TestPlayNow(t *testing.T) {
 
 	// Replacing a queue offers undo.
 	s, out = run(s, PlayNow{Tracks: tracks(2), Start: 0})
-	if n := only[Notice](out); n[0].Text != "playing · queue replaced with 2 tracks" || n[0].Command != "undo" {
+	if n := only[Notice](
+		out,
+	); n[0].Text != "playing · queue replaced with 2 tracks" ||
+		n[0].Command != "undo" {
 		t.Errorf("notice = %#v", n)
 	}
 	if s.Queue[0].ID != 4 {
@@ -143,28 +173,57 @@ func TestTrackStartedSendsNeighboursAndScrobble(t *testing.T) {
 		t.Errorf("effects = %#v, want %#v", out, want)
 	}
 	// mpv moves on by itself.
-	s, out = run(s, FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Finished}}, FromPlayer{player.TrackStarted{Entry: 2}})
+	s, out = run(
+		s,
+		FromPlayer{player.TrackEnded{Entry: 1, Reason: player.Finished}},
+		FromPlayer{player.TrackStarted{Entry: 2}},
+	)
 	if s.Current != 1 || !s.Player.Playing {
 		t.Errorf("current %d playing %v", s.Current, s.Player.Playing)
 	}
-	if sn := only[SetNeighbours](out); len(sn) != 1 || sn[0] != (SetNeighbours{Prev: entry(1, "t1"), Next: entry(3, "t3")}) {
+	if sn := only[SetNeighbours](
+		out,
+	); len(sn) != 1 ||
+		sn[0] != (SetNeighbours{Prev: entry(1, "t1"), Next: entry(3, "t3")}) {
 		t.Errorf("neighbours = %#v", sn)
 	}
 	// The last one ends the queue.
-	s, _ = run(s, FromPlayer{player.TrackStarted{Entry: 3}}, FromPlayer{player.TrackEnded{Entry: 3, Reason: player.Finished}})
+	s, _ = run(
+		s,
+		FromPlayer{player.TrackStarted{Entry: 3}},
+		FromPlayer{player.TrackEnded{Entry: 3, Reason: player.Finished}},
+	)
 	if s.Player.Playing || s.Current != 2 {
 		t.Errorf("after the end: playing %v current %d", s.Player.Playing, s.Current)
 	}
 }
 
 func TestScrobbleSubmission(t *testing.T) {
-	s, _ := run(New(), PlayNow{Tracks: tracks(1), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(1), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
 	var out []Effect
 	// A seek to 45s doesn't count as listening.
-	s, out = run(s, FromPlayer{player.Position{Entry: 1, Position: 45 * time.Second, Duration: 100 * time.Second}})
+	s, out = run(
+		s,
+		FromPlayer{
+			player.Position{Entry: 1, Position: 45 * time.Second, Duration: 100 * time.Second},
+		},
+	)
 	for sec := 46; sec <= 95; sec++ {
 		var o []Effect
-		s, o = run(s, FromPlayer{player.Position{Entry: 1, Position: time.Duration(sec) * time.Second, Duration: 100 * time.Second}})
+		s, o = run(
+			s,
+			FromPlayer{
+				player.Position{
+					Entry:    1,
+					Position: time.Duration(sec) * time.Second,
+					Duration: 100 * time.Second,
+				},
+			},
+		)
 		out = append(out, o...)
 	}
 	sub := only[Scrobble](out)
@@ -178,7 +237,11 @@ func TestScrobbleSubmission(t *testing.T) {
 }
 
 func TestAddEndAndNext(t *testing.T) {
-	s, _ := run(New(), PlayNow{Tracks: tracks(2), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(2), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
 	s, out := run(s, AddNext{Tracks: tracks(1)})
 	if s.Queue[1].ID != 3 {
 		t.Errorf("queue = %v, want the new entry second", s.Queue)
@@ -199,7 +262,12 @@ func TestAddEndAndNext(t *testing.T) {
 }
 
 func TestUndoRedo(t *testing.T) {
-	s, _ := run(New(), PlayNow{Tracks: tracks(2), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}}, AddEnd{Tracks: tracks(1)})
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(2), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+		AddEnd{Tracks: tracks(1)},
+	)
 	s, out := run(s, Undo{})
 	if len(s.Queue) != 2 || s.Current != 0 {
 		t.Errorf("after undo: %d entries, current %d", len(s.Queue), s.Current)
@@ -247,14 +315,24 @@ func TestTransport(t *testing.T) {
 	if _, out = run(s, PlayPause{}); !reflect.DeepEqual(out, []Effect{Resume{}}) {
 		t.Errorf("resume: %#v", out)
 	}
-	if _, out = run(s, SeekBy{D: 10 * time.Second}); !reflect.DeepEqual(out, []Effect{Seek{By: 10 * time.Second}}) {
+	if _, out = run(
+		s,
+		SeekBy{D: 10 * time.Second},
+	); !reflect.DeepEqual(
+		out,
+		[]Effect{Seek{By: 10 * time.Second}},
+	) {
 		t.Errorf("seek: %#v", out)
 	}
 	s, out = run(s, NextTrack{})
 	if p := only[Play](out); len(p) != 1 || p[0].Span.Current.ID != 2 {
 		t.Errorf("next: %#v", out)
 	}
-	s, _ = run(s, FromPlayer{player.TrackStarted{Entry: 2}}, FromPlayer{player.Position{Entry: 2, Position: 10 * time.Second}})
+	s, _ = run(
+		s,
+		FromPlayer{player.TrackStarted{Entry: 2}},
+		FromPlayer{player.Position{Entry: 2, Position: 10 * time.Second}},
+	)
 	if _, out = run(s, PrevTrack{}); !reflect.DeepEqual(out, []Effect{SeekTo{}}) {
 		t.Errorf("prev after 10s restarts the track: %#v", out)
 	}
@@ -270,7 +348,11 @@ func TestTransport(t *testing.T) {
 }
 
 func TestPlayerDied(t *testing.T) {
-	s, _ := run(New(), PlayNow{Tracks: tracks(1), Start: 0}, FromPlayer{player.TrackStarted{Entry: 1}})
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(1), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
 	s, out := run(s, FromPlayer{player.Died{Err: errors.New("exit 1")}})
 	if s.Player.Playing {
 		t.Error("still playing after the player died")

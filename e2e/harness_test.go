@@ -58,7 +58,11 @@ type server struct{ url, user, password string }
 // test when there is none.
 func target(t *testing.T) server {
 	t.Helper()
-	s := server{os.Getenv("NAVIGO_E2E_URL"), os.Getenv("NAVIGO_E2E_USER"), os.Getenv("NAVIGO_E2E_PASSWORD")}
+	s := server{
+		os.Getenv("NAVIGO_E2E_URL"),
+		os.Getenv("NAVIGO_E2E_USER"),
+		os.Getenv("NAVIGO_E2E_PASSWORD"),
+	}
 	if s.url == "" {
 		if f, err := os.Open("../.env.e2e"); err == nil {
 			defer f.Close()
@@ -117,7 +121,12 @@ func startIn(t *testing.T, s server, home string) *session {
 		env = append(env, d+"="+p)
 	}
 	cfgDir := filepath.Join(home, "config_home", "navigo")
-	cfg := fmt.Sprintf("server:\n  url: %q\n  user: %q\n  password: %q\nplayer:\n  mpv_args: [--ao=null]\n", s.url, s.user, s.password)
+	cfg := fmt.Sprintf(
+		"server:\n  url: %q\n  user: %q\n  password: %q\nplayer:\n  mpv_args: [--ao=null]\n",
+		s.url,
+		s.user,
+		s.password,
+	)
 	if err := os.MkdirAll(cfgDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -172,7 +181,11 @@ func (s *session) waitFor(what string, timeout time.Duration, ok func(screen str
 
 func (s *session) waitText(text string, timeout time.Duration) string {
 	s.t.Helper()
-	return s.waitFor(fmt.Sprintf("%q on screen", text), timeout, func(scr string) bool { return strings.Contains(scr, text) })
+	return s.waitFor(
+		fmt.Sprintf("%q on screen", text),
+		timeout,
+		func(scr string) bool { return strings.Contains(scr, text) },
+	)
 }
 
 // stop quits navigo with :q, kills it if that doesn't work, and on a
@@ -189,7 +202,9 @@ func (s *session) log() string {
 func (s *session) quit() {
 	if s.t.Failed() {
 		s.t.Logf("screen:\n%s", s.screen())
-		if log, err := os.ReadFile(filepath.Join(s.home, "cache_home", "navigo", "navigo.log")); err == nil {
+		if log, err := os.ReadFile(
+			filepath.Join(s.home, "cache_home", "navigo", "navigo.log"),
+		); err == nil {
 			s.t.Logf("navigo.log:\n%s", log)
 		}
 	}
@@ -215,7 +230,14 @@ func nowPlaying(t *testing.T, s server) []string {
 	_, _ = rand.Read(b)
 	salt := hex.EncodeToString(b)
 	sum := md5.Sum([]byte(s.password + salt))
-	q := url.Values{"u": {s.user}, "t": {hex.EncodeToString(sum[:])}, "s": {salt}, "v": {"1.16.1"}, "c": {"navigo-e2e"}, "f": {"json"}}
+	q := url.Values{
+		"u": {s.user},
+		"t": {hex.EncodeToString(sum[:])},
+		"s": {salt},
+		"v": {"1.16.1"},
+		"c": {"navigo-e2e"},
+		"f": {"json"},
+	}
 	resp, err := http.Get(strings.TrimRight(s.url, "/") + "/rest/getNowPlaying?" + q.Encode())
 	if err != nil {
 		t.Fatal(errors.Unwrap(err)) // the URL holds a token

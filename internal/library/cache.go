@@ -34,7 +34,8 @@ func CachePath(dir, server, user string) string {
 // file or the new one, never half of one.
 func Save(dir string, s *Snapshot) error {
 	var buf bytes.Buffer
-	if err := gob.NewEncoder(&buf).Encode(cacheFile{Version: cacheVersion, Snapshot: *s}); err != nil {
+	if err := gob.NewEncoder(&buf).
+		Encode(cacheFile{Version: cacheVersion, Snapshot: *s}); err != nil {
 		return fmt.Errorf("library cache: %w", err)
 	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
@@ -64,8 +65,10 @@ func Load(dir, server, user string) (*Snapshot, error) {
 		return nil, ErrNoCache
 	}
 	var f cacheFile
-	if err := gob.NewDecoder(bytes.NewReader(b)).Decode(&f); err != nil || f.Version != cacheVersion ||
-		f.Snapshot.Server != server || f.Snapshot.User != user {
+	if err := gob.NewDecoder(bytes.NewReader(b)).
+		Decode(&f); err != nil || f.Version != cacheVersion ||
+		f.Snapshot.Server != server ||
+		f.Snapshot.User != user {
 		_ = os.Remove(path)
 		return nil, ErrNoCache
 	}

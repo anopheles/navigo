@@ -34,7 +34,11 @@ func main() {
 
 func run() error {
 	debug := flag.Bool("debug", os.Getenv("NAVIGO_DEBUG") == "1", "log at debug level")
-	configPath := flag.String("config", "", "config file (default: navigo/config.yaml in the user config dir)")
+	configPath := flag.String(
+		"config",
+		"",
+		"config file (default: navigo/config.yaml in the user config dir)",
+	)
 	flag.Parse()
 
 	path := *configPath

@@ -112,7 +112,11 @@ func (c *Conn) Command(ctx context.Context, args ...any) (json.RawMessage, error
 
 // Named runs a command in the named-argument form, whose meaning doesn't
 // depend on argument positions that change between mpv versions.
-func (c *Conn) Named(ctx context.Context, name string, args map[string]any) (json.RawMessage, error) {
+func (c *Conn) Named(
+	ctx context.Context,
+	name string,
+	args map[string]any,
+) (json.RawMessage, error) {
 	cmd := map[string]any{"name": name}
 	for k, v := range args {
 		cmd[k] = v

@@ -71,17 +71,34 @@ func Serve(conn *dbus.Conn) (Controls, error) {
 		Interfaces: []introspect.Interface{
 			introspect.IntrospectData,
 			prop.IntrospectData,
-			{Name: rootIface, Methods: introspect.Methods(root{}), Properties: props.Introspection(rootIface)},
-			{Name: playerIface, Methods: playerIntrospection, Properties: props.Introspection(playerIface),
-				Signals: []introspect.Signal{{Name: "Seeked", Args: []introspect.Arg{{Name: "Position", Type: "x"}}}}},
+			{
+				Name:       rootIface,
+				Methods:    introspect.Methods(root{}),
+				Properties: props.Introspection(rootIface),
+			},
+			{
+				Name:       playerIface,
+				Methods:    playerIntrospection,
+				Properties: props.Introspection(playerIface),
+				Signals: []introspect.Signal{
+					{Name: "Seeked", Args: []introspect.Arg{{Name: "Position", Type: "x"}}},
+				},
+			},
 		},
 	}
-	if err := conn.Export(introspect.NewIntrospectable(node), objectPath, "org.freedesktop.DBus.Introspectable"); err != nil {
+	if err := conn.Export(
+		introspect.NewIntrospectable(node),
+		objectPath,
+		"org.freedesktop.DBus.Introspectable",
+	); err != nil {
 		return nil, err
 	}
 	reply, err := conn.RequestName(busName, dbus.NameFlagDoNotQueue)
 	if err == nil && reply != dbus.RequestNameReplyPrimaryOwner {
-		reply, err = conn.RequestName(fmt.Sprintf("%s.instance%d", busName, os.Getpid()), dbus.NameFlagDoNotQueue)
+		reply, err = conn.RequestName(
+			fmt.Sprintf("%s.instance%d", busName, os.Getpid()),
+			dbus.NameFlagDoNotQueue,
+		)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("media controls: %w", err)
@@ -102,27 +119,42 @@ func (m *mpris) propMap() prop.Map {
 		},
 		playerIface: {
 			"PlaybackStatus": ro("Stopped"),
-			"LoopStatus": {Value: string(LoopNone), Writable: true, Emit: prop.EmitTrue, Callback: func(c *prop.Change) *dbus.Error {
-				l, _ := c.Value.(string)
-				switch Loop(l) {
-				case LoopNone, LoopPlaylist, LoopTrack:
-					m.send(Command{Kind: SetLoop, Loop: Loop(l)})
-					return nil
-				}
-				return dbus.MakeFailedError(fmt.Errorf("unknown LoopStatus %q", l))
-			}},
-			"Rate":        {Value: 1.0, Writable: true, Emit: prop.EmitTrue, Callback: func(*prop.Change) *dbus.Error { return nil }},
+			"LoopStatus": {
+				Value:    string(LoopNone),
+				Writable: true,
+				Emit:     prop.EmitTrue,
+				Callback: func(c *prop.Change) *dbus.Error {
+					l, _ := c.Value.(string)
+					switch Loop(l) {
+					case LoopNone, LoopPlaylist, LoopTrack:
+						m.send(Command{Kind: SetLoop, Loop: Loop(l)})
+						return nil
+					}
+					return dbus.MakeFailedError(fmt.Errorf("unknown LoopStatus %q", l))
+				},
+			},
+			"Rate": {
+				Value:    1.0,
+				Writable: true,
+				Emit:     prop.EmitTrue,
+				Callback: func(*prop.Change) *dbus.Error { return nil },
+			},
 			"MinimumRate": {Value: 1.0, Emit: prop.EmitConst},
 			"MaximumRate": {Value: 1.0, Emit: prop.EmitConst},
 			// navigo's shuffle reorders the queue once (S); there is no
 			// shuffle mode to report.
 			"Shuffle":  {Value: false, Emit: prop.EmitConst},
 			"Metadata": ro(metadata(Status{})),
-			"Volume": {Value: 1.0, Writable: true, Emit: prop.EmitTrue, Callback: func(c *prop.Change) *dbus.Error {
-				v, _ := c.Value.(float64)
-				m.send(Command{Kind: SetVolume, Volume: int(v*100 + 0.5)})
-				return nil
-			}},
+			"Volume": {
+				Value:    1.0,
+				Writable: true,
+				Emit:     prop.EmitTrue,
+				Callback: func(c *prop.Change) *dbus.Error {
+					v, _ := c.Value.(float64)
+					m.send(Command{Kind: SetVolume, Volume: int(v*100 + 0.5)})
+					return nil
+				},
+			},
 			"Position":      {Value: int64(0), Emit: prop.EmitFalse},
 			"CanGoNext":     ro(false),
 			"CanGoPrevious": ro(false),
@@ -158,7 +190,11 @@ func (m *mpris) Update(s Status) {
 	m.mu.Unlock()
 
 	set := func(name string, v any) {
-		if cur, err := m.props.Get(playerIface, name); err == nil && fmt.Sprint(cur.Value()) == fmt.Sprint(v) {
+		if cur, err := m.props.Get(
+			playerIface,
+			name,
+		); err == nil &&
+			fmt.Sprint(cur.Value()) == fmt.Sprint(v) {
 			return
 		}
 		m.props.SetMust(playerIface, name, v)
@@ -252,7 +288,8 @@ func (m *mpris) playerMethods() map[string]any {
 			m.mu.Lock()
 			cur := m.last
 			m.mu.Unlock()
-			if cur.TrackID == "" || track != trackPath(cur.TrackID) || pos < 0 || time.Duration(pos)*time.Microsecond > cur.Length {
+			if cur.TrackID == "" || track != trackPath(cur.TrackID) || pos < 0 ||
+				time.Duration(pos)*time.Microsecond > cur.Length {
 				return nil
 			}
 			m.send(Command{Kind: SeekTo, Position: time.Duration(pos) * time.Microsecond})
@@ -265,8 +302,21 @@ func (m *mpris) playerMethods() map[string]any {
 }
 
 var playerIntrospection = []introspect.Method{
-	{Name: "Next"}, {Name: "Previous"}, {Name: "Pause"}, {Name: "PlayPause"}, {Name: "Stop"}, {Name: "Play"},
+	{
+		Name: "Next",
+	},
+	{Name: "Previous"},
+	{Name: "Pause"},
+	{Name: "PlayPause"},
+	{Name: "Stop"},
+	{Name: "Play"},
 	{Name: "Seek", Args: []introspect.Arg{{Name: "Offset", Type: "x", Direction: "in"}}},
-	{Name: "SetPosition", Args: []introspect.Arg{{Name: "TrackId", Type: "o", Direction: "in"}, {Name: "Position", Type: "x", Direction: "in"}}},
+	{
+		Name: "SetPosition",
+		Args: []introspect.Arg{
+			{Name: "TrackId", Type: "o", Direction: "in"},
+			{Name: "Position", Type: "x", Direction: "in"},
+		},
+	},
 	{Name: "OpenUri", Args: []introspect.Arg{{Name: "Uri", Type: "s", Direction: "in"}}},
 }

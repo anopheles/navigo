@@ -71,7 +71,10 @@ func (v *searchView) best() int {
 	if v.res.Best < 0 {
 		return 0
 	}
-	return slices.IndexFunc(v.rows, func(r searchRow) bool { return r.group == v.res.Best && r.i == 0 })
+	return slices.IndexFunc(
+		v.rows,
+		func(r searchRow) bool { return r.group == v.res.Best && r.i == 0 },
+	)
 }
 
 func (v *searchView) row(i int) searchRow {
@@ -275,7 +278,9 @@ func (m *Model) searchRowText(v *searchView, i, w int) string {
 	r := v.row(i)
 	switch {
 	case r.heading:
-		return dimStyle.Render(fit(fmt.Sprintf(" ── %s · %d ──", groupNames[r.group], v.res.Len(r.group)), w))
+		return dimStyle.Render(
+			fit(fmt.Sprintf(" ── %s · %d ──", groupNames[r.group], v.res.Len(r.group)), w),
+		)
 	case r.more > 0:
 		return dimStyle.Render(fit(fmt.Sprintf("   … %d more", r.more), w))
 	}

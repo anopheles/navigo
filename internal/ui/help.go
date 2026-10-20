@@ -86,7 +86,10 @@ func (m *Model) buildHelp() *helpView {
 	if bs := t.Bindings(keymap.Cmdline, "global"); len(bs) > 0 {
 		rows = append(rows, helpRow{heading: "On the : line and in prompts"})
 		for _, b := range bs {
-			rows = append(rows, helpRow{key: keyLabel(b.Seq()), line: b.Command, desc: lineCommands[b.Command]})
+			rows = append(
+				rows,
+				helpRow{key: keyLabel(b.Seq()), line: b.Command, desc: lineCommands[b.Command]},
+			)
 		}
 	}
 	var unbound []helpRow
@@ -96,7 +99,9 @@ func (m *Model) buildHelp() *helpView {
 		}
 	}
 	if len(unbound) > 0 {
-		rows = append(append(rows, helpRow{heading: "Commands without a key: type them after :"}), unbound...)
+		rows = append(
+			append(rows, helpRow{heading: "Commands without a key: type them after :"}),
+			unbound...)
 	}
 	v := &helpView{all: rows}
 	v.apply("")
@@ -146,7 +151,10 @@ func (m *Model) helpRowText(v *helpView, i, w int) string {
 	if r.heading != "" {
 		return dimStyle.Render(fit(" ── "+r.heading+" ──", w))
 	}
-	return fit(" "+keyStyle.Render(fit(r.key, 10))+" "+fit(r.line, 18)+" "+dimStyle.Render(r.desc), w)
+	return fit(
+		" "+keyStyle.Render(fit(r.key, 10))+" "+fit(r.line, 18)+" "+dimStyle.Render(r.desc),
+		w,
+	)
 }
 
 func (m *Model) emptyHelp(v *helpView) string {

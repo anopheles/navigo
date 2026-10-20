@@ -26,12 +26,18 @@ type Progress func(done, total int)
 
 // Due reports whether old needs a full sync: there is none, it is for
 // another server or user, or the server has scanned since.
-func Due(ctx context.Context, c *subsonic.Client, old *Snapshot, server, user string) (bool, subsonic.ScanStatus, error) {
+func Due(
+	ctx context.Context,
+	c *subsonic.Client,
+	old *Snapshot,
+	server, user string,
+) (bool, subsonic.ScanStatus, error) {
 	st, err := c.ScanStatus(ctx)
 	if err != nil {
 		return false, st, err
 	}
-	stale := old == nil || old.Server != server || old.User != user || !st.LastScan.Equal(old.LastScan)
+	stale := old == nil || old.Server != server || old.User != user ||
+		!st.LastScan.Equal(old.LastScan)
 	return stale, st, nil
 }
 
@@ -39,7 +45,13 @@ func Due(ctx context.Context, c *subsonic.Client, old *Snapshot, server, user st
 // which lists everything on Navidrome, and falls back to getAlbumList2 and
 // getAlbum on servers where that returns nothing. Playlists and stars are
 // fetched too.
-func Sync(ctx context.Context, c *subsonic.Client, server, user string, st subsonic.ScanStatus, progress Progress) (*Snapshot, error) {
+func Sync(
+	ctx context.Context,
+	c *subsonic.Client,
+	server, user string,
+	st subsonic.ScanStatus,
+	progress Progress,
+) (*Snapshot, error) {
 	if progress == nil {
 		progress = func(int, int) {}
 	}
@@ -69,7 +81,12 @@ func Refresh(ctx context.Context, c *subsonic.Client, old *Snapshot) (*Snapshot,
 
 // searchAll pages each kind until it comes back short. A kind that is
 // done is asked for with a count of 0.
-func searchAll(ctx context.Context, c *subsonic.Client, total int, progress Progress) ([]Artist, []Album, []Track, error) {
+func searchAll(
+	ctx context.Context,
+	c *subsonic.Client,
+	total int,
+	progress Progress,
+) ([]Artist, []Album, []Track, error) {
 	var artists []Artist
 	var albums []Album
 	var tracks []Track
@@ -112,7 +129,12 @@ func next(n subsonic.SearchCounts, artists, albums, songs int) subsonic.SearchCo
 
 // albumByAlbum is the fallback: every album, then each album's songs.
 // Artists come from the songs and albums.
-func albumByAlbum(ctx context.Context, c *subsonic.Client, total int, progress Progress) ([]Artist, []Album, []Track, error) {
+func albumByAlbum(
+	ctx context.Context,
+	c *subsonic.Client,
+	total int,
+	progress Progress,
+) ([]Artist, []Album, []Track, error) {
 	pctx, cancel := page(ctx)
 	list, err := c.Albums(pctx, subsonic.ByName)
 	cancel()

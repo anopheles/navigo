@@ -97,7 +97,8 @@ func (m *Model) keyFor(line string) string {
 // is being typed.
 func (m *Model) matches() []*cmd {
 	v := m.line.Value()
-	if m.mode != keymap.Cmdline || strings.TrimSpace(v) == "" || strings.Contains(strings.TrimLeft(v, " :"), " ") {
+	if m.mode != keymap.Cmdline || strings.TrimSpace(v) == "" ||
+		strings.Contains(strings.TrimLeft(v, " :"), " ") {
 		return nil
 	}
 	narrow := m.scopes()
@@ -176,7 +177,9 @@ func (m *Model) matchList() []string {
 		row := " " + fit(c.Name, nameW) + "  " + dimStyle.Render(c.Desc)
 		row = fit(row, m.w-lipgloss.Width(right)) + right
 		if m.compl != nil && m.compl.head == "" && m.compl.items[m.compl.idx] == c.Name {
-			row = cursorStyle.Render(fit(" "+fit(c.Name, nameW)+"  "+c.Desc, m.w-lipgloss.Width(key)-1) + key + " ")
+			row = cursorStyle.Render(
+				fit(" "+fit(c.Name, nameW)+"  "+c.Desc, m.w-lipgloss.Width(key)-1) + key + " ",
+			)
 		}
 		out = append(out, (row))
 	}
@@ -186,7 +189,10 @@ func (m *Model) matchList() []string {
 // appendMsg adds text to the message shown, as one message.
 func (m *Model) appendMsg(text string) {
 	m.shown.text += text
-	if i := slices.IndexFunc(m.history, func(h message) bool { return h.id == m.shown.id }); i >= 0 {
+	if i := slices.IndexFunc(
+		m.history,
+		func(h message) bool { return h.id == m.shown.id },
+	); i >= 0 {
 		m.history[i].text = m.shown.text
 	}
 }

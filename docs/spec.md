@@ -469,7 +469,7 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)â
 - **Playlists:** the Playlists list and playlist tracks with `'p`; removals (`dd`, `x`, `d{motion}`, Visual `d`) after a y/n Confirmation, into the register; `p`/`P` and `J`/`K` on the server; `dd` on the list; `:playlist-add`, `:playlist-new`; no undo; edits refused offline ([#37](https://github.com/anopheles/navigo/issues/37)).
 - **Playback extras:** `=`/`+`/`-` volume (kept for mpv started later), `S` shuffle keeping the current track first, `R` repeat off/all/one driving what plays next and shown in the now-playing bar, the `i`/`:info` popup, and `*` stars, refused offline ([#39](https://github.com/anopheles/navigo/issues/39)).
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
-- **Tests:** layer A and the first layer B scenario.
+- **Tests:** layer A, and the three layer B scenarios (the new-user path from search to playing, transport, cold start from the cache) on the fixture library and live ([#45](https://github.com/anopheles/navigo/issues/45)).
 
 Still to build for v1:
 
@@ -482,4 +482,3 @@ Still to build for v1:
 - **Media controls:** MPRIS on Linux, and `force-media-title` for macOS and Windows.
 - **Colours:** the 16-colour palette and `NO_COLOR`; the skeleton still uses fixed 256-colour values.
 - **`:logout`.**
-- **Layer B:** the transport and cold-start scenarios.

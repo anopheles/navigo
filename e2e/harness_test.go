@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -93,13 +94,20 @@ type session struct {
 	cmd  *exec.Cmd
 	home string
 	done chan struct{}
+	once sync.Once
 }
 
 // start runs navigo with its own HOME and XDG dirs and a config.yaml that
 // logs in to s and keeps mpv silent.
 func start(t *testing.T, s server) *session {
 	t.Helper()
-	home := t.TempDir()
+	return startIn(t, s, t.TempDir())
+}
+
+// startIn is start with a given HOME, so a second run finds what the
+// first left: the cache, the history and navigo.log.
+func startIn(t *testing.T, s server, home string) *session {
+	t.Helper()
 	env := []string{"HOME=" + home, "TERM=xterm-256color", "PATH=" + os.Getenv("PATH")}
 	for _, d := range []string{"XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR", "XDG_DATA_HOME", "XDG_STATE_HOME"} {
 		p := filepath.Join(home, strings.ToLower(strings.TrimPrefix(d, "XDG_")))
@@ -168,8 +176,17 @@ func (s *session) waitText(text string, timeout time.Duration) string {
 }
 
 // stop quits navigo with :q, kills it if that doesn't work, and on a
-// failed test writes out the screen and navigo's debug log.
-func (s *session) stop() {
+// failed test writes out the screen and navigo's debug log. Only the
+// first call does anything.
+func (s *session) stop() { s.once.Do(s.quit) }
+
+// log is navigo.log as written so far.
+func (s *session) log() string {
+	b, _ := os.ReadFile(filepath.Join(s.home, "cache_home", "navigo", "navigo.log"))
+	return string(b)
+}
+
+func (s *session) quit() {
 	if s.t.Failed() {
 		s.t.Logf("screen:\n%s", s.screen())
 		if log, err := os.ReadFile(filepath.Join(s.home, "cache_home", "navigo", "navigo.log")); err == nil {

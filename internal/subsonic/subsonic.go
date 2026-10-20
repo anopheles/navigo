@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -408,6 +409,7 @@ func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v
 		ctx, cancel = context.WithTimeout(ctx, Timeout)
 		defer cancel()
 	}
+	slog.Debug("server request", "endpoint", endpoint) // never the parameters: they hold the token
 	q := c.auth()
 	for k, vs := range params {
 		q[k] = vs

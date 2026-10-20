@@ -8,6 +8,7 @@
 //	F6  renderer    half-blocks (x/mosaic) ↔ kitty unicode placeholders
 //	F7  state       normal → loading → missing → failed (faked)
 //	F8  popup       P4: big cover over the screen
+//	F10 fake transparency: rounded corners cut out through alpha
 //	F9  size gate   enforce 100×28 ↔ show at any size
 //
 // Fetches are logged to $NAVIGO_PROTO_LOG (bytes, ms, content type) and the
@@ -21,6 +22,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"image"
+	"image/color"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -42,6 +44,10 @@ import (
 type protoCover struct {
 	place    int // 0 off, 1 card, 2 panel, 3 header
 	kitty    bool
+	mode     int // 0 x/mosaic, 1 alpha-aware half-blocks, 2 kitty
+	mask     bool
+	bg       color.Color
+	bgAsked  bool
 	force    int // 0 normal, 1 loading, 2 missing, 3 failed
 	popup    bool
 	noGate   bool
@@ -56,11 +62,12 @@ type protoCover struct {
 }
 
 type coverEntry struct {
-	img   image.Image
-	err   error
-	bytes int
-	ms    int64
-	disk  bool
+	img    image.Image
+	masked image.Image
+	err    error
+	bytes  int
+	ms     int64
+	disk   bool
 }
 
 type (
@@ -70,6 +77,17 @@ type (
 	}
 	protoRestMsg struct{ seq int }
 )
+
+// shown is the image with the prototype's rounded-corner mask if it is on.
+func (e *coverEntry) shown(mask bool) image.Image {
+	if !mask {
+		return e.img
+	}
+	if e.masked == nil {
+		e.masked = roundCorners(e.img, 0.16)
+	}
+	return e.masked
+}
 
 type protoWant struct {
 	id   string
@@ -170,6 +188,10 @@ func (m *Model) protoPost() tea.Cmd {
 	p := &m.proto
 	p.init()
 	var cmds []tea.Cmd
+	if !p.bgAsked {
+		p.bgAsked = true
+		cmds = append(cmds, tea.RequestBackgroundColor)
+	}
 	if a, ok := m.protoBrowseAlbum(); ok && string(a.ID) != p.browse {
 		p.browse = string(a.ID)
 		p.seq++
@@ -182,7 +204,7 @@ func (m *Model) protoPost() tea.Cmd {
 		if e, ok := p.covers[w.key()]; ok {
 			if p.kitty && e.img != nil && !p.sent[m.protoKittyKey(w)] {
 				p.sent[m.protoKittyKey(w)] = true
-				cmds = append(cmds, tea.Raw(m.protoTransmit(w, e.img)))
+				cmds = append(cmds, tea.Raw(m.protoTransmit(w, e.shown(p.mask))))
 			}
 			continue
 		}
@@ -253,6 +275,11 @@ func (m *Model) protoUpdate(msg tea.Msg) (tea.Cmd, bool) {
 		delete(p.inflight, msg.key)
 		p.covers[msg.key] = msg.e
 		return m.protoPost(), true
+	case tea.BackgroundColorMsg:
+		p.bg = msg.Color
+		p.rendered = map[string]string{}
+		protoLog(fmt.Sprintf("terminal background: %v", msg))
+		return nil, true
 	case protoRestMsg:
 		if msg.seq == p.seq {
 			p.browseOK = p.browse
@@ -265,8 +292,13 @@ func (m *Model) protoUpdate(msg tea.Msg) (tea.Cmd, bool) {
 			p.place = (p.place + 1) % 4
 			note = [...]string{"off", "P1 card in the bar", "P2 panel over the queue", "P3 header over the library"}[p.place]
 		case "f6":
-			p.kitty = !p.kitty
-			note = map[bool]string{false: "half-blocks", true: "kitty placeholders"}[p.kitty]
+			p.mode = (p.mode + 1) % 3
+			p.kitty = p.mode == 2
+			note = [...]string{"x/mosaic (alpha ignored)", "alpha-aware half-blocks", "kitty placeholders"}[p.mode]
+		case "f10":
+			p.mask = !p.mask
+			p.rendered = map[string]string{}
+			note = fmt.Sprint("rounded-corner mask (fake transparency): ", p.mask)
 		case "f7":
 			p.force = (p.force + 1) % 4
 			note = [...]string{"normal", "loading", "missing", "failed"}[p.force]
@@ -293,7 +325,7 @@ func (m *Model) protoUpdate(msg tea.Msg) (tea.Cmd, bool) {
 // ---------- drawing ----------
 
 func (m *Model) protoKittyKey(w protoWant) string {
-	return fmt.Sprintf("%s|%d|%d", w.key(), w.w, w.h)
+	return fmt.Sprintf("%s|%d|%d|%v|%d", w.key(), w.w, w.h, m.proto.mask, m.proto.mode)
 }
 
 func (m *Model) protoKittyID(w protoWant) int {
@@ -368,8 +400,12 @@ func (m *Model) protoArt(w protoWant) []string {
 	k := m.protoKittyKey(w)
 	s, ok := p.rendered[k]
 	if !ok {
-		mo := mosaic.New().Width(w.w * 2).Height(w.h * 2)
-		s = strings.TrimRight(mo.Render(e.img), "\n")
+		if p.mode == 1 {
+			s = alphaHalf(e.shown(p.mask), w.w, w.h, p.bg)
+		} else {
+			mo := mosaic.New().Width(w.w * 2).Height(w.h * 2)
+			s = strings.TrimRight(mo.Render(e.shown(p.mask)), "\n")
+		}
 		p.rendered[k] = s
 	}
 	return strings.Split(s, "\n")

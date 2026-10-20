@@ -466,8 +466,12 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 				return nil
 			}
 			// Fire and forget, but a failure to reach the server counts.
-			if err := c.Scrobble(ctx, string(e.Track), e.Submission); subsonic.IsUnreachable(err) {
+			err := c.Scrobble(ctx, string(e.Track), e.Submission)
+			switch {
+			case subsonic.IsUnreachable(err):
 				return eventMsg{app.Unreachable{Err: err}}
+			case err == nil && e.Submission:
+				return eventMsg{app.Scrobbled{Track: e.Track, At: time.Now()}}
 			}
 			return nil
 		}

@@ -176,6 +176,9 @@ type Song struct {
 	Duration    int    `json:"duration"`
 	CoverArt    string `json:"coverArt"`
 	PlayCount   int    `json:"playCount"`
+	// Played is when the user last played the song; zero if never.
+	Played     time.Time `json:"played"`
+	UserRating int       `json:"userRating"` // 1–5 stars, 0 if unrated
 	// Artists is every artist credited on the song, as the server splits
 	// them (OpenSubsonic); empty on plain Subsonic servers.
 	Artists []ArtistRef `json:"artists"`

@@ -63,6 +63,8 @@ type Track struct {
 	Genre     string
 	Duration  time.Duration
 	PlayCount int
+	Played    time.Time // last played; zero if never
+	Rating    int       // the user's 1–5 stars; 0 if unrated
 }
 
 // Credits reports whether a track credits an artist.
@@ -116,6 +118,8 @@ func TrackFrom(s subsonic.Song) Track {
 		Genre:     s.Genre,
 		Duration:  time.Duration(s.Duration) * time.Second,
 		PlayCount: s.PlayCount,
+		Played:    s.Played,
+		Rating:    s.UserRating,
 		Artists:   artists,
 	}
 }

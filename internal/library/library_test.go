@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/anopheles/navigo/internal/subsonic"
 	"github.com/anopheles/navigo/internal/subsonic/subsonictest"
@@ -264,5 +265,29 @@ func TestNext(t *testing.T) {
 	}
 	if n != want {
 		t.Errorf("next = %+v, want %+v", n, want)
+	}
+}
+
+func TestPlayedAndRating(t *testing.T) {
+	s, _, _ := synced(t)
+	tr, _ := s.Track("1r5mQFqRFVnhqKgS0vVtWZ")
+	if want := time.Date(2026, 10, 20, 10, 30, 13, 473707392, time.UTC); !tr.Played.Equal(want) {
+		t.Errorf("Played = %v, want %v", tr.Played, want)
+	}
+	if got := TrackFrom(subsonic.Song{ID: "x", UserRating: 4}); got.Rating != 4 {
+		t.Errorf("Rating = %d", got.Rating)
+	}
+
+	at := time.Date(2026, 10, 21, 8, 0, 0, 0, time.UTC)
+	n := s.WithPlay(tr.ID, at)
+	got, _ := n.Track(tr.ID)
+	if got.PlayCount != tr.PlayCount+1 || !got.Played.Equal(at) {
+		t.Errorf("after WithPlay: count %d played %v", got.PlayCount, got.Played)
+	}
+	if old, _ := s.Track(tr.ID); old.PlayCount != tr.PlayCount {
+		t.Error("WithPlay changed the old snapshot")
+	}
+	if s.WithPlay("not-a-track", at) != s {
+		t.Error("an unknown track made a new snapshot")
 	}
 }

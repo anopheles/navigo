@@ -11,6 +11,7 @@ func TestStartsOnHome(t *testing.T) {
 	h := homeHarness(t, 120, 40, nil)
 	h.contains(
 		" Home ",
+		"Mix",
 		"Recently added",
 		"Most played",
 		"Recently played",
@@ -19,6 +20,7 @@ func TestStartsOnHome(t *testing.T) {
 		"<CR> open",
 	)
 	if got := h.order(
+		"Mix",
 		"Recently added",
 		"Most played",
 		"Recently played",
@@ -27,7 +29,7 @@ func TestStartsOnHome(t *testing.T) {
 	); strings.Join(
 		got,
 		",",
-	) != "Recently added,Most played,Recently played,Random,Starred" {
+	) != "Mix,Recently added,Most played,Recently played,Random,Starred" {
 		t.Errorf("Home's lists in order %q", got)
 	}
 	golden.RequireEqual(t, h.screen())
@@ -39,11 +41,11 @@ func TestHomeLists(t *testing.T) {
 		keys, title, kind string
 		want              []string
 	}{
-		{"<CR>", "Recently added", "newest", []string{"Night Drive Vol. 1", "The Long Haul", "夜明け"}},
-		{"j<CR>", "Most played", "frequent", []string{"Blue Hour", "Static Bloom"}},
-		{"jj<CR>", "Recently played", "recent", []string{"Static Bloom", "Blue Hour"}},
-		{"3j<CR>", "Random", "random", []string{"Static Bloom", "Blue Hour", "The Long Haul"}},
-		{"4j<CR>", "Starred", "starred", []string{"★ Blue Hour"}},
+		{"j<CR>", "Recently added", "newest", []string{"Night Drive Vol. 1", "The Long Haul", "夜明け"}},
+		{"2j<CR>", "Most played", "frequent", []string{"Blue Hour", "Static Bloom"}},
+		{"3j<CR>", "Recently played", "recent", []string{"Static Bloom", "Blue Hour"}},
+		{"4j<CR>", "Random", "random", []string{"Static Bloom", "Blue Hour", "The Long Haul"}},
+		{"5j<CR>", "Starred", "starred", []string{"★ Blue Hour"}},
 	} {
 		h.keys("'h'hgg" + c.keys)
 		h.contains("Home › " + c.title)
@@ -65,20 +67,54 @@ func TestHomeLists(t *testing.T) {
 	}
 
 	// An album opens as anywhere else; ga and the rest work on its rows.
-	h.keys("'hggj<CR><CR>")
+	h.keys("'hgg2j<CR><CR>")
 	h.contains("Home › Most played › Blue Hour", "Dusk Signal")
 }
 
 func TestHomeOffline(t *testing.T) {
 	h := homeHarness(t, 120, 40, nil)
-	h.keys("j<CR>") // Most played, while online
+	h.keys("2j<CR>") // Most played, while online
 	h.contains("Blue Hour")
 	h.srv.SetDown(true)
 	h.keys(":sync<CR>")
 	h.contains("offline")
 	// A list never fetched says why it's empty; the last answer stays.
-	h.keys("hgg<CR>")
+	h.keys("hggj<CR>")
 	h.contains("can't reach the server · Home's lists need it")
-	h.keys("hj<CR>")
+	h.keys("hgg2j<CR>")
 	h.contains("Home › Most played", "Blue Hour")
+}
+
+func TestHomeMix(t *testing.T) {
+	h := homeHarness(t, 120, 40, nil)
+	h.keys("<CR>") // Mix, the first row
+	h.contains(" Home ", "mixed ")
+	if h.m.top().kind != homeList {
+		t.Error("Mix left Home")
+	}
+	if n := len(h.m.state.Queue); n == 0 || n > 50 {
+		t.Errorf("queue has %d entries after a mix", n)
+	}
+	if n := h.requests("getAlbumList2"); n != 0 {
+		t.Errorf("Mix asked the server for %d album lists", n)
+	}
+
+	// A count sets the size, gm runs it anywhere, and u undoes it.
+	first := h.m.state.Queue
+	h.keys("'a3gm")
+	h.contains("mixed 3 tracks · u brings the old queue back")
+	if len(h.m.state.Queue) != 3 {
+		t.Errorf("3gm queued %d", len(h.m.state.Queue))
+	}
+	h.keys("u")
+	if len(h.m.state.Queue) != len(first) {
+		t.Errorf("undo left %d entries, want %d", len(h.m.state.Queue), len(first))
+	}
+
+	// The pick comes from the cache, so it works offline too.
+	h.srv.SetDown(true)
+	h.keys(":sync<CR>")
+	h.contains("offline")
+	h.keys(":mix<CR>")
+	h.contains("mixed ")
 }

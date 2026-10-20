@@ -163,6 +163,11 @@ type (
 		Library *library.Snapshot
 		Err     error
 	}
+	// Scrobbled: the server took a submission scrobble, made at At.
+	Scrobbled struct {
+		Track library.TrackID
+		At    time.Time
+	}
 	// FromPlayer wraps an event from the Player.
 	FromPlayer struct{ Event player.Event }
 	// PlayerFailed: a Player call returned an error.
@@ -238,6 +243,14 @@ func apply(s State, e Event) (State, []Effect) {
 			return s.startSync(false)
 		}
 		return s, nil
+	case Scrobbled:
+		// The cache learns the play now, so a Mix made before the next
+		// sync doesn't pick what was just heard.
+		if s.Library == nil {
+			return s, nil
+		}
+		s.Library = s.Library.WithPlay(e.Track, e.At)
+		return s, []Effect{SaveCache{Library: s.Library}}
 	case LoggedIn:
 		s.loggedIn, s.Offline = true, false
 		if s.cacheChecked {
@@ -427,6 +440,8 @@ func apply(s State, e Event) (State, []Effect) {
 
 	case ChangeVolume, Shuffle, CycleRepeat:
 		return s.applyPlayback(e)
+	case Mix:
+		return s.applyMix(e)
 	case LoadAlbumList, AlbumListLoaded:
 		return s.applyHome(e)
 	case SetStars, StarsWritten:
@@ -659,6 +674,7 @@ func (SeekBy) isEvent()       {}
 func (StopPlayback) isEvent() {}
 func (Undo) isEvent()         {}
 func (Redo) isEvent()         {}
+func (Scrobbled) isEvent()    {}
 func (FromPlayer) isEvent()   {}
 func (PlayerFailed) isEvent() {}
 func (Failed) isEvent()       {}

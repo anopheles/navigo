@@ -1,13 +1,17 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/anopheles/navigo/internal/app"
+	"github.com/anopheles/navigo/internal/command"
 	"github.com/anopheles/navigo/internal/library"
 )
 
 // homeLists are Home's rows, in the spec's order, with the server's
-// album list type for each.
+// album list type for each. The first, Mix, is not a list: it runs mix.
 var homeLists = []struct{ title, kind, empty string }{
+	{"Mix", "mix", ""},
 	{"Recently added", "newest", "nothing here yet"},
 	{"Most played", "frequent", "nothing played yet"},
 	{"Recently played", "recent", "nothing played yet"},
@@ -17,8 +21,12 @@ var homeLists = []struct{ title, kind, empty string }{
 
 // openHomeList opens one of Home's lists and asks the server for it
 // again; until it answers, the last answer shows.
-func (m *Model) openHomeList(i int) {
+func (m *Model) openHomeList(i int, c command.Call) {
 	l := homeLists[i]
+	if l.kind == "mix" {
+		m.mix(c)
+		return
+	}
 	m.lib = append(m.lib, frame{kind: homeAlbums, homeKind: l.kind, title: l.title})
 	m.event(app.LoadAlbumList{Kind: l.kind})
 }
@@ -55,4 +63,13 @@ func (m *Model) emptyHome(kind string) string {
 		return " can't reach the server · Home's lists need it; the library works from the cache"
 	}
 	return " loading…"
+}
+
+// mix replaces the queue with a Mix of the count's size, or MixSize.
+func (m *Model) mix(c command.Call) {
+	n := library.MixSize
+	if c.Count > 0 {
+		n = c.Count
+	}
+	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now()})
 }

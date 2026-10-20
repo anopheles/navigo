@@ -48,7 +48,7 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 
 ## Architecture
 
-Decided in [What is navigo's architecture and domain model?](https://github.com/anopheles/navigo/issues/10), with ADRs [0001](adr/0001-single-writer-core-with-effects-as-data.md)–[0004](adr/0004-shuffle-reorders-the-queue.md).
+Decided in [What is navigo's architecture and domain model?](https://github.com/anopheles/navigo/issues/10), with ADRs [0001](adr/0001-single-writer-core-with-effects-as-data.md)–[0004](adr/0004-shuffle-reorders-the-queue.md); [0006](adr/0006-mix-is-picked-from-the-cache.md) came after v1.
 
 **State flow:**
 - A **UI-free core** (`internal/app`) holds the session state: library snapshot, queue, register, undo history, player status and offline state.
@@ -99,6 +99,7 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 - **Artists** are everyone credited on a track or as an album artist, Various Artists included. Composers, conductors and other roles are left out.
 - The queue holds **queue entries** (`EntryID` + track), so one track can be queued twice and edits and undo stay unambiguous.
 - **Shuffle** is a one-shot, undoable reorder of the queue ([ADR 0004](adr/0004-shuffle-reorders-the-queue.md)). **Repeat** is a mode: off, all or one.
+- A **Mix** is a one-shot, undoable replacement of the queue with tracks picked from the cache ([ADR 0006](adr/0006-mix-is-picked-from-the-cache.md)). It is not a mode: the picked tracks are ordinary queue entries.
 
 ## Server API
 
@@ -205,7 +206,7 @@ keys:
 **Popups** (a Confirmation, track info, the key menu, `:messages`) appear over both windows. They take the `popup` scope, and `q`/`<Esc>` close them.
 
 **Sections:** Home, Artists, Albums, Playlists, Search, Help. There is no Tracks section. Each section remembers its drill-down path and cursor.
-- **Home:** a list of album lists, in this order: Recently added, Most played, Recently played, Random, Starred.
+- **Home:** Mix, which runs a Mix rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random, Starred.
 - **Artists:** every artist with at least one track, sorted by the server's sort name. Each row shows the artist's own album count, or "appears on N" for artists with no albums of their own.
 - **An artist's page:** their own albums, then a `── Appears on ──` heading (skipped by the cursor) and the albums where they only have tracks. `{`/`}` jump between the two groups. Opening an Appears on album puts the cursor on that artist's first track.
 - **Help:** generated from the bindings in effect, and searchable with `/`.
@@ -251,7 +252,7 @@ keys:
 | Motions | `j` `k` `<Down>` `<Up>` · `gg` `G` `[count]G` · `<C-d>` `<C-u>` `<C-f>` `<C-b>` · `<C-e>` `<C-y>` · `H` `M` `L` · `zz` `zt` `zb` · `{` `}` (groups) · `[count]%` · scroll wheel |
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
-| Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `R` repeat off → all → one · `X` stop |
+| Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix (`[count]gm` for that many tracks) · `R` repeat off → all → one · `X` stop |
 | Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `*` star/unstar · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
@@ -320,6 +321,12 @@ The `:` line has Tab completion for command names and arguments.
 - After every `TrackStarted`, the core sends the player the new neighbours, so the next track is already loaded in mpv and plays gaplessly.
 - **Shuffle** (`S`) reorders the queue once, as one undoable step. **Repeat** (`R`) cycles off → all → one.
 
+**Mix** (`gm`, `:mix`, or Home's Mix row) replaces the queue with 50 tracks, or as many as a count says, picked at random from the whole library, and plays the first; `u` brings the old queue back. It works offline, from the cache.
+- **Weights:** a track's chance is 1 × starred (×3) × rating (1★ left out, 2★ ×0.5, 3★ or unrated ×1, 4★ ×1.5, 5★ ×2) × staleness (played within 7 days ×0.1, rising in a straight line to ×1 at 90 days; never played ×1). Play count doesn't count, so the mix doesn't lean to all-time favourites.
+- **Variety:** at most 3 tracks per artist and 2 per album, and never one artist twice in a row.
+- **Too few:** when the rules run out, it takes what's left and says "mixed 23 of 50 tracks"; with nothing to pick it says why and leaves the queue alone.
+- The weights, size and limits are fixed; there are no settings for them.
+
 **Undo:** `u`/`<C-r>` walk one queue history from either window. Playlist edits on the server can't be undone.
 
 ## Offline cache and sync
@@ -328,11 +335,12 @@ The `:` line has Tab completion for command names and arguments.
 
 **Cache-first:** every list and search reads the in-memory library snapshot, online or offline. The server is contacted only for sync, playback (`stream`, `scrobble`), writes (stars, playlist edits) and Home's album lists. Those come from `getAlbumList2` (50 albums) each time one opens, so Recently played is current; offline, a list shows the last answer of the session, or says it needs the server.
 
-**What it holds:** library metadata only: artists, albums, tracks (with their artist lists), playlists with their tracks, stars and play counts. No audio, no cover art, no client state.
+**What it holds:** library metadata only: artists, albums, tracks (with their artist lists), playlists with their tracks, stars, play counts, when each track was last played and the user's ratings. No audio, no cover art, no client state.
 
 **Store:**
 - One versioned `encoding/gob` file per server and user, in `navigo/` under the user cache directory, written atomically.
 - It's disposable: a version mismatch or a corrupt file means a full sync.
+- A submission scrobble the server accepts updates the track's play count and last played in the cache, so a Mix made before the next sync doesn't pick what just played; the next sync brings the server's numbers.
 
 **Sync:**
 - **At startup:** load the snapshot and render at once, then check in the background whether the server rescanned (`getScanStatus.lastScan` / `getIndexes.lastModified`). If it did, run a full sync. Playlists and stars are always refreshed.

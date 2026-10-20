@@ -361,3 +361,19 @@ func TestPlayerDied(t *testing.T) {
 		t.Errorf("notice = %#v", n)
 	}
 }
+
+func TestScrobbledUpdatesTheCache(t *testing.T) {
+	lib := library.Build("s", "u", time.Time{}, nil, nil, tracks(2), nil, nil)
+	at := time.Date(2026, 10, 21, 8, 0, 0, 0, time.UTC)
+	s, out := run(New(), CacheLoaded{Library: lib}, Scrobbled{Track: lib.Tracks[1].ID, At: at})
+	got, _ := s.Library.Track(lib.Tracks[1].ID)
+	if got.PlayCount != 1 || !got.Played.Equal(at) {
+		t.Errorf("track after the scrobble: count %d played %v", got.PlayCount, got.Played)
+	}
+	if sv := only[SaveCache](out); len(sv) != 1 || sv[0].Library != s.Library {
+		t.Errorf("saves = %#v, want the new snapshot saved", sv)
+	}
+	if _, out := run(New(), Scrobbled{Track: "1", At: at}); len(out) != 0 {
+		t.Errorf("with no library: %#v", out)
+	}
+}

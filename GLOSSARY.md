@@ -72,6 +72,10 @@ _Avoid_: queue item, slot
 A one-shot command that reorders the queue at random; it can be undone like any other queue edit, and there is no hidden play order.
 _Avoid_: shuffle mode, random play
 
+**Mix**:
+A one-shot command that replaces the queue with tracks picked at random from the whole library, leaning toward starred, well-rated tracks not played lately; it can be undone like any other queue edit, and nothing keeps refilling the queue.
+_Avoid_: radio, autoplay, instant mix, song mix, track mix
+
 **Repeat**:
 What happens at the end of a track or the queue: off, all (start the queue again) or one (play the same queue entry again).
 _Avoid_: loop

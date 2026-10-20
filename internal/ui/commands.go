@@ -56,7 +56,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "back", Label: "back", Desc: "Go back out to the list you came from.", Run: func(m *Model, _ command.Call) error { m.back(); return nil }},
 		{Name: "go-album", Jump: true, Label: "album", Desc: "Go to the album of the track or album under the cursor.", Run: (*Model).goAlbum},
 		{Name: "go-artist", Jump: true, Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
-		{Name: "home", Jump: true, Label: "home", Desc: "Show Home: recently added, most and recently played, random and starred albums.", Run: func(m *Model, _ command.Call) error { m.showSection(homeList); return nil }},
+		{Name: "home", Jump: true, Label: "home", Desc: "Show Home: Mix, then recently added, most and recently played, random and starred albums.", Run: func(m *Model, _ command.Call) error { m.showSection(homeList); return nil }},
 		{Name: "artists", Jump: true, Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
 		{Name: "albums", Jump: true, Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
 		{Name: "playlists", Jump: true, Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
@@ -83,6 +83,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "reconnect", Label: "reconnect", Desc: "Try the server now instead of waiting for the next retry.", Run: func(m *Model, _ command.Call) error { m.event(app.Reconnect{}); return nil }},
 		{Name: "sync", Label: "sync", Desc: "Sync the whole library from the server.", Run: func(m *Model, _ command.Call) error { m.event(app.SyncNow{}); return nil }},
 		{Name: "volume", Args: volumeArgs, Label: "volume", Desc: "Change the volume by points, such as volume +5, or set it: volume 60.", Run: volume},
+		{Name: "mix", Label: "mix", Desc: "Replace the queue with 50 tracks from the whole library, or as many as a count says, leaning toward starred, well-rated tracks not played lately; u undoes it.", Run: func(m *Model, c command.Call) error { m.mix(c); return nil }},
 		{Name: "shuffle", Label: "shuffle", Desc: "Shuffle the queue once, keeping the current track first; u undoes it.", Run: func(m *Model, _ command.Call) error { m.event(app.Shuffle{Seed: m.seed()}); return nil }},
 		{Name: "repeat", Label: "repeat", Desc: "Cycle repeat: off, all (the queue again), one (the same track again).", Run: func(m *Model, _ command.Call) error { m.event(app.CycleRepeat{}); return nil }},
 		{Name: "info", Label: "info", Desc: "Show details of the track, album or artist under the cursor, or of what plays.", Run: (*Model).info},
@@ -192,7 +193,7 @@ func (m *Model) goRow(count, def int) {
 	}
 }
 
-func (m *Model) open(command.Call) error {
+func (m *Model) open(c command.Call) error {
 	f := m.top()
 	switch f.kind {
 	case sectionList:
@@ -209,7 +210,7 @@ func (m *Model) open(command.Call) error {
 			m.openArtist(m.artistsOf(f)[f.cur])
 		}
 	case homeList:
-		m.openHomeList(f.cur)
+		m.openHomeList(f.cur, c)
 	case albumList, artistPage, homeAlbums:
 		if a, ok := m.rowAlbum(); ok {
 			m.openAlbum(a, f.artist)

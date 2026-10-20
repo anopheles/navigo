@@ -46,6 +46,7 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "+", "volume +5"},
 	{"global", "-", "volume -5"},
 	{"global", "S", "shuffle"},
+	{"global", "gm", "mix"},
 	{"global", "R", "repeat"},
 	{"global", "i", "info"},
 	{"global", "*", "star"},

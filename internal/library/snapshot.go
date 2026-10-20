@@ -281,3 +281,17 @@ func (s *Snapshot) WithExtras(playlists []Playlist, starred []string) *Snapshot 
 	n.indexStars()
 	return &n
 }
+
+// WithPlay returns a copy in which a track was played once more, at at,
+// as after a scrobble; the next sync brings the server's own numbers.
+func (s *Snapshot) WithPlay(id TrackID, at time.Time) *Snapshot {
+	i, ok := s.trackByID[id]
+	if !ok {
+		return s
+	}
+	n := *s
+	n.Tracks = slices.Clone(s.Tracks)
+	n.Tracks[i].PlayCount++
+	n.Tracks[i].Played = at
+	return &n
+}

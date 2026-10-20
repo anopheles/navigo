@@ -49,6 +49,9 @@ type coverEntry struct {
 	state  coverState
 	art    *cover.Art
 	failed time.Time
+	// accent is the cover's dominant colour, if it has one.
+	accent    color.Color
+	hasAccent bool
 }
 
 // sentImage is an image kitty holds: which cover at which size, and its id.
@@ -59,12 +62,15 @@ type sentImage struct {
 }
 
 type covers struct {
-	entries  map[string]*coverEntry
-	bg       color.Color // the terminal's background, once it has said
-	rendered map[string][]string
-	sent     []sentImage
-	nextID   uint32
-	uses     uint32
+	// accentFor is the cover the accent colour comes from; "" for the
+	// configured one.
+	accentFor string
+	entries   map[string]*coverEntry
+	bg        color.Color // the terminal's background, once it has said
+	rendered  map[string][]string
+	sent      []sentImage
+	nextID    uint32
+	uses      uint32
 }
 
 // coverMsg is a fetched cover, or why there is none.
@@ -104,6 +110,44 @@ func (m *Model) coverRows() int {
 	return 0
 }
 
+// coverAccentWanted reports whether the accent takes the playing album's
+// colour: playing is left to the default or set to cover, and the terminal
+// shows 24-bit colour.
+func (m *Model) coverAccentWanted() bool {
+	p := m.deps.Config.RoleColors().Playing
+	return (p == "" || p == config.CoverColor) && m.deps.TrueColor && m.coverMode() != ""
+}
+
+// syncAccent puts the playing album's colour on the accent once its cover
+// is in, and the configured colour back when there is no cover colour to
+// use. While a cover loads, the last accent stays, so a change of album
+// doesn't flash the default.
+func (m *Model) syncAccent() {
+	id, playing := m.playingCover()
+	target := ""
+	var col color.Color
+	if m.coverAccentWanted() && playing {
+		e := m.covers.entries[id]
+		if e == nil || e.state == coverLoading {
+			return
+		}
+		if e.hasAccent {
+			target, col = id, e.accent
+		}
+	}
+	if target == m.covers.accentFor {
+		return
+	}
+	m.covers.accentFor = target
+	if target == "" {
+		applyColors(m.deps.Config.RoleColors(), m.deps.TrueColor)
+		return
+	}
+	playingColor = col
+	accentStyle = lipgloss.NewStyle().Foreground(col).Bold(true)
+	accentStops = accentFrom(col)
+}
+
 // coverID is what the server is asked for: the album of the playing track,
 // so one fetch serves all its tracks.
 func coverID(t library.Track) string {
@@ -130,7 +174,7 @@ func (m *Model) coverPost() tea.Cmd {
 		return nil
 	}
 	id, ok := m.playingCover()
-	if !ok || (!m.cardOn() && m.popup == nil) {
+	if !ok || (!m.cardOn() && m.popup == nil && !m.coverAccentWanted()) {
 		return nil
 	}
 	if m.covers.entries == nil {
@@ -198,6 +242,7 @@ func (m *Model) coverArrived(msg coverMsg) {
 	switch {
 	case msg.err == nil:
 		e.state, e.art = coverReady, msg.art
+		e.accent, e.hasAccent = msg.art.Accent()
 	case errors.Is(msg.err, subsonic.ErrNoCover):
 		e.state = coverNone
 	case errors.Is(msg.err, context.Canceled):
@@ -334,11 +379,7 @@ func (m *Model) nowPlayingCard() []string {
 		dur := s.Player.Duration
 		times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur)) + flags
 		pw := max(w-lipgloss.Width(times)-2, 0)
-		fill := 0
-		if dur > 0 {
-			fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
-		}
-		text[5] = fit(" "+progressBar(fill, pw)+times, w)
+		text[5] = fit(" "+progressBar(halvesDone(s.Player.Position, dur, pw), pw)+times, w)
 		m.bar = barHit{y: m.npRows[0] + 5, x: 1 + cardCols + 2 + 1, w: pw}
 	}
 	out := make([]string, cardRows)

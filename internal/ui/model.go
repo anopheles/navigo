@@ -130,7 +130,9 @@ type frame struct {
 type Model struct {
 	deps   Deps
 	covers covers
-	state  app.State
+	// dress says the row being drawn may carry styles of its own (rowstyle.go).
+	dress bool
+	state app.State
 	// pendingSave is the saved queue waiting to be written; saveArmed,
 	// that the timer for it is running.
 	pendingSave *queueWrite
@@ -275,6 +277,7 @@ func (m *Model) Init() tea.Cmd {
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	_, cmd := m.update(msg)
+	m.syncAccent()
 	cmd = tea.Batch(cmd, m.coverPost())
 	if len(m.timers) > 0 {
 		cmd = tea.Batch(append(m.timers, cmd)...)

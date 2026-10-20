@@ -194,7 +194,9 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
+		m.dress = i != f.cur && !m.inSelection(libraryWindow, i) && (!focused || !m.highlighting())
 		row := m.libraryRow(f, i, w)
+		m.dress = false
 		if focused {
 			row = m.highlight(row)
 		}
@@ -265,11 +267,17 @@ func (m *Model) starred(id, name string) string {
 }
 
 func (m *Model) artistLine(a library.Artist, w int) string {
+	if m.dress {
+		return m.artistLineDressed(a, w)
+	}
 	n := artistCount(a.AlbumCount, m.state.Library.AppearsOn(a.ID))
 	return " " + fit(m.starred(string(a.ID), a.Name), w-2-len(n)-2) + "  " + n + " "
 }
 
 func (m *Model) albumLine(a library.Album, w int) string {
+	if m.dress {
+		return m.albumLineDressed(a, w)
+	}
 	year := ""
 	if a.Year > 0 {
 		year = fmt.Sprint(a.Year)
@@ -303,6 +311,9 @@ func (m *Model) trackLine(mark, num string, t library.Track, w int) string {
 	title := m.starred(string(t.ID), t.Title)
 	if w < 40 {
 		return fit(mark+title, w)
+	}
+	if m.dress {
+		return m.trackLineDressed(mark, num, t, w)
 	}
 	numW := max(len(num)+1, 3)
 	rest := w - lipgloss.Width(mark) - numW - 6
@@ -340,7 +351,15 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 				mark = "⏸ "
 			}
 		}
+		quiet := i != m.queueCur && !current && !m.inSelection(queueWindow, i) &&
+			(!focused || !m.highlighting())
+		played := quiet && ok && i < row
+		m.dress = quiet && !played
 		line := m.trackLine(mark, fmt.Sprint(i+1), q[i].Track, w)
+		m.dress = false
+		if played {
+			line = dimStyle.Render(line)
+		}
 		if focused {
 			line = m.highlight(line)
 		}
@@ -609,11 +628,7 @@ func (m *Model) nowPlaying() []string {
 	dur := s.Player.Duration
 	times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur)) + flags
 	pw := max(m.w-lipgloss.Width(times)-2, 0)
-	fill := 0
-	if dur > 0 {
-		fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
-	}
-	l2 := " " + progressBar(fill, pw) + times + " "
+	l2 := " " + progressBar(halvesDone(s.Player.Position, dur, pw), pw) + times + " "
 	m.bar = barHit{y: m.npRows[0] + 1, x: 1, w: pw}
 	return []string{(l1), (fit(l2, m.w))}
 }
@@ -752,23 +767,36 @@ func clock(d time.Duration) string {
 	return fmt.Sprintf("%d:%02d", s/60, s%60)
 }
 
-// progressBar is fill cells of ━ then a ● head, then the faint rest. When the
-// playing role is a hex colour (a theme or the config's), the fill fades up
-// to it from a darker shade of the same hue; the terminal's own palette
-// can't be blended, so it stays flat.
-func progressBar(fill, w int) string {
-	if fill >= w {
-		return accentStyle.Render(strings.Repeat("━", w))
+// progressBar is the bar w cells wide, filled to halves half-cells: ━ for a
+// whole cell, ╸ for a half, then the faint rest, so the head moves twice as
+// finely as a cell. When the playing role is a hex colour (a theme, the
+// config's, or the cover's), the fill fades up to it from a darker shade of
+// the same hue; the terminal's own palette can't be blended, so it stays flat.
+func progressBar(halves, w int) string {
+	full := min(halves/2, w)
+	half := 0
+	if full < w {
+		half = halves % 2
 	}
 	var b strings.Builder
-	if _, basic := playingColor.(ansi.BasicColor); basic || fill < 2 {
-		b.WriteString(accentStyle.Render(strings.Repeat("━", fill)))
+	if _, basic := playingColor.(ansi.BasicColor); basic || full < 2 {
+		b.WriteString(accentStyle.Render(strings.Repeat("━", full)))
 	} else {
-		for _, c := range lipgloss.Blend1D(fill, lipgloss.Darken(playingColor, 0.5), playingColor) {
+		for _, c := range lipgloss.Blend1D(full, lipgloss.Darken(playingColor, 0.5), playingColor) {
 			b.WriteString(lipgloss.NewStyle().Foreground(c).Bold(true).Render("━"))
 		}
 	}
-	b.WriteString(accentStyle.Render("●"))
-	b.WriteString(dimStyle.Render(strings.Repeat("─", w-fill-1)))
+	if half == 1 {
+		b.WriteString(accentStyle.Render("╸"))
+	}
+	b.WriteString(dimStyle.Render(strings.Repeat("─", w-full-half)))
 	return b.String()
+}
+
+// halvesDone is how many half-cells of a w cell bar the position has covered.
+func halvesDone(pos, dur time.Duration, w int) int {
+	if dur <= 0 {
+		return 0
+	}
+	return min(2*w, int(int64(2*w)*int64(max(pos, 0))/int64(dur)))
 }

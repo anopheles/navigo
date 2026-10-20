@@ -53,7 +53,7 @@ func TestCardHasTheBarsFacts(t *testing.T) {
 	h.play()
 	h.fake.Tick(42 * time.Second)
 	h.pump()
-	h.contains("▶ Low Tide", "Aurora Lane", "Blue Hour", "2/6 in queue", "0:42 / 3:05", "━●─")
+	h.contains("▶ Low Tide", "Aurora Lane", "Blue Hour", "2/6 in queue", "0:42 / 3:05")
 }
 
 func TestNoCardOnASmallTerminal(t *testing.T) {

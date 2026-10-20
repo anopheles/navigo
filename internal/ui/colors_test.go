@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
 )
 
 var sgrRE = regexp.MustCompile(`\x1b\[([0-9;]*)m`)
@@ -75,7 +76,7 @@ func TestColoursOff(t *testing.T) {
 	}
 	find := func(text string) string {
 		for _, l := range lines {
-			if strings.Contains(l, text) {
+			if strings.Contains(ansi.Strip(l), text) {
 				return l
 			}
 		}

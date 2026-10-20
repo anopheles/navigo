@@ -77,3 +77,15 @@ func TestColorsNotAMapping(t *testing.T) {
 		t.Errorf("problems = %v, %v", c.Problems(), err)
 	}
 }
+
+func TestPlayingCanTakeTheCoversColour(t *testing.T) {
+	c, err := Parse([]byte("colors:\n  playing: Cover\n  key: red\n"))
+	if err != nil || len(c.Problems()) != 0 || c.Colors.Playing != CoverColor ||
+		c.Colors.Key != "1" {
+		t.Errorf("colors = %+v, problems %v, err %v", c.Colors, c.Problems(), err)
+	}
+	c, _ = Parse([]byte("colors:\n  key: cover\n"))
+	if len(c.Problems()) != 1 || c.Colors.Key != "" {
+		t.Errorf("key: cover should be a problem, not a colour: %+v %v", c.Colors, c.Problems())
+	}
+}

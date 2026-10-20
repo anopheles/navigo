@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 func read(t *testing.T, name string) []byte {
@@ -270,5 +271,62 @@ func TestNilCacheKeepsNothing(t *testing.T) {
 	}
 	if OpenCache("", 1) != nil {
 		t.Error("an empty dir should give no cache")
+	}
+}
+
+func TestAccent(t *testing.T) {
+	hue := func(c color.Color) float64 {
+		r, g, b, _ := c.RGBA()
+		h, _, _ := colorful.Color{
+			R: float64(r) / 65535,
+			G: float64(g) / 65535,
+			B: float64(b) / 65535,
+		}.Hsl()
+		return h
+	}
+	// A small saturated blue patch on a large dull grey-brown field.
+	img := image.NewNRGBA(image.Rect(0, 0, 100, 100))
+	for y := range 100 {
+		for x := range 100 {
+			img.SetNRGBA(x, y, color.NRGBA{120, 110, 105, 255})
+		}
+	}
+	for y := 40; y < 60; y++ {
+		for x := 40; x < 60; x++ {
+			img.SetNRGBA(x, y, color.NRGBA{20, 90, 240, 255})
+		}
+	}
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	a, _ := Decode(buf.Bytes())
+	c, ok := a.Accent()
+	if !ok {
+		t.Fatal("no accent for a cover with a blue patch")
+	}
+	if h := hue(c); h < 205 || h > 235 {
+		t.Errorf("hue = %.0f, want blue", h)
+	}
+	r, g, b, _ := c.RGBA()
+	_, s, l := colorful.Color{
+		R: float64(r) / 65535,
+		G: float64(g) / 65535,
+		B: float64(b) / 65535,
+	}.Hsl()
+	if s < 0.49 || l < 0.51 || l > 0.67 {
+		t.Errorf("saturation %.2f, lightness %.2f: not the evened-out tone", s, l)
+	}
+}
+
+func TestAccentNeedsColour(t *testing.T) {
+	for name, c := range map[string]color.NRGBA{
+		"grey":        {128, 128, 128, 255},
+		"black":       {0, 0, 0, 255},
+		"white":       {255, 255, 255, 255},
+		"transparent": {255, 0, 0, 0},
+	} {
+		a, _ := Decode(solid(t, 50, 50, c))
+		if got, ok := a.Accent(); ok {
+			t.Errorf("%s gave the accent %v", name, got)
+		}
 	}
 }

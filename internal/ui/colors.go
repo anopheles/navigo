@@ -29,7 +29,7 @@ var (
 var accentStops []color.Color
 
 // defaultPlaying is the playing colour on a true-colour terminal when the
-// config sets none: a mid-tone magenta that reads on light and dark
+// config sets none, or until the cover has given one: a mid-tone magenta that reads on light and dark
 // backgrounds, and that the progress bar can fade up to. Elsewhere the
 // terminal's own magenta stays.
 const defaultPlaying = "#c25bd8"
@@ -38,8 +38,11 @@ const defaultPlaying = "#c25bd8"
 // those it leaves out. Hex colours are down-sampled by the renderer to
 // what the terminal shows; NO_COLOR removes all of them.
 func applyColors(c config.Colors, trueColor bool) {
-	if c.Playing == "" && trueColor {
-		c.Playing = defaultPlaying
+	if c.Playing == "" || c.Playing == config.CoverColor { // the cover's colour comes later
+		c.Playing = ""
+		if trueColor {
+			c.Playing = defaultPlaying
+		}
 	}
 	pick := func(v string, def color.Color) color.Color {
 		switch {

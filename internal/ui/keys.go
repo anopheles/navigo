@@ -378,6 +378,7 @@ func (m *Model) reloadConfig(command.Call) error {
 	m.deps.Config.Player, m.deps.Config.Resume = cfg.Player, cfg.Resume
 	m.deps.Config.Theme, m.deps.Config.Colors = cfg.Theme, cfg.Colors
 	applyColors(cfg.RoleColors(), m.deps.TrueColor)
+	m.covers.accentFor = "" // the cover colour is put on again if it applies
 	m.setTable(t)
 	m.event(app.ConfigureReplayGain{ReplayGain: gainOf(cfg.Player)})
 	m.event(app.ConfigureResume{On: cfg.ResumeOn()})

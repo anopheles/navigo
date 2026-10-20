@@ -184,8 +184,9 @@ func TestProgressFillFadesOnlyForHexPlaying(t *testing.T) {
 	if n := distinctFills(t, screen); n != 1 {
 		t.Errorf("the terminal's palette drew the fill in %d colours, want 1", n)
 	}
-	if !strings.Contains(ansi.Strip(screen), "━●─") {
-		t.Errorf("the progress bar has no ● head:\n%s", ansi.Strip(screen))
+	if bar := ansi.Strip(lineWith(t, screen, "0:42 / 3:05")); !strings.Contains(bar, "━") ||
+		!strings.Contains(bar, "─") {
+		t.Errorf("the progress bar is not filled up to a rest:\n%s", bar)
 	}
 }
 

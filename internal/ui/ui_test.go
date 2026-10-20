@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/exp/golden"
 
 	"github.com/anopheles/navigo/internal/config"
@@ -264,3 +265,35 @@ type brokenKeyring struct{}
 func (brokenKeyring) Get(string, string) (string, error) { return "", os.ErrNotExist }
 func (brokenKeyring) Set(string, string, string) error   { return os.ErrPermission }
 func (brokenKeyring) Delete(string, string) error        { return os.ErrPermission }
+
+func TestProgressBarMovesInHalfCells(t *testing.T) {
+	for _, c := range []struct {
+		halves, w int
+		want      string
+	}{
+		{0, 4, "────"},
+		{1, 4, "╸───"},
+		{5, 4, "━━╸─"},
+		{8, 4, "━━━━"},
+		{99, 4, "━━━━"},
+	} {
+		if got := ansi.Strip(progressBar(c.halves, c.w)); got != c.want {
+			t.Errorf("progressBar(%d, %d) = %q, want %q", c.halves, c.w, got, c.want)
+		}
+	}
+	for _, c := range []struct {
+		pos, dur time.Duration
+		w, want  int
+	}{
+		{0, time.Minute, 10, 0},
+		{30 * time.Second, time.Minute, 10, 10},
+		{time.Minute, time.Minute, 10, 20},
+		{2 * time.Minute, time.Minute, 10, 20},
+		{time.Second, 0, 10, 0},
+		{-time.Second, time.Minute, 10, 0},
+	} {
+		if got := halvesDone(c.pos, c.dur, c.w); got != c.want {
+			t.Errorf("halvesDone(%v, %v, %d) = %d, want %d", c.pos, c.dur, c.w, got, c.want)
+		}
+	}
+}

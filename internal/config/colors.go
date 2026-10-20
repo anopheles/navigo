@@ -31,6 +31,10 @@ var colorNames = func() map[string]int {
 
 var hexRE = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
+// CoverColor is the value of the playing role that takes its colour from
+// the cover of the playing album.
+const CoverColor = "cover"
+
 // ParseColor reads a colour: one of the 16 by name (red, bright-red,
 // gray), by number (0 to 15), or as #rrggbb. It returns the number as a
 // string, or the hex in lower case.
@@ -88,6 +92,10 @@ func (c *Colors) UnmarshalYAML(n *yaml.Node) error {
 				c.Problems,
 				Problem{pos(val), "colors." + key.Value + ": give a colour"},
 			)
+			continue
+		}
+		if dst == &c.Playing && strings.EqualFold(strings.TrimSpace(val.Value), CoverColor) {
+			*dst = CoverColor
 			continue
 		}
 		v, err := ParseColor(val.Value)

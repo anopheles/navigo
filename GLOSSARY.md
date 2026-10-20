@@ -82,7 +82,11 @@ _Avoid_: loop
 
 **Role**:
 A meaning a colour carries in navigo (playing, key, error, selection); the user can recolour a role but not add or merge roles.
-_Avoid_: theme, colour slot, preset
+_Avoid_: colour slot
+
+**Theme**:
+A named set of colours for the four roles, picked with `theme:` and changed role by role with `colors:`. It colours only the roles, never the text or background, which stay the terminal's.
+_Avoid_: preset, skin
 
 **Saved queue**:
 The queue, its current entry and position, the volume and the repeat mode, kept between runs per server and user so that Resume can bring them back.

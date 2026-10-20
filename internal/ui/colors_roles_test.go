@@ -115,3 +115,38 @@ func TestColourProblemsShow(t *testing.T) {
 	)
 	h.contains("config.yaml has problems", "config.yaml:2:12: colors.playing")
 }
+
+func TestThemeColoursTheRoles(t *testing.T) {
+	cfg, err := config.Parse([]byte("theme: catppuccin-mocha\ncolors:\n  key: red\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := newHarness(
+		t,
+		120,
+		40,
+		func(c *config.Config, _ *subsonictest.Server) { c.Theme, c.Colors = cfg.Theme, cfg.Colors },
+	)
+	h.keys("3j<CR>j<CR>")
+	screen := h.m.render()
+	if l := lineWith(t, screen, "▶"); !strings.Contains(l, "38;2;203;166;247") { // mauve
+		t.Errorf("playing isn't the theme's mauve: %q", l)
+	}
+	if l := lineWith(t, screen, "<CR>"); !has(l, 31) { // colors: overrides the theme
+		t.Errorf("keys aren't red: %q", l)
+	}
+}
+
+func TestReloadConfigChangesTheTheme(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	if err := os.MkdirAll(filepath.Dir(h.path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(h.path, []byte("theme: dracula\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.keys("3j<CR>j<CR>:reload-config<CR>")
+	if l := lineWith(t, h.m.render(), "▶"); !strings.Contains(l, "38;2;255;121;198") { // pink
+		t.Errorf("not dracula: %q", l)
+	}
+}

@@ -45,7 +45,7 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 - **Beyond-parity features:** lyrics, scrobbling settings, multiple servers, cover art in the terminal.
 - **Offline playback** (downloading audio) ([#9](https://github.com/anopheles/navigo/issues/9)).
 - **Release packaging** (goreleaser, package managers).
-- **Presets and a single accent colour:** only four colour roles can be recoloured ([#52](https://github.com/anopheles/navigo/issues/52)).
+- **A single accent colour:** one colour driving several roles; roles are recoloured one by one or by a named theme ([#52](https://github.com/anopheles/navigo/issues/52)).
 - **Free-text filtering within a list:** `/` jumps between matches, and the Search section covers the whole library ([#26](https://github.com/anopheles/navigo/issues/26)).
 
 ## Architecture
@@ -161,7 +161,8 @@ player:
 hints: true          # the hint line; :hints on|off for the session
 resume: true         # bring the queue back at the next start (false = off)
 
-colors:              # recolour a role; '#rrggbb' or an ANSI name or 0-15
+theme: catppuccin-mocha   # a named palette for the roles (optional)
+colors:              # recolour a role on top of it; '#rrggbb' or an ANSI name or 0-15
   playing: green
   key: yellow
   error: red
@@ -199,6 +200,7 @@ keys:
 **The new keys** ([#53](https://github.com/anopheles/navigo/issues/53)):
 - `player.replaygain` is `off`, `track` (the default) or `album`; `player.replaygain_preamp` is in dB, from -15 to 15, default 0. [Queue and playback](#queue-and-playback).
 - `resume` is on unless set to `false`. [Resume](#resume).
+- `theme` names a palette for the roles; `colors` then recolours single roles on top of it. [Colours](#colours).
 - `colors` takes the roles `playing`, `key`, `error` and `selection`. [Colours](#colours).
 - **Validation:** a bad value (an unknown mode, a preamp that isn't a number or is out of range, a colour that can't be read) is skipped, keeps its default and is listed in the same popup as bad bindings, as `config.yaml:LINE:COL: message`. Unknown top-level keys are still ignored, but an unknown role inside `colors` is reported. `navigo check-config` covers all of it.
 - **`:reload-config`** applies all three again: ReplayGain returns to the configured mode and preamp (dropping a `:replaygain` override), colours change at once, and `resume: false` stops saving and deletes the saved queue.
@@ -439,7 +441,7 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 
 [Which colours does navigo use by default?](https://github.com/anopheles/navigo/issues/25)
 
-**Palette:** only the terminal's 16 colours and text attributes (reverse, bold, faint, underline), so navigo follows the user's terminal theme on light and dark backgrounds. Each colour means one thing: **magenta = playing, cyan = a key, red = an error.**
+**Palette** (the default): only the terminal's 16 colours and text attributes (reverse, bold, faint, underline), so navigo follows the user's terminal theme on light and dark backgrounds. Each colour means one thing: **magenta = playing, cyan = a key, red = an error.**
 
 | Element | Look |
 |---|---|
@@ -455,7 +457,8 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 
 **Recolouring** ([What can a user change about navigo's look?](https://github.com/anopheles/navigo/issues/52), reversing the "no colour settings" choice above): the `colors` block recolours four **roles**: `playing`, `key`, `error` and `selection`. A value is one of the 16 colours by name (`red`, `bright-red`, `gray`), by number from 0 to 15, or `#rrggbb`.
 - **The other elements** are attributes (reverse, bold, faint, underline) and follow whatever colours are set.
-- **No presets and no single accent:** the terminal's own theme is the preset, and one accent would merge "playing" with "focus" and, for red, with "error".
+- **Themes** (added after the first decision against presets): `theme:` picks a named palette for the four roles, and a role in `colors:` replaces the theme's colour for it. The themes are `catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`, `gruvbox-dark`, `gruvbox-light`, `nord`, `dracula`, `solarized-dark`, `solarized-light`, `tokyo-night`, `tokyo-night-storm`, `tokyo-night-day`, `one-dark`, `one-light`, `rose-pine`, `rose-pine-moon`, `rose-pine-dawn`, `everforest-dark`, `kanagawa`, `monokai`. Names are not case-sensitive, and an unknown one is reported with this list. A theme gives only the four role colours, as `#rrggbb`; the text and background are the terminal's, so a theme looks right in a terminal that uses the same one, and the selection colour is a background chosen to read against that theme's text. With no `theme:`, the roles are the terminal's own palette, which follows whatever theme the terminal has.
+- **No single accent:** one accent colour would merge "playing" with "focus" and, for red, with "error".
 - **Low colour depth:** a hex colour snaps to the nearest colour of a 256- or 16-colour terminal.
 - **Safeguard:** the Visual selection stays underlined whatever colour it has, so a `selection` close to the text colour can't hide it, and it shows with colours off. navigo can't know the terminal's text colour, so it cannot check for that.
 

@@ -194,7 +194,7 @@ type Model struct {
 // New returns the model; Init starts logging in. It refuses a keys: block
 // that leaves no way to quit.
 func New(deps Deps) (*Model, error) {
-	applyColors(deps.Config.Colors)
+	applyColors(deps.Config.RoleColors())
 	line := newInput()
 	line.Prompt = ":"
 	m := &Model{

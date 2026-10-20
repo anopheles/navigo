@@ -106,6 +106,7 @@ func run() error {
 		CacheDir:   cacheDir,
 		StateDir:   stateDir,
 		Media:      media,
+		TrueColor:  trueColor(),
 		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})
@@ -199,4 +200,12 @@ func setupLog(debug bool) (*os.File, string) {
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: level})))
 	return file, path
+}
+
+// trueColor says whether the terminal shows 24-bit colour and colours are on.
+func trueColor() bool {
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+	return colorprofile.Detect(os.Stdout, os.Environ()) == colorprofile.TrueColor
 }

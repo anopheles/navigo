@@ -1,38 +1,38 @@
- Help                                                                     Queue (0)                                     
- ── Everywhere ──                                                       │                                               
- j          down               Move the cursor down.                    │ The queue is empty.                           
- <Down>     down               Move the cursor down.                    │                                               
- k          up                 Move the cursor up.                      │ Find something to play:                       
- <Up>       up                 Move the cursor up.                      │   'b albums   j/k move                        
- gg         first              Go to the first row, or to row N with a …│   <CR> open   h back                          
- G          last               Go to the last row, or to row N with a c…│                                               
- <C-d>      half-page-down     Move down half a page.                   │ On a track:                                   
- <C-u>      half-page-up       Move up half a page.                     │   <CR> play it   A add to queue               
- <C-f>      page-down          Move down a page.                        │                                               
- <C-b>      page-up            Move up a page.                          │   :q quit                                     
- <C-e>      scroll-down        Scroll the list down a row; the cursor s…│                                               
- <C-y>      scroll-up          Scroll the list up a row; the cursor sta…│                                               
- H          screen-top         Go to the top row on screen, or the Nth …│                                               
- M          screen-middle      Go to the middle row on screen.          │                                               
- L          screen-bottom      Go to the bottom row on screen, or the N…│                                               
- zz         scroll-center      Scroll so the cursor row is in the middl…│                                               
- zt         scroll-top         Scroll so the cursor row is at the top o…│                                               
- zb         scroll-bottom      Scroll so the cursor row is at the botto…│                                               
- %          percent            Go to the row N percent of the way down:…│                                               
- /          find               Find a row in this list by its text; a c…│                                               
- n          find-next          Go to the next match of the last find.   │                                               
- N          find-prev          Go to the previous match of the last fin…│                                               
- <C-o>      jump-back          Go back to where you were before the las…│                                               
- <C-i>      forward            Go forward again in the jump list, after…│                                               
- gp         go-playing         Go to the entry that plays, in the queue.│                                               
- }          next-group         Go to the start of the next group, such …│                                               
- {          prev-group         Go to the start of this group, or of the…│                                               
- ga         go-album           Go to the album of the track or album un…│                                               
- gr         go-artist          Go to the artist of the track or album u…│                                               
- h          back               Go back out to the list you came from.   │                                               
- <Space>    play-pause         Pause or resume playback, or start the q…│                                               
- >          next-track         Play the next track in the queue.        │                                               
- <          prev-track         Play the previous track, or restart this…│                                               
+╭ Help ────────────────────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
+│ ── Everywhere ──                                                     ││                                              │
+│ j          down               Move the cursor down.                  ││ The queue is empty.                          │
+│ <Down>     down               Move the cursor down.                  ││                                              │
+│ k          up                 Move the cursor up.                    ││ Find something to play:                      │
+│ <Up>       up                 Move the cursor up.                    ││   'b albums   j/k move                       │
+│ gg         first              Go to the first row, or to row N with …││   <CR> open   h back                         │
+│ G          last               Go to the last row, or to row N with a…││                                              │
+│ <C-d>      half-page-down     Move down half a page.                 ││ On a track:                                  │
+│ <C-u>      half-page-up       Move up half a page.                   ││   <CR> play it   A add to queue              │
+│ <C-f>      page-down          Move down a page.                      ││                                              │
+│ <C-b>      page-up            Move up a page.                        ││   :q quit                                    │
+│ <C-e>      scroll-down        Scroll the list down a row; the cursor…││                                              │
+│ <C-y>      scroll-up          Scroll the list up a row; the cursor s…││                                              │
+│ H          screen-top         Go to the top row on screen, or the Nt…││                                              │
+│ M          screen-middle      Go to the middle row on screen.        ││                                              │
+│ L          screen-bottom      Go to the bottom row on screen, or the…││                                              │
+│ zz         scroll-center      Scroll so the cursor row is in the mid…││                                              │
+│ zt         scroll-top         Scroll so the cursor row is at the top…││                                              │
+│ zb         scroll-bottom      Scroll so the cursor row is at the bot…││                                              │
+│ %          percent            Go to the row N percent of the way dow…││                                              │
+│ /          find               Find a row in this list by its text; a…││                                              │
+│ n          find-next          Go to the next match of the last find. ││                                              │
+│ N          find-prev          Go to the previous match of the last f…││                                              │
+│ <C-o>      jump-back          Go back to where you were before the l…││                                              │
+│ <C-i>      forward            Go forward again in the jump list, aft…││                                              │
+│ gp         go-playing         Go to the entry that plays, in the que…││                                              │
+│ }          next-group         Go to the start of the next group, suc…││                                              │
+│ {          prev-group         Go to the start of this group, or of t…││                                              │
+│ ga         go-album           Go to the album of the track or album …││                                              │
+│ gr         go-artist          Go to the artist of the track or album…││                                              │
+│ h          back               Go back out to the list you came from. ││                                              │
+│ <Space>    play-pause         Pause or resume playback, or start the…││                                              │
+│ >          next-track         Play the next track in the queue.      ││                                              │
+╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  h back  <Tab> other window  ? keys                                                                                     
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  ■ nothing playing                                                                                             RG track 

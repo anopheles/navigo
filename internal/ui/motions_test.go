@@ -14,9 +14,9 @@ func (h *harness) onMile(n int) {
 	h.cursorOn(fmt.Sprintf("Mile %03d", n))
 }
 
-// The Long Haul has 510 tracks; 34 rows show at 120×40.
+// The Long Haul has 510 tracks; 34 rows show at 120×41.
 func TestPageAndScreenMotions(t *testing.T) {
-	h := newHarness(t, 120, 40, nil)
+	h := newHarness(t, 120, 41, nil)
 	h.keys("4j<CR>")
 	if rows := h.m.bodyHeight(); rows != 34 {
 		t.Fatalf("%d rows on screen", rows)

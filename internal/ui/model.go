@@ -48,6 +48,9 @@ type Deps struct {
 	// OnLogin is called with the client once the server accepted the
 	// credentials, so the player can sign stream URLs with it.
 	OnLogin func(*subsonic.Client)
+	// TrueColor says the terminal shows 24-bit colour, so the default
+	// playing colour can be one the progress bar fades up to.
+	TrueColor bool
 }
 
 // PlayerMsg wraps a Player event for Program.Send.
@@ -194,7 +197,7 @@ type Model struct {
 // New returns the model; Init starts logging in. It refuses a keys: block
 // that leaves no way to quit.
 func New(deps Deps) (*Model, error) {
-	applyColors(deps.Config.RoleColors())
+	applyColors(deps.Config.RoleColors(), deps.TrueColor)
 	line := newInput()
 	line.Prompt = ":"
 	m := &Model{
@@ -979,7 +982,7 @@ func (m *Model) clamp() {
 
 // bodyHeight is the number of list rows each window shows.
 func (m *Model) bodyHeight() int {
-	h := m.h - 5 // title row, the rule, now-playing bar (2), status line
+	h := m.h - 6 // the pane's two edges, the rule, now-playing bar (2), status line
 	if m.hints {
 		h--
 	}

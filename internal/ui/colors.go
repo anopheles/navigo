@@ -20,10 +20,19 @@ var (
 	selectionColor color.Color = ansi.Blue
 )
 
+// defaultPlaying is the playing colour on a true-colour terminal when the
+// config sets none: a mid-tone magenta that reads on light and dark
+// backgrounds, and that the progress bar can fade up to. Elsewhere the
+// terminal's own magenta stays.
+const defaultPlaying = "#c25bd8"
+
 // applyColors puts the config's colours on the roles, and the defaults on
 // those it leaves out. Hex colours are down-sampled by the renderer to
 // what the terminal shows; NO_COLOR removes all of them.
-func applyColors(c config.Colors) {
+func applyColors(c config.Colors, trueColor bool) {
+	if c.Playing == "" && trueColor {
+		c.Playing = defaultPlaying
+	}
 	pick := func(v string, def color.Color) color.Color {
 		switch {
 		case v == "":

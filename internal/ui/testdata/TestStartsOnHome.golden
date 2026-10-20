@@ -1,38 +1,38 @@
- Home                                                                     Queue (0)                                     
- Mix                                                                    │                                               
- Recently added                                                         │ The queue is empty.                           
- Most played                                                            │                                               
- Recently played                                                        │ Find something to play:                       
- Random                                                                 │   'b albums   j/k move                        
- Starred                                                                │   <CR> open   h back                          
-                                                                        │                                               
-                                                                        │ On a track:                                   
-                                                                        │   <CR> play it   A add to queue               
-                                                                        │                                               
-                                                                        │   :q quit                                     
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
-                                                                        │                                               
+╭ Home ────────────────────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
+│ Mix                                                                  ││                                              │
+│ Recently added                                                       ││ The queue is empty.                          │
+│ Most played                                                          ││                                              │
+│ Recently played                                                      ││ Find something to play:                      │
+│ Random                                                               ││   'b albums   j/k move                       │
+│ Starred                                                              ││   <CR> open   h back                         │
+│                                                                      ││                                              │
+│                                                                      ││ On a track:                                  │
+│                                                                      ││   <CR> play it   A add to queue              │
+│                                                                      ││                                              │
+│                                                                      ││   :q quit                                    │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+│                                                                      ││                                              │
+╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  <CR> mix  h back  <Tab> other window  ? keys                                                                           
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  ■ nothing playing                                                                                             RG track 

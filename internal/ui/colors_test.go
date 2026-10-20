@@ -96,17 +96,20 @@ func TestColoursOff(t *testing.T) {
 	}
 	// The cursor is reverse in the focused queue (on its first row),
 	// underlined in the library (on Blue Hour).
-	q := strings.SplitN(find("Dusk Signal"), "│", 2)
-	if len(q) != 2 || !has(q[1], 7) {
+	// A row reads: edge, library, edge, edge, queue, edge; the focused
+	// window's edges have no escape codes, so the parts between vary.
+	q := strings.Split(find("Dusk Signal"), "│")
+	if len(q) < 5 || !has(q[len(q)-2], 7) {
 		t.Errorf("the queue's cursor row isn't reverse: %q", find("Dusk Signal"))
 	}
-	lib := strings.SplitN(find("4 Blue Hour"), "│", 2)[0]
+	lib := strings.Split(find("4 Blue Hour"), "│")[1]
 	if !has(lib, 4) {
 		t.Errorf("the library's cursor row isn't underlined: %q", lib)
 	}
 	// What plays is bold, with ▶.
-	playing := strings.SplitN(find("▶ "), "│", 2)
-	if len(playing) != 2 || !has(playing[1], 1) || !strings.Contains(playing[1], "▶") {
+	playing := strings.Split(find("▶ "), "│")
+	if len(playing) < 5 || !has(playing[len(playing)-2], 1) ||
+		!strings.Contains(playing[len(playing)-2], "▶") {
 		t.Errorf("the playing row isn't bold with ▶: %q", playing)
 	}
 }

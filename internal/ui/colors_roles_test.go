@@ -3,8 +3,10 @@ package ui
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
@@ -148,5 +150,64 @@ func TestReloadConfigChangesTheTheme(t *testing.T) {
 	h.keys("3j<CR>j<CR>:reload-config<CR>")
 	if l := lineWith(t, h.m.render(), "▶"); !strings.Contains(l, "38;2;255;121;198") { // pink
 		t.Errorf("not dracula: %q", l)
+	}
+}
+
+// distinctFills counts the colours the progress bar's ━ cells are drawn in.
+func distinctFills(t *testing.T, screen string) int {
+	t.Helper()
+	colours := map[string]bool{}
+	for _, m := range regexp.MustCompile(`\x1b\[([0-9;]*)m━`).FindAllStringSubmatch(screen, -1) {
+		colours[m[1]] = true
+	}
+	return len(colours)
+}
+
+func TestProgressFillFadesOnlyForHexPlaying(t *testing.T) {
+	play := func(h *harness) {
+		h.keys("3j<CR>j<CR>")
+		h.fake.Tick(42 * time.Second)
+		h.pump()
+	}
+	h := newHarness(t, 120, 40, withColors(config.Colors{Playing: "#ff9e64"}))
+	play(h)
+	if n := distinctFills(t, h.m.render()); n < 3 {
+		t.Errorf("a hex playing colour left the fill in %d colours, want a fade", n)
+	}
+	h = newHarness(t, 120, 40, nil)
+	play(h)
+	screen := h.m.render()
+	if n := distinctFills(t, screen); n != 1 {
+		t.Errorf("the terminal's palette drew the fill in %d colours, want 1", n)
+	}
+	if !strings.Contains(ansi.Strip(screen), "━●─") {
+		t.Errorf("the progress bar has no ● head:\n%s", ansi.Strip(screen))
+	}
+}
+
+func TestTrueColorTerminalsGetAFadingPlayingColourByDefault(t *testing.T) {
+	for _, c := range []struct {
+		name      string
+		trueColor bool
+		colors    config.Colors
+		fades     bool
+	}{
+		{"true colour, nothing set", true, config.Colors{}, true},
+		{"16 colours, nothing set", false, config.Colors{}, false},
+		{"true colour, playing set to an ANSI colour", true, config.Colors{Playing: "5"}, false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			h := newHarness(t, 120, 40, func(cfg *config.Config, _ *subsonictest.Server) {
+				cfg.Colors = c.colors
+			})
+			h.m.deps.TrueColor = c.trueColor
+			applyColors(h.m.deps.Config.RoleColors(), c.trueColor)
+			h.keys("3j<CR>j<CR>")
+			h.fake.Tick(42 * time.Second)
+			h.pump()
+			if got := distinctFills(t, h.m.render()) > 1; got != c.fades {
+				t.Errorf("fade = %v, want %v", got, c.fades)
+			}
+		})
 	}
 }

@@ -63,37 +63,29 @@ func (m *Model) render() string {
 	var lines []string
 	if m.w < narrow {
 		if m.focus == libraryWindow {
-			lines = append(
-				lines,
-				titleOn.Render(fit(m.libTitle()+"   "+m.keyHint("window", "queue"), m.w)),
-			)
-			lines = append(lines, m.libraryRows(m.w, h, true)...)
+			title := m.libTitle() + "   " + m.keyHint("window", "queue")
+			lines = pane(title, m.libraryRows(m.w-2, h, true), m.w, true)
 		} else {
-			lines = append(
-				lines,
-				titleOn.Render(fit(m.queueTitle()+"   "+m.keyHint("window", "library"), m.w)),
-			)
-			lines = append(lines, m.queueRows(m.w, h, true)...)
+			title := m.queueTitle() + "   " + m.keyHint("window", "library")
+			lines = pane(title, m.queueRows(m.w-2, h, true), m.w, true)
 		}
 	} else {
 		lw := m.w * 3 / 5
-		rw := m.w - lw - 1
-		lines = append(
-			lines,
-			m.title(
-				m.libTitle(),
-				lw,
-				m.focus == libraryWindow,
-			)+" "+m.title(
-				m.queueTitle(),
-				rw,
-				m.focus == queueWindow,
-			),
+		rw := m.w - lw
+		left := pane(
+			m.libTitle(),
+			m.libraryRows(lw-2, h, m.focus == libraryWindow),
+			lw,
+			m.focus == libraryWindow,
 		)
-		left := m.libraryRows(lw, h, m.focus == libraryWindow)
-		right := m.queueRows(rw, h, m.focus == queueWindow)
-		for i := range h {
-			lines = append(lines, left[i]+dimStyle.Render("│")+right[i])
+		right := pane(
+			m.queueTitle(),
+			m.queueRows(rw-2, h, m.focus == queueWindow),
+			rw,
+			m.focus == queueWindow,
+		)
+		for i := range left {
+			lines = append(lines, left[i]+right[i])
 		}
 	}
 	if m.hints {
@@ -120,11 +112,25 @@ func (m *Model) render() string {
 	return strings.Join(lines, "\n")
 }
 
-func (m *Model) title(s string, w int, focused bool) string {
+// pane frames rows (w-2 wide) in a rounded border with the title in the top
+// edge. The focused window's border is plain and its title reversed; the
+// other's is faint.
+func pane(title string, rows []string, w int, focused bool) []string {
+	edge, name := dimStyle, titleOff
 	if focused {
-		return titleOn.Render(fit(s, w))
+		edge, name = lipgloss.NewStyle(), titleOn
 	}
-	return titleOff.Render(fit(s, w))
+	inner := max(w-2, 0)
+	t := ansi.Truncate(title, max(inner-1, 0), "…") + " "
+	t = ansi.Truncate(t, inner, "")
+	out := []string{
+		edge.Render("╭") + name.Render(t) +
+			edge.Render(strings.Repeat("─", max(inner-lipgloss.Width(t), 0))+"╮"),
+	}
+	for _, r := range rows {
+		out = append(out, edge.Render("│")+r+edge.Render("│"))
+	}
+	return append(out, edge.Render("╰"+strings.Repeat("─", inner)+"╯"))
 }
 
 func (m *Model) libTitle() string {
@@ -591,11 +597,7 @@ func (m *Model) nowPlaying() []string {
 	if dur > 0 {
 		fill = min(pw, int(int64(pw)*int64(s.Player.Position)/int64(dur)))
 	}
-	l2 := " " + accentStyle.Render(
-		strings.Repeat("━", fill),
-	) + dimStyle.Render(
-		strings.Repeat("─", pw-fill),
-	) + times + " "
+	l2 := " " + progressBar(fill, pw) + times + " "
 	return []string{(l1), (fit(l2, m.w))}
 }
 
@@ -731,4 +733,25 @@ func pad(lines []string, w, h int) []string {
 func clock(d time.Duration) string {
 	s := int(d.Round(time.Second).Seconds())
 	return fmt.Sprintf("%d:%02d", s/60, s%60)
+}
+
+// progressBar is fill cells of ━ then a ● head, then the faint rest. When the
+// playing role is a hex colour (a theme or the config's), the fill fades up
+// to it from a darker shade of the same hue; the terminal's own palette
+// can't be blended, so it stays flat.
+func progressBar(fill, w int) string {
+	if fill >= w {
+		return accentStyle.Render(strings.Repeat("━", w))
+	}
+	var b strings.Builder
+	if _, basic := playingColor.(ansi.BasicColor); basic || fill < 2 {
+		b.WriteString(accentStyle.Render(strings.Repeat("━", fill)))
+	} else {
+		for _, c := range lipgloss.Blend1D(fill, lipgloss.Darken(playingColor, 0.5), playingColor) {
+			b.WriteString(lipgloss.NewStyle().Foreground(c).Bold(true).Render("━"))
+		}
+	}
+	b.WriteString(accentStyle.Render("●"))
+	b.WriteString(dimStyle.Render(strings.Repeat("─", w-fill-1)))
+	return b.String()
 }

@@ -1,10 +1,14 @@
 #!/bin/sh
-# The CI check steps (ADR 0005 for the licence list). Run from the repo
-# root, with Go, and mpv for the player tests. GitHub Actions runs this in
-# the check job; tools/ci/local.sh runs it in the cached CI image.
+# The CI check steps (.golangci.yml for the linters and formatters, ADR
+# 0005 for the licence list). Run from the repo root, with Go, and mpv for
+# the player tests. GitHub Actions runs this in the check job;
+# tools/ci/local.sh runs it in the cached CI image.
 set -eu
 
-test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+tools/ci/install-golangci-lint.sh
+golangci-lint fmt --diff
+golangci-lint run ./...
+golangci-lint run --build-tags e2e ./e2e/...
 go vet ./...
 go vet -tags e2e ./e2e
 go test ./...

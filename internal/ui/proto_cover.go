@@ -294,7 +294,7 @@ func (m *Model) protoUpdate(msg tea.Msg) (tea.Cmd, bool) {
 		case "f6":
 			p.mode = (p.mode + 1) % 3
 			p.kitty = p.mode == 2
-			note = [...]string{"x/mosaic (alpha ignored)", "alpha-aware half-blocks", "kitty placeholders"}[p.mode]
+			note = [...]string{"x/mosaic (alpha ignored)", "alpha-aware quadrant blocks", "kitty placeholders"}[p.mode]
 		case "f10":
 			p.mask = !p.mask
 			p.rendered = map[string]string{}

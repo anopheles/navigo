@@ -70,25 +70,42 @@ func over(p px, bg color.Color) (c [3]uint8, drawn bool) {
 
 func u8(f float64) uint8 { return uint8(math.Round(math.Max(0, math.Min(1, f)) * 255)) }
 
-// alphaHalf draws img as w×h cells of ▀ ▄ with transparency kept: a cell
-// whose top half is clear and bottom half drawn is ▄ in the bottom colour on
-// the terminal's own background, and so on.
+// quadrants[mask] is the glyph with the TL(1) TR(2) BL(4) BR(8) quarters lit.
+var quadrants = []string{" ", "▘", "▝", "▀", "▖", "▌", "▞", "▛", "▗", "▚", "▐", "▜", "▄", "▙", "▟", "█"}
+
+// alphaHalf draws img as w×h cells of quadrant blocks (2×2 pixels a cell)
+// with transparency kept. Pixels that are clear stay the terminal's own
+// background: a cell with some clear pixels draws only the others, in their
+// average colour. A cell with none is split into the two colours that fit
+// its four pixels best.
 func alphaHalf(img image.Image, w, h int, bg color.Color) string {
-	pix := shrink(img, w, h*2)
+	pix := shrink(img, w*2, h*2)
 	var sb strings.Builder
 	for y := range h {
 		for x := range w {
-			t, tok := over(pix[(2*y)*w+x], bg)
-			b, bok := over(pix[(2*y+1)*w+x], bg)
-			switch {
-			case tok && bok:
-				fmt.Fprintf(&sb, "\x1b[38;2;%d;%d;%d;48;2;%d;%d;%dm▀\x1b[m", t[0], t[1], t[2], b[0], b[1], b[2])
-			case tok:
-				fmt.Fprintf(&sb, "\x1b[38;2;%d;%d;%dm▀\x1b[m", t[0], t[1], t[2])
-			case bok:
-				fmt.Fprintf(&sb, "\x1b[38;2;%d;%d;%dm▄\x1b[m", b[0], b[1], b[2])
-			default:
+			var c [4][3]uint8
+			var ok [4]bool
+			drawn := 0
+			for i := range 4 {
+				c[i], ok[i] = over(pix[(2*y+i/2)*w*2+2*x+i%2], bg)
+				if ok[i] {
+					drawn |= 1 << i
+				}
+			}
+			switch drawn {
+			case 0:
 				sb.WriteByte(' ')
+			case 15:
+				mask, fg, bgc := bestSplit(c)
+				if mask == 0 {
+					fmt.Fprintf(&sb, "\x1b[48;2;%d;%d;%dm \x1b[m", fg[0], fg[1], fg[2])
+				} else {
+					fmt.Fprintf(&sb, "\x1b[38;2;%d;%d;%d;48;2;%d;%d;%dm%s\x1b[m",
+						fg[0], fg[1], fg[2], bgc[0], bgc[1], bgc[2], quadrants[mask])
+				}
+			default:
+				fg := average(c, drawn)
+				fmt.Fprintf(&sb, "\x1b[38;2;%d;%d;%dm%s\x1b[m", fg[0], fg[1], fg[2], quadrants[drawn])
 			}
 		}
 		if y < h-1 {
@@ -96,6 +113,53 @@ func alphaHalf(img image.Image, w, h int, bg color.Color) string {
 		}
 	}
 	return sb.String()
+}
+
+func average(c [4][3]uint8, mask int) [3]uint8 {
+	var sum [3]int
+	n := 0
+	for i := range 4 {
+		if mask&(1<<i) != 0 {
+			for k := range 3 {
+				sum[k] += int(c[i][k])
+			}
+			n++
+		}
+	}
+	if n == 0 {
+		return [3]uint8{}
+	}
+	return [3]uint8{uint8(sum[0] / n), uint8(sum[1] / n), uint8(sum[2] / n)}
+}
+
+// bestSplit picks which quarters get the foreground colour so that both
+// groups are as uniform as possible; mask 0 means one colour fits all.
+func bestSplit(c [4][3]uint8) (mask int, fg, bg [3]uint8) {
+	cost := func(m int) float64 {
+		var t float64
+		for _, g := range []int{m, 15 &^ m} {
+			a := average(c, g)
+			for i := range 4 {
+				if g&(1<<i) != 0 {
+					for k := range 3 {
+						d := float64(c[i][k]) - float64(a[k])
+						t += d * d
+					}
+				}
+			}
+		}
+		return t
+	}
+	best, bestCost := 0, cost(0)
+	for m := 1; m < 8; m++ { // 8..15 are the same splits swapped
+		if cost(m) < bestCost-1 {
+			best, bestCost = m, cost(m)
+		}
+	}
+	if best == 0 {
+		return 0, average(c, 15), [3]uint8{}
+	}
+	return best, average(c, best), average(c, 15&^best)
 }
 
 // roundCorners returns img with rounded corners of radius r (a fraction of

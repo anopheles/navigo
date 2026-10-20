@@ -62,7 +62,9 @@ func (m *Model) render() string {
 	}
 	h := m.bodyHeight()
 	var lines []string
+	m.paneAt = [2]paneHit{}
 	if m.w < narrow {
+		m.paneAt[m.focus] = paneHit{0, m.w}
 		if m.focus == libraryWindow {
 			title := m.libTitle() + "   " + m.keyHint("window", "queue")
 			lines = m.pane(title, m.libraryRows(m.w-2, h, true), m.w, true)
@@ -73,6 +75,7 @@ func (m *Model) render() string {
 	} else {
 		lw := m.w * 3 / 5
 		rw := m.w - lw
+		m.paneAt = [2]paneHit{{0, lw}, {lw, rw}}
 		left := m.pane(
 			m.libTitle(),
 			m.libraryRows(lw-2, h, m.focus == libraryWindow),

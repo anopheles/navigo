@@ -50,3 +50,78 @@ func TestWheelOverTheBarChangesVolume(t *testing.T) {
 		t.Errorf("wheel over the library changed the volume: %q", c)
 	}
 }
+
+func click1(x, y int) tea.MouseClickMsg { return tea.MouseClickMsg{X: x, Y: y, Button: tea.MouseLeft} }
+
+func TestClickMovesTheCursorAndDoubleClickOpens(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.toAlbums()
+	h.screen()
+	depth := len(h.m.lib)
+	h.send(click1(5, 3)) // the third row
+	if f := h.m.top(); f.cur != 2 || len(h.m.lib) != depth {
+		t.Fatalf("after one click: cur %d, depth %d", f.cur, len(h.m.lib))
+	}
+	h.advance(time.Second)
+	h.send(click1(5, 2))
+	h.advance(100 * time.Millisecond)
+	h.send(click1(5, 2))
+	if len(h.m.lib) != depth+1 {
+		t.Errorf("a double-click didn't open the album: depth %d", len(h.m.lib))
+	}
+}
+
+func TestSlowSecondClickIsNotADoubleClick(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.toAlbums()
+	h.screen()
+	depth := len(h.m.lib)
+	h.send(click1(5, 2))
+	h.advance(2 * time.Second)
+	h.send(click1(5, 2))
+	if len(h.m.lib) != depth {
+		t.Errorf("two slow clicks opened the album")
+	}
+}
+
+func TestClickInTheQueueTakesTheFocus(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("3j<CR><CR>") // plays an album, filling the queue
+	h.screen()
+	if h.m.focus != libraryWindow {
+		t.Fatal("test expects the library focused")
+	}
+	h.send(click1(h.m.paneAt[queueWindow].x+4, 3))
+	if h.m.focus != queueWindow || h.m.queueCur != 2 {
+		t.Errorf("focus %v, queue cursor %d", h.m.focus, h.m.queueCur)
+	}
+	h.advance(time.Second)
+	h.send(click1(h.m.paneAt[queueWindow].x+4, 4))
+	h.advance(50 * time.Millisecond)
+	h.send(click1(h.m.paneAt[queueWindow].x+4, 4))
+	if _, row, _ := h.m.state.NowPlaying(); row != 3 {
+		t.Errorf("double-click played queue row %d, want 3", row)
+	}
+}
+
+func TestWheelScrollsTheListUnderIt(t *testing.T) {
+	h := newHarness(t, 120, 10, nil)
+	h.toAlbums()
+	h.screen()
+	f := h.m.top()
+	if h.m.rows(f) <= h.m.bodyHeight()+wheelRows {
+		t.Skip("list too short to scroll")
+	}
+	h.send(tea.MouseWheelMsg{X: 5, Y: 2, Button: tea.MouseWheelDown})
+	if f.offset != wheelRows || f.cur != wheelRows {
+		t.Errorf("after the wheel: offset %d, cursor %d", f.offset, f.cur)
+	}
+	h.send(tea.MouseWheelMsg{X: 5, Y: 2, Button: tea.MouseWheelUp})
+	if f.offset != 0 {
+		t.Errorf("wheel up: offset %d", f.offset)
+	}
+	h.send(tea.MouseWheelMsg{X: h.m.paneAt[queueWindow].x + 4, Y: 2, Button: tea.MouseWheelDown})
+	if h.m.focus != libraryWindow {
+		t.Error("the wheel moved the focus")
+	}
+}

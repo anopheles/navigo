@@ -164,6 +164,10 @@ type Model struct {
 	// now-playing rows, for the mouse; bar.w is 0 with no bar drawn.
 	bar    barHit
 	npRows [2]int // first screen row of the now-playing bar, and its height
+	// paneAt is where each window sits (columns from x, w wide; w 0 when
+	// hidden) and click is the last click on a row, for a double-click.
+	paneAt [2]paneHit
+	click  click
 
 	// The ":" line and the search prompt. A search prompt's text is
 	// selected until a key changes it, and beforeSearch is what <Esc>

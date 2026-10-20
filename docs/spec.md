@@ -239,7 +239,7 @@ keys:
 - **Not recorded:** `j`/`k`, `<C-d>`/`<C-u>` and `l`/`h`.
 - `<C-i>` works where the terminal tells it apart from Tab, and `:forward` works everywhere.
 
-**Startup:** opens on Home, focus in the library window, with the queue empty or, when [Resume](#resume) has one saved, restored and paused. The mouse does two things and nothing else: a click or drag on the progress bar seeks there, and the wheel over the now-playing bar changes the volume by 5 points a notch.
+**Startup:** opens on Home, focus in the library window, with the queue empty or, when [Resume](#resume) has one saved, restored and paused. The mouse is limited to four things: a click or drag on the progress bar seeks there; the wheel over the now-playing bar changes the volume by 5 points a notch; a click on a list row moves the cursor there (and the focus to its window), and a second click on it within 400 ms does what `<CR>` does; and the wheel over a list scrolls it 3 rows a notch.
 
 ## Keys
 
@@ -526,7 +526,7 @@ Small gaps no ticket settled, filled in here so the spec is complete; revisit th
 
 - **Where history lives.** The `:` and search histories are saved in a `navigo/` directory: `$XDG_STATE_HOME` (or `~/.local/state`) on Linux, and the user cache directory on macOS and Windows. Go has no per-OS state directory.
 - **`/` in Help** filters the rows as you type rather than finding the next match, since Help is a reference to narrow down; `<Esc>` puts the old filter back. The key menu leaves motions out, so they scroll it.
-- **The scroll wheel.** The motions row lists it, but the wheel only changes the volume (Startup), so the lists are left to the keys.
+- **The scroll wheel.** The motions row lists it, and the wheel scrolls the list under it as well as setting the volume (Startup).
 - **Where `:sort` and `:filter` work.** On flat lists only: a playlist's tracks are left out because edits go to the server by row, and grouped or ranked lists (an artist page, search results, Help) keep their order.
 - **MPRIS's Shuffle.** navigo's shuffle reorders the queue once (ADR 0004), so the Shuffle property is always false and can't be set; `S` shuffles.
 - **The star key.** No ticket gave starring a key; `*` stars the row or the selection, or unstars them when all are starred (`:star`).

@@ -8,8 +8,11 @@ import (
 )
 
 // view is the focused list's cursor and scroll offset, and its length.
-func (m *Model) view() (cur, off *int, n int) {
-	if m.focus == queueWindow {
+func (m *Model) view() (cur, off *int, n int) { return m.viewOf(m.focus) }
+
+// viewOf is view for either window.
+func (m *Model) viewOf(win window) (cur, off *int, n int) {
+	if win == queueWindow {
 		return &m.queueCur, &m.queueOff, len(m.state.Queue)
 	}
 	f := m.top()

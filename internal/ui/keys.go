@@ -74,6 +74,8 @@ func settingsFrom(k config.Keys) keySettings {
 }
 
 // errNoQuit is why navigo won't start with a table that can't quit.
+//
+//nolint:staticcheck // ST1005: the message ends in a keys.yaml path
 var errNoQuit = errors.New(
 	"no key quits navigo: bind quit, or cmdline for :q, in keys: normal: global:",
 )
@@ -228,6 +230,7 @@ func bindOne(
 	c, ok := reg.Get(call.Name)
 	if !ok {
 		if _, line := lineCommands[call.Name]; line {
+			//nolint:staticcheck // ST1005: the message ends in a keys.yaml key
 			return fmt.Errorf("%s edits the command line: bind it under cmdline:", call.Name)
 		}
 		return fmt.Errorf("unknown command %q", call.Name)

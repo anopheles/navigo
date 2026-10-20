@@ -168,7 +168,7 @@ func setupLog(debug bool) (*os.File, string) {
 	if debug {
 		level = slog.LevelDebug
 	}
-	var w io.Writer = io.Discard
+	w := io.Discard
 	var file *os.File
 	var path string
 	if dir, err := os.UserCacheDir(); err == nil {

@@ -159,15 +159,17 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	n := m.rows(f)
 	f.offset = scroll(f.cur, f.offset, h, n)
 	var out []string
-	if n == 0 && f.kind == homeAlbums {
+	switch {
+	case n > 0:
+	case f.kind == homeAlbums:
 		out = append(out, dimStyle.Render(fit(m.emptyHome(f.homeKind), w)))
-	} else if n == 0 && f.kind == helpList && f.help != nil {
+	case f.kind == helpList && f.help != nil:
 		out = append(out, dimStyle.Render(fit(m.emptyHelp(f.help), w)))
-	} else if n == 0 && f.kind == searchList && f.search != nil {
+	case f.kind == searchList && f.search != nil:
 		for _, l := range m.emptySearch(f.search) {
 			out = append(out, dimStyle.Render(fit(l, w)))
 		}
-	} else if n == 0 {
+	default:
 		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {

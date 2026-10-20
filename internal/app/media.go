@@ -60,7 +60,7 @@ func (s State) applyMedia(e Event) (State, []Effect) {
 		if !s.Player.Playing {
 			return s, nil
 		}
-		return s, []Effect{SeekTo{Pos: e.Pos}}
+		return s, []Effect{SeekTo(e)}
 	case SetRepeat:
 		s.Repeat = e.Repeat
 		return s, append(s.neighbours(), Notice{Text: "repeat " + s.Repeat.String()})

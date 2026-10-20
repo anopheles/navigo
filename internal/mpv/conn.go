@@ -310,5 +310,5 @@ func closedErr(err error) error {
 	if err == nil || errors.Is(err, ErrClosed) {
 		return ErrClosed
 	}
-	return fmt.Errorf("%w: %v", ErrClosed, err)
+	return fmt.Errorf("%w: %w", ErrClosed, err)
 }

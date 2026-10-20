@@ -95,7 +95,7 @@ func Serve(conn *dbus.Conn) (Controls, error) {
 	}
 	reply, err := conn.RequestName(busName, dbus.NameFlagDoNotQueue)
 	if err == nil && reply != dbus.RequestNameReplyPrimaryOwner {
-		reply, err = conn.RequestName(
+		_, err = conn.RequestName(
 			fmt.Sprintf("%s.instance%d", busName, os.Getpid()),
 			dbus.NameFlagDoNotQueue,
 		)

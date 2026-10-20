@@ -70,8 +70,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	switch e.Code {
-	case CodeTokenAuthDisabled:
+	if e.Code == CodeTokenAuthDisabled {
 		return "the server does not accept token authentication, which navigo needs"
 	}
 	return fmt.Sprintf("server error %d: %s", e.Code, e.Message)

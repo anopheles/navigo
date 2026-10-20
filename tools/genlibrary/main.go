@@ -174,7 +174,7 @@ func ffmpeg(args ...string) error {
 		"ffmpeg",
 		append([]string{"-nostdin", "-loglevel", "error", "-y"}, args...)...)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("ffmpeg %s: %v\n%s", strings.Join(args, " "), err, out)
+		return fmt.Errorf("ffmpeg %s: %w\n%s", strings.Join(args, " "), err, out)
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package library
 
 import (
 	"context"
+	"errors"
 	"os"
 	"slices"
 	"testing"
@@ -218,7 +219,7 @@ func TestAlbumByAlbumFallback(t *testing.T) {
 func TestCache(t *testing.T) {
 	s, _, url := synced(t)
 	dir := t.TempDir()
-	if _, err := Load(dir, url, subsonictest.Username); err != ErrNoCache {
+	if _, err := Load(dir, url, subsonictest.Username); !errors.Is(err, ErrNoCache) {
 		t.Errorf("Load with no file = %v", err)
 	}
 	if err := Save(dir, s); err != nil {
@@ -233,14 +234,14 @@ func TestCache(t *testing.T) {
 		!got.IsStarred(s.Starred[0]) {
 		t.Error("the loaded snapshot differs or has no indexes")
 	}
-	if _, err := Load(dir, url, "someone-else"); err != ErrNoCache {
+	if _, err := Load(dir, url, "someone-else"); !errors.Is(err, ErrNoCache) {
 		t.Errorf("another user's cache = %v", err)
 	}
 	path := CachePath(dir, url, subsonictest.Username)
 	if err := os.WriteFile(path, []byte("not gob"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Load(dir, url, subsonictest.Username); err != ErrNoCache {
+	if _, err := Load(dir, url, subsonictest.Username); !errors.Is(err, ErrNoCache) {
 		t.Errorf("damaged cache = %v", err)
 	}
 	if _, err := os.Stat(path); !os.IsNotExist(err) {

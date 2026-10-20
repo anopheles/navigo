@@ -10,8 +10,8 @@
 package keymap
 
 import (
-	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -386,17 +386,15 @@ func (e *Engine) resolve(mode Mode, b *Binding) Result {
 		e.op, e.opCount, e.count, e.keys = b, e.count, "", nil
 		return Result{Kind: Pending}
 	}
-	n := 0
-	fmt.Sscan(e.count, &n)
+	n, _ := strconv.Atoi(e.count)
 	e.Reset()
 	return Result{Kind: Run, Command: b.Command, Count: n}
 }
 
 // finish runs the pending operator; counts before and after it multiply.
 func (e *Engine) finish(r Result) Result {
-	var a, b int
-	fmt.Sscan(e.opCount, &a)
-	fmt.Sscan(e.count, &b)
+	a, _ := strconv.Atoi(e.opCount)
+	b, _ := strconv.Atoi(e.count)
 	r.Kind, r.Command = Run, e.op.Command
 	if a > 0 || b > 0 {
 		r.Count = max(a, 1) * max(b, 1)

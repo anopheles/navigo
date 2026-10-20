@@ -10,6 +10,10 @@ linters:
     - nolintlint
     - unconvert
     - usestdlibvars
+  exclusions:
+    presets:
+      # Unchecked Close, Remove and print errors, as golangci-lint v1 did.
+      - std-error-handling
   settings:
     nolintlint:
       require-explanation: true

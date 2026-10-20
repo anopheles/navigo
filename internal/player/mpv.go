@@ -450,7 +450,7 @@ func (m *MPV) loop(p *mpv.Process) {
 	if errors.Is(err, mpv.ErrClosed) {
 		err = nil
 	}
-	m.emit(Died{Err: fmt.Errorf("mpv stopped: %v", err)})
+	m.emit(Died{Err: fmt.Errorf("mpv stopped: %w", err)})
 }
 
 func (m *MPV) handle(p *mpv.Process, ev mpv.Event) {
@@ -512,7 +512,7 @@ func (m *MPV) handle(p *mpv.Process, ev mpv.Event) {
 // start-file before the loadfile reply that tells us the entry's ID.
 func (m *MPV) settle() {
 	m.op.Lock()
-	m.op.Unlock()
+	m.op.Unlock() //nolint:staticcheck // SA2001: an empty critical section is the wait
 }
 
 func (m *MPV) property(ev mpv.Event) {

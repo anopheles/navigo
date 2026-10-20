@@ -66,7 +66,7 @@ func (m *Model) stash() {
 func (m *Model) goTo(path ...frame) {
 	m.stash()
 	m.focus = libraryWindow
-	m.lib = append(sectionPath(path[0].kind)[:1], path...)
+	m.lib = append([]frame{sectionPath(path[0].kind)[0]}, path...)
 	m.clamp()
 }
 
@@ -189,7 +189,7 @@ func (m *Model) group(dir, count int) {
 	f := m.top()
 	gs := m.groups(f)
 	for range count {
-		next := -1
+		var next int
 		if dir > 0 {
 			if i := slices.IndexFunc(gs, func(g int) bool { return g > f.cur }); i >= 0 {
 				next = gs[i]

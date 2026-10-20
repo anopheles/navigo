@@ -82,7 +82,7 @@ func Start(ctx context.Context, opts Options) (*Process, error) {
 		case <-p.exited:
 			p.cleanup()
 			return nil, fmt.Errorf(
-				"mpv exited before it was ready (%v)%s",
+				"mpv exited before it was ready (%w)%s",
 				p.waitErr,
 				diagnose(path, opts.Args),
 			)

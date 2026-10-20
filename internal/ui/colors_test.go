@@ -85,7 +85,11 @@ func TestColoursOff(t *testing.T) {
 	// The focused window's title is reverse, the other's only bold: the
 	// first SGR is the library title's, the last before "Queue" the queue's.
 	title := lines[0]
-	before := sgrs(title[:strings.Index(title, "Queue (6)")])
+	head, _, ok := strings.Cut(title, "Queue (6)")
+	if !ok {
+		t.Fatalf("no queue title in %q", title)
+	}
+	before := sgrs(head)
 	if len(before) < 2 || strings.Contains(";"+before[0]+";", ";7;") ||
 		!strings.Contains(";"+before[len(before)-1]+";", ";7;") {
 		t.Errorf("titles don't show the focus: %q", title)

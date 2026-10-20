@@ -43,7 +43,7 @@ func (s State) applyHome(e Event) (State, []Effect) {
 		l := s.Home[e.Kind]
 		l.Loading = true
 		s.Home = withList(s.Home, e.Kind, l)
-		return s, []Effect{FetchAlbumList{Kind: e.Kind}}
+		return s, []Effect{FetchAlbumList(e)}
 	case AlbumListLoaded:
 		l := s.Home[e.Kind]
 		l.Loading = false

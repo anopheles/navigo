@@ -20,13 +20,14 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 10. [Search](#search)
 11. [Queue and playback](#queue-and-playback)
 12. [Offline cache and sync](#offline-cache-and-sync)
-13. [Offline, errors and messages](#offline-errors-and-messages)
-14. [OS media controls](#os-media-controls)
-15. [Colours](#colours)
-16. [Testing](#testing)
-17. [Licence and dependencies](#licence-and-dependencies)
-18. [Filled in while writing this spec](#filled-in-while-writing-this-spec)
-19. [The walking skeleton and this spec](#the-walking-skeleton-and-this-spec)
+13. [Resume](#resume)
+14. [Offline, errors and messages](#offline-errors-and-messages)
+15. [OS media controls](#os-media-controls)
+16. [Colours](#colours)
+17. [Testing](#testing)
+18. [Licence and dependencies](#licence-and-dependencies)
+19. [Filled in while writing this spec](#filled-in-while-writing-this-spec)
+20. [The walking skeleton and this spec](#the-walking-skeleton-and-this-spec)
 
 ## Scope
 
@@ -38,12 +39,13 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 - An offline library cache.
 - Login with the OS keyring.
 - Full key rebinding in YAML.
+- **Added after the first release** ([#48](https://github.com/anopheles/navigo/issues/48)): ReplayGain, Resume (the queue comes back at the next start) and colour roles.
 
 **Out of scope:**
 - **Beyond-parity features:** lyrics, scrobbling settings, multiple servers, cover art in the terminal.
-- **Offline playback** (downloading audio) and **session restore**: v1 opens on Home with an empty queue ([#9](https://github.com/anopheles/navigo/issues/9)).
+- **Offline playback** (downloading audio) ([#9](https://github.com/anopheles/navigo/issues/9)).
 - **Release packaging** (goreleaser, package managers).
-- **Configurable themes** ([#25](https://github.com/anopheles/navigo/issues/25)).
+- **Presets and a single accent colour:** only four colour roles can be recoloured ([#52](https://github.com/anopheles/navigo/issues/52)).
 - **Free-text filtering within a list:** `/` jumps between matches, and the Search section covers the whole library ([#26](https://github.com/anopheles/navigo/issues/26)).
 
 ## Architecture
@@ -75,12 +77,12 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 ```
 
 **Player:** this hides mpv completely (process, IPC, playlist, entry IDs). Its interface:
-- **Calls:** `Play(Span{Prev, Current, Next})`, `SetNeighbours(prev, next)`, `Pause`/`Resume`, `SeekTo`/`SeekBy`, `SetVolume`, `Stop`.
+- **Calls:** `Play(Span{Prev, Current, Next})`, `SetNeighbours(prev, next)`, `Pause`/`Resume`, `SeekTo`/`SeekBy`, `SetVolume`, `SetReplayGain(mode, preamp)`, `Stop`.
 - **Events:** `TrackStarted`, `TrackEnded{Finished|Stopped|Failed}`, `Position`, `Paused`, `Buffering`, `Volume`, `Died`.
 - **Adapters:** two, the mpv one and an in-memory fake.
 
 **mpv** ([#4](https://github.com/anopheles/navigo/issues/4), [ADR 0002](adr/0002-navigo-owns-the-queue.md)):
-- **Spawn:** navigo starts its own mpv with `--idle=yes --no-terminal --no-video --audio-display=no --no-config --load-scripts=no --ytdl=no`, then `player.mpv_args`, then `--input-ipc-server`.
+- **Spawn:** navigo starts its own mpv with `--idle=yes --no-terminal --no-video --audio-display=no --no-config --load-scripts=no --ytdl=no`, `--replaygain=<mode>` and `--replaygain-preamp=<dB>`, then `player.mpv_args`, then `--input-ipc-server`.
 - **IPC:** a unix socket in a 0700 temp directory, or a unique named pipe on Windows (go-winio). No cgo.
 - **Playlist:** mpv holds only the previous, current and next queue entries, so playback is gapless and mpv's own Previous works. navigo owns the queue.
 - **Stream URLs:** signed with a fresh salt, sent over IPC only, never on the command line. The minimum mpv is 0.38.
@@ -153,8 +155,17 @@ server:
 player:
   mpv_path: /opt/mpv/bin/mpv               # when mpv isn't on PATH
   mpv_args: [--audio-device=pulse/hdmi]    # extra mpv options; must start with --
+  replaygain: track                        # off | track | album
+  replaygain_preamp: 0                     # dB, -15 to 15
 
 hints: true          # the hint line; :hints on|off for the session
+resume: true         # bring the queue back at the next start (false = off)
+
+colors:              # recolour a role; '#rrggbb' or an ANSI name or 0-15
+  playing: green
+  key: yellow
+  error: red
+  selection: gray
 
 keys:
   leader: '\'        # expanded at load
@@ -185,7 +196,12 @@ keys:
 - **Session changes:** `:nmap`/`:vmap`/`:cmap` (with `--in <scope>`) and the `unmap` forms last for the session only. `:reload-config` rebuilds the table and discards them.
 - Only the y/n keys of a Confirmation can't be rebound.
 
-**No colour settings in v1** ([#25](https://github.com/anopheles/navigo/issues/25)).
+**The new keys** ([#53](https://github.com/anopheles/navigo/issues/53)):
+- `player.replaygain` is `off`, `track` (the default) or `album`; `player.replaygain_preamp` is in dB, from -15 to 15, default 0. [Queue and playback](#queue-and-playback).
+- `resume` is on unless set to `false`. [Resume](#resume).
+- `colors` takes the roles `playing`, `key`, `error` and `selection`. [Colours](#colours).
+- **Validation:** a bad value (an unknown mode, a preamp that isn't a number or is out of range, a colour that can't be read) is skipped, keeps its default and is listed in the same popup as bad bindings, as `config.yaml:LINE:COL: message`. Unknown top-level keys are still ignored, but an unknown role inside `colors` is reported. `navigo check-config` covers all of it.
+- **`:reload-config`** applies all three again: ReplayGain returns to the configured mode and preamp (dropping a `:replaygain` override), colours change at once, and `resume: false` stops saving and deletes the saved queue.
 
 ## Screens and navigation
 
@@ -218,7 +234,7 @@ keys:
 - **Not recorded:** `j`/`k`, `<C-d>`/`<C-u>` and `l`/`h`.
 - `<C-i>` works where the terminal tells it apart from Tab, and `:forward` works everywhere.
 
-**Startup:** opens on Home, focus in the library window, empty queue. No mouse support.
+**Startup:** opens on Home, focus in the library window, with the queue empty or, when [Resume](#resume) has one saved, restored and paused. No mouse support.
 
 ## Keys
 
@@ -265,6 +281,7 @@ keys:
 **`:`-only commands:**
 - library and playlists: `:sort <field> [desc]` and `:filter genre <text>|year <year>[-<year>]` (each alone undoes it) on Albums, Artists, Home's lists and an album's tracks, `:playlist-add <name>`, `:playlist-new`, `:sync`;
 - session: `:login`, `:logout`, `:reconnect`, `:hints on|off`;
+- playback: `:replaygain [off|track|album]` changes the ReplayGain mode for the session (no argument cycles through them) and has no default key;
 - the rest: `:messages`, `:info`, `:map`, `:reload-config`.
 
 The `:` line has Tab completion for command names and arguments.
@@ -329,13 +346,21 @@ The `:` line has Tab completion for command names and arguments.
 
 **Undo:** `u`/`<C-r>` walk one queue history from either window. Playlist edits on the server can't be undone.
 
+**ReplayGain** ([How should ReplayGain behave in navigo?](https://github.com/anopheles/navigo/issues/50)): mpv does the work, from the gain tags in the stream (they survive transcoding), so it needs nothing from the server and navigo ignores the server's `replayGain` fields.
+- **Modes:** `off`, `track` and `album`; there is no `auto`, because the queue is mixed after any edit, shuffle or Mix. `album` falls back to `track` per file. The default is `track`.
+- **Clipping and fallback** are mpv's defaults (the gain is capped at `1/peak` where a peak is known; untagged tracks play at their own level) and are not settings.
+- **Set** with `player.replaygain` and `player.replaygain_preamp`, or `:replaygain` for the session. A change is heard after about a second, once mpv's buffer drains, and the message confirms it at once.
+- **Volume** is separate: ReplayGain never changes it, and it can lift a track above unity.
+- **Shown** as a faint `RG track` or `RG album` in the now-playing bar when on, and the `i` popup shows the gain mpv reports, or "no replaygain tags".
+- **mpv 0.38** is still the minimum.
+
 ## Offline cache and sync
 
 [How does the offline library cache work?](https://github.com/anopheles/navigo/issues/9)
 
 **Cache-first:** every list and search reads the in-memory library snapshot, online or offline. The server is contacted only for sync, playback (`stream`, `scrobble`), writes (stars, playlist edits) and Home's album lists. Those come from `getAlbumList2` (50 albums) each time one opens, so Recently played is current; offline, a list shows the last answer of the session, or says it needs the server.
 
-**What it holds:** library metadata only: artists, albums, tracks (with their artist lists), playlists with their tracks, stars, play counts, when each track was last played and the user's ratings. No audio, no cover art, no client state.
+**What it holds:** library metadata only: artists, albums, tracks (with their artist lists), playlists with their tracks, stars, play counts, when each track was last played and the user's ratings. No audio, no cover art, and no client state (the [saved queue](#resume) has its own file).
 
 **Store:**
 - One versioned `encoding/gob` file per server and user, in `navigo/` under the user cache directory, written atomically.
@@ -348,6 +373,19 @@ The `:` line has Tab completion for command names and arguments.
 - No timer, no incremental diffing.
 - The new snapshot replaces the old one in one step, and cursors stay on the same item by ID.
 - **First run:** sections show sync progress, and search and playback wait for the sync.
+
+## Resume
+
+[Should navigo restore the last session, and what exactly?](https://github.com/anopheles/navigo/issues/51), which reverses the choice in [#9](https://github.com/anopheles/navigo/issues/9) to start with an empty queue. Terms: **Saved queue**, **Resume**.
+
+- **What is saved:** the queue entries (track IDs in order), the current entry, the position in seconds, the volume and the repeat mode. Not the cursor, section, register or undo history; the restored queue starts a fresh undo history.
+- **Where:** its own small versioned file per server and user in the state directory, not in the disposable cache, written atomically with mode 0600. A version mismatch or a corrupt file is dropped.
+- **When it is written:** on a change to the queue, current entry, volume or repeat (debounced to about 1 s), and on quit; the position every 10 s while playing, and on pause and quit.
+- **Restore:** at startup the queue loads **paused at the saved position**: `restored 12 tracks · <Space> plays from 2:14`. Nothing starts on its own; the first play seeks to the position.
+- **Missing tracks:** entries that are not in the loaded library are dropped once, at startup, with a count (`restored 11 of 12 tracks`). With nothing left, navigo starts empty and says nothing. The later background sync does not check again.
+- **Settings:** on unless `resume: false`. Emptying the queue empties the saved one; `:logout` deletes the file; another user or server has its own file.
+- **Offline** needs nothing extra: the cached library resolves the entries, and `<Space>` gives the usual "the queue is ready" message.
+- **Two navigo instances:** the last one to write wins.
 
 ## Offline, errors and messages
 
@@ -378,7 +416,7 @@ The `:` line has Tab completion for command names and arguments.
 
 **Three tiers:**
 - **Messages** (status line): info clears after 8 s, errors stay until replaced or `<Esc>`, and the newest always wins. `:messages` shows the last 100 with their times. Going offline and coming back each get one info message.
-- **Indicators** (now-playing bar): lasting states, joined with " · " in the order mpv problems, offline, syncing. The least important are cut first on narrow terminals.
+- **Indicators** (now-playing bar): lasting states, joined with " · " in the order mpv problems, offline, syncing, ReplayGain. The least important are cut first on narrow terminals.
 - **Popups:** only when the user must act (bad bindings at startup, the can't-quit check). Never for the server or mpv.
 
 **mpv:**
@@ -415,6 +453,12 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 | Hint line, now-playing bar | no background; a faint rule above the now-playing bar |
 | Login and popup borders | faint; the focused login field's label cyan |
 
+**Recolouring** ([What can a user change about navigo's look?](https://github.com/anopheles/navigo/issues/52), reversing the "no colour settings" choice above): the `colors` block recolours four **roles**: `playing`, `key`, `error` and `selection`. A value is an ANSI name, a number from 0 to 15, or `#rrggbb`.
+- **The other elements** are attributes (reverse, bold, faint, underline) and follow whatever colours are set.
+- **No presets and no single accent:** the terminal's own theme is the preset, and one accent would merge "playing" with "focus" and, for red, with "error".
+- **Low colour depth:** a hex colour snaps to the nearest colour of a 256- or 16-colour terminal.
+- **Safeguard:** a `selection` equal to the text colour is reported and skipped, so the selection can't vanish.
+
 **Without colour:** no meaning depends on colour alone, so navigo works fully with colours off. Any non-empty `NO_COLOR` turns colours off.
 
 ## Testing
@@ -425,7 +469,8 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
   - the core, by the effects it returns;
   - the keymap engine and command parser, as pure functions;
   - the mpv IPC client, against a fake socket;
-  - the subsonic client, against the `httptest` fake server.
+  - the subsonic client, against the `httptest` fake server;
+  - the config values and errors for ReplayGain, Resume and colours, the saved queue's round trip (including a corrupt file, missing tracks, offline start and `:logout`), colour parsing and its degrade at each depth, and the Player call order for `SetReplayGain` on the fake.
 - **The fake server** (`internal/subsonic/subsonictest`) replays JSON recorded from a throwaway Navidrome serving a **synthetic fixture library**; never the live one, since the repo is public. It checks token+salt auth and fails a test on a plain password, a reused salt or an unrecorded request. Re-record with `tools/fixtures.sh up && tools/fixtures.sh record`.
 - **Layer A (in-process UI):** the real Bubble Tea model, core and runner, with the real client against the fake server and the fake Player. Most checks are targeted assertions; a few golden frames cover the layouts (120×40, plus 80×40 for narrow), refreshed with `-update`.
 - **Layer B (e2e):** `go test -tags e2e ./e2e` builds the binary and drives it in a pty through a terminal emulator, against a real Navidrome and real mpv (`--ao=null`), with its own HOME and XDG dirs. It runs against the live server from `.env.e2e` locally, and against the docker Navidrome with the fixture library through `tools/e2e/run.sh` in CI. It skips without credentials. There are three scenarios: the new-user path, transport, and cold start from the cache. Keymap edge cases stay in layer A.
@@ -491,4 +536,4 @@ The skeleton in this repo ([#16](https://github.com/anopheles/navigo/issues/16)�
 - **Messages:** the three tiers (status-line messages with expiry and `:messages`, indicator slots, popups), the log path on unexpected errors, and crash handling ([#29](https://github.com/anopheles/navigo/issues/29)).
 - **Tests:** layer A, and the three layer B scenarios (the new-user path from search to playing, transport, cold start from the cache) on the fixture library and live ([#45](https://github.com/anopheles/navigo/issues/45)).
 
-Still to build for v1: nothing; every item above is built.
+Still to build for v1: nothing; every item above is built. Added since, and still to build: ReplayGain, Resume and colour roles ([#54](https://github.com/anopheles/navigo/issues/54)).

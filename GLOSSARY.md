@@ -80,6 +80,18 @@ _Avoid_: radio, autoplay, instant mix, song mix, track mix
 What happens at the end of a track or the queue: off, all (start the queue again) or one (play the same queue entry again).
 _Avoid_: loop
 
+**Role**:
+A meaning a colour carries in navigo (playing, key, error, selection); the user can recolour a role but not add or merge roles.
+_Avoid_: theme, colour slot, preset
+
+**Saved queue**:
+The queue, its current entry and position, the volume and the repeat mode, kept between runs per server and user so that Resume can bring them back.
+_Avoid_: session, playback state
+
+**Resume**:
+Starting navigo with the saved queue loaded and paused where it stopped; nothing plays until the user asks.
+_Avoid_: session restore, autoplay
+
 **Group**:
 A run of related rows in a list: consecutive tracks from the same album in a track list or the queue, or an artist's own albums and their Appears on albums on the artist's page; `{`/`}` jump between groups.
 

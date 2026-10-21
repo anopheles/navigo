@@ -51,7 +51,11 @@ func TestWheelOverTheBarChangesVolume(t *testing.T) {
 	}
 }
 
-func click1(x, y int) tea.MouseClickMsg { return tea.MouseClickMsg{X: x, Y: y, Button: tea.MouseLeft} }
+func click1(
+	x, y int,
+) tea.MouseClickMsg {
+	return tea.MouseClickMsg{X: x, Y: y, Button: tea.MouseLeft}
+}
 
 func TestClickMovesTheCursorAndDoubleClickOpens(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)

@@ -175,6 +175,44 @@ func TestStars(t *testing.T) {
 	}
 }
 
+func TestRatings(t *testing.T) {
+	s := New()
+	s.Library = library.Build("u", "ann", time.Time{}, nil, nil, tracks(3), nil, nil)
+	rating := func(id library.TrackID) int { tr, _ := s.Library.Track(id); return tr.Rating }
+	s, out := run(s, SetRating{Tracks: []library.TrackID{"t1", "t2"}, Rating: 4, Name: "2 tracks"})
+	w := only[WriteRating](out)
+	if len(w) != 1 || w[0].Rating != 4 || len(w[0].Tracks) != 2 || rating("t1") != 0 {
+		t.Fatalf("write = %#v; rated before the server agreed: %d", w, rating("t1"))
+	}
+	s, out = run(s, RatingWritten{Write: w[0]})
+	if rating("t1") != 4 || rating("t2") != 4 || rating("t3") != 0 ||
+		only[Notice](out)[0].Text != "rated 2 tracks ★★★★" || len(only[SaveCache](out)) != 1 {
+		t.Errorf("after: %d %d %d %#v", rating("t1"), rating("t2"), rating("t3"), out)
+	}
+	s, out = run(s, SetRating{Tracks: []library.TrackID{"t1"}, Rating: 0, Name: "Track 1"})
+	s, out = run(s, RatingWritten{Write: only[WriteRating](out)[0]})
+	if rating("t1") != 0 || only[Notice](out)[0].Text != "rating cleared for Track 1" {
+		t.Errorf("cleared: %d %#v", rating("t1"), out)
+	}
+
+	// Refused offline; a failure changes nothing.
+	off := s
+	off.Offline = true
+	if _, out = run(off, SetRating{Tracks: []library.TrackID{"t3"}, Rating: 2}); len(
+		only[WriteRating](out),
+	) != 0 {
+		t.Error("rated while offline")
+	}
+	s, out = run(s, SetRating{Tracks: []library.TrackID{"t3"}, Rating: 2})
+	s, _ = run(
+		s,
+		RatingWritten{Write: only[WriteRating](out)[0], Err: errors.New("gone"), Unreachable: true},
+	)
+	if rating("t3") != 0 || !s.Offline {
+		t.Errorf("after a failure: rating %d offline %v", rating("t3"), s.Offline)
+	}
+}
+
 func TestPublishNowPlaying(t *testing.T) {
 	s, out := publish(
 		New(),

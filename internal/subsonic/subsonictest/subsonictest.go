@@ -55,6 +55,7 @@ var ignoresParams = []string{
 	"scrobble",
 	"star",
 	"unstar",
+	"setRating",
 	"createPlaylist",
 	"updatePlaylist",
 	"deletePlaylist",

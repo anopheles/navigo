@@ -354,6 +354,26 @@ func TestStar(t *testing.T) {
 	}
 }
 
+func TestSetRating(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	if err := c.SetRating(ctx, "s1", 4); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.SetRating(ctx, "s1", 0); err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, r := range srv.Requests() {
+		if r.Endpoint == "setRating" {
+			got = append(got, r.Params.Encode())
+		}
+	}
+	if want := []string{"id=s1&rating=4", "id=s1&rating=0"}; !slices.Equal(got, want) {
+		t.Errorf("requests = %q, want %q", got, want)
+	}
+}
+
 func TestCoverArt(t *testing.T) {
 	c, srv := newClient(t)
 	got, err := c.CoverArt(context.Background(), "al-1")

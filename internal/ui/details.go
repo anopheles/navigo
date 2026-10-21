@@ -145,6 +145,36 @@ func (m *Model) star(command.Call) error {
 	return nil
 }
 
+// rate is :rate N: it rates the chosen tracks, or what plays.
+func (m *Model) rate(c command.Call) error {
+	n, err := rating(c.Args)
+	if err != nil {
+		return err
+	}
+	items := m.chosenItems()
+	m.endVisual()
+	if len(items) == 0 {
+		if t, _, ok := m.state.NowPlaying(); ok {
+			items = []item{{library.TrackGroup, string(t.ID), t.Title}}
+		}
+	}
+	if len(items) == 0 {
+		return errors.New("nothing to rate here")
+	}
+	e := app.SetRating{Rating: n, Name: items[0].name}
+	for _, it := range items {
+		if it.group != library.TrackGroup {
+			return errors.New("only tracks can be rated")
+		}
+		e.Tracks = append(e.Tracks, library.TrackID(it.id))
+	}
+	if len(items) > 1 {
+		e.Name = fmt.Sprintf("%d tracks", len(items))
+	}
+	m.event(e)
+	return nil
+}
+
 // info is i and :info: details of the row under the cursor, or of the
 // track that plays.
 func (m *Model) info(command.Call) error {
@@ -191,6 +221,7 @@ func (m *Model) info(command.Call) error {
 		}
 		add("Length", clock(t.Duration))
 		add("Played", times(t.PlayCount))
+		add("Rating", stars(t.Rating))
 		if np, _, ok := m.state.NowPlaying(); ok && np.ID == t.ID {
 			add("ReplayGain", m.gainText())
 		}
@@ -221,6 +252,14 @@ func (m *Model) queueTrack(id string) library.Track {
 		}
 	}
 	return library.Track{}
+}
+
+// stars is a rating as ★★★★☆, or "not rated".
+func stars(n int) string {
+	if n <= 0 {
+		return "not rated"
+	}
+	return strings.Repeat("★", n) + strings.Repeat("☆", max(5-n, 0))
 }
 
 func times(n int) string {

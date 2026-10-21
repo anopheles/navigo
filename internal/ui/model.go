@@ -610,6 +610,21 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 				},
 			}
 		}
+	case app.WriteRating:
+		return func() tea.Msg {
+			if c == nil {
+				return eventMsg{app.RatingWritten{Write: e, Err: errors.New("not logged in")}}
+			}
+			var err error
+			for _, id := range e.Tracks {
+				if err = c.SetRating(ctx, string(id), e.Rating); err != nil {
+					break
+				}
+			}
+			return eventMsg{
+				app.RatingWritten{Write: e, Err: err, Unreachable: subsonic.IsUnreachable(err)},
+			}
+		}
 	case app.WriteStar:
 		return func() tea.Msg {
 			if c == nil {

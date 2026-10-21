@@ -120,3 +120,52 @@ func TestStarring(t *testing.T) {
 	h.keys("*")
 	h.contains("offline · stars can be changed once the server is back")
 }
+
+func TestRating(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("3j<CR>j:rate 4<CR>")
+	h.contains("rated Low Tide ★★★★")
+	h.keys("i")
+	h.contains("Rating     ★★★★☆")
+	h.keys("q:rate 0<CR>")
+	h.contains("rating cleared for Low Tide")
+	h.keys("i")
+	h.contains("Rating     not rated")
+	h.keys("q")
+
+	// A selection; refusals.
+	h.keys("ggVj:rate 5<CR>")
+	h.contains("rated 2 tracks ★★★★★")
+	h.keys(":rate 6<CR>")
+	h.contains("rate: give 1 to 5 stars, or 0 to clear: rate 4")
+	h.keys("h:rate 3<CR>")
+	h.contains("only tracks can be rated")
+
+	var got []string
+	for _, r := range h.srv.Requests() {
+		if r.Endpoint == "setRating" {
+			got = append(got, r.Params.Encode())
+		}
+	}
+	lib := h.m.state.Library
+	ts := lib.AlbumTracks(lib.Albums[3].ID)
+	want := []string{
+		"id=" + string(ts[1].ID) + "&rating=4",
+		"id=" + string(ts[1].ID) + "&rating=0",
+		"id=" + string(ts[0].ID) + "&rating=5",
+		"id=" + string(ts[1].ID) + "&rating=5",
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("requests:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	if t0, _ := lib.Track(ts[0].ID); t0.Rating != 5 {
+		t.Errorf("the library has rating %d", t0.Rating)
+	}
+
+	// Offline, rating is refused.
+	h.srv.SetDown(true)
+	h.keys(":sync<CR>")
+	h.advance(time.Second)
+	h.keys("<CR>:rate 2<CR>")
+	h.contains("offline · ratings can be changed once the server is back")
+}

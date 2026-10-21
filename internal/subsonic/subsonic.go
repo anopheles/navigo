@@ -381,6 +381,11 @@ func (c *Client) Star(ctx context.Context, on bool, artistIDs, albumIDs, songIDs
 	return c.call(ctx, endpoint, q, nil)
 }
 
+// SetRating rates a song 1–5 stars, or clears its rating with 0.
+func (c *Client) SetRating(ctx context.Context, id string, rating int) error {
+	return c.call(ctx, "setRating", url.Values{"id": {id}, "rating": {strconv.Itoa(rating)}}, nil)
+}
+
 // Starred is what the user has starred.
 type Starred struct {
 	Artists []Artist `json:"artist"`

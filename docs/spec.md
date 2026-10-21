@@ -112,7 +112,7 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 - **Endpoints:**
   - session and library: `ping`, `getOpenSubsonicExtensions`, `getArtists`, `getArtist`, `getAlbumList2`, `getAlbum`, `getPlaylists`, `getPlaylist`, `search3`;
   - playback: `stream`, `getCoverArt`, `scrobble`;
-  - stars and change detection: `star`/`unstar`, `getStarred2`, `getScanStatus`, `getIndexes`;
+  - stars, ratings and change detection: `star`/`unstar`, `setRating` (one call per track), `getStarred2`, `getScanStatus`, `getIndexes`;
   - playlist edits: `createPlaylist` (also with `playlistId`, to reorder: it replaces the tracks), `updatePlaylist` (also with `name`, to rename), `deletePlaylist`.
 - **Extensions:** `formPost` (calls go as POST once offered, keeping tokens out of URLs) and `transcodeOffset` (seeking in transcoded streams). Optional features are gated on `getOpenSubsonicExtensions`.
 - **Limits:** Navidrome caps list endpoints at 500. An empty-query `search3` lists the whole library with offsets; that's the sync path, with a `getAlbumList2`+`getAlbum` fallback.
@@ -287,6 +287,7 @@ keys:
 - library and playlists: `:sort <field> [desc]` and `:filter genre <text>|year <year>[-<year>]` (each alone undoes it) on Albums, Artists, Home's lists and an album's tracks, `:playlist-add <name>`, `:playlist-new`, `:playlist-rename <name>` (the playlist under the cursor or the one open; a name another playlist has is refused, [#63](https://github.com/anopheles/navigo/issues/63)), `:sync`;
 - session: `:login`, `:logout`, `:reconnect`, `:hints on|off`;
 - playback: `:replaygain [off|track|album]` changes the ReplayGain mode for the session (no argument cycles through them) and has no default key;
+- rating ([#64](https://github.com/anopheles/navigo/issues/64)): `:rate 1`–`5` rates the track under the cursor, the selection's tracks, or with nothing under the cursor what plays; `:rate 0` clears it. Albums and artists can't be rated, a rating is refused offline like a star, and the cache takes it once the server agrees, so Mix sees it at once. The `i` popup shows a track's rating as `★★★★☆` or `not rated`;
 - the rest: `:messages`, `:info`, `:map`, `:reload-config`.
 
 The `:` line has Tab completion for command names and arguments.

@@ -285,6 +285,19 @@ func (s *Snapshot) WithExtras(playlists []Playlist, starred []string) *Snapshot 
 	return &n
 }
 
+// WithRating returns a copy in which tracks have the rating r, as after
+// a setRating.
+func (s *Snapshot) WithRating(ids []TrackID, r int) *Snapshot {
+	n := *s
+	n.Tracks = slices.Clone(s.Tracks)
+	for _, id := range ids {
+		if i, ok := s.trackByID[id]; ok {
+			n.Tracks[i].Rating = r
+		}
+	}
+	return &n
+}
+
 // WithPlay returns a copy in which a track was played once more, at at,
 // as after a scrobble; the next sync brings the server's own numbers.
 func (s *Snapshot) WithPlay(id TrackID, at time.Time) *Snapshot {

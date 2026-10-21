@@ -469,6 +469,8 @@ func apply(s State, e Event) (State, []Effect) {
 		return s.applyHome(e)
 	case SetStars, StarsWritten:
 		return s.applyStars(e)
+	case SetRating, RatingWritten:
+		return s.applyRating(e)
 	case Yank, Remove, Paste, Move, ClearQueue:
 		return s.applyEdit(e)
 	case PlaylistRemove,

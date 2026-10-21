@@ -134,6 +134,9 @@ func run(c *client, out string) error {
 	rec.get("scrobble", url.Values{"id": {first}, "submission": {"false"}})
 	rec.get("star", url.Values{"id": {first}})
 	rec.get("unstar", url.Values{"id": {first}})
+	// Rated and unrated again, so the library keeps its ratings.
+	rec.get("setRating", url.Values{"id": {first}, "rating": {"4"}})
+	rec.get("setRating", url.Values{"id": {first}, "rating": {"0"}})
 	// A playlist made, changed and deleted again, so the seeded ones stay
 	// as they are.
 	var made struct {

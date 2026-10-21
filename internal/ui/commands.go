@@ -89,6 +89,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "shuffle", Label: "shuffle", Desc: "Shuffle the queue once, keeping the current track first; u undoes it.", Run: func(m *Model, _ command.Call) error { m.event(app.Shuffle{Seed: m.seed()}); return nil }},
 		{Name: "repeat", Label: "repeat", Desc: "Cycle repeat: off, all (the queue again), one (the same track again).", Run: func(m *Model, _ command.Call) error { m.event(app.CycleRepeat{}); return nil }},
 		{Name: "info", Label: "info", Desc: "Show details of the track, album or artist under the cursor, or of what plays.", Run: (*Model).info},
+		{Name: "rate", Args: rateArgs, Label: "rate", Desc: "Rate the track under the cursor, the selection or what plays 1 to 5 stars, or 0 to clear: rate 4.", Run: (*Model).rate},
 		{Name: "star", Label: "star", Desc: "Star the track, album or artist under the cursor, or the selection; again unstars.", Run: (*Model).star},
 		{Name: "stop", Label: "stop", Desc: "Stop playback.", Run: func(m *Model, _ command.Call) error { m.event(app.StopPlayback{}); return nil }},
 		{Name: "queue-clear", Label: "clear queue", Desc: "Empty the queue; what plays plays on to its end. u brings it back.", Run: func(m *Model, _ command.Call) error { m.event(app.ClearQueue{}); return nil }},
@@ -381,6 +382,21 @@ func seekArgs(a []string) error {
 	}
 	_, err := parseSeek(a[0])
 	return err
+}
+
+func rateArgs(a []string) error {
+	_, err := rating(a)
+	return err
+}
+
+// rating reads :rate's one argument, 0 to 5.
+func rating(a []string) (int, error) {
+	if len(a) == 1 {
+		if n, err := digits(a[0]); err == nil && n <= 5 {
+			return n, nil
+		}
+	}
+	return 0, errors.New("rate: give 1 to 5 stars, or 0 to clear: rate 4")
 }
 
 func volumeArgs(a []string) error {

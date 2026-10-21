@@ -94,3 +94,37 @@ func TestNewSnapshotKeepsCursorsByID(t *testing.T) {
 		t.Errorf("cursor at row %d (%q), want Blue Hour at row 0", h.m.top().cur, h.cursorRow())
 	}
 }
+
+// A Mix asked for during the first sync waits for it, and Home's Mix row
+// says so, with the sync's progress.
+func TestMixDuringTheFirstSync(t *testing.T) {
+	var before, waiting string
+	h := setupHarness(t, 120, 40, nil, func(h *harness) {
+		h.midSync = func(h *harness) {
+			if waiting != "" {
+				return
+			}
+			if before == "" {
+				before = h.screen()
+				h.keys("gm")
+				waiting = h.screen()
+			}
+		}
+	})
+	if !strings.Contains(before, "Mix · once the library has synced · 500 / 547 tracks") {
+		t.Errorf("Home mid-sync:\n%s", before)
+	}
+	for _, w := range []string{
+		"Mix · starts once the library has synced",
+		"the library is syncing · the mix starts once it's done",
+	} {
+		if !strings.Contains(waiting, w) {
+			t.Errorf("after gm mid-sync, screen lacks %q:\n%s", w, waiting)
+		}
+	}
+	h.contains("mixed ")
+	if len(h.m.state.Queue) == 0 {
+		t.Error("the queue is empty after the sync; the waiting mix didn't run")
+	}
+	h.lacks("once the library has synced")
+}

@@ -35,7 +35,8 @@ type PlayerState struct {
 // SyncStatus is the state of a sync with the server.
 type SyncStatus struct {
 	Running     bool
-	Done, Total int // tracks fetched so far, and how many the server has
+	Done, Total int  // tracks fetched so far, and how many the server has
+	Failed      bool // the last sync ended in an error
 }
 
 // State is the session. Treat it as immutable: Apply never changes the
@@ -57,6 +58,10 @@ type State struct {
 	Home map[string]AlbumList
 
 	cacheChecked bool // the cache file has been tried
+
+	// mixWait is a Mix asked for during the first sync; it runs once the
+	// library is there (see mix.go).
+	mixWait *mixWait
 
 	// Resume: the saved queue read at startup waits in pending for the
 	// library; saving starts once it is restored or known to be none, so
@@ -300,17 +305,27 @@ func apply(s State, e Event) (State, []Effect) {
 		return s, nil
 	case Synced:
 		s.Sync = SyncStatus{}
+		wait := s.mixWait
+		s.mixWait = nil
 		if e.Err != nil {
+			s.Sync.Failed = true
 			return s, []Effect{
 				Notice{
 					Text:       "couldn't sync the library: " + e.Err.Error(),
+					Command:    "sync",
+					Hint:       "tries again",
 					Err:        true,
 					Unexpected: true,
 				},
 			}
 		}
 		s.Library = e.Library
-		return s, []Effect{SaveCache{Library: e.Library}}
+		out := []Effect{SaveCache{Library: e.Library}}
+		if wait != nil && wait.still(s) {
+			s, more := s.applyMix(wait.mix)
+			return s, append(out, more...)
+		}
+		return s, out
 
 	case PlayNow:
 		if e.Start < 0 || e.Start >= len(e.Tracks) {

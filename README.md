@@ -39,7 +39,8 @@ go install github.com/anopheles/navigo/cmd/navigo@latest
 Run `navigo`. The first time, a form asks for your server's URL,
 username and password. It checks them against the server and saves the
 password in your OS keyring, never in a file unless you say so. Then the
-library syncs once. After that it opens at once from the local cache and
+library syncs once; Home's lists work meanwhile, and a Mix asked for
+then starts when the sync is done. After that it opens at once from the local cache and
 checks the server in the background.
 
 navigo starts on Home: recently added, most and recently played, random

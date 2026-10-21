@@ -238,6 +238,8 @@ func (m *Model) emptyList() string {
 		return fmt.Sprintf(" Syncing library… %d / %d tracks", sy.Done, sy.Total)
 	case sy.Running:
 		return " Syncing library…"
+	case sy.Failed:
+		return " the library couldn't sync · :sync tries again"
 	}
 	return " loading…"
 }
@@ -258,7 +260,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case albumList:
 		return m.albumLine(m.albumsOf(f)[i], w)
 	case homeList:
-		return fit(" "+homeLists[i].title, w)
+		return fit(" "+homeLists[i].title+m.mixRowNote(i), w)
 	case homeAlbums:
 		return m.albumLine(m.albumsOf(f)[i], w)
 	case playlistList:

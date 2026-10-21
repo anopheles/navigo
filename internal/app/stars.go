@@ -36,8 +36,11 @@ func (WriteStar) isEffect()   {}
 func (s State) applyStars(e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case SetStars:
-		if len(e.Artists)+len(e.Albums)+len(e.Tracks) == 0 || s.Library == nil {
+		if len(e.Artists)+len(e.Albums)+len(e.Tracks) == 0 {
 			return s, nil
+		}
+		if s.Library == nil {
+			return s, []Effect{s.unsynced("can't star yet")}
 		}
 		if s.Offline {
 			return s, []Effect{

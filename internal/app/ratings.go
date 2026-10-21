@@ -38,8 +38,11 @@ func (WriteRating) isEffect()  {}
 func (s State) applyRating(e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case SetRating:
-		if len(e.Tracks) == 0 || s.Library == nil || e.Rating < 0 || e.Rating > 5 {
+		if len(e.Tracks) == 0 || e.Rating < 0 || e.Rating > 5 {
 			return s, nil
+		}
+		if s.Library == nil {
+			return s, []Effect{s.unsynced("can't rate yet")}
 		}
 		if s.Offline {
 			return s, []Effect{

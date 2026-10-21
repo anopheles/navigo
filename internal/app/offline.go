@@ -77,7 +77,7 @@ type (
 func (s State) applyOffline(e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case Unreachable:
-		s.Sync = SyncStatus{} // a sync that hit it is abandoned
+		s.Sync, s.mixWait = SyncStatus{}, nil // a sync that hit it is abandoned
 		return s.goOffline()
 	case StartedOffline:
 		return s.goOffline()
@@ -114,7 +114,7 @@ func (s State) goOffline() (State, []Effect) {
 	if s.Offline {
 		return s, nil // a retry is already scheduled
 	}
-	s.Offline, s.retry, s.Sync = true, 0, SyncStatus{}
+	s.Offline, s.retry, s.Sync, s.mixWait = true, 0, SyncStatus{}, nil
 	s, out := s.scheduleRetry()
 	return s, append(out, Notice{Text: "can't reach the server · browsing from the cache"})
 }

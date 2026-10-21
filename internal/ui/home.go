@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/anopheles/navigo/internal/app"
@@ -72,6 +73,23 @@ func (m *Model) mix(c command.Call) {
 		n = c.Count
 	}
 	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now()})
+}
+
+// mixRowNote follows Home's Mix row while the first sync runs, since a
+// Mix needs the whole library: whether one waits, and how far along it is.
+func (m *Model) mixRowNote(i int) string {
+	sy := m.state.Sync
+	if homeLists[i].kind != "mix" || m.state.Library != nil || !sy.Running {
+		return ""
+	}
+	note := " · once the library has synced"
+	if m.state.MixWaiting() {
+		note = " · starts once the library has synced"
+	}
+	if sy.Total > 0 {
+		note += fmt.Sprintf(" · %d / %d tracks", sy.Done, sy.Total)
+	}
+	return note
 }
 
 // onMixRow reports whether the cursor is on Home's Mix row.

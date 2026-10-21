@@ -39,8 +39,10 @@ type harness struct {
 	// they are delivered once that command returns.
 	queued   []tea.Msg
 	progress []string // the empty-list text seen while syncing
-	clock    *fakeClock
-	raw      []string // what was written straight to the terminal
+	// midSync, when set, runs after each sync progress message.
+	midSync func(*harness)
+	clock   *fakeClock
+	raw     []string // what was written straight to the terminal
 }
 
 // fakeClock records timers instead of sleeping; advance fires them.
@@ -248,6 +250,9 @@ func (h *harness) run(cmd tea.Cmd) {
 		h.queued = h.queued[1:]
 		h.send(q)
 		h.progress = append(h.progress, h.m.emptyList())
+		if h.midSync != nil {
+			h.midSync(h)
+		}
 	}
 	switch msg := msg.(type) {
 	case nil:

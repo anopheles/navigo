@@ -55,7 +55,7 @@ func TestBindingProblems(t *testing.T) {
 		"config.yaml:6:7: unknown key name <nope>; write <lt> for the < key",
 		`config.yaml:7:7: unknown command "queue-shred"`,
 		"config.yaml:8:7: kill-to-end edits the command line: bind it under cmdline:",
-		`config.yaml:9:7: seek: "fast" is not a number of seconds`,
+		`config.yaml:9:7: seek: "fast" is not seconds, a time like 1:30 or a percentage`,
 		"config.yaml:10:7: stop takes no arguments",
 		"config.yaml:12:7: <C-d> is bound already, at line 11",
 		`config.yaml:13:7: "a: keys can't start with ", which names a register; navigo has one`,

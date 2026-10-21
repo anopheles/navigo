@@ -160,7 +160,7 @@ func TestCommandLine(t *testing.T) {
 	h.keys(":")
 	h.typeText("seek x")
 	h.keys("<CR>")
-	h.contains(`seek: "x" is not a number of seconds`)
+	h.contains(`seek: "x" is not seconds, a time like 1:30 or a percentage`)
 	h.keys(":")
 	h.typeText("q")
 	h.keys("<CR>")
@@ -322,6 +322,51 @@ func TestSpan(t *testing.T) {
 	} {
 		if got := span(d); got != want {
 			t.Errorf("span(%v) = %q, want %q", d, got, want)
+		}
+	}
+}
+
+func TestSeekToATimeOrAPercentage(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("3j<CR><CR>")
+	dur := h.m.state.Player.Duration
+	for _, c := range []struct{ arg, call string }{
+		{"1:30", "SeekTo(1m30s)"},
+		{"0:05", "SeekTo(5s)"},
+		{"50%", fmt.Sprintf("SeekTo(%v)", dur/2)},
+		{"+1:30", "SeekBy(1m30s)"},
+		{"-0:30", "SeekBy(-30s)"},
+		{"20", "SeekBy(20s)"},
+		{"-5", "SeekBy(-5s)"},
+	} {
+		h.keys(":")
+		h.typeText("seek " + c.arg)
+		h.keys("<CR>")
+		if got := h.lastCall(); got != c.call {
+			t.Errorf(":seek %s called %q, want %q", c.arg, got, c.call)
+		}
+	}
+}
+
+func TestParseSeek(t *testing.T) {
+	for arg, want := range map[string]seekTo{
+		"10":      {by: 10 * time.Second, rel: true},
+		"+10":     {by: 10 * time.Second, rel: true},
+		"-10":     {by: -10 * time.Second, rel: true},
+		"1:30":    {by: 90 * time.Second},
+		"1:02:03": {by: time.Hour + 2*time.Minute + 3*time.Second},
+		"-1:00":   {by: -time.Minute, rel: true},
+		"0%":      {pct: 0, isPct: true},
+		"100%":    {pct: 100, isPct: true},
+	} {
+		got, err := parseSeek(arg)
+		if err != nil || got != want {
+			t.Errorf("parseSeek(%q) = %+v, %v, want %+v", arg, got, err, want)
+		}
+	}
+	for _, arg := range []string{"x", "", "1:", ":30", "1:60", "1:2:3:4", "101%", "-5%", "+5%", "1.5", "1:-3"} {
+		if _, err := parseSeek(arg); err == nil {
+			t.Errorf("parseSeek(%q) took it", arg)
 		}
 	}
 }

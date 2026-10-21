@@ -7,8 +7,8 @@
 │   6 Afte│   <Space>  play/pause         Pause or resume playback, or start the queue.                      │         │
 │         │   >        next track         Play the next track in the queue.                                  │         │
 │         │   <        previous track     Play the previous track, or restart this one after 3 seconds.      │         │
-│         │   .        seek +10           Seek by a number of seconds, such as seek +10; a count multiplies… │         │
-│         │   ,        seek -10           Seek by a number of seconds, such as seek +10; a count multiplies… │         │
+│         │   .        seek +10           Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a … │         │
+│         │   ,        seek -10           Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a … │         │
 │         │   X        stop               Stop playback.                                                     │         │
 │         │   =        volume +5          Change the volume by points, such as volume +5, or set it: volume… │         │
 │         │   +        volume +5          Change the volume by points, such as volume +5, or set it: volume… │         │

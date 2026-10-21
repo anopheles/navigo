@@ -1024,10 +1024,53 @@ func (m *Model) bodyHeight() int {
 	return max(h, 1)
 }
 
-func seconds(arg string) (time.Duration, error) {
-	n, err := strconv.Atoi(strings.TrimPrefix(arg, "+"))
-	if err != nil {
-		return 0, fmt.Errorf("seek: %q is not a number of seconds", arg)
+// seekTo is a :seek argument: by seconds or a time, forward or back when
+// rel is set, else to that time; or to pct percent of the track.
+type seekTo struct {
+	by    time.Duration
+	rel   bool
+	pct   int
+	isPct bool
+}
+
+// parseSeek reads 10, +10, -10 (seconds, relative), 1:30 or 1:02:03 (a
+// time to go to), +1:30 or -0:30 (a time to move by) and 50% (a point of
+// the track).
+func parseSeek(arg string) (seekTo, error) {
+	bad := fmt.Errorf("seek: %q is not seconds, a time like 1:30 or a percentage", arg)
+	if p, ok := strings.CutSuffix(arg, "%"); ok {
+		n, err := digits(p)
+		if err != nil || n > 100 {
+			return seekTo{}, bad
+		}
+		return seekTo{pct: n, isPct: true}, nil
 	}
-	return time.Duration(n) * time.Second, nil
+	body, sign := arg, 1
+	if b, ok := strings.CutPrefix(arg, "+"); ok {
+		body = b
+	} else if b, ok := strings.CutPrefix(arg, "-"); ok {
+		body, sign = b, -1
+	}
+	parts := strings.Split(body, ":")
+	if len(parts) > 3 {
+		return seekTo{}, bad
+	}
+	total := 0
+	for i, p := range parts {
+		n, err := digits(p)
+		if err != nil || i > 0 && n >= 60 {
+			return seekTo{}, bad
+		}
+		total = total*60 + n
+	}
+	d := time.Duration(sign*total) * time.Second
+	return seekTo{by: d, rel: len(parts) == 1 || body != arg}, nil
+}
+
+// digits reads a number of plain digits, with no sign.
+func digits(s string) (int, error) {
+	if s == "" || strings.TrimLeft(s, "0123456789") != "" {
+		return 0, strconv.ErrSyntax
+	}
+	return strconv.Atoi(s)
 }

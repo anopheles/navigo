@@ -79,7 +79,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "play-pause", Label: "play/pause", Desc: "Pause or resume playback, or start the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.PlayPause{}); return nil }},
 		{Name: "next-track", Label: "next track", Desc: "Play the next track in the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.NextTrack{}); return nil }},
 		{Name: "prev-track", Label: "previous track", Desc: "Play the previous track, or restart this one after 3 seconds.", Run: func(m *Model, _ command.Call) error { m.event(app.PrevTrack{}); return nil }},
-		{Name: "seek", Args: seekArgs, Label: "seek", Desc: "Seek by a number of seconds, such as seek +10; a count multiplies it.", Run: seek},
+		{Name: "seek", Args: seekArgs, Label: "seek", Desc: "Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a count multiplies a relative seek.", Run: seek},
 		{Name: "reconnect", Label: "reconnect", Desc: "Try the server now instead of waiting for the next retry.", Run: func(m *Model, _ command.Call) error { m.event(app.Reconnect{}); return nil }},
 		{Name: "sync", Label: "sync", Desc: "Sync the whole library from the server.", Run: func(m *Model, _ command.Call) error { m.event(app.SyncNow{}); return nil }},
 		{Name: "volume", Args: volumeArgs, Label: "volume", Desc: "Change the volume by points, such as volume +5, or set it: volume 60.", Run: volume},
@@ -329,13 +329,19 @@ func quiet(err error) error {
 
 func seek(m *Model, c command.Call) error {
 	if len(c.Args) != 1 {
-		return errors.New("seek: give seconds, such as seek +10")
+		return errors.New("seek: give seconds or a time, such as seek +10 or seek 1:30")
 	}
-	d, err := seconds(c.Args[0])
-	if err != nil {
+	to, err := parseSeek(c.Args[0])
+	switch {
+	case err != nil:
 		return err
+	case to.isPct:
+		m.event(app.SeekAt{Pos: m.state.Player.Duration * time.Duration(to.pct) / 100})
+	case to.rel:
+		m.event(app.SeekBy{D: to.by * time.Duration(c.N())})
+	default:
+		m.event(app.SeekAt{Pos: to.by})
 	}
-	m.event(app.SeekBy{D: d * time.Duration(c.N())})
 	return nil
 }
 
@@ -370,9 +376,9 @@ func someArgs(a []string) error {
 
 func seekArgs(a []string) error {
 	if len(a) != 1 {
-		return errors.New("seek: give seconds, such as seek +10")
+		return errors.New("seek: give seconds or a time, such as seek +10 or seek 1:30")
 	}
-	_, err := seconds(a[0])
+	_, err := parseSeek(a[0])
 	return err
 }
 

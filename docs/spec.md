@@ -343,6 +343,7 @@ The `:` line has Tab completion for command names and arguments.
 **Playing:**
 - After every `TrackStarted`, the core sends the player the new neighbours, so the next track is already loaded in mpv and plays gaplessly.
 - **Shuffle** (`S`) reorders the queue once, as one undoable step. **Repeat** (`R`) cycles off → all → one.
+- **`:seek`** ([#62](https://github.com/anopheles/navigo/issues/62)) moves by seconds (`+10`, `-10`, or a bare `10`, so `.` and `,` keep their meaning) or by a time (`+1:30`, `-0:30`), and goes to a time (`1:30`, `1:02:03`) or a point of the track (`50%`). A count multiplies only the relative forms.
 
 **Mix** (`gm`, `:mix`, or Home's Mix row) replaces the queue with 50 tracks, or as many as a count says, picked at random from the whole library, and plays the first; `u` brings the old queue back. It works offline, from the cache.
 - **Weights:** a track's chance is 1 × starred (×3) × rating (1★ left out, 2★ ×0.5, 3★ or unrated ×1, 4★ ×1.5, 5★ ×2) × staleness (played within 7 days ×0.1, rising in a straight line to ×1 at 90 days; never played ×1). Play count doesn't count, so the mix doesn't lean to all-time favourites.

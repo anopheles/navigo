@@ -30,6 +30,11 @@ type (
 		Tracks []library.Track
 	}
 	PlaylistDelete struct{ ID library.PlaylistID }
+	// PlaylistRename gives a playlist a new name.
+	PlaylistRename struct {
+		ID   library.PlaylistID
+		Name string
+	}
 	// PlaylistWritten is the server's answer to a WritePlaylist.
 	PlaylistWritten struct {
 		Write WritePlaylist
@@ -51,6 +56,8 @@ const (
 	// CreatePlaylist makes a playlist Name of Songs.
 	CreatePlaylist
 	DeletePlaylist
+	// RenamePlaylist gives the playlist After's name.
+	RenamePlaylist
 )
 
 // WritePlaylist changes a playlist on the server. After is the playlist as
@@ -72,6 +79,7 @@ func (PlaylistInsert) isEvent()  {}
 func (PlaylistMove) isEvent()    {}
 func (PlaylistCreate) isEvent()  {}
 func (PlaylistDelete) isEvent()  {}
+func (PlaylistRename) isEvent()  {}
 func (PlaylistWritten) isEvent() {}
 func (WritePlaylist) isEffect()  {}
 
@@ -108,6 +116,8 @@ func (s State) applyPlaylist(e Event) (State, []Effect) {
 	case PlaylistMove:
 		id = e.ID
 	case PlaylistDelete:
+		id = e.ID
+	case PlaylistRename:
 		id = e.ID
 	}
 	p, ok := s.Library.Playlist(id)
@@ -177,6 +187,12 @@ func (s State) applyPlaylist(e Event) (State, []Effect) {
 	case PlaylistDelete:
 		w.Kind = DeletePlaylist
 		w.Done = Notice{Text: "playlist " + p.Name + " deleted"}
+	case PlaylistRename:
+		if e.Name == "" || e.Name == p.Name {
+			return s, nil
+		}
+		w.Kind, after.Name = RenamePlaylist, e.Name
+		w.Done = Notice{Text: fmt.Sprintf("playlist %s renamed to %s", p.Name, e.Name)}
 	}
 	w.Name, w.After = p.Name, after
 	return s, []Effect{w}

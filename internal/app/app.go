@@ -476,6 +476,7 @@ func apply(s State, e Event) (State, []Effect) {
 		PlaylistMove,
 		PlaylistCreate,
 		PlaylistDelete,
+		PlaylistRename,
 		PlaylistWritten:
 		return s.applyPlaylist(e)
 	case FromPlayer:

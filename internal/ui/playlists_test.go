@@ -195,3 +195,29 @@ func TestPlaylistEditsOffline(t *testing.T) {
 	h.lacks("Remove 1 track")
 	h.contains("offline · playlists can be changed once the server is back")
 }
+
+func TestPlaylistRename(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	// In the list, the playlist under the cursor.
+	h.keys("'pj:playlist-rename Evening Mix<CR>")
+	h.contains("playlist Morning Mix renamed to Evening Mix", "Evening Mix")
+	h.playlistIs("Evening Mix", mix)
+	h.wrote("updatePlaylist playlistId=Evening Mix name=Evening Mix")
+
+	// In a playlist, the one shown; the title follows.
+	h.keys("<CR>:playlist-rename Dawn<CR>")
+	h.contains("Playlists › Dawn", "playlist Evening Mix renamed to Dawn")
+
+	h.keys(":playlist-rename empty<CR>")
+	h.contains(`there's a playlist called "Empty" already`)
+	h.keys(":playlist-rename<CR>")
+	h.contains("playlist-rename: give the new name, such as playlist-rename Rock")
+	h.keys("'a:playlist-rename X<CR>")
+	h.contains("not on a playlist")
+
+	h.srv.SetDown(true)
+	h.keys("'p:playlist-rename X<CR>")
+	h.contains("couldn't change Dawn")
+	h.keys(":playlist-rename Y<CR>")
+	h.contains("offline · playlists can be changed once the server is back")
+}

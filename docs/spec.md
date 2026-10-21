@@ -113,7 +113,7 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
   - session and library: `ping`, `getOpenSubsonicExtensions`, `getArtists`, `getArtist`, `getAlbumList2`, `getAlbum`, `getPlaylists`, `getPlaylist`, `search3`;
   - playback: `stream`, `getCoverArt`, `scrobble`;
   - stars and change detection: `star`/`unstar`, `getStarred2`, `getScanStatus`, `getIndexes`;
-  - playlist edits: `createPlaylist` (also with `playlistId`, to reorder: it replaces the tracks), `updatePlaylist`, `deletePlaylist`.
+  - playlist edits: `createPlaylist` (also with `playlistId`, to reorder: it replaces the tracks), `updatePlaylist` (also with `name`, to rename), `deletePlaylist`.
 - **Extensions:** `formPost` (calls go as POST once offered, keeping tokens out of URLs) and `transcodeOffset` (seeking in transcoded streams). Optional features are gated on `getOpenSubsonicExtensions`.
 - **Limits:** Navidrome caps list endpoints at 500. An empty-query `search3` lists the whole library with offsets; that's the sync path, with a `getAlbumList2`+`getAlbum` fallback.
 - **Scrobbles:** `stream` doesn't count a play. navigo sends `scrobble submission=false` when a track starts and `submission=true` after half the track or 4 minutes listened, whichever comes first, once per queue-entry play. Seeks don't count toward that.
@@ -284,7 +284,7 @@ keys:
 `s` and `r` are deliberately unbound, `\` is the leader and has no default bindings, and `<C-Space>` is never a default (because of a Windows console bug).
 
 **`:`-only commands:**
-- library and playlists: `:sort <field> [desc]` and `:filter genre <text>|year <year>[-<year>]` (each alone undoes it) on Albums, Artists, Home's lists and an album's tracks, `:playlist-add <name>`, `:playlist-new`, `:sync`;
+- library and playlists: `:sort <field> [desc]` and `:filter genre <text>|year <year>[-<year>]` (each alone undoes it) on Albums, Artists, Home's lists and an album's tracks, `:playlist-add <name>`, `:playlist-new`, `:playlist-rename <name>` (the playlist under the cursor or the one open; a name another playlist has is refused, [#63](https://github.com/anopheles/navigo/issues/63)), `:sync`;
 - session: `:login`, `:logout`, `:reconnect`, `:hints on|off`;
 - playback: `:replaygain [off|track|album]` changes the ReplayGain mode for the session (no argument cycles through them) and has no default key;
 - the rest: `:messages`, `:info`, `:map`, `:reload-config`.

@@ -598,6 +598,8 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 				newID, err = c.CreatePlaylist(ctx, e.Name, string(e.ID), songs)
 			case app.DeletePlaylist:
 				err = c.DeletePlaylist(ctx, string(e.ID))
+			case app.RenamePlaylist:
+				err = c.RenamePlaylist(ctx, string(e.ID), e.After.Name)
 			}
 			return eventMsg{
 				app.PlaylistWritten{

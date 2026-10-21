@@ -309,6 +309,9 @@ func TestPlaylistWrites(t *testing.T) {
 	if err := c.UpdatePlaylist(ctx, "pl1", []string{"c"}, []int{0, 2}); err != nil {
 		t.Fatal(err)
 	}
+	if err := c.RenamePlaylist(ctx, "pl1", "Jazz"); err != nil {
+		t.Fatal(err)
+	}
 	if err := c.DeletePlaylist(ctx, "pl1"); err != nil {
 		t.Fatal(err)
 	}
@@ -322,6 +325,7 @@ func TestPlaylistWrites(t *testing.T) {
 		"createPlaylist name=Rock&songId=a&songId=b",
 		"createPlaylist playlistId=pl1&songId=b&songId=a",
 		"updatePlaylist playlistId=pl1&songIdToAdd=c&songIndexToRemove=0&songIndexToRemove=2",
+		"updatePlaylist name=Jazz&playlistId=pl1",
 		"deletePlaylist id=pl1",
 	}
 	if !slices.Equal(got, want) {

@@ -62,6 +62,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "playlists", Jump: true, Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
 		{Name: "playlist-add", Args: someArgs, Label: "add to playlist", Desc: "Add the selection or the row under the cursor to the end of a playlist: playlist-add Rock.", Run: (*Model).playlistAdd, Complete: (*Model).playlistNames},
 		{Name: "playlist-new", Args: someArgs, Label: "new playlist", Desc: "Make a playlist of the selection or the row under the cursor: playlist-new Rock.", Run: (*Model).playlistNew},
+		{Name: "playlist-rename", Args: someArgs, Label: "rename playlist", Desc: "Rename the playlist under the cursor, or the one open: playlist-rename Rock.", Run: (*Model).playlistRename},
 		{Name: "playlist-delete", Label: "delete playlist", Desc: "Delete the playlist under the cursor, after asking.", Run: (*Model).deletePlaylist},
 		{Name: "playlist-undo", Label: "undo", Desc: "Explain that playlist changes can't be undone, and how to put a removal back.", Run: (*Model).playlistUndo},
 		{Name: "search", Jump: true, Args: anyArgs, Label: "search", Desc: "Search the library, or type the text to search for: search blue hour.", Run: (*Model).search, Complete: func(m *Model) []string {

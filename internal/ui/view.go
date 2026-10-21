@@ -154,6 +154,11 @@ func (m *Model) libTitle() string {
 	var parts []string
 	for _, f := range m.lib[1:] {
 		t := f.title
+		if f.kind == playlistTracks && m.state.Library != nil {
+			if p, ok := m.state.Library.Playlist(f.playlist); ok {
+				t = p.Name // it may have been renamed since
+			}
+		}
 		if d := f.view.describe(); d != "" {
 			t += " (" + d + ")"
 		}

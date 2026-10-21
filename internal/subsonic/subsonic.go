@@ -351,6 +351,11 @@ func (c *Client) UpdatePlaylist(ctx context.Context, id string, add []string, re
 	return c.call(ctx, "updatePlaylist", q, nil)
 }
 
+// RenamePlaylist gives a playlist a new name.
+func (c *Client) RenamePlaylist(ctx context.Context, id, name string) error {
+	return c.call(ctx, "updatePlaylist", url.Values{"playlistId": {id}, "name": {name}}, nil)
+}
+
 // DeletePlaylist deletes a playlist.
 func (c *Client) DeletePlaylist(ctx context.Context, id string) error {
 	return c.call(ctx, "deletePlaylist", url.Values{"id": {id}}, nil)

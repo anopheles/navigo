@@ -105,6 +105,41 @@ func (m *Model) deletePlaylist(command.Call) error {
 	return nil
 }
 
+// playlistRename is :playlist-rename <name>, on the playlist under the
+// cursor in the list or the one open.
+func (m *Model) playlistRename(c command.Call) error {
+	name := strings.Join(c.Args, " ")
+	if name == "" {
+		return errors.New("playlist-rename: give the new name, such as playlist-rename Rock")
+	}
+	lib := m.state.Library
+	f := m.top()
+	var p library.Playlist
+	switch {
+	case lib == nil || m.focus != libraryWindow:
+		return errors.New("not on a playlist")
+	case f.kind == playlistList && f.cur < len(lib.Playlists):
+		p = lib.Playlists[f.cur]
+	case f.kind == playlistTracks:
+		var ok bool
+		if p, ok = m.shownPlaylist(); !ok {
+			return errors.New("not on a playlist")
+		}
+	default:
+		return errors.New("not on a playlist")
+	}
+	for _, o := range lib.Playlists {
+		if o.ID != p.ID && strings.EqualFold(o.Name, name) {
+			return fmt.Errorf("there's a playlist called %q already", o.Name)
+		}
+	}
+	if m.state.Offline {
+		return errOffline
+	}
+	m.event(app.PlaylistRename{ID: p.ID, Name: name})
+	return nil
+}
+
 // playlistUndo is u and <C-r> in a playlist: changes on the server can't
 // be undone, but a removal can be put back.
 func (m *Model) playlistUndo(command.Call) error {

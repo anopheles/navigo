@@ -135,3 +135,21 @@ func TestPlaylistEditsOfflineAndFailing(t *testing.T) {
 		t.Errorf("notice = %#v", n)
 	}
 }
+
+func TestPlaylistRename(t *testing.T) {
+	s, out := run(withPlaylist(), PlaylistRename{ID: "pl", Name: "Jazz"})
+	w := only[WritePlaylist](out)[0]
+	if w.Kind != RenamePlaylist || w.ID != "pl" || w.After.Name != "Jazz" {
+		t.Fatalf("write = %+v", w)
+	}
+	if p, _ := s.Library.Playlist("pl"); p.Name != "Rock" {
+		t.Error("renamed before the server agreed")
+	}
+	s, out = written(s, out, "")
+	if p, _ := s.Library.Playlist("pl"); p.Name != "Jazz" || len(p.Tracks) != 3 {
+		t.Errorf("after: %+v", p)
+	}
+	if n := only[Notice](out); n[0].Text != "playlist Rock renamed to Jazz" {
+		t.Errorf("notice = %q", n[0].Text)
+	}
+}

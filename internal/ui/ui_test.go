@@ -323,7 +323,7 @@ func TestSeekToATimeOrAPercentage(t *testing.T) {
 		{"50%", fmt.Sprintf("SeekTo(%v)", dur/2)},
 		{"+1:30", "SeekBy(1m30s)"},
 		{"-0:30", "SeekBy(-30s)"},
-		{"20", "SeekBy(20s)"},
+		{"+20", "SeekBy(20s)"},
 		{"-5", "SeekBy(-5s)"},
 	} {
 		h.keys(":")
@@ -335,9 +335,19 @@ func TestSeekToATimeOrAPercentage(t *testing.T) {
 	}
 }
 
+func TestBareSecondsAreRefused(t *testing.T) {
+	_, err := parseSeek("90")
+	if err == nil || err.Error() != `seek: "90" is ambiguous · +90 moves by it, 1:30 goes to it` {
+		t.Errorf("parseSeek(90): %v", err)
+	}
+	_, err = parseSeek("5")
+	if err == nil || err.Error() != `seek: "5" is ambiguous · +5 moves by it, 0:05 goes to it` {
+		t.Errorf("parseSeek(5): %v", err)
+	}
+}
+
 func TestParseSeek(t *testing.T) {
 	for arg, want := range map[string]seekTo{
-		"10":      {by: 10 * time.Second, rel: true},
 		"+10":     {by: 10 * time.Second, rel: true},
 		"-10":     {by: -10 * time.Second, rel: true},
 		"1:30":    {by: 90 * time.Second},
@@ -351,7 +361,7 @@ func TestParseSeek(t *testing.T) {
 			t.Errorf("parseSeek(%q) = %+v, %v, want %+v", arg, got, err, want)
 		}
 	}
-	for _, arg := range []string{"x", "", "1:", ":30", "1:60", "1:2:3:4", "101%", "-5%", "+5%", "1.5", "1:-3"} {
+	for _, arg := range []string{"x", "", "1:", ":30", "1:60", "1:2:3:4", "101%", "-5%", "+5%", "1.5", "1:-3", "10", "0"} {
 		if _, err := parseSeek(arg); err == nil {
 			t.Errorf("parseSeek(%q) took it", arg)
 		}

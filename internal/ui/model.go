@@ -1050,9 +1050,10 @@ type seekTo struct {
 	isPct bool
 }
 
-// parseSeek reads 10, +10, -10 (seconds, relative), 1:30 or 1:02:03 (a
-// time to go to), +1:30 or -0:30 (a time to move by) and 50% (a point of
-// the track).
+// parseSeek reads +10 or -10 (seconds to move by), +1:30 or -0:30 (a
+// time to move by), 1:30 or 1:02:03 (a time to go to) and 50% (a point of
+// the track). A sign moves; a bare number is refused, since 90 and 1:30
+// would look alike but do different things.
 func parseSeek(arg string) (seekTo, error) {
 	bad := fmt.Errorf("seek: %q is not seconds, a time like 1:30 or a percentage", arg)
 	if p, ok := strings.CutSuffix(arg, "%"); ok {
@@ -1081,7 +1082,11 @@ func parseSeek(arg string) (seekTo, error) {
 		total = total*60 + n
 	}
 	d := time.Duration(sign*total) * time.Second
-	return seekTo{by: d, rel: len(parts) == 1 || body != arg}, nil
+	if len(parts) == 1 && body == arg {
+		return seekTo{}, fmt.Errorf(
+			"seek: %q is ambiguous · +%s moves by it, %s goes to it", arg, arg, long(d))
+	}
+	return seekTo{by: d, rel: body != arg}, nil
 }
 
 // digits reads a number of plain digits, with no sign.

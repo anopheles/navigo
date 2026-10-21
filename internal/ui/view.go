@@ -180,7 +180,7 @@ func (m *Model) queueTitle() string {
 	for _, e := range m.state.Queue {
 		total += e.Track.Duration
 	}
-	return t + " · " + span(total)
+	return t + " · " + long(total)
 }
 
 // keyHint is "<key> label" for a command, or "" if nothing is bound to it.
@@ -779,15 +779,6 @@ func pad(lines []string, w, h int) []string {
 		lines = append(lines, strings.Repeat(" ", w))
 	}
 	return lines[:h]
-}
-
-// span is a length that may pass an hour: 48:10, or 2:03:41.
-func span(d time.Duration) string {
-	s := int(d.Round(time.Second).Seconds())
-	if s < 3600 {
-		return clock(d)
-	}
-	return fmt.Sprintf("%d:%02d:%02d", s/3600, s/60%60, s%60)
 }
 
 func clock(d time.Duration) string {

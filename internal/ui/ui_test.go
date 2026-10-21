@@ -310,20 +310,7 @@ func TestQueueTitleShowsTheTotalTime(t *testing.T) {
 	if total == 0 {
 		t.Fatal("the fixture's tracks have no length")
 	}
-	h.contains(fmt.Sprintf("Queue (%d) · %s", len(h.m.state.Queue), span(total)))
-}
-
-func TestSpan(t *testing.T) {
-	for d, want := range map[time.Duration]string{
-		0:                               "0:00",
-		59 * time.Second:                "0:59",
-		48*time.Minute + 10*time.Second: "48:10",
-		2*time.Hour + 3*time.Minute + 41*time.Second: "2:03:41",
-	} {
-		if got := span(d); got != want {
-			t.Errorf("span(%v) = %q, want %q", d, got, want)
-		}
-	}
+	h.contains(fmt.Sprintf("Queue (%d) · %s", len(h.m.state.Queue), long(total)))
 }
 
 func TestSeekToATimeOrAPercentage(t *testing.T) {

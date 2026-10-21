@@ -16,7 +16,10 @@ import (
 // find their way from what the screen shows, not from known names.
 
 var (
-	playingRE  = regexp.MustCompile(`[▶⏸] (.+?) — `)
+	// the playing track on a line of the now-playing bar: the two-line bar
+	// has "▶ title — artist", the cover card the title alone
+	playingRE  = regexp.MustCompile(`[▶⏸] (.+?)(?: — |\s*$)`)
+	barRuleRE  = regexp.MustCompile(`^─+$`)
 	positionRE = regexp.MustCompile(` (\d+):(\d\d) / \d+:\d\d\b`)
 	queueRE    = regexp.MustCompile(`(\d+)/(\d+) in queue`)
 	// a track row in the library window ends in its duration
@@ -47,14 +50,33 @@ func (s *session) openFirstAlbum() {
 	})
 }
 
-// line is one line of the screen, without the queue window.
+// line is one line of the left window, inside its frame.
 func (s *session) line(n int) string {
 	lines := strings.Split(s.screen(), "\n")
 	if n >= len(lines) {
 		return ""
 	}
-	left, _, _ := strings.Cut(lines[n], "│")
+	left, _, _ := strings.Cut(strings.TrimPrefix(lines[n], "│"), "│")
 	return strings.TrimRight(left, " ")
+}
+
+// barTitle is the title the now-playing bar shows. It reads only the lines
+// under the rule above the bar, since the queue marks the playing row with
+// ▶ too.
+func barTitle(scr string) (string, bool) {
+	lines := strings.Split(scr, "\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		if !barRuleRE.MatchString(lines[i]) {
+			continue
+		}
+		for _, l := range lines[i+1:] {
+			if m := playingRE.FindStringSubmatch(l); m != nil {
+				return strings.TrimSpace(m[1]), true
+			}
+		}
+		break
+	}
+	return "", false
 }
 
 // position is the now-playing bar's elapsed time, or -1.
@@ -72,12 +94,11 @@ func (s *session) position() time.Duration {
 // and returns its title.
 func (s *session) playing() string {
 	s.t.Helper()
-	scr := s.waitFor(
+	title, _ := barTitle(s.waitFor(
 		"the now-playing bar",
 		30*time.Second,
-		func(scr string) bool { return playingRE.MatchString(scr) },
-	)
-	title := strings.TrimSpace(playingRE.FindStringSubmatch(scr)[1])
+		func(scr string) bool { _, ok := barTitle(scr); return ok },
+	))
 	s.waitFor(
 		"the position to pass 0:02",
 		30*time.Second,

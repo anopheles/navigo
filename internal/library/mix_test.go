@@ -57,6 +57,37 @@ func TestMixVarietyRules(t *testing.T) {
 	}
 }
 
+// Artists whose names differ only by case count as one for the variety
+// rules, though Browse lists them apart.
+func TestMixVarietyFoldsCase(t *testing.T) {
+	tracks := mixLibrary(10, 2, 3)
+	for i := range tracks {
+		switch tracks[i].ArtistID {
+		case "a0":
+			tracks[i].Artists = []ArtistRef{{ID: "a0", Name: "ELETTRA STORM"}}
+		case "a1":
+			tracks[i].Artists = []ArtistRef{{ID: "a1", Name: "Elettra Storm"}}
+		}
+	}
+	same := func(id ArtistID) bool { return id == "a0" || id == "a1" }
+	for seed := range uint64(200) {
+		got := mix(tracks, nil, MixSize, seed)
+		n := 0
+		for i, tr := range got {
+			if !same(tr.ArtistID) {
+				continue
+			}
+			n++
+			if i > 0 && same(got[i-1].ArtistID) {
+				t.Fatalf("seed %d: the two spellings in a row at %d", seed, i)
+			}
+		}
+		if n > mixPerArtist {
+			t.Fatalf("seed %d: %d tracks by the two spellings, want at most %d", seed, n, mixPerArtist)
+		}
+	}
+}
+
 func TestMixSizeAndShortfall(t *testing.T) {
 	if got := mix(mixLibrary(30, 2, 2), nil, 10, 1); len(got) != 10 {
 		t.Errorf("asked for 10, got %d", len(got))

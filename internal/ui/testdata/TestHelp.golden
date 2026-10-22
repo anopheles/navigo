@@ -9,10 +9,10 @@
 │ <C-d>      half-page-down     Move down half a page.                 ││ On a track:                                  │
 │ <C-u>      half-page-up       Move up half a page.                   ││   <CR> play it   A add to queue              │
 │ <C-f>      page-down          Move down a page.                      ││                                              │
-│ <C-b>      page-up            Move up a page.                        ││   :q quit                                    │
-│ <C-e>      scroll-down        Scroll the list down a row; the cursor…││                                              │
+│ <C-b>      page-up            Move up a page.                        ││ Or let navigo pick:                          │
+│ <C-e>      scroll-down        Scroll the list down a row; the cursor…││   gm mix from the whole library              │
 │ <C-y>      scroll-up          Scroll the list up a row; the cursor s…││                                              │
-│ H          screen-top         Go to the top row on screen, or the Nt…││                                              │
+│ H          screen-top         Go to the top row on screen, or the Nt…││   :q quit                                    │
 │ M          screen-middle      Go to the middle row on screen.        ││                                              │
 │ L          screen-bottom      Go to the bottom row on screen, or the…││                                              │
 │ zz         scroll-center      Scroll so the cursor row is in the mid…││                                              │

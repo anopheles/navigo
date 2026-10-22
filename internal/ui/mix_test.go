@@ -1,6 +1,11 @@
 package ui
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/charmbracelet/x/ansi"
+)
 
 // gm mixes around the row under the cursor, else what plays, else the
 // whole library; :mix library and Home's Mix row always mix the library.
@@ -84,4 +89,35 @@ func TestMixAroundAsksForSimilarArtists(t *testing.T) {
 	if n := h.requests("getArtistInfo2"); n != 1 {
 		t.Errorf("offline, %d similar-artist requests in all, want still 1", n)
 	}
+}
+
+// The hint line offers gm only where it has a seed; the key menu names
+// what gm would mix from; the empty queue offers it for the whole library.
+func TestMixIsDiscoverable(t *testing.T) {
+	h := homeHarness(t, 160, 40, nil)
+	h.contains("Or let navigo pick:", "gm mix from the whole library")
+
+	h.keys("j") // a Home list: not a seed
+	if hl := ansi.Strip(h.m.hintLine()); strings.Contains(hl, "gm mix") {
+		t.Errorf("hint line on a Home list offers gm: %q", hl)
+	}
+	h.keys("?")
+	h.contains("mix from the whole library")
+	h.keys("q'a")
+	artist := h.m.artistsOf(h.m.top())[0]
+	if hl := ansi.Strip(h.m.hintLine()); !strings.Contains(hl, "gm mix") {
+		t.Errorf("hint line on an artist lacks gm: %q", hl)
+	}
+	h.keys("?")
+	h.contains("mix from " + artist.Name)
+	h.keys("q")
+
+	// With something playing, a row that is no seed mixes from it.
+	h.keys("gm'hj?")
+	playing := h.m.state.Queue[h.m.state.Current].Track
+	h.contains("mix from " + playing.Title)
+	h.keys("q")
+
+	h.keys("'?/mix<CR>")
+	h.contains("Mix around the row, else what plays, else the whole library")
 }

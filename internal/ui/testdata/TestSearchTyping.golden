@@ -9,10 +9,10 @@
 │    Blue Highway                       Pell Mell feat. Zoë Bran…  2:22││ On a track:                                  │
 │    Blue Hour                          Aurora Lane · Blue Hour    0:31││   <CR> play it   A add to queue              │
 │    Blue Static                        The Quiet Ones · Blue      0:31││                                              │
-│    Low Tide                           Aurora Lane · Blue Hour    3:05││   :q quit                                    │
-│    Afterglow                          Aurora Lane · Blue Hour    1:37││                                              │
+│    Low Tide                           Aurora Lane · Blue Hour    3:05││ Or let navigo pick:                          │
+│    Afterglow                          Aurora Lane · Blue Hour    1:37││   gm mix from the whole library              │
 │    Dusk Signal                        Aurora Lane · Blue Hour    2:22││                                              │
-│    Glass Garden                       Aurora Lane · Blue         3:05││                                              │
+│    Glass Garden                       Aurora Lane · Blue         3:05││   :q quit                                    │
 │    Harbour Lights                     Aurora Lane · Blue         1:37││                                              │
 │    Homeward                           The Quiet Ones · Blue      1:37││                                              │
 │    Last Ferry                         Aurora Lane · Blue         3:58││                                              │

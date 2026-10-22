@@ -5,6 +5,7 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/anopheles/navigo/internal/keymap"
 )
@@ -32,6 +33,7 @@ var menuGroups = []struct {
 			"stop",
 			"volume",
 			"shuffle",
+			"mix",
 			"repeat",
 		},
 	},
@@ -78,9 +80,11 @@ var menuGroups = []struct {
 func (m *Model) openKeyMenu() {
 	under := m.scopes()
 	bs := m.engine.Table().Effective(keymap.Normal, under)
-	var lines []string
+	type row struct{ key, label, desc string }
+	var groups [][]row
+	width := 18 // the label column, widened for a long label up to 32
 	for _, g := range menuGroups {
-		var rows []string
+		var rows []row
 		for _, name := range g.names {
 			for _, b := range bs {
 				if b.Name() != name {
@@ -93,22 +97,22 @@ func (m *Model) openKeyMenu() {
 				label := c.Label
 				if _, args, ok := strings.Cut(b.Command, " "); ok {
 					label += " " + args
+				} else if name == "mix" {
+					label = "mix from " + m.mixFrom()
 				}
-				rows = append(
-					rows,
-					"  "+keyStyle.Render(
-						fit(keyLabel(b.Seq()), 8),
-					)+" "+fit(
-						label,
-						18,
-					)+" "+dimStyle.Render(
-						c.Desc,
-					),
-				)
+				width = max(width, min(lipgloss.Width(label), 32))
+				rows = append(rows, row{keyLabel(b.Seq()), label, c.Desc})
 			}
 		}
+		groups = append(groups, rows)
+	}
+	var lines []string
+	for i, rows := range groups {
 		if len(rows) > 0 {
-			lines = append(append(lines, accentStyle.Render(g.title)), rows...)
+			lines = append(lines, accentStyle.Render(menuGroups[i].title))
+		}
+		for _, r := range rows {
+			lines = append(lines, "  "+keyStyle.Render(fit(r.key, 8))+" "+fit(r.label, width)+" "+dimStyle.Render(r.desc))
 		}
 	}
 	m.openPopup("Keys here", lines)

@@ -1,7 +1,7 @@
 ╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
 │   1 Dusk Signal                       Aurora Lane                2:22││                                              │
 │   2 Low ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮         │
-│   3 Stre│ Keys here 1–24 of 43                                                                             │         │
+│   3 Stre│ Keys here 1–24 of 44                                                                             │         │
 │   4 Blue│ Play                                                                                             │         │
 │   5 Wint│   <CR>     play               Replace the queue with this list and play from the track under th… │         │
 │   6 Afte│   <Space>  play/pause         Pause or resume playback, or start the queue.                      │         │
@@ -14,6 +14,7 @@
 │         │   +        volume +5          Change the volume by points, such as volume +5, or set it: volume… │         │
 │         │   -        volume -5          Change the volume by points, such as volume +5, or set it: volume… │         │
 │         │   S        shuffle            Shuffle the queue once, keeping the current track first; u undoes… │         │
+│         │   gm       mix from Low Tide  Mix around the row, else what plays, else the whole library (mix … │         │
 │         │   R        repeat             Cycle repeat: off, all (the queue again), one (the same track aga… │         │
 │         │ Queue                                                                                            │         │
 │         │   A        add to queue       Add the track under the cursor to the end of the queue.            │         │
@@ -25,7 +26,6 @@
 │         │   V        select             Select rows: start Visual mode, or end it.                         │         │
 │         │   v        select             Select rows: start Visual mode, or end it.                         │         │
 │         │   *        star               Star the track, album or artist under the cursor, or the selectio… │         │
-│         │ Go                                                                                               │         │
 │         ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯         │
 │                                                                      ││                                              │
 │                                                                      ││                                              │

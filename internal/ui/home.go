@@ -111,6 +111,15 @@ func (m *Model) mixSeed() *library.Seed {
 	return nil
 }
 
+// mixFrom names what gm would mix from, for the key menu: the seed's
+// name, or "the whole library".
+func (m *Model) mixFrom() string {
+	if s := m.mixSeed(); s != nil {
+		return s.Name
+	}
+	return "the whole library"
+}
+
 // rowSeed is the row under the cursor as a seed. A track row is always a
 // track seed; sections, Home's lists, headings and Help are not seeds.
 func (m *Model) rowSeed() (library.Seed, bool) {

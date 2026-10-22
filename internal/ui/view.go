@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -436,8 +437,11 @@ func (m *Model) emptyQueue(w int) []string {
 		dimStyle.Render(" On a track:"),
 		join(k(tracks, "play-now", "play it"), k(tracks, "add-end", "add to queue")),
 		"",
-		join(keyStyle.Render(":q") + " " + dimStyle.Render("quit")),
 	}
+	if mix := k([]string{"global"}, "mix", "mix from the whole library"); mix != "" {
+		lines = append(lines, dimStyle.Render(" Or let navigo pick:"), join(mix), "")
+	}
+	lines = append(lines, join(keyStyle.Render(":q")+" "+dimStyle.Render("quit")))
 	for i := range lines {
 		lines[i] = fit(lines[i], w)
 	}
@@ -543,6 +547,10 @@ func (m *Model) hintLine() string {
 		names = []string{"play-now", "add-end", "add-next", "visual", "back", "window", "key-menu"}
 	default:
 		names = []string{"open", "back", "window", "key-menu"}
+	}
+	if _, ok := m.rowSeed(); ok { // gm offered only where it has a seed
+		i := slices.Index(names, "window")
+		names = slices.Insert(names, i, "mix")
 	}
 	var parts []string
 	for _, name := range names {

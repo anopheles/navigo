@@ -9,10 +9,10 @@
 │                                                                      ││ On a track:                                  │
 │                                                                      ││   <CR> play it   A add to queue              │
 │                                                                      ││                                              │
+│                                                                      ││ Or let navigo pick:                          │
+│                                                                      ││   gm mix from the whole library              │
+│                                                                      ││                                              │
 │                                                                      ││   :q quit                                    │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
 │                                                                      ││                                              │
 │                                                                      ││                                              │
 │                                                                      ││                                              │

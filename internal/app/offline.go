@@ -196,6 +196,20 @@ func (s State) streamFailed(title, reason string) (State, []Effect) {
 	return s, append([]Effect{Stop{}}, out...)
 }
 
+// noAudio stops playback when the audio output can't be opened. Unlike a
+// broken file nothing is skipped, since every track would fail the same.
+func (s State) noAudio(title string) (State, []Effect) {
+	s.NoAudio = true
+	s = s.halt()
+	return s, []Effect{
+		Stop{},
+		Notice{
+			Text:    "couldn't play " + title + " · no audio output · check the system's sound",
+			Command: "play-pause", Hint: "tries again", Err: true,
+		},
+	}
+}
+
 // skipBroken moves past a file the server has but can't be played.
 func (s State) skipBroken() (State, []Effect) {
 	s.skips++

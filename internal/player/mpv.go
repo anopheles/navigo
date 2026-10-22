@@ -502,6 +502,10 @@ func (m *MPV) loop(p *mpv.Process) {
 	m.emit(Died{Err: fmt.Errorf("mpv stopped: %w", err)})
 }
 
+// aoInitFailed is mpv's file_error when the audio output can't be
+// opened, such as when the system's sound server hangs.
+const aoInitFailed = "audio output initialization failed"
+
 func (m *MPV) handle(p *mpv.Process, ev mpv.Event) {
 	switch ev.Name {
 	case "start-file":
@@ -544,6 +548,9 @@ func (m *MPV) handle(p *mpv.Process, ev mpv.Event) {
 			ended.Reason = Finished
 		case "error":
 			ended.Reason, ended.Err = Failed, ev.FileError
+			if ev.FileError == aoInitFailed {
+				ended.Reason = NoAudio
+			}
 		}
 		m.emit(ended)
 

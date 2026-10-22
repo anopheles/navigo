@@ -669,14 +669,44 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		return nil
 	}
 	ticket := m.player.ticket()
-	return func() tea.Msg {
+	w := newPlayerWatch()
+	run := func() tea.Msg {
 		var err error
-		m.player.run(ticket, func() { err = call() })
+		m.player.run(ticket, func() {
+			w.start()
+			err = call()
+		})
+		var msgs []tea.Msg
+		if w.answered() {
+			msgs = append(msgs, eventMsg{app.PlayerUnresponsive{}})
+		}
 		if err != nil {
-			return eventMsg{app.PlayerFailed{Err: err}}
+			msgs = append(msgs, eventMsg{app.PlayerFailed{Err: err}})
+		}
+		return batchOf(msgs)
+	}
+	watch := func() tea.Msg {
+		if w.wait(func() <-chan time.Time { return time.After(playerPatience) }) {
+			return eventMsg{app.PlayerUnresponsive{Stuck: true}}
 		}
 		return nil
 	}
+	return tea.Batch(run, watch)
+}
+
+// batchOf is msgs as one message: nil, the one, or a batch of them.
+func batchOf(msgs []tea.Msg) tea.Msg {
+	switch len(msgs) {
+	case 0:
+		return nil
+	case 1:
+		return msgs[0]
+	}
+	cmds := make([]tea.Cmd, len(msgs))
+	for i, msg := range msgs {
+		cmds[i] = func() tea.Msg { return msg }
+	}
+	return tea.BatchMsg(cmds)
 }
 
 // tick keeps the offline countdown redrawing once a second.

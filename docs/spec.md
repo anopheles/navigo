@@ -425,6 +425,8 @@ The `:` line has Tab completion for command names and arguments.
 
 **Playback failures:**
 - **A stream that fails to load** triggers a ping. If the server is gone, navigo goes offline and stops on that track; mpv is never allowed to run through the queue. If the server answers, the file is broken: skip it with a message, and stop after 3 failures in a row.
+- **No audio output** ([#77](https://github.com/anopheles/navigo/issues/77)): when mpv can't open the audio output (`audio output initialization failed`, as when the system's sound server hangs), no file is to blame, so nothing is skipped. Playback stops on that track with `couldn't play <title> · no audio output · check the system's sound` and `<Space> tries again`, and the indicator `no audio output` stays until a track really plays.
+- **mpv not answering:** a player call unanswered after 5 s shows the indicator `mpv isn't responding · no audio output?` until it answers.
 - **A 10 s buffering stall** also triggers a ping.
 - The current track usually plays on from mpv's buffer.
 

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -161,4 +162,37 @@ func TestBarShowsWhatPlaysWhileOffline(t *testing.T) {
 	h.keys("2j<CR>")
 	h.contains("▶ Dusk Signal", "not in the queue", "offline · the queue is ready")
 	h.lacks("▶ Streetlamp")
+}
+
+// No audio output: playback stops on the track, nothing is skipped, and
+// the bar says so until a track really plays.
+func TestNoAudioOutput(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("3j<CR><CR>")
+	h.fake.FailAudio()
+	h.pump()
+	if h.lastCall() != "Stop" {
+		t.Errorf("player calls = %q, want them to end with Stop", h.fake.Calls())
+	}
+	h.contains(
+		"couldn't play Dusk Signal · no audio output · check the system's sound",
+		"<Space> tries again", "■ nothing playing", "no audio output",
+	)
+	h.lacks("skipped", "offline")
+	if h.m.state.Current != 0 {
+		t.Errorf("current row %d, want the failed track", h.m.state.Current)
+	}
+
+	h.keys("<Space>")
+	calls := h.fake.Calls()
+	if i := slices.Index(calls, "Stop"); i < 0 || !slices.ContainsFunc(calls[i:], func(c string) bool {
+		return strings.HasPrefix(c, "Play(")
+	}) {
+		t.Fatalf("<Space> after no audio: %q", calls)
+	}
+	h.fake.Tick(time.Second)
+	h.pump()
+	if ind := h.m.indicators(); slices.Contains(ind, "no audio output") {
+		t.Errorf("indicators while it plays = %q", ind)
+	}
 }

@@ -589,6 +589,10 @@ func (m *Model) indicators() []string {
 		} else {
 			out = append(out, "mpv stopped")
 		}
+	case s.PlayerStuck:
+		out = append(out, "mpv isn't responding · no audio output?")
+	case s.NoAudio:
+		out = append(out, "no audio output")
 	}
 	if m.state.Offline {
 		next := "offline · trying…"

@@ -75,7 +75,7 @@ func (s State) died(err error, at time.Time) (State, []Effect) {
 	}
 	s.playing = 0
 	s.Player = PlayerState{Volume: s.Player.Volume}
-	s.PlayerDown = true
+	s.PlayerDown, s.PlayerStuck = true, false
 	s.deaths = append(
 		slices.DeleteFunc(
 			slices.Clone(s.deaths),

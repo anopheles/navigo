@@ -54,6 +54,13 @@ type harness struct {
 // lasts two seconds.
 func newMPV(t *testing.T) *harness {
 	t.Helper()
+	return newMPVWith(t, "--ao=null")
+}
+
+// newMPVWith is newMPV with other mpv arguments, such as another audio
+// output.
+func newMPVWith(t *testing.T, args ...string) *harness {
+	t.Helper()
 	if _, err := exec.LookPath("mpv"); err != nil {
 		t.Skip("mpv not on PATH")
 	}
@@ -71,7 +78,7 @@ func newMPV(t *testing.T) *harness {
 	}))
 	t.Cleanup(h.srv.Close)
 	h.m = NewMPV(MPVOptions{
-		Args: []string{"--ao=null"},
+		Args: args,
 		StreamURL: func(id library.TrackID) string {
 			h.mu.Lock()
 			h.urls++
@@ -481,4 +488,20 @@ func TestMPVReplayGain(t *testing.T) {
 		g, ok := e.(GainTags)
 		return ok && g.Entry == 1 && g.Track == nil && g.Album == nil
 	})
+}
+
+// An audio output that can't be opened ends the entry with NoAudio, not
+// Failed: the file is fine.
+func TestMPVNoAudioOutput(t *testing.T) {
+	h := newMPVWith(t, "--ao=alsa", "--audio-device=alsa/navigo-no-such-device")
+	if err := h.m.Play(context.Background(), Span{Current: entry(1, "1s")}); err != nil {
+		t.Fatal(err)
+	}
+	e := h.await("entry 1 to end", func(e Event) bool {
+		x, ok := e.(TrackEnded)
+		return ok && x.Entry == 1
+	}).(TrackEnded)
+	if e.Reason != NoAudio {
+		t.Errorf("ended with %v (%q), want NoAudio", e.Reason, e.Err)
+	}
 }

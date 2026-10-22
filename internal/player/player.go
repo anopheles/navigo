@@ -106,6 +106,9 @@ const (
 	Stopped
 	// Failed: it could not be played, such as a stream error.
 	Failed
+	// NoAudio: the audio output couldn't be opened, so nothing can play;
+	// the file is not to blame.
+	NoAudio
 )
 
 // Position of the current entry, sent about once a second while playing

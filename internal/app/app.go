@@ -102,9 +102,13 @@ type State struct {
 	PlayerProblem string
 	PlayerDown    bool
 	PlayerCapped  bool
-	installHint   string
-	resume        *resumePoint
-	deaths        []time.Time
+	// NoAudio: the audio output couldn't be opened, until a track really
+	// plays. PlayerStuck: a player call has gone unanswered for a while.
+	NoAudio     bool
+	PlayerStuck bool
+	installHint string
+	resume      *resumePoint
+	deaths      []time.Time
 
 	playing      player.EntryID // the entry the player says is playing
 	playingTrack library.Track  // its track, even if the queue changed since
@@ -196,6 +200,9 @@ type (
 	FromPlayer struct{ Event player.Event }
 	// PlayerFailed: a Player call returned an error.
 	PlayerFailed struct{ Err error }
+	// PlayerUnresponsive: a Player call has gone unanswered for a while
+	// (Stuck), or an answer came after all.
+	PlayerUnresponsive struct{ Stuck bool }
 	// Failed: some other work went wrong in a way navigo can't explain,
 	// such as saving the cache.
 	Failed struct {
@@ -517,6 +524,9 @@ func apply(s State, e Event) (State, []Effect) {
 		return s.applyOffline(e)
 	case PlayerFailed:
 		return s, []Effect{Notice{Text: "player: " + e.Err.Error(), Err: true, Unexpected: true}}
+	case PlayerUnresponsive:
+		s.PlayerStuck = e.Stuck
+		return s, nil
 	case Failed:
 		return s, []Effect{Notice{Text: e.What + ": " + e.Err.Error(), Err: true, Unexpected: true}}
 	}
@@ -557,10 +567,13 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 		if e.Entry != s.playing || e.Reason == player.Stopped {
 			return s, nil
 		}
-		if e.Reason == player.Failed {
+		if e.Reason == player.Failed || e.Reason == player.NoAudio {
 			title := "the track"
 			if i := s.index(e.Entry); i >= 0 {
 				title = s.Queue[i].Track.Title
+			}
+			if e.Reason == player.NoAudio {
+				return s.noAudio(title)
 			}
 			return s.streamFailed(title, e.Err)
 		}
@@ -582,7 +595,7 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 		}
 		s.Player.Position = e.Position
 		if e.Position > 0 {
-			s.skips = 0 // it really plays
+			s.skips, s.NoAudio = 0, false // it really plays
 		}
 		if e.Duration > 0 {
 			s.Player.Duration = e.Duration
@@ -708,27 +721,28 @@ func count(n int) string {
 	return fmt.Sprintf("%d tracks", n)
 }
 
-func (Start) isEvent()        {}
-func (LoggedIn) isEvent()     {}
-func (SyncNow) isEvent()      {}
-func (CacheLoaded) isEvent()  {}
-func (SyncProgress) isEvent() {}
-func (Synced) isEvent()       {}
-func (PlayNow) isEvent()      {}
-func (AddEnd) isEvent()       {}
-func (AddNext) isEvent()      {}
-func (PlayRow) isEvent()      {}
-func (PlayPause) isEvent()    {}
-func (NextTrack) isEvent()    {}
-func (PrevTrack) isEvent()    {}
-func (SeekBy) isEvent()       {}
-func (StopPlayback) isEvent() {}
-func (Undo) isEvent()         {}
-func (Redo) isEvent()         {}
-func (Scrobbled) isEvent()    {}
-func (FromPlayer) isEvent()   {}
-func (PlayerFailed) isEvent() {}
-func (Failed) isEvent()       {}
+func (Start) isEvent()              {}
+func (LoggedIn) isEvent()           {}
+func (SyncNow) isEvent()            {}
+func (CacheLoaded) isEvent()        {}
+func (SyncProgress) isEvent()       {}
+func (Synced) isEvent()             {}
+func (PlayNow) isEvent()            {}
+func (AddEnd) isEvent()             {}
+func (AddNext) isEvent()            {}
+func (PlayRow) isEvent()            {}
+func (PlayPause) isEvent()          {}
+func (NextTrack) isEvent()          {}
+func (PrevTrack) isEvent()          {}
+func (SeekBy) isEvent()             {}
+func (StopPlayback) isEvent()       {}
+func (Undo) isEvent()               {}
+func (Redo) isEvent()               {}
+func (Scrobbled) isEvent()          {}
+func (FromPlayer) isEvent()         {}
+func (PlayerFailed) isEvent()       {}
+func (PlayerUnresponsive) isEvent() {}
+func (Failed) isEvent()             {}
 
 func (LoadCache) isEffect()     {}
 func (StartSync) isEffect()     {}

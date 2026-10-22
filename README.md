@@ -21,7 +21,13 @@ mpv, gaplessly.
 
 ## Install
 
-Download the archive for your OS and CPU from
+On macOS, with [Homebrew](https://brew.sh) (this also installs mpv):
+
+```sh
+brew install anopheles/tap/navigo
+```
+
+Otherwise, download the archive for your OS and CPU from
 [Releases](https://github.com/anopheles/navigo/releases), unpack it and
 put `navigo` on your `PATH`. On macOS, the binary isn't notarized: run
 `xattr -d com.apple.quarantine navigo` once after unpacking.

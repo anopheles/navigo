@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -153,11 +154,33 @@ func TestStreamURL(t *testing.T) {
 	}
 }
 
+// dropper is the URL of a server that closes every connection at once:
+// a transport error, as with no server at all. A closed port won't do,
+// since on WSL a connection to one hangs instead of being refused.
+func dropper(t *testing.T) string {
+	t.Helper()
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = l.Close() })
+	go func() {
+		for {
+			c, err := l.Accept()
+			if err != nil {
+				return
+			}
+			_ = c.Close()
+		}
+	}()
+	return "http://" + l.Addr().String()
+}
+
 func TestTransportErrorsHideTheToken(t *testing.T) {
-	c := New(Credentials{URL: "http://127.0.0.1:1", Username: "ann", Password: "secret"})
+	c := New(Credentials{URL: dropper(t), Username: "ann", Password: "secret"})
 	err := c.Login(context.Background())
 	if err == nil {
-		t.Fatal("Login succeeded against a closed port")
+		t.Fatal("Login succeeded against a server that drops connections")
 	}
 	if strings.Contains(err.Error(), "t=") || strings.Contains(err.Error(), "s=") {
 		t.Errorf("error leaks auth params: %v", err)
@@ -272,13 +295,13 @@ func TestUnreachable(t *testing.T) {
 			t.Errorf("%s: %v, want unreachable", name, err)
 		}
 	}
-	// No server at all.
+	// No answer at all.
 	if err := New(
-		Credentials{URL: "http://127.0.0.1:1", Username: "a", Password: "b"},
+		Credentials{URL: dropper(t), Username: "a", Password: "b"},
 	).Ping(ctx); !IsUnreachable(
 		err,
 	) {
-		t.Errorf("refused: %v", err)
+		t.Errorf("no answer: %v", err)
 	}
 }
 

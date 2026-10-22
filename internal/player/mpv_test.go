@@ -285,11 +285,9 @@ func TestVersionOK(t *testing.T) {
 func TestMPVIgnoresReplacedEntries(t *testing.T) {
 	h := newMPV(t)
 	ctx := context.Background()
-	bad := MPVOptions{
-		Args:      []string{"--ao=null"},
-		StreamURL: func(id library.TrackID) string { return "http://127.0.0.1:1/" + string(id) },
-	}
-	h.m.opts.StreamURL = bad.StreamURL
+	// "x" isn't a duration, so the test server answers 404 and the load
+	// fails at once. (A closed port is no good: on WSL a connection to
+	// one hangs instead of being refused.)
 	if err := h.m.Play(ctx, Span{Current: entry(1, "x"), Next: entry(2, "x")}); err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +306,6 @@ func TestMPVIgnoresReplacedEntries(t *testing.T) {
 			drained = true
 		}
 	}
-	h.m.opts.StreamURL = func(id library.TrackID) string { return h.srv.URL + "/" + string(id) }
 	if err := h.m.Play(ctx, Span{Current: entry(3, "5s")}); err != nil {
 		t.Fatal(err)
 	}

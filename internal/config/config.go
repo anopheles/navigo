@@ -33,7 +33,9 @@ type Config struct {
 	// CoverArt turns the playing track's cover on or off, or forces a
 	// renderer; on, automatic, unless set.
 	CoverArt CoverArt `yaml:"cover_art"`
-	Keys     Keys     `yaml:"keys"`
+	// ListenBrainz turns on Recommendations for a Mix.
+	ListenBrainz ListenBrainz `yaml:"listenbrainz"`
+	Keys         Keys         `yaml:"keys"`
 }
 
 // Resume is the resume: setting.
@@ -63,7 +65,7 @@ func (c Config) ResumeOn() bool { return !c.Resume.Off }
 func (c Config) Problems() []Problem {
 	return slices.Concat(
 		c.Player.Problems, c.Resume.Problems, c.Theme.Problems, c.Colors.Problems,
-		c.CoverArt.Problems,
+		c.CoverArt.Problems, c.ListenBrainz.Problems,
 	)
 }
 

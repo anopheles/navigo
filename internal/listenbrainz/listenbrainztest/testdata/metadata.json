@@ -1,0 +1,85 @@
+{
+  "00000000-0000-0000-0000-000000000001": {
+    "artist": {
+      "artist_credit_id": 1,
+      "artists": [
+        {
+          "area": "Nowhere",
+          "artist_mbid": "10000000-0000-0000-0000-000000000001",
+          "begin_year": 2000,
+          "join_phrase": "",
+          "name": "Björk",
+          "rels": {
+            "official homepage": "https://example.org/"
+          },
+          "type": "Group"
+        }
+      ],
+      "name": "Björk"
+    },
+    "recording": {
+      "first_release_date": "2000-01-01",
+      "isrcs": [
+        "XX0000000001"
+      ],
+      "length": 300000,
+      "name": "Hyperballad",
+      "rels": []
+    }
+  },
+  "00000000-0000-0000-0000-000000000002": {
+    "artist": {
+      "artist_credit_id": 1,
+      "artists": [
+        {
+          "area": "Nowhere",
+          "artist_mbid": "10000000-0000-0000-0000-000000000001",
+          "begin_year": 2000,
+          "join_phrase": " feat. ",
+          "name": "Daft Punk",
+          "rels": {
+            "official homepage": "https://example.org/"
+          },
+          "type": "Group"
+        },
+        {
+          "area": "Nowhere",
+          "artist_mbid": "10000000-0000-0000-0000-000000000002",
+          "begin_year": 2000,
+          "join_phrase": "",
+          "name": "Pharrell Williams",
+          "rels": {
+            "official homepage": "https://example.org/"
+          },
+          "type": "Group"
+        }
+      ],
+      "name": "Daft Punk feat. Pharrell Williams"
+    },
+    "recording": {
+      "first_release_date": "2000-01-01",
+      "isrcs": [
+        "XX0000000001"
+      ],
+      "length": 300000,
+      "name": "Get Lucky (Radio Edit)",
+      "rels": []
+    }
+  },
+  "00000000-0000-0000-0000-000000000003": {
+    "artist": {
+      "artist_credit_id": 1,
+      "artists": [],
+      "name": "The Quiet Ones"
+    },
+    "recording": {
+      "first_release_date": "2000-01-01",
+      "isrcs": [
+        "XX0000000001"
+      ],
+      "length": 300000,
+      "name": "Undertow (2024 Remaster)",
+      "rels": []
+    }
+  }
+}

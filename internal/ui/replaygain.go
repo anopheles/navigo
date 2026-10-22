@@ -79,5 +79,5 @@ func newState(cfg config.Config) app.State {
 	s := app.New()
 	s.ReplayGain = gainOf(cfg.Player)
 	s.ResumeOn = cfg.ResumeOn()
-	return s
+	return s.WithListenBrainz(lbOf(cfg.ListenBrainz))
 }

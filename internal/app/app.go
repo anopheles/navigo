@@ -54,6 +54,8 @@ type State struct {
 	Gain player.GainTags
 	// ResumeOn says the queue is kept between runs (see resume.go).
 	ResumeOn bool
+	// recs are the user's Recommendations (see recommendations.go).
+	recs recsState
 	// Home is Home's album lists by kind, as the server last sent them.
 	Home map[string]AlbumList
 
@@ -242,6 +244,8 @@ type (
 		Command string
 		Hint    string
 		Err     bool
+		// Quiet keeps it out of the status line: only :messages has it.
+		Quiet bool
 		// Unexpected marks an error navigo can't explain in plain words;
 		// the UI logs it and points to the log.
 		Unexpected bool
@@ -256,6 +260,7 @@ const scrobbleAfter = 4 * time.Minute
 func Apply(s State, e Event) (State, []Effect) {
 	n, out := apply(s, e)
 	n, out = withSaving(s, n, out)
+	n = withRecs(s, n)
 	if np := n.nowPlaying(); !reflect.DeepEqual(np, s.nowPlaying()) {
 		out = append(out, PublishNowPlaying{np})
 	}
@@ -265,12 +270,22 @@ func Apply(s State, e Event) (State, []Effect) {
 func apply(s State, e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case Start:
+		out := []Effect{LoadCache{}}
 		if s.ResumeOn {
-			return s, []Effect{LoadCache{}, LoadSaved{}}
+			out = append(out, LoadSaved{})
 		}
-		return s, []Effect{LoadCache{}}
-	case SavedLoaded, ConfigureResume, LoggedOut:
+		if s.recsOn() {
+			out = append(out, LoadRecs{})
+		}
+		return s, out
+	case SavedLoaded, ConfigureResume:
 		return s.applyResume(e)
+	case LoggedOut:
+		s, out := s.applyResume(e)
+		s.recs.stored = nil
+		return s, append(out, DeleteRecs{})
+	case ConfigureListenBrainz, RecsLoaded, RecsFetched:
+		return s.applyRecs(e)
 	case CacheLoaded:
 		s.cacheChecked = true
 		if s.Library == nil {
@@ -295,20 +310,22 @@ func apply(s State, e Event) (State, []Effect) {
 		}
 		return s, nil
 	case SyncNow:
+		// :sync always asks ListenBrainz too, which doesn't need the server.
+		s, recs := s.fetchRecs(true)
 		switch {
 		case s.Offline:
 			s, out := s.probe(ProbeUser)
-			return s, append(
-				out,
-				Notice{Text: "offline · the library syncs once the server is back"},
+			return s, slices.Concat(
+				out, recs,
+				[]Effect{Notice{Text: "offline · the library syncs once the server is back"}},
 			)
 		case !s.loggedIn:
-			return s, []Effect{Notice{Text: "not connected to the server yet", Err: true}}
+			return s, append(recs, Notice{Text: "not connected to the server yet", Err: true})
 		case s.Sync.Running:
-			return s, []Effect{Notice{Text: "already syncing"}}
+			return s, append(recs, Notice{Text: "already syncing"})
 		}
 		s, out := s.startSync(true)
-		return s, append(out, Notice{Text: "syncing the whole library…"})
+		return s, slices.Concat(out, recs, []Effect{Notice{Text: "syncing the whole library…"}})
 	case SyncProgress:
 		if s.Sync.Running {
 			s.Sync.Done, s.Sync.Total = e.Done, e.Total
@@ -636,12 +653,18 @@ func entryOf(e player.Event) (player.EntryID, bool) {
 	return 0, false
 }
 
+// startSync syncs the library. The startup sync check, which also runs
+// after coming back online, asks ListenBrainz too when its list is due.
 func (s State) startSync(full bool) (State, []Effect) {
 	if s.Sync.Running {
 		return s, nil
 	}
+	var recs []Effect
+	if !full {
+		s, recs = s.fetchRecs(false)
+	}
 	s.Sync = SyncStatus{Running: true}
-	return s, []Effect{StartSync{Old: s.Library, Full: full}}
+	return s, append([]Effect{StartSync{Old: s.Library, Full: full}}, recs...)
 }
 
 // edit records an undo point and applies f to the queue. f returns the

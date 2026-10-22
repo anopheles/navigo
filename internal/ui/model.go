@@ -463,6 +463,9 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 	if cmd, ok := m.runResume(e); ok {
 		return cmd
 	}
+	if cmd, ok := m.runRecs(e); ok {
+		return cmd
+	}
 	switch e := e.(type) {
 	case app.Notice:
 		m.notice(e)
@@ -749,6 +752,10 @@ func (m *Model) notice(n app.Notice) {
 			key = ks[0] + " in the queue"
 		}
 		text += " · " + key + " " + n.Hint
+	}
+	if n.Quiet {
+		m.logMsg(text, n.Err)
+		return
 	}
 	m.setMsg(text, n.Err)
 }

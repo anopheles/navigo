@@ -45,12 +45,7 @@ func (m *Model) setMsg(text string, isErr bool) {
 		m.clearMsg()
 		return
 	}
-	m.msgSeq++
-	msg := message{id: m.msgSeq, text: text, err: isErr, at: m.clock.Now()}
-	m.history = append(m.history, msg)
-	if over := len(m.history) - historySize; over > 0 {
-		m.history = m.history[over:]
-	}
+	msg := m.logMsg(text, isErr)
 	m.shown = msg
 	if !isErr {
 		id := msg.id
@@ -59,6 +54,17 @@ func (m *Model) setMsg(text string, isErr bool) {
 			m.clock.After(infoFor, func(time.Time) tea.Msg { return expireMsg{id} }),
 		)
 	}
+}
+
+// logMsg records a message for :messages without showing it.
+func (m *Model) logMsg(text string, isErr bool) message {
+	m.msgSeq++
+	msg := message{id: m.msgSeq, text: text, err: isErr, at: m.clock.Now()}
+	m.history = append(m.history, msg)
+	if over := len(m.history) - historySize; over > 0 {
+		m.history = m.history[over:]
+	}
+	return msg
 }
 
 // clearMsg empties the status line; the history keeps the message.

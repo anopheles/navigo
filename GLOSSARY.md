@@ -84,6 +84,10 @@ _Avoid_: radio, station, source
 An artist the server reports as close to another, from its own sources; navigo reads these but never keeps them.
 _Avoid_: related artist, neighbour
 
+**Recommendation**:
+A track ListenBrainz suggests for the user from their listening, which a Mix may lean toward; navigo only reads these.
+_Avoid_: suggestion, pick, discovery
+
 **Repeat**:
 What happens at the end of a track or the queue: off, all (start the queue again) or one (play the same queue entry again).
 _Avoid_: loop

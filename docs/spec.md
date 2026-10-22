@@ -20,15 +20,16 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 10. [Search](#search)
 11. [Queue and playback](#queue-and-playback)
 12. [Offline cache and sync](#offline-cache-and-sync)
-13. [Resume](#resume)
-14. [Offline, errors and messages](#offline-errors-and-messages)
-15. [OS media controls](#os-media-controls)
-16. [Colours](#colours)
-17. [Cover art](#cover-art)
-18. [Testing](#testing)
-19. [Licence and dependencies](#licence-and-dependencies)
-20. [Filled in while writing this spec](#filled-in-while-writing-this-spec)
-21. [The walking skeleton and this spec](#the-walking-skeleton-and-this-spec)
+13. [ListenBrainz Recommendations](#listenbrainz-recommendations)
+14. [Resume](#resume)
+15. [Offline, errors and messages](#offline-errors-and-messages)
+16. [OS media controls](#os-media-controls)
+17. [Colours](#colours)
+18. [Cover art](#cover-art)
+19. [Testing](#testing)
+20. [Licence and dependencies](#licence-and-dependencies)
+21. [Filled in while writing this spec](#filled-in-while-writing-this-spec)
+22. [The walking skeleton and this spec](#the-walking-skeleton-and-this-spec)
 
 ## Scope
 
@@ -41,9 +42,11 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 - Login with the OS keyring.
 - Full key rebinding in YAML.
 - **Added after the first release** ([#48](https://github.com/anopheles/navigo/issues/48)): ReplayGain, Resume (the queue comes back at the next start) and colour roles.
+- **Recommendations** ([#47](https://github.com/anopheles/navigo/issues/47)): a Mix leans toward the user's ListenBrainz Recommendations once `listenbrainz.user` is set.
 
 **Out of scope:**
 - **Beyond-parity features:** lyrics, scrobbling settings and multiple servers. Cover art is built ([#60](https://github.com/anopheles/navigo/issues/60)); artist and playlist images are not.
+- **ListenBrainz beyond Recommendations** ([#47](https://github.com/anopheles/navigo/issues/47)): scrobbling to it (Navidrome does), its generated playlists, a list of Recommendations on Home, and Recommendations not in the library.
 - **Offline playback** (downloading audio) ([#9](https://github.com/anopheles/navigo/issues/9)).
 - **Release packaging** (goreleaser, package managers).
 - **A single accent colour:** one colour driving several roles; roles are recoloured one by one or by a named theme ([#52](https://github.com/anopheles/navigo/issues/52)).
@@ -67,6 +70,7 @@ cmd/navigo/          wiring only
 internal/app/        core: session state, queue, register, effects
 internal/library/    domain types, snapshot, cache file, sync, search
 internal/subsonic/   thin HTTP client (+ subsonictest: the fake server)
+internal/listenbrainz/ Recommendations client (+ a fake ListenBrainz)
 internal/mpv/        IPC client + process spawn
 internal/player/     Player interface, mpv adapter, in-memory fake
 internal/mediactl/   MediaControls: MPRIS on Linux, stubs elsewhere
@@ -102,7 +106,7 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 - **Artists** are everyone credited on a track or as an album artist, Various Artists included. Composers, conductors and other roles are left out.
 - The queue holds **queue entries** (`EntryID` + track), so one track can be queued twice and edits and undo stay unambiguous.
 - **Shuffle** is a one-shot, undoable reorder of the queue ([ADR 0004](adr/0004-shuffle-reorders-the-queue.md)). **Repeat** is a mode: off, all or one.
-- A **Mix** is a one-shot, undoable replacement of the queue with tracks picked from the cache, from the whole library or around a **Seed** ([ADR 0006](adr/0006-mix-is-picked-from-the-cache.md)). Around a seed, the server's **similar artists** count too when it can be reached ([ADR 0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md)). It is not a mode: the picked tracks are ordinary queue entries.
+- A **Mix** is a one-shot, undoable replacement of the queue with tracks picked from the cache, from the whole library or around a **Seed** ([ADR 0006](adr/0006-mix-is-picked-from-the-cache.md)). Around a seed, the server's **similar artists** count too when it can be reached ([ADR 0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md)). It is not a mode: the picked tracks are ordinary queue entries. When set up, a Mix leans toward the user's **Recommendations** from ListenBrainz ([ADR 0008](adr/0008-listenbrainz-is-a-second-optional-service.md)).
 
 ## Server API
 
@@ -139,7 +143,7 @@ The form saves to the keyring. If the keyring isn't available, it offers (y/n) t
 **At runtime** the password is kept in memory only and a fresh token is made for each request. No token is ever written to disk.
 
 **Rules:**
-- `:logout` deletes the keyring entry and returns to the form. Logging in as another user or server starts a fresh session.
+- `:logout` deletes the keyring entry and the stored [Recommendations](#listenbrainz-recommendations), and returns to the form. Logging in as another user or server starts a fresh session.
 - If `config.yaml` holds a password and group or others can read it, navigo warns but still runs (Unix only). navigo creates the file with mode 0600.
 - No API-key login in v1 (Navidrome 0.63 doesn't offer it). One `server:` block only.
 
@@ -152,6 +156,10 @@ server:
   url: https://music.example.com
   user: ann
   password_command: pass show navidrome   # or password: …, or nothing (keyring)
+
+listenbrainz:        # Recommendations for a Mix; off without user
+  user: ann
+  url: https://api.listenbrainz.org       # the default; or a self-hosted ListenBrainz
 
 player:
   mpv_path: /opt/mpv/bin/mpv               # when mpv isn't on PATH
@@ -207,6 +215,11 @@ keys:
 - `colors` takes the roles `playing`, `key`, `error` and `selection`. [Colours](#colours).
 - **Validation:** a bad value (an unknown mode, a preamp that isn't a number or is out of range, a colour that can't be read) is skipped, keeps its default and is listed in the same popup as bad bindings, as `config.yaml:LINE:COL: message`. Unknown top-level keys are still ignored, but an unknown role inside `colors` is reported. `navigo check-config` covers all of it.
 - **`:reload-config`** applies all three again: ReplayGain returns to the configured mode and preamp (dropping a `:replaygain` override), colours change at once, and `resume: false` stops saving and deletes the saved queue.
+
+**`listenbrainz`** ([How does the user turn it on?](https://github.com/anopheles/navigo/issues/82)):
+- `user` turns [Recommendations](#listenbrainz-recommendations) on; without it they're off. There's no `enabled` key and no `:` command that sets it. `url` defaults to `https://api.listenbrainz.org`.
+- **Validation:** an empty `user` or a `url` that isn't `http(s)` is skipped, listed in the same popup, and leaves Recommendations off. Whether the user exists is only found out by the first fetch; `navigo check-config` stays offline.
+- **`:reload-config`:** turning them on, or changing `user` or `url`, fetches at once (past the 24 h wait); turning them off stops the lift at once and deletes the stored list.
 
 ## Screens and navigation
 
@@ -348,7 +361,7 @@ The `:` line has Tab completion for command names and arguments.
 
 **Mix** (`gm`, `:mix`) replaces the queue with 50 tracks, or as many as a count says, and plays the first; `u` brings the old queue back. It mixes around the row under the cursor (see Around a seed), else around what plays, else from the whole library. `:mix library` and Home's Mix row always mix from the whole library. It works offline, from the cache.
 - **Before the first sync:** a Mix asked for while the first sync runs waits for it, says so (`mixing from <name> once the library has synced` for a seed), and runs once the library is there, unless the queue or what plays changed since. Home's Mix row shows the sync's progress meanwhile. If the sync fails or the server can't be reached, the Mix is dropped; asking again says why (`nothing to mix · the library couldn't sync`, with `:sync` to try again). Starring, rating and playlist edits before the first sync say why they can't run instead of doing nothing.
-- **Weights:** a track's chance is 1 × starred (×3) × rating (1★ left out, 2★ ×0.5, 3★ or unrated ×1, 4★ ×1.5, 5★ ×2) × staleness (played within 7 days ×0.1, rising in a straight line to ×1 at 90 days; never played ×1). Play count doesn't count, so the mix doesn't lean to all-time favourites.
+- **Weights:** a track's chance is 1 × starred (×3) × rating (1★ left out, 2★ ×0.5, 3★ or unrated ×1, 4★ ×1.5, 5★ ×2) × staleness (played within 7 days ×0.1, rising in a straight line to ×1 at 90 days; never played ×1) × Recommendation (×3; see [ListenBrainz Recommendations](#listenbrainz-recommendations)). Play count doesn't count, so the mix doesn't lean to all-time favourites.
 - **Variety:** at most 3 tracks per artist and 2 per album, and never one artist twice in a row. Artists whose names differ only by case are one artist here and in closeness; Browse still lists them apart.
 - **Too few:** when the rules run out, it takes what's left and says "mixed 23 of 50 tracks"; with nothing to pick it says why and leaves the queue alone. It never pads with unrelated tracks.
 - The weights, size and limits are fixed; there are no settings for them.
@@ -356,7 +369,7 @@ The `:` line has Tab completion for command names and arguments.
 **Around a seed** ([Which tracks does a Mix around a seed pick?](https://github.com/anopheles/navigo/issues/69), [How is a Mix around a seed asked for and shown?](https://github.com/anopheles/navigo/issues/70), [ADR 0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md)):
 - **Seed:** the artist, album, playlist or track under the cursor, in any list, the queue or search. A track row is always a track seed, even in an album's tracks. On a row that can't be a seed (a section, one of Home's album lists, Help), what plays is the seed. `gm` is not bound in Visual mode.
 - **Closeness:** a track's closeness to the seed is the sum of: in the seed +3; a seed artist +2 × √(that artist's share of the seed's tracks); a similar artist +2.5 × rank (1 for the server's first, falling evenly to 0.5 for its last; a track by several counts the best rank); a genre +1 × the share of the seed with that genre. When similar artists came back, genre only adds to a track that already has another signal; with none, genre alone makes a track a candidate. A track with closeness 0 is not a candidate.
-- **Pick weight:** closeness² × the Weights above. A 1★ track is left out even if it's in the seed.
+- **Pick weight:** closeness² × the Weights above, Recommendation included ([#84](https://github.com/anopheles/navigo/issues/84)). A 1★ track is left out even if it's in the seed, and a Recommendation never makes a track a candidate on its own.
 - **From the seed:** a track in the seed, or crediting an artist who makes up at least half of it. These fill at most a third of the Mix (16 of 50), skip the 3-per-artist limit, and skip the 2-per-album limit only when the seed is an album. Never one artist twice in a row applies to everyone.
 - **Opening track:** a track seed plays first whatever its rating or staleness. Other seeds open with a weighted pick from the seed's own tracks.
 - **Similar artists:** on every Mix, `getArtistInfo2` for the top 3 seed artists by share (one for an artist seed), in parallel, matched by ID and by name without case. navigo stores none of them. While they load, the status line says `mixing from <name>…`, the queue stays as it is and keys keep working; if the queue or what plays changes first, the Mix is dropped, and a second `gm` replaces the pending one.
@@ -393,6 +406,38 @@ The `:` line has Tab completion for command names and arguments.
 - The new snapshot replaces the old one in one step, and cursors stay on the same item by ID.
 - **First run:** sections show sync progress, and search and playback wait for the sync.
 
+## ListenBrainz Recommendations
+
+[Map: a Mix that leans toward ListenBrainz Recommendations](https://github.com/anopheles/navigo/issues/47), [ADR 0008](adr/0008-listenbrainz-is-a-second-optional-service.md). Term: **Recommendation**.
+
+**What:** ListenBrainz suggests up to 1,000 recordings for a user, regenerated about once a day. navigo reads them from ListenBrainz itself, without a token, since Navidrome can neither pass them on nor tell navigo the user name. They're off unless `listenbrainz.user` is set ([Configuration](#configuration)).
+
+**Fetching** ([When does navigo fetch Recommendations, and where does it keep them?](https://github.com/anopheles/navigo/issues/81)):
+- At the startup sync check (which also runs after coming back online) when the stored list is over 24 h old or missing, and always on `:sync`. No timer and no indicator.
+- `GET <url>/1/cf/recommendation/user/<user>/recording?count=1000`. When `last_updated` equals the stored one, that's all; otherwise one `POST <url>/1/metadata/recording/` names them all (`inc=artist`). At most 2 requests, with the 10 s API timeout.
+- **Decoded leniently:** the endpoint is experimental, so only `mbids[].recording_mbid` is required; `score` and the rest are ignored.
+
+**Stored:** in its own versioned `encoding/gob` file per server and user beside the cache, written atomically and disposable like it. It holds the `url` and `user` it was fetched for, `last_updated`, when it was fetched, and each Recommendation's MBID, title and artists, not track IDs. A file for another `url` or `user` is ignored and fetched again. `:logout`, or turning Recommendations off, deletes it.
+
+**Matching** ([Which tracks does a Recommendation lift, and by how much?](https://github.com/anopheles/navigo/issues/80)):
+- In memory, each time the library snapshot or the list is replaced.
+- A track matches when one of its artists (display or credited) equals one of the Recommendation's (its credit or each artist) **and** its title equals the Recommendation's. Both are folded: lowercase, accents dropped, `&` read as "and", other runs of non-word characters as one space. Titles also match with bracketed parts and a trailing ` - …` stripped from either side.
+- A title alone never matches, and MusicBrainz IDs aren't used.
+- Every copy of a song (album, compilation, live album) matches and is lifted in full.
+
+**In a Mix:**
+- ×3 in the [Weights](#queue-and-playback), for a whole-library Mix and around a seed; ListenBrainz's score doesn't count. A 1★ track stays out, and staleness and variety apply as usual.
+- A Mix never waits for a fetch. It uses the stored list however old, offline too; during the first fetch it has none.
+- A Mix's messages and rows don't change. The `i` popup shows `recommended by ListenBrainz` on a track that matches.
+
+**Failures** (never offline, which is about the server only):
+- **Unreachable, timeout, 5xx or a reply that can't be read:** keep the stored list and try again at the next startup or `:sync`. `:messages` only: `couldn't reach ListenBrainz · keeping the Recommendations from 22 Oct`, or `· no Recommendations yet`.
+- **429:** wait `X-RateLimit-Reset-In` seconds and retry once, then as above.
+- **404:** error `ListenBrainz has no user "ann" · check listenbrainz.user in config.yaml`; the stored list is dropped.
+- **204** (not generated yet): no Recommendations; info `no Recommendations from ListenBrainz for ann yet · they can take a day or two after your first listens`.
+- Recommendations missing from the metadata reply are dropped quietly.
+- **A new list** says in `:messages` only: `507 of 1,000 Recommendations are in the library`.
+
 ## Resume
 
 [Should navigo restore the last session, and what exactly?](https://github.com/anopheles/navigo/issues/51), which reverses the choice in [#9](https://github.com/anopheles/navigo/issues/9) to start with an empty queue. Terms: **Saved queue**, **Resume**.
@@ -413,6 +458,7 @@ The `:` line has Tab completion for command names and arguments.
 **What offline means:**
 - navigo is offline when a request can't reach the server: connection refused, DNS, timeout, TLS, HTTP 5xx, or a reply that isn't from a Subsonic server. **One failure is enough.**
 - A Subsonic error from the server is not offline. Rejected credentials open the login form.
+- ListenBrainz failing is never offline ([ListenBrainz Recommendations](#listenbrainz-recommendations)).
 
 **Startup:** with a cache, navigo opens from it as usual, shows `offline`, and checks the credentials once the server is back. Without one, the sections say "can't reach `<url>` · retrying", and `:login` is offered.
 
@@ -508,6 +554,7 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
   - the keymap engine and command parser, as pure functions;
   - the mpv IPC client, against a fake socket;
   - the subsonic client, against the `httptest` fake server;
+  - the ListenBrainz client, against an `httptest` fake ListenBrainz with hand-written fixtures (a list, an unchanged `last_updated`, 204, 404, 429 then success, 5xx, metadata missing MBIDs), and Recommendation matching as a pure function. There's no e2e scenario: a synthetic ListenBrainz user can't be recorded, and CI doesn't call the live API;
   - the config values and errors for ReplayGain, Resume and colours, the saved queue's round trip (including a corrupt file, missing tracks, offline start and `:logout`), colour parsing and its degrade at each depth, and the Player call order for `SetReplayGain` on the fake.
 - **The fake server** (`internal/subsonic/subsonictest`) replays JSON recorded from a throwaway Navidrome serving a **synthetic fixture library**; never the live one, since the repo is public. It checks token+salt auth and fails a test on a plain password, a reused salt or an unrecorded request. Re-record with `tools/fixtures.sh up && tools/fixtures.sh record`.
 - **Layer A (in-process UI):** the real Bubble Tea model, core and runner, with the real client against the fake server and the fake Player. Most checks are targeted assertions; a few golden frames cover the layouts (120×40, plus 80×40 for narrow), refreshed with `-update`.
@@ -531,7 +578,7 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
   - **UI:** Bubble Tea v2, Lip Gloss v2, Bubbles v2 (`textinput` only), `charmbracelet/x`.
   - **System:** godbus/dbus v5 (MPRIS), go-winio (Windows pipes), go-keyring.
   - **Config:** go.yaml.in/yaml/v3.
-  - **Search:** golang.org/x/text (folding accents).
+  - **Search:** golang.org/x/text (folding accents, also for matching Recommendations).
   - **Cover art:** golang.org/x/image/webp (BSD-3-Clause), to decode what the server sends.
   - **Tests only:** `x/xpty` and `x/vt`.
 

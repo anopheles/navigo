@@ -51,7 +51,14 @@ func mixAround(s *Snapshot, seed Seed, n int, r uint64) []Track {
 // checkAround checks the rules every Mix around a seed keeps: no track
 // twice, never one artist (any spelling) twice in a row, at most a third
 // from the seed, and at most 3 per artist and 2 per album for the rest.
-func checkAround(t *testing.T, r uint64, got []Track, n int, fromSeed func(Track) bool, seedAlbums bool) {
+func checkAround(
+	t *testing.T,
+	r uint64,
+	got []Track,
+	n int,
+	fromSeed func(Track) bool,
+	seedAlbums bool,
+) {
 	t.Helper()
 	seen := map[TrackID]bool{}
 	byArtist, byAlbum := map[string]int{}, map[AlbumID]int{}
@@ -102,7 +109,12 @@ func TestMixAroundAnAlbum(t *testing.T) {
 		checkAround(t, r, got, 15, fromSeed, true)
 		for _, tr := range got {
 			if tr.Genre != "Rock" {
-				t.Fatalf("seed %d: %s (%q) has nothing in common with the album", r, tr.ID, tr.Genre)
+				t.Fatalf(
+					"seed %d: %s (%q) has nothing in common with the album",
+					r,
+					tr.ID,
+					tr.Genre,
+				)
 			}
 		}
 	}

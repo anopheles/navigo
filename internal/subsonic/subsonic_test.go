@@ -441,13 +441,16 @@ func TestSimilarArtists(t *testing.T) {
 		t.Fatalf("SimilarArtists = %v, %v; want none from a server without agents", got, err)
 	}
 	last := srv.Requests()[len(srv.Requests())-1]
-	if last.Endpoint != "getArtistInfo2" || last.Params.Encode() != "count=20&id=1MNu0aqmjGxOZOiezuZPxB" {
+	if last.Endpoint != "getArtistInfo2" ||
+		last.Params.Encode() != "count=20&id=1MNu0aqmjGxOZOiezuZPxB" {
 		t.Errorf("request = %s %s", last.Endpoint, last.Params.Encode())
 	}
 
 	hs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(`{"subsonic-response":{"status":"ok","version":"1.16.1","artistInfo2":{
-			"similarArtist":[{"id":"b","name":"Bee"},{"id":"c","name":"Sea"}]}}}`))
+		_, _ = w.Write(
+			[]byte(`{"subsonic-response":{"status":"ok","version":"1.16.1","artistInfo2":{
+			"similarArtist":[{"id":"b","name":"Bee"},{"id":"c","name":"Sea"}]}}}`),
+		)
 	}))
 	t.Cleanup(hs.Close)
 	c = New(Credentials{URL: hs.URL, Username: "ann", Password: "secret"})

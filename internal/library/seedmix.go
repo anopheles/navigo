@@ -34,7 +34,13 @@ type Seed struct {
 // seed's top artists (SeedArtists), one list each, closest first; nil
 // when they couldn't be had. It returns fewer than n, or none, when too
 // few tracks are close; it never pads with unrelated ones.
-func (s *Snapshot) MixAround(seed Seed, similar [][]ArtistRef, n int, now time.Time, r *rand.Rand) []Track {
+func (s *Snapshot) MixAround(
+	seed Seed,
+	similar [][]ArtistRef,
+	n int,
+	now time.Time,
+	r *rand.Rand,
+) []Track {
 	c := s.closeness(seed, similar)
 	if len(c.seed) == 0 {
 		return nil

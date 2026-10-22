@@ -27,7 +27,10 @@ func TestNoAudioOutputStopsAtOnce(t *testing.T) {
 		t.Fatalf("no audio %v, current %d, playing %v", s.NoAudio, s.Current, s.Player.Playing)
 	}
 	// mpv ran on to the next entry: ignored, as after any failure.
-	if s, out = run(s, FromPlayer{player.TrackEnded{Entry: 2, Reason: player.NoAudio}}); out != nil {
+	if s, out = run(
+		s,
+		FromPlayer{player.TrackEnded{Entry: 2, Reason: player.NoAudio}},
+	); out != nil {
 		t.Errorf("a later entry's failure did %#v", out)
 	}
 

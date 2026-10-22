@@ -124,7 +124,9 @@ func (s State) applySimilar(e SimilarLoaded) (State, []Effect) {
 	s.mixLookup = nil
 	var out []Effect
 	if e.Unreachable {
-		s, out = s.applyOffline(Unreachable{Err: errors.New("similar artists: can't reach the server")})
+		s, out = s.applyOffline(
+			Unreachable{Err: errors.New("similar artists: can't reach the server")},
+		)
 	}
 	if !w.still(s) {
 		return s, out

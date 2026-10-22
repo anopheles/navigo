@@ -112,7 +112,17 @@ func (m *Model) openKeyMenu() {
 			lines = append(lines, accentStyle.Render(menuGroups[i].title))
 		}
 		for _, r := range rows {
-			lines = append(lines, "  "+keyStyle.Render(fit(r.key, 8))+" "+fit(r.label, width)+" "+dimStyle.Render(r.desc))
+			lines = append(
+				lines,
+				"  "+keyStyle.Render(
+					fit(r.key, 8),
+				)+" "+fit(
+					r.label,
+					width,
+				)+" "+dimStyle.Render(
+					r.desc,
+				),
+			)
 		}
 	}
 	m.openPopup("Keys here", lines)

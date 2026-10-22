@@ -83,7 +83,12 @@ func TestMixVarietyFoldsCase(t *testing.T) {
 			}
 		}
 		if n > mixPerArtist {
-			t.Fatalf("seed %d: %d tracks by the two spellings, want at most %d", seed, n, mixPerArtist)
+			t.Fatalf(
+				"seed %d: %d tracks by the two spellings, want at most %d",
+				seed,
+				n,
+				mixPerArtist,
+			)
 		}
 	}
 }

@@ -168,24 +168,40 @@ func genreLib(n int) *library.Snapshot {
 
 func TestMixAroundASeed(t *testing.T) {
 	seed := &library.Seed{Kind: library.SeedTrack, ID: "a3-b1-t2", Name: "Song 3-1-2"}
-	s, out := answered(run(New(), CacheLoaded{Library: genreLib(30)}, Mix{N: 50, Seed: 7, Around: seed}))
+	s, out := answered(
+		run(New(), CacheLoaded{Library: genreLib(30)}, Mix{N: 50, Seed: 7, Around: seed}),
+	)
 	if len(s.Queue) != 50 || s.Queue[0].Track.ID != "a3-b1-t2" {
-		t.Fatalf("queue %d, opening with %v; want 50 from the seed track", len(s.Queue), s.Queue[0].Track.ID)
+		t.Fatalf(
+			"queue %d, opening with %v; want 50 from the seed track",
+			len(s.Queue),
+			s.Queue[0].Track.ID,
+		)
 	}
 	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mixed 50 tracks from Song 3-1-2" {
 		t.Errorf("notices = %#v", n)
 	}
 
 	small := &library.Seed{Kind: library.SeedTrack, ID: "a1-b0-t0", Name: "Song 1-0-0"}
-	_, out = answered(run(New(), CacheLoaded{Library: genreLib(3)}, Mix{N: 50, Seed: 7, Around: small}))
+	_, out = answered(
+		run(New(), CacheLoaded{Library: genreLib(3)}, Mix{N: 50, Seed: 7, Around: small}),
+	)
 	if n := only[Notice](out); len(n) != 1 || !strings.HasPrefix(n[0].Text, "mixed ") ||
 		!strings.HasSuffix(n[0].Text, " of 50 tracks from Song 1-0-0") {
 		t.Errorf("too few: notices = %#v", n)
 	}
 
 	gone := &library.Seed{Kind: library.SeedAlbum, ID: "nope", Name: "Gone"}
-	s, out = run(New(), CacheLoaded{Library: genreLib(3)}, PlayNow{Tracks: tracks(2)}, Mix{N: 50, Seed: 7, Around: gone})
-	if n := only[Notice](out); len(s.Queue) != 2 || !n[len(n)-1].Err || n[len(n)-1].Text != "nothing to mix from Gone" {
+	s, out = run(
+		New(),
+		CacheLoaded{Library: genreLib(3)},
+		PlayNow{Tracks: tracks(2)},
+		Mix{N: 50, Seed: 7, Around: gone},
+	)
+	if n := only[Notice](
+		out,
+	); len(s.Queue) != 2 || !n[len(n)-1].Err ||
+		n[len(n)-1].Text != "nothing to mix from Gone" {
 		t.Errorf("nothing close: queue %d, notices %#v", len(s.Queue), n)
 	}
 }
@@ -193,7 +209,10 @@ func TestMixAroundASeed(t *testing.T) {
 func TestMixAroundASeedWaitsForTheFirstSync(t *testing.T) {
 	seed := &library.Seed{Kind: library.SeedTrack, ID: "a3-b1-t2", Name: "Song 3-1-2"}
 	s, out := run(syncing(), Mix{N: 50, Seed: 7, Around: seed})
-	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mixing from Song 3-1-2 once the library has synced" {
+	if n := only[Notice](
+		out,
+	); len(n) != 1 ||
+		n[0].Text != "mixing from Song 3-1-2 once the library has synced" {
 		t.Errorf("notices = %#v", n)
 	}
 	s, out = answered(run(s, Synced{Library: genreLib(30)}))
@@ -204,7 +223,9 @@ func TestMixAroundASeedWaitsForTheFirstSync(t *testing.T) {
 		t.Errorf("notices after the sync = %#v", n)
 	}
 	_, out = run(syncing(), Synced{Err: errDown}, Mix{N: 50, Seed: 7, Around: seed})
-	if n := only[Notice](out); n[len(n)-1].Text != "nothing to mix from Song 3-1-2 · the library couldn't sync" {
+	if n := only[Notice](
+		out,
+	); n[len(n)-1].Text != "nothing to mix from Song 3-1-2 · the library couldn't sync" {
 		t.Errorf("failed sync: notices = %#v", n)
 	}
 }
@@ -217,14 +238,22 @@ func answered(s State, out []Effect) (State, []Effect) {
 	if len(f) == 0 {
 		return s, out
 	}
-	s, more := run(s, SimilarLoaded{Seq: f[0].Seq, Lists: make([][]library.ArtistRef, len(f[0].Artists))})
+	s, more := run(
+		s,
+		SimilarLoaded{Seq: f[0].Seq, Lists: make([][]library.ArtistRef, len(f[0].Artists))},
+	)
 	return s, more
 }
 
 func TestMixAroundASeedAsksForSimilarArtists(t *testing.T) {
 	lib := genreLib(30)
 	seed := &library.Seed{Kind: library.SeedAlbum, ID: "a3-b1", Name: "Album 3"}
-	s, out := run(New(), CacheLoaded{Library: lib}, PlayNow{Tracks: tracks(2)}, Mix{N: 30, Seed: 7, Around: seed})
+	s, out := run(
+		New(),
+		CacheLoaded{Library: lib},
+		PlayNow{Tracks: tracks(2)},
+		Mix{N: 30, Seed: 7, Around: seed},
+	)
 	f := only[FetchSimilar](out)
 	if len(f) != 1 || len(f[0].Artists) != 1 || f[0].Artists[0] != "a3" {
 		t.Fatalf("lookups = %#v, want one for a3", f)
@@ -237,7 +266,10 @@ func TestMixAroundASeedAsksForSimilarArtists(t *testing.T) {
 	}
 
 	// Similar artists come in: a Mix with them and without the genre alone.
-	s, out = run(s, SimilarLoaded{Seq: f[0].Seq, Lists: [][]library.ArtistRef{{{ID: "a9", Name: "a9"}}}})
+	s, out = run(
+		s,
+		SimilarLoaded{Seq: f[0].Seq, Lists: [][]library.ArtistRef{{{ID: "a9", Name: "a9"}}}},
+	)
 	if n := only[Notice](out); len(n) == 0 || !strings.HasSuffix(n[0].Text, "tracks from Album 3") {
 		t.Errorf("notices = %#v", n)
 	}

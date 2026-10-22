@@ -185,9 +185,13 @@ func TestNoAudioOutput(t *testing.T) {
 
 	h.keys("<Space>")
 	calls := h.fake.Calls()
-	if i := slices.Index(calls, "Stop"); i < 0 || !slices.ContainsFunc(calls[i:], func(c string) bool {
-		return strings.HasPrefix(c, "Play(")
-	}) {
+	if i := slices.Index(
+		calls,
+		"Stop",
+	); i < 0 ||
+		!slices.ContainsFunc(calls[i:], func(c string) bool {
+			return strings.HasPrefix(c, "Play(")
+		}) {
 		t.Fatalf("<Space> after no audio: %q", calls)
 	}
 	h.fake.Tick(time.Second)

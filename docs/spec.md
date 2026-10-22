@@ -51,7 +51,7 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 
 ## Architecture
 
-Decided in [What is navigo's architecture and domain model?](https://github.com/anopheles/navigo/issues/10), with ADRs [0001](adr/0001-single-writer-core-with-effects-as-data.md)–[0004](adr/0004-shuffle-reorders-the-queue.md); [0006](adr/0006-mix-is-picked-from-the-cache.md) came after v1.
+Decided in [What is navigo's architecture and domain model?](https://github.com/anopheles/navigo/issues/10), with ADRs [0001](adr/0001-single-writer-core-with-effects-as-data.md)–[0004](adr/0004-shuffle-reorders-the-queue.md); [0006](adr/0006-mix-is-picked-from-the-cache.md) and [0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md) came after v1.
 
 **State flow:**
 - A **UI-free core** (`internal/app`) holds the session state: library snapshot, queue, register, undo history, player status and offline state.
@@ -102,7 +102,7 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 - **Artists** are everyone credited on a track or as an album artist, Various Artists included. Composers, conductors and other roles are left out.
 - The queue holds **queue entries** (`EntryID` + track), so one track can be queued twice and edits and undo stay unambiguous.
 - **Shuffle** is a one-shot, undoable reorder of the queue ([ADR 0004](adr/0004-shuffle-reorders-the-queue.md)). **Repeat** is a mode: off, all or one.
-- A **Mix** is a one-shot, undoable replacement of the queue with tracks picked from the cache ([ADR 0006](adr/0006-mix-is-picked-from-the-cache.md)). It is not a mode: the picked tracks are ordinary queue entries.
+- A **Mix** is a one-shot, undoable replacement of the queue with tracks picked from the cache, from the whole library or around a **Seed** ([ADR 0006](adr/0006-mix-is-picked-from-the-cache.md)). Around a seed, the server's **similar artists** count too when it can be reached ([ADR 0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md)). It is not a mode: the picked tracks are ordinary queue entries.
 
 ## Server API
 
@@ -110,14 +110,14 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 
 - **Client:** navigo's own thin JSON client (`f=json`, `v=1.16.1`). Token+salt auth with a **fresh salt per request** and per stream URL, and never `p=`.
 - **Endpoints:**
-  - session and library: `ping`, `getOpenSubsonicExtensions`, `getArtists`, `getArtist`, `getAlbumList2`, `getAlbum`, `getPlaylists`, `getPlaylist`, `search3`;
+  - session and library: `ping`, `getOpenSubsonicExtensions`, `getArtists`, `getArtist`, `getArtistInfo2` (similar artists for a Mix around a seed: `count=20`, without `includeNotPresent`, so only library artists come back), `getAlbumList2`, `getAlbum`, `getPlaylists`, `getPlaylist`, `search3`;
   - playback: `stream`, `getCoverArt`, `scrobble`;
   - stars, ratings and change detection: `star`/`unstar`, `setRating` (one call per track), `getStarred2`, `getScanStatus`, `getIndexes`;
   - playlist edits: `createPlaylist` (also with `playlistId`, to reorder: it replaces the tracks), `updatePlaylist` (also with `name`, to rename), `deletePlaylist`.
 - **Extensions:** `formPost` (calls go as POST once offered, keeping tokens out of URLs) and `transcodeOffset` (seeking in transcoded streams). Optional features are gated on `getOpenSubsonicExtensions`.
 - **Limits:** Navidrome caps list endpoints at 500. An empty-query `search3` lists the whole library with offsets; that's the sync path, with a `getAlbumList2`+`getAlbum` fallback.
 - **Scrobbles:** `stream` doesn't count a play. navigo sends `scrobble submission=false` when a track starts and `submission=true` after half the track or 4 minutes listened, whichever comes first, once per queue-entry play. Seeks don't count toward that.
-- **Timeouts:** 10 s for API calls, 60 s per sync page.
+- **Timeouts:** 10 s for API calls, 60 s per sync page, 2 s for a Mix's similar-artist lookups.
 - **Errors:** a failed response is `subsonic-response.status="failed"` with a code: 40 wrong credentials, 41 token auth unsupported (clear message, no fallback to a plain password), 70 not found.
 
 ## Login and credentials
@@ -227,10 +227,10 @@ keys:
 **Popups** (a Confirmation, track info, the key menu, `:messages`) appear over both windows. They take the `popup` scope, and `q`/`<Esc>` close them.
 
 **Sections:** Home, Artists, Albums, Playlists, Search, Help. There is no Tracks section. Each section remembers its drill-down path and cursor.
-- **Home:** Mix, which runs a Mix rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random, Starred.
+- **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random, Starred.
 - **Artists:** every artist with at least one track, sorted by the server's sort name. Each row shows the artist's own album count, or "appears on N" for artists with no albums of their own.
 - **An artist's page:** their own albums, then a `── Appears on ──` heading (skipped by the cursor) and the albums where they only have tracks. `{`/`}` jump between the two groups. Opening an Appears on album puts the cursor on that artist's first track.
-- **Help:** generated from the bindings in effect, and searchable with `/`.
+- **Help:** generated from the bindings in effect, and searchable with `/`. It describes `gm`'s chain (row, what plays, whole library) once.
 
 **Marks** jump to a section: `'h` Home, `'q` the queue window, `'a` Artists, `'b` Albums, `'p` Playlists, `'s` Search, `'?` Help. They are ordinary bindings to `:home`, `:artists`, ….
 
@@ -273,7 +273,7 @@ keys:
 | Motions | `j` `k` `<Down>` `<Up>` · `gg` `G` `[count]G` · `<C-d>` `<C-u>` `<C-f>` `<C-b>` · `<C-e>` `<C-y>` · `H` `M` `L` · `zz` `zt` `zb` · `{` `}` (groups) · `[count]%` · scroll wheel |
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
-| Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix (`[count]gm` for that many tracks) · `R` repeat off → all → one · `X` stop |
+| Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix around the row under the cursor (`[count]gm` for that many tracks) · `R` repeat off → all → one · `X` stop |
 | Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
@@ -286,7 +286,7 @@ keys:
 **`:`-only commands:**
 - library and playlists: `:sort <field> [desc]` and `:filter genre <text>|year <year>[-<year>]` (each alone undoes it) on Albums, Artists, Home's lists and an album's tracks, `:playlist-add <name>`, `:playlist-new`, `:playlist-rename <name>` (the playlist under the cursor or the one open; a name another playlist has is refused, [#63](https://github.com/anopheles/navigo/issues/63)), `:sync`;
 - session: `:login`, `:logout`, `:reconnect`, `:hints on|off`;
-- playback: `:replaygain [off|track|album]` changes the ReplayGain mode for the session (no argument cycles through them) and has no default key;
+- playback: `:mix library` mixes from the whole library whatever is under the cursor (Tab completes `library`; Home's Mix row runs it, and binding `gm` to it gives the old `gm`); `:replaygain [off|track|album]` changes the ReplayGain mode for the session (no argument cycles through them) and has no default key;
 - rating ([#64](https://github.com/anopheles/navigo/issues/64)): `:rate 1`–`5` rates the track under the cursor, the selection's tracks, or with nothing under the cursor what plays; `:rate 0` clears it. Albums and artists can't be rated, a rating is refused offline like a star, and the cache takes it once the server agrees, so Mix sees it at once. The `i` popup shows a track's rating as `★★★★☆` or `not rated`;
 - the rest: `:messages`, `:info`, `:map`, `:reload-config`.
 
@@ -296,10 +296,10 @@ The `:` line has Tab completion for command names and arguments.
 
 [How does a new user discover navigo without reading docs?](https://github.com/anopheles/navigo/issues/13). Every aid is drawn from the live binding table, so they all follow rebinding.
 
-- **Hint line:** the keys that matter for the row under the cursor and the mode, such as `<CR> play  A add to queue  a play next  V select  ga album  <C-o> go back  's search  <Tab> other window  '? help`. In Visual mode it shows counts ("A add 3 tracks to queue"). It's on by default.
-- **Empty-queue message:** the empty queue window says what to press first.
+- **Hint line:** the keys that matter for the row under the cursor and the mode, such as `<CR> play  A add to queue  a play next  V select  ga album  <C-o> go back  's search  <Tab> other window  '? help`. In Visual mode it shows counts ("A add 3 tracks to queue"). It's on by default. `gm mix` shows only on rows that can be a seed.
+- **Empty-queue message:** the empty queue window says what to press first, including `Or let navigo pick:  gm mix from the whole library`.
 - **Prefix menus:** these appear after a pure prefix (`g`, `'`, `<C-w>`, `d`, leader) has waited 500 ms.
-- **Key menu (`?`):** a popup with the keys for what's under the cursor, grouped as Play, Queue, Select, Go and Help. Pressing a key runs it. It scrolls to fit 24 rows.
+- **Key menu (`?`):** a popup with the keys for what's under the cursor, grouped as Play, Queue, Select, Go and Help. Pressing a key runs it. The Play group names what `gm` would mix from: `mix from <name>`, or on a row that can't be a seed `mix from <what plays>` or `mix from the whole library`. It scrolls to fit 24 rows.
 - **The `:` line teaches keys:** typing fuzzy-matches command names and descriptions, listing each match's key. Matches that apply here come first, then whole words, then scattered letters. Running a command that has a key shows `tip: next time press A`.
 - **Every queue change says what it did** and how to undo it: "3 tracks added to the end of the queue (12 in queue) · u undoes".
 - **A `/` that finds nothing** offers `<CR>` to search the whole library with the same text.
@@ -346,12 +346,22 @@ The `:` line has Tab completion for command names and arguments.
 - **Shuffle** (`S`) reorders the queue once, as one undoable step. **Repeat** (`R`) cycles off → all → one.
 - **`:seek`** ([#62](https://github.com/anopheles/navigo/issues/62)) moves by seconds (`+10`, `-10`) or by a time (`+1:30`, `-0:30`), and goes to a time (`1:30`, `1:02:03`) or a point of the track (`50%`): a sign moves, no sign goes to. A bare number is refused (`seek: "90" is ambiguous · +90 moves by it, 1:30 goes to it`), since `90` and `1:30` would look alike but do different things; a binding with one is reported by `navigo check-config`. A count multiplies only the relative forms.
 
-**Mix** (`gm`, `:mix`, or Home's Mix row) replaces the queue with 50 tracks, or as many as a count says, picked at random from the whole library, and plays the first; `u` brings the old queue back. It works offline, from the cache.
-- **Before the first sync:** a Mix asked for while the first sync runs waits for it, says so, and runs once the library is there, unless the queue or what plays changed since. Home's Mix row shows the sync's progress meanwhile. If the sync fails or the server can't be reached, the Mix is dropped; asking again says why (`nothing to mix · the library couldn't sync`, with `:sync` to try again). Starring, rating and playlist edits before the first sync say why they can't run instead of doing nothing.
+**Mix** (`gm`, `:mix`) replaces the queue with 50 tracks, or as many as a count says, and plays the first; `u` brings the old queue back. It mixes around the row under the cursor (see Around a seed), else around what plays, else from the whole library. `:mix library` and Home's Mix row always mix from the whole library. It works offline, from the cache.
+- **Before the first sync:** a Mix asked for while the first sync runs waits for it, says so (`mixing from <name> once the library has synced` for a seed), and runs once the library is there, unless the queue or what plays changed since. Home's Mix row shows the sync's progress meanwhile. If the sync fails or the server can't be reached, the Mix is dropped; asking again says why (`nothing to mix · the library couldn't sync`, with `:sync` to try again). Starring, rating and playlist edits before the first sync say why they can't run instead of doing nothing.
 - **Weights:** a track's chance is 1 × starred (×3) × rating (1★ left out, 2★ ×0.5, 3★ or unrated ×1, 4★ ×1.5, 5★ ×2) × staleness (played within 7 days ×0.1, rising in a straight line to ×1 at 90 days; never played ×1). Play count doesn't count, so the mix doesn't lean to all-time favourites.
-- **Variety:** at most 3 tracks per artist and 2 per album, and never one artist twice in a row.
-- **Too few:** when the rules run out, it takes what's left and says "mixed 23 of 50 tracks"; with nothing to pick it says why and leaves the queue alone.
+- **Variety:** at most 3 tracks per artist and 2 per album, and never one artist twice in a row. Artists whose names differ only by case are one artist here and in closeness; Browse still lists them apart.
+- **Too few:** when the rules run out, it takes what's left and says "mixed 23 of 50 tracks"; with nothing to pick it says why and leaves the queue alone. It never pads with unrelated tracks.
 - The weights, size and limits are fixed; there are no settings for them.
+
+**Around a seed** ([Which tracks does a Mix around a seed pick?](https://github.com/anopheles/navigo/issues/69), [How is a Mix around a seed asked for and shown?](https://github.com/anopheles/navigo/issues/70), [ADR 0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md)):
+- **Seed:** the artist, album, playlist or track under the cursor, in any list, the queue or search. A track row is always a track seed, even in an album's tracks. On a row that can't be a seed (a section, one of Home's album lists, Help), what plays is the seed. `gm` is not bound in Visual mode.
+- **Closeness:** a track's closeness to the seed is the sum of: in the seed +3; a seed artist +2 × √(that artist's share of the seed's tracks); a similar artist +2.5 × rank (1 for the server's first, falling evenly to 0.5 for its last; a track by several counts the best rank); a genre +1 × the share of the seed with that genre. When similar artists came back, genre only adds to a track that already has another signal; with none, genre alone makes a track a candidate. A track with closeness 0 is not a candidate.
+- **Pick weight:** closeness² × the Weights above. A 1★ track is left out even if it's in the seed.
+- **From the seed:** a track in the seed, or crediting an artist who makes up at least half of it. These fill at most a third of the Mix (16 of 50), skip the 3-per-artist limit, and skip the 2-per-album limit only when the seed is an album. Never one artist twice in a row applies to everyone.
+- **Opening track:** a track seed plays first whatever its rating or staleness. Other seeds open with a weighted pick from the seed's own tracks.
+- **Similar artists:** on every Mix, `getArtistInfo2` for the top 3 seed artists by share (one for an artist seed), in parallel, matched by ID and by name without case. navigo stores none of them. While they load, the status line says `mixing from <name>…`, the queue stays as it is and keys keep working; if the queue or what plays changes first, the Mix is dropped, and a second `gm` replaces the pending one.
+- **Without them:** offline, the lookup is skipped and the Mix is instant. Past the 2 s limit, on a Subsonic error or with an empty list, the Mix is picked from the cache alone with no extra message; the time limit doesn't count as going offline (Navidrome is slow the first time it looks an artist up), but a connection failure does, as for any request.
+- **Messages:** `<name>` is what the row shows (artist, album title, playlist name or track title): `mixed 50 tracks from <name>`, `mixed 4 of 50 tracks from <name>`, or `nothing to mix from <name>` with the queue left alone. A whole-library Mix says `mixed 50 tracks`.
 
 **Undo:** `u`/`<C-r>` walk one queue history from either window. Playlist edits on the server can't be undone.
 

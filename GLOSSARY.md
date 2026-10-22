@@ -73,8 +73,16 @@ A one-shot command that reorders the queue at random; it can be undone like any 
 _Avoid_: shuffle mode, random play
 
 **Mix**:
-A one-shot command that replaces the queue with tracks picked at random from the whole library, leaning toward starred, well-rated tracks not played lately; it can be undone like any other queue edit, and nothing keeps refilling the queue.
+A one-shot command that replaces the queue with tracks picked at random from the whole library, or around a seed, leaning toward starred, well-rated tracks not played lately; it can be undone like any other queue edit, and nothing keeps refilling the queue.
 _Avoid_: radio, autoplay, instant mix, song mix, track mix
+
+**Seed**:
+The artist, album, playlist or track a Mix is built around; a Mix with no seed draws on the whole library.
+_Avoid_: radio, station, source
+
+**Similar artist**:
+An artist the server reports as close to another, from its own sources; navigo reads these but never keeps them.
+_Avoid_: related artist, neighbour
 
 **Repeat**:
 What happens at the end of a track or the queue: off, all (start the queue again) or one (play the same queue entry again).

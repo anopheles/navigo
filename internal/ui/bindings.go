@@ -128,6 +128,8 @@ var lineDefaults = []struct{ scope, keys, command string }{
 	{"global", "<S-Tab>", "complete-back"},
 	{"global", "<Up>", "history-back"},
 	{"global", "<Down>", "history-forward"},
+	{"global", "<C-p>", "history-back"},
+	{"global", "<C-n>", "history-forward"},
 	{"global", "<C-a>", "line-start"},
 	{"global", "<C-e>", "line-end"},
 	{"global", "<C-w>", "kill-word"},

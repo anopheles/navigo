@@ -261,7 +261,7 @@ keys:
 **Modes:**
 - **Normal.**
 - **Visual:** `V`/`v`, whole rows. `:` applies a command to the selection.
-- **Command-line** (`:`), **Search** (`/`) and **Prompt** (text asked for by a popup). These three share one line-editing table: `<C-w>`, `<C-u>`, `<C-a>`/`<C-e>`, history on `<Up>`/`<Down>`, `<Esc>` cancels and `<CR>` accepts.
+- **Command-line** (`:`), **Search** (`/`) and **Prompt** (text asked for by a popup). These three share one line-editing table: `<C-w>`, `<C-u>`, `<C-a>`/`<C-e>`, history on `<Up>`/`<Down>` and `<C-p>`/`<C-n>`, `<Esc>` cancels and `<CR>` accepts.
 
 **Grammar:** `[count] operator [count] motion | [count] operator operator | [count] command`.
 - **Operators:** `d` (remove) and `y` (yank) only. There is one unnamed register shared by every view. `"x` is parsed and rejected.

@@ -123,6 +123,15 @@ func TestCmdlineHistory(t *testing.T) {
 	if v := h.m.line.Value(); v != "dra" {
 		t.Errorf("<Down> back to %q, want the draft", v)
 	}
+	// <C-p> and <C-n> walk it too, as in Vim.
+	h.keys("<C-p>")
+	if v := h.m.line.Value(); v != "queue" {
+		t.Errorf("<C-p> = %q, want queue", v)
+	}
+	h.keys("<C-p><C-n><C-n>")
+	if v := h.m.line.Value(); v != "dra" {
+		t.Errorf("<C-p><C-p><C-n><C-n> = %q, want the draft", v)
+	}
 	h.keys("<Esc>")
 
 	n := h.restart()

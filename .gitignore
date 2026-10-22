@@ -4,3 +4,6 @@
 # build output
 /navigo
 /dist/
+
+# Claude Code agent worktrees
+/.claude/worktrees/

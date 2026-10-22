@@ -10,23 +10,41 @@ import (
 	"github.com/anopheles/navigo/internal/library"
 )
 
+// homeRow is one of Home's rows.
+type homeRow struct{ title, kind, empty string }
+
 // homeLists are Home's rows, in the spec's order, with the server's
 // album list type for each. The first, Mix, is not a list: it runs mix.
-var homeLists = []struct{ title, kind, empty string }{
+// The last, Recommended, is the user's Recommendations, from the cache.
+var homeLists = []homeRow{
 	{"Mix", "mix", ""},
 	{"Recently added", "newest", "nothing here yet"},
 	{"Most played", "frequent", "nothing played yet"},
 	{"Recently played", "recent", "nothing played yet"},
 	{"Random", "random", "nothing here yet"},
 	{"Starred", "starred", "nothing starred yet · * stars an album"},
+	{"Recommended", "recommended", ""},
+}
+
+// homeRows are the rows Home shows: Recommended only while
+// Recommendations are on.
+func (m *Model) homeRows() []homeRow {
+	if m.state.Recs().On {
+		return homeLists
+	}
+	return homeLists[:len(homeLists)-1]
 }
 
 // openHomeList opens one of Home's lists and asks the server for it
 // again; until it answers, the last answer shows.
 func (m *Model) openHomeList(i int, c command.Call) {
-	l := homeLists[i]
-	if l.kind == "mix" {
+	l := m.homeRows()[i]
+	switch l.kind {
+	case "mix":
 		m.mixAround(c, nil) // Home's Mix row is always the whole library
+		return
+	case "recommended":
+		m.lib = append(m.lib, frame{kind: recommendedTracks, title: l.title})
 		return
 	}
 	m.lib = append(m.lib, frame{kind: homeAlbums, homeKind: l.kind, title: l.title})
@@ -163,7 +181,7 @@ func (m *Model) rowSeed() (library.Seed, bool) {
 // Mix needs the whole library: whether one waits, and how far along it is.
 func (m *Model) mixRowNote(i int) string {
 	sy := m.state.Sync
-	if homeLists[i].kind != "mix" || m.state.Library != nil || !sy.Running {
+	if m.homeRows()[i].kind != "mix" || m.state.Library != nil || !sy.Running {
 		return ""
 	}
 	note := " · once the library has synced"
@@ -179,5 +197,39 @@ func (m *Model) mixRowNote(i int) string {
 // onMixRow reports whether the cursor is on Home's Mix row.
 func (m *Model) onMixRow() bool {
 	f := m.top()
-	return f.kind == homeList && homeLists[f.cur].kind == "mix"
+	return f.kind == homeList && f.cur < len(m.homeRows()) && m.homeRows()[f.cur].kind == "mix"
+}
+
+// recommendedOf is the tracks Home's Recommended list shows, sorted and
+// filtered.
+func (m *Model) recommendedOf(f *frame) []library.Track {
+	base := m.state.Recs().Tracks
+	if !f.view.active() {
+		return base
+	}
+	if k := m.viewKey(f); f.view.key != k || f.view.tracks == nil {
+		f.view.key, f.view.tracks = k, apply(f.view, base, trackFacts)
+	}
+	return f.view.tracks
+}
+
+// emptyRecs says why the Recommended list has no rows.
+func (m *Model) emptyRecs() string {
+	switch v := m.state.Recs(); {
+	case m.state.Library == nil:
+		return m.emptyList()
+	case !v.On:
+		return " Recommendations are off · set listenbrainz.user in config.yaml"
+	case v.Fetched:
+		if v.Total == 1 {
+			return " your one Recommendation isn't in the library"
+		}
+		return fmt.Sprintf(
+			" none of your %s Recommendations are in the library",
+			app.Thousands(v.Total),
+		)
+	case v.NotGenerated:
+		return " ListenBrainz has no Recommendations for " + v.User + " yet"
+	}
+	return " no Recommendations yet · navigo asks ListenBrainz at startup and on :sync"
 }

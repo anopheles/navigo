@@ -18,18 +18,20 @@ type Recommendation struct {
 	Artists []string
 }
 
-// Recommended finds the library tracks the Recommendations name, and how
-// many Recommendations matched at least one. A track matches when one of
-// its artists (display or credited) and its title equal a
+// Recommended finds the library tracks the Recommendations name. all is
+// every matching track, every copy of a song included; firsts is one
+// track per Recommendation that matched, in the Recommendations' order,
+// using the copy that comes first in the library. A track matches when
+// one of its artists (display or credited) and its title equal a
 // Recommendation's, both folded and with bracketed parts and a trailing
-// " - …" stripped. Every copy of a song matches.
-func (s *Snapshot) Recommended(recs []Recommendation) (map[TrackID]bool, int) {
-	out := map[TrackID]bool{}
+// " - …" stripped.
+func (s *Snapshot) Recommended(recs []Recommendation) (all map[TrackID]bool, firsts []Track) {
+	all = map[TrackID]bool{}
 	if len(recs) == 0 {
-		return out, 0
+		return all, nil
 	}
-	index := map[string][]TrackID{}
-	for _, t := range s.Tracks {
+	index := map[string][]int{} // positions in s.Tracks, in library order
+	for i, t := range s.Tracks {
 		title := titleKey(t.Title)
 		artists := map[string]bool{matchFold(t.Artist): true}
 		for _, a := range t.Artists {
@@ -37,22 +39,26 @@ func (s *Snapshot) Recommended(recs []Recommendation) (map[TrackID]bool, int) {
 		}
 		for a := range artists {
 			k := a + "\x00" + title
-			index[k] = append(index[k], t.ID)
+			index[k] = append(index[k], i)
 		}
 	}
-	matched := 0
+	listed := map[TrackID]bool{}
 	for _, r := range recs {
-		title, hit := titleKey(r.Title), false
+		title, first := titleKey(r.Title), -1
 		for _, a := range r.Artists {
-			for _, id := range index[matchFold(a)+"\x00"+title] {
-				out[id], hit = true, true
+			for _, i := range index[matchFold(a)+"\x00"+title] {
+				all[s.Tracks[i].ID] = true
+				if first < 0 || i < first {
+					first = i
+				}
 			}
 		}
-		if hit {
-			matched++
+		if first >= 0 && !listed[s.Tracks[first].ID] {
+			listed[s.Tracks[first].ID] = true
+			firsts = append(firsts, s.Tracks[first])
 		}
 	}
-	return out, matched
+	return all, firsts
 }
 
 var (

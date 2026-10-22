@@ -27,7 +27,7 @@ func TestRecommended(t *testing.T) {
 		track("brackets", "(Intro)", "Someone"),
 	}, nil, nil)
 
-	got, matched := s.Recommended([]Recommendation{
+	got, firsts := s.Recommended([]Recommendation{
 		{Title: "hyperballad", Artists: []string{"BJORK"}},
 		{Title: "Heroes", Artists: []string{"David Bowie"}},
 		{Title: "Wonderwall (Remastered)", Artists: []string{"Oasis"}},
@@ -42,8 +42,13 @@ func TestRecommended(t *testing.T) {
 	if keys := slices.Sorted(maps.Keys(got)); !slices.Equal(keys, want) {
 		t.Errorf("matched tracks = %v, want %v", keys, want)
 	}
-	if matched != 5 {
-		t.Errorf("matched Recommendations = %d, want 5", matched)
+	// One per Recommendation, in their order, the first copy in the library.
+	var ids []TrackID
+	for _, t := range firsts {
+		ids = append(ids, t.ID)
+	}
+	if want := []TrackID{"plain", "remaster", "live", "credited", "and"}; !slices.Equal(ids, want) {
+		t.Errorf("firsts = %v, want %v", ids, want)
 	}
 }
 
@@ -58,7 +63,7 @@ func TestRecommendedNone(t *testing.T) {
 		nil,
 		nil,
 	)
-	if got, n := s.Recommended(nil); len(got) != 0 || n != 0 {
-		t.Errorf("Recommended(nil) = %v, %d; want nothing", got, n)
+	if got, firsts := s.Recommended(nil); len(got) != 0 || len(firsts) != 0 {
+		t.Errorf("Recommended(nil) = %v, %v; want nothing", got, firsts)
 	}
 }

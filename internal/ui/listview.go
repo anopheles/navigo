@@ -87,9 +87,10 @@ func trackFacts(t library.Track) facts {
 // sortFields are the fields :sort takes on each kind of list, the first
 // being what the field is called.
 var sortFields = map[listKind][]string{
-	albumList:   {"name", "artist", "year", "plays", "tracks", "length", "genre"},
-	artistList:  {"name", "albums"},
-	albumTracks: {"number", "title", "artist", "year", "plays", "length", "genre"},
+	albumList:         {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	artistList:        {"name", "albums"},
+	albumTracks:       {"number", "title", "artist", "year", "plays", "length", "genre"},
+	recommendedTracks: {"title", "artist", "year", "plays", "length", "genre"},
 }
 
 func fieldsFor(k listKind) []string {
@@ -153,6 +154,10 @@ func (m *Model) viewKey(f *frame) string {
 	key := fmt.Sprintf("%p", m.state.Library)
 	if f.kind == homeAlbums {
 		l := m.state.Home[f.homeKind].Albums
+		key += fmt.Sprintf("|%p|%d", l, len(l))
+	}
+	if f.kind == recommendedTracks {
+		l := m.state.Recs().Tracks
 		key += fmt.Sprintf("|%p|%d", l, len(l))
 	}
 	return key

@@ -46,7 +46,7 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 
 **Out of scope:**
 - **Beyond-parity features:** lyrics, scrobbling settings and multiple servers. Cover art is built ([#60](https://github.com/anopheles/navigo/issues/60)); artist and playlist images are not.
-- **ListenBrainz beyond Recommendations** ([#47](https://github.com/anopheles/navigo/issues/47)): scrobbling to it (Navidrome does), its generated playlists, a list of Recommendations on Home, and Recommendations not in the library.
+- **ListenBrainz beyond Recommendations** ([#47](https://github.com/anopheles/navigo/issues/47)): scrobbling to it (Navidrome does), its generated playlists, and Recommendations not in the library.
 - **Offline playback** (downloading audio) ([#9](https://github.com/anopheles/navigo/issues/9)).
 - **Release packaging** (goreleaser, package managers).
 - **A single accent colour:** one colour driving several roles; roles are recoloured one by one or by a named theme ([#52](https://github.com/anopheles/navigo/issues/52)).
@@ -240,7 +240,7 @@ keys:
 **Popups** (a Confirmation, track info, the key menu, `:messages`) appear over both windows. They take the `popup` scope, and `q`/`<Esc>` close them.
 
 **Sections:** Home, Artists, Albums, Playlists, Search, Help. There is no Tracks section. Each section remembers its drill-down path and cursor.
-- **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random, Starred.
+- **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random, Starred; then, while [Recommendations](#listenbrainz-recommendations) are on, Recommended.
 - **Artists:** every artist with at least one track, sorted by the server's sort name. Each row shows the artist's own album count, or "appears on N" for artists with no albums of their own.
 - **An artist's page:** their own albums, then a `── Appears on ──` heading (skipped by the cursor) and the albums where they only have tracks. `{`/`}` jump between the two groups. Opening an Appears on album puts the cursor on that artist's first track.
 - **Help:** generated from the bindings in effect, and searchable with `/`. It describes `gm`'s chain (row, what plays, whole library) once.
@@ -429,6 +429,12 @@ The `:` line has Tab completion for command names and arguments.
 - ×3 in the [Weights](#queue-and-playback), for a whole-library Mix and around a seed; ListenBrainz's score doesn't count. A 1★ track stays out, and staleness and variety apply as usual.
 - A Mix never waits for a fetch. It uses the stored list however old, offline too; during the first fetch it has none.
 - A Mix's messages and rows don't change. The `i` popup shows `recommended by ListenBrainz` on a track that matches.
+
+**On Home:** a **Recommended** row after Starred, only while Recommendations are on, opens a list of tracks from the cache, titled `Recommended (534)`:
+- One row per Recommendation in the library, played or not, in ListenBrainz's order; of several copies of a song, the first in the library. `:sort` and `:filter` work as on Home's other lists.
+- Rows look like a playlist's tracks. `<CR>` plays the list from that row, as with a playlist; `a`/`A`, `gm`, `i`, `*`, `ga`/`gr` work as on any track.
+- A new list or a sync updates it in place, the cursor staying on its track. Offline it works from the stored list.
+- **Empty:** `no Recommendations yet · navigo asks ListenBrainz at startup and on :sync`, `ListenBrainz has no Recommendations for ann yet` (204), or `none of your 1,000 Recommendations are in the library`.
 
 **Failures** (never offline, which is about the server only):
 - **Unreachable, timeout, 5xx or a reply that can't be read:** keep the stored list and try again at the next startup or `:sync`. `:messages` only: `couldn't reach ListenBrainz · keeping the Recommendations from 22 Oct`, or `· no Recommendations yet`.

@@ -78,10 +78,12 @@ type recsState struct {
 	// want is a fetch asked for before the stored list was read:
 	// wantNone, wantDue or wantForced.
 	want int
-	// matched are the library tracks the list names, and matchedRecs how
-	// many Recommendations named at least one.
-	matched     map[library.TrackID]bool
-	matchedRecs int
+	// matched are the library tracks the list names, every copy; list is
+	// one track per Recommendation, best first, for Home's list.
+	matched map[library.TrackID]bool
+	list    []library.Track
+	// notGenerated: ListenBrainz said it has made none for the user yet.
+	notGenerated bool
 }
 
 const (
@@ -99,6 +101,28 @@ func (s State) WithListenBrainz(user, api string) State {
 
 // Recommended reports whether a track is one of the user's Recommendations.
 func (s State) Recommended(id library.TrackID) bool { return s.recs.matched[id] }
+
+// RecsView is what Home's Recommended list shows: one track per
+// Recommendation in the library, best first, and why it may be empty.
+type RecsView struct {
+	On           bool            // listenbrainz.user is set
+	Tracks       []library.Track // in ListenBrainz's order
+	Fetched      bool            // a list is stored
+	Total        int             // Recommendations in the stored list
+	NotGenerated bool            // ListenBrainz has made none yet
+	User         string
+}
+
+// Recs is what Home's Recommended list shows.
+func (s State) Recs() RecsView {
+	v := RecsView{
+		On: s.recsOn(), Tracks: s.recs.list, NotGenerated: s.recs.notGenerated, User: s.recs.user,
+	}
+	if st := s.recs.stored; st != nil {
+		v.Fetched, v.Total = true, len(st.Recs)
+	}
+	return v
+}
 
 func (s State) recsOn() bool { return s.recs.user != "" }
 
@@ -165,17 +189,18 @@ func (s State) recsFetched(e RecsFetched) (State, []Effect) {
 		st := e.Stored
 		s.recs.stored = &st
 		s = s.matchRecs()
-		text := fmt.Sprintf("%s Recommendations from ListenBrainz", thousands(len(st.Recs)))
+		s.recs.notGenerated = false
+		text := fmt.Sprintf("%s Recommendations from ListenBrainz", Thousands(len(st.Recs)))
 		if s.Library != nil {
 			text = fmt.Sprintf(
 				"%s of %s Recommendations are in the library",
-				thousands(s.recs.matchedRecs), thousands(len(st.Recs)),
+				Thousands(len(s.recs.list)), Thousands(len(st.Recs)),
 			)
 		}
 		return s, []Effect{SaveRecs{Stored: st}, Notice{Text: text, Quiet: true}}
 	case FetchUnchanged:
 		st := e.Stored
-		s.recs.stored = &st
+		s.recs.stored, s.recs.notGenerated = &st, false
 		return s, []Effect{SaveRecs{Stored: st}}
 	case FetchNoUser:
 		s.recs.stored = nil
@@ -186,7 +211,7 @@ func (s State) recsFetched(e RecsFetched) (State, []Effect) {
 			Err: true,
 		}}
 	case FetchNotGenerated:
-		s.recs.stored = nil
+		s.recs.stored, s.recs.notGenerated = nil, true
 		return s, []Effect{DeleteRecs{}, Notice{Text: fmt.Sprintf(
 			"no Recommendations from ListenBrainz for %s yet · they can take a day or two after your first listens",
 			s.recs.user,
@@ -215,15 +240,15 @@ func withRecs(old, n State) State {
 
 func (s State) matchRecs() State {
 	if s.Library == nil || s.recs.stored == nil {
-		s.recs.matched, s.recs.matchedRecs = nil, 0
+		s.recs.matched, s.recs.list = nil, nil
 		return s
 	}
-	s.recs.matched, s.recs.matchedRecs = s.Library.Recommended(s.recs.stored.Recs)
+	s.recs.matched, s.recs.list = s.Library.Recommended(s.recs.stored.Recs)
 	return s
 }
 
-// thousands writes n with commas, as in 1,000.
-func thousands(n int) string {
+// Thousands writes n with commas, as in 1,000.
+func Thousands(n int) string {
 	d := strconv.Itoa(n)
 	for i := len(d) - 3; i > 0; i -= 3 {
 		d = d[:i] + "," + d[i:]

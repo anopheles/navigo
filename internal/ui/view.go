@@ -155,6 +155,9 @@ func (m *Model) libTitle() string {
 	var parts []string
 	for _, f := range m.lib[1:] {
 		t := f.title
+		if f.kind == recommendedTracks {
+			t = fmt.Sprintf("%s (%d)", f.title, len(m.state.Recs().Tracks))
+		}
 		if f.kind == playlistTracks && m.state.Library != nil {
 			if p, ok := m.state.Library.Playlist(f.playlist); ok {
 				t = p.Name // it may have been renamed since
@@ -204,6 +207,8 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	case n > 0:
 	case f.kind == homeAlbums:
 		out = append(out, dimStyle.Render(fit(m.emptyHome(f.homeKind), w)))
+	case f.kind == recommendedTracks:
+		out = append(out, dimStyle.Render(fit(m.emptyRecs(), w)))
 	case f.kind == helpList && f.help != nil:
 		out = append(out, dimStyle.Render(fit(m.emptyHelp(f.help), w)))
 	case f.kind == searchList && f.search != nil:
@@ -261,7 +266,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case albumList:
 		return m.albumLine(m.albumsOf(f)[i], w)
 	case homeList:
-		return fit(" "+homeLists[i].title+m.mixRowNote(i), w)
+		return fit(" "+m.homeRows()[i].title+m.mixRowNote(i), w)
 	case homeAlbums:
 		return m.albumLine(m.albumsOf(f)[i], w)
 	case playlistList:
@@ -271,6 +276,8 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case playlistTracks:
 		ts := lib.PlaylistTracks(f.playlist)
 		return m.trackLine("  ", fmt.Sprint(i+1), ts[i], w)
+	case recommendedTracks:
+		return m.trackLine("  ", fmt.Sprint(i+1), m.recommendedOf(f)[i], w)
 	case searchList:
 		return m.searchRowText(f.search, i, w)
 	case helpList:

@@ -110,6 +110,7 @@ const (
 	albumTracks
 	playlistList
 	playlistTracks
+	recommendedTracks // Home's Recommended list
 	searchList
 	helpList
 )
@@ -347,7 +348,7 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		switch msg.Event.(type) {
-		case app.Synced, app.CacheLoaded:
+		case app.Synced, app.CacheLoaded, app.RecsLoaded, app.RecsFetched:
 			keep := m.cursorIDs()
 			cmd := m.dispatch(msg.Event)
 			for _, f := range m.searchFrames() {
@@ -940,6 +941,8 @@ func (m *Model) scopes() []string {
 		return []string{"playlists", "containers", "global"}
 	case playlistTracks:
 		return []string{"playlist-tracks", "tracks", "global"}
+	case recommendedTracks:
+		return []string{"tracks", "global"}
 	case helpList:
 		return []string{"help", "global"}
 	case searchList:
@@ -973,7 +976,9 @@ func (m *Model) rows(f *frame) int {
 	case f.kind == helpList && f.help != nil:
 		return len(f.help.rows)
 	case f.kind == homeList:
-		return len(homeLists)
+		return len(m.homeRows())
+	case f.kind == recommendedTracks:
+		return len(m.recommendedOf(f))
 	case f.kind == homeAlbums:
 		return len(m.albumsOf(f))
 	case lib == nil:
@@ -1017,7 +1022,9 @@ func (m *Model) rowID(f *frame, i int) string {
 	lib := m.state.Library
 	switch f.kind {
 	case homeList:
-		return homeLists[i].kind
+		return m.homeRows()[i].kind
+	case recommendedTracks:
+		return string(m.recommendedOf(f)[i].ID)
 	case homeAlbums:
 		return string(m.albumsOf(f)[i].ID)
 	case artistList:

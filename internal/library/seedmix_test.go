@@ -290,7 +290,7 @@ func TestSeedArtists(t *testing.T) {
 	}
 }
 
-func TestMixAroundLiftsOnlyCloseRecommendations(t *testing.T) {
+func TestMixAroundFavoursOnlyCloseRecommendations(t *testing.T) {
 	s := seedLibrary()
 	// Artist 9 has no genre, so only their own tracks are close. Of their
 	// 18, one is a Recommendation; so is a Jazz track by Artist 5.

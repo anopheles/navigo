@@ -219,7 +219,7 @@ keys:
 **`listenbrainz`** ([How does the user turn it on?](https://github.com/anopheles/navigo/issues/82)):
 - `user` turns [Recommendations](#listenbrainz-recommendations) on; without it they're off. There's no `enabled` key and no `:` command that sets it. `url` defaults to `https://api.listenbrainz.org`.
 - **Validation:** an empty `user` or a `url` that isn't `http(s)` is skipped, listed in the same popup, and leaves Recommendations off. Whether the user exists is only found out by the first fetch; `navigo check-config` stays offline.
-- **`:reload-config`:** turning them on, or changing `user` or `url`, fetches at once (past the 24 h wait); turning them off stops the lift at once and deletes the stored list.
+- **`:reload-config`:** turning them on, or changing `user` or `url`, fetches at once (past the 24 h wait); turning them off stops a Mix leaning toward them at once and deletes the stored list.
 
 ## Screens and navigation
 
@@ -423,7 +423,7 @@ The `:` line has Tab completion for command names and arguments.
 - In memory, each time the library snapshot or the list is replaced.
 - A track matches when one of its artists (display or credited) equals one of the Recommendation's (its credit or each artist) **and** its title equals the Recommendation's. Both are folded: lowercase, accents dropped, `&` read as "and", other runs of non-word characters as one space. Titles also match with bracketed parts and a trailing ` - …` stripped from either side.
 - A title alone never matches, and MusicBrainz IDs aren't used.
-- Every copy of a song (album, compilation, live album) matches and is lifted in full.
+- Every copy of a song (album, compilation, live album) matches and gets the full ×3.
 
 **In a Mix:**
 - ×3 in the [Weights](#queue-and-playback), for a whole-library Mix and around a seed; ListenBrainz's score doesn't count. A 1★ track stays out, and staleness and variety apply as usual.

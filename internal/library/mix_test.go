@@ -183,9 +183,9 @@ func TestStaleness(t *testing.T) {
 	}
 }
 
-// TestMixLiftsRecommendations checks how often the first pick is track 0,
+// TestMixFavoursRecommendations checks how often the first pick is track 0,
 // out of two tracks by different artists, when it is a Recommendation.
-func TestMixLiftsRecommendations(t *testing.T) {
+func TestMixFavoursRecommendations(t *testing.T) {
 	cases := []struct {
 		name    string
 		change  func(*Track)

@@ -19,9 +19,9 @@ const (
 	mixPerAlbum  = 2
 )
 
-// recommendedLift is how much more likely a Mix is to pick one of the
-// user's Recommendations; ListenBrainz's score doesn't count.
-const recommendedLift = 3
+// recommendedWeight multiplies the Mix weight of the user's
+// Recommendations; ListenBrainz's score doesn't count.
+const recommendedWeight = 3
 
 // Mix picks up to n tracks at random from the whole library, leaning
 // toward starred and well-rated tracks that haven't played lately, and
@@ -52,7 +52,7 @@ func (s *Snapshot) mixOrder(
 	for i, t := range s.Tracks {
 		w := s.mixWeight(t, now)
 		if recommended[t.ID] {
-			w *= recommendedLift
+			w *= recommendedWeight
 		}
 		if close != nil && w > 0 {
 			c := close(t)

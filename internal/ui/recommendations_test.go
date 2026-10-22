@@ -131,7 +131,7 @@ func TestReloadConfigTurnsRecommendationsOnAndOff(t *testing.T) {
 	}
 	h.command("reload-config")
 	if h.recommended("Undertow") {
-		t.Error("turning them off kept the lift")
+		t.Error("turning them off kept the Recommendations")
 	}
 	if _, err := os.Stat(
 		listenbrainz.Path(h.cache, h.srv.URL, subsonictest.Username),

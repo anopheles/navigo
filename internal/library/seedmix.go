@@ -46,7 +46,7 @@ func (s *Snapshot) MixAround(
 	if len(c.seed) == 0 {
 		return nil
 	}
-	// A Recommendation is lifted only if it is close already: closeness 0
+	// A Recommendation weighs more only if it is close already: closeness 0
 	// still leaves it out.
 	order := s.mixOrder(now, r, recommended, c.of)
 	rules := mixRules{

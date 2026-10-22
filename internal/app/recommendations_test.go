@@ -87,7 +87,7 @@ func TestStoredListForAnotherUserIsIgnored(t *testing.T) {
 	other.User = "bob-lb"
 	s, out := startedWith(&other)
 	if s.Recommended("t1") {
-		t.Error("another user's list lifted a track")
+		t.Error("another user's list counted")
 	}
 	if f := only[FetchRecs](out); len(f) != 1 || f[0].Old != nil {
 		t.Errorf("FetchRecs = %#v, want one without the old list", f)
@@ -217,7 +217,7 @@ func TestReloadConfig(t *testing.T) {
 		t.Errorf("new user: FetchRecs = %#v", f)
 	}
 	if s2.Recommended("t1") {
-		t.Error("the old user's list still lifts")
+		t.Error("the old user's list still counts")
 	}
 	if s3, _ := run(s2, fetched(FetchNew, lbList(2, "Track 1"))); s3.Recommended("t1") {
 		t.Error("an answer for the old user was taken")
@@ -225,7 +225,7 @@ func TestReloadConfig(t *testing.T) {
 	// Off deletes the list.
 	s, out = run(s, ConfigureListenBrainz{})
 	if len(only[DeleteRecs](out)) != 1 || s.Recommended("t1") {
-		t.Errorf("off: effects %#v, still lifts %v", out, s.Recommended("t1"))
+		t.Errorf("off: effects %#v, still recommended %v", out, s.Recommended("t1"))
 	}
 	// Turned on again mid-run: fetched at once, no file to wait for.
 	if _, out = run(
@@ -243,7 +243,7 @@ func TestLogoutDeletesTheList(t *testing.T) {
 	s, _ = run(s, fetched(FetchNew, lbList(1, "Track 1")))
 	s, out := run(s, LoggedOut{})
 	if len(only[DeleteRecs](out)) != 1 || s.Recommended("t1") {
-		t.Errorf(":logout: %#v, still lifts %v", out, s.Recommended("t1"))
+		t.Errorf(":logout: %#v, still recommended %v", out, s.Recommended("t1"))
 	}
 }
 

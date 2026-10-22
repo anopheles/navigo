@@ -373,7 +373,8 @@ func (m *Model) nowPlayingCard() []string {
 		if s.Player.Buffering {
 			right = append([]string{"buffering"}, right...)
 		}
-		text[1] = fit(" "+m.accent(icon+" "+t.Title), w)
+		// Two spaces: some fonts draw ⏸ wider than its cell, over one.
+		text[1] = fit(" "+m.accent(icon+"  "+t.Title), w)
 		text[2] = fit(" "+titleOff.Render(t.Artist), w)
 		text[3] = fit(" "+dimStyle.Render(t.Album), w)
 		text[4] = fit(m.cardRight(right, w), w)

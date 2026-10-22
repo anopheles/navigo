@@ -48,7 +48,7 @@ func TestMPVDiesAndResumes(t *testing.T) {
 	if !slices.Contains(h.fake.Calls(), "Play(1 2 3 from 42s)") {
 		t.Errorf("no resume at 42s in %q", h.fake.Calls())
 	}
-	h.contains("▶ Low Tide", "0:42 / 3:05")
+	h.contains("▶  Low Tide", "0:42 / 3:05")
 	h.lacks("mpv stopped")
 }
 
@@ -77,5 +77,5 @@ func TestMPVCrashCap(t *testing.T) {
 	h.advance(time.Minute)
 	h.lacks("mpv keeps crashing")
 	h.keys("<Space>")
-	h.contains("▶ Dusk Signal")
+	h.contains("▶  Dusk Signal")
 }

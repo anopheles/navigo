@@ -39,7 +39,7 @@ func TestBrowseOpenPlay(t *testing.T) {
 	h.fake.Tick(42 * time.Second)
 	h.pump()
 	h.contains(
-		"▶ Low Tide — Aurora Lane · Blue Hour",
+		"▶  Low Tide — Aurora Lane · Blue Hour",
 		"2/6 in queue",
 		"0:42 / 3:05",
 		"playing · 6 tracks in the queue",
@@ -89,12 +89,12 @@ func TestAutoAdvanceAndTransport(t *testing.T) {
 	h.keys("3j<CR><CR>")
 	h.fake.Finish()
 	h.pump()
-	h.contains("▶ Low Tide", "2/6 in queue")
+	h.contains("▶  Low Tide", "2/6 in queue")
 	if calls := h.fake.Calls(); calls[len(calls)-1] != "SetNeighbours(1 3)" {
 		t.Errorf("after the track ended: %q", calls)
 	}
 	h.keys("<Space>")
-	h.contains("⏸ Low Tide")
+	h.contains("⏸  Low Tide")
 	h.keys("<Space>3.>")
 	want := []string{"Pause", "Resume", "SeekBy(30s)", "Play(2 3 4)", "SetNeighbours(2 4)"}
 	if calls := h.fake.Calls(); strings.Join(calls[len(calls)-5:], " ") != strings.Join(want, " ") {

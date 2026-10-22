@@ -91,7 +91,7 @@ func TestBrokenFileIsSkipped(t *testing.T) {
 	h.keys("3j<CR><CR>")
 	h.fake.FailCurrent("loading failed")
 	h.pump()
-	h.contains("couldn't play Dusk Signal (loading failed) · skipped", "▶ Low Tide")
+	h.contains("couldn't play Dusk Signal (loading failed) · skipped", "▶  Low Tide")
 	h.lacks("offline")
 }
 
@@ -160,8 +160,8 @@ func TestBarShowsWhatPlaysWhileOffline(t *testing.T) {
 	h.srv.SetDown(true)
 	h.cmd("sync")
 	h.keys("2j<CR>")
-	h.contains("▶ Dusk Signal", "not in the queue", "offline · the queue is ready")
-	h.lacks("▶ Streetlamp")
+	h.contains("▶  Dusk Signal", "not in the queue", "offline · the queue is ready")
+	h.lacks("▶  Streetlamp")
 }
 
 // No audio output: playback stops on the track, nothing is skipped, and

@@ -17,7 +17,7 @@ import (
 
 var (
 	// the playing track on a line of the now-playing bar: the two-line bar
-	// has "▶ title — artist", the cover card the title alone
+	// has "▶  title — artist", the cover card the title alone
 	playingRE  = regexp.MustCompile(`[▶⏸] (.+?)(?: — |\s*$)`)
 	barRuleRE  = regexp.MustCompile(`^─+$`)
 	positionRE = regexp.MustCompile(` (\d+):(\d\d) / \d+:\d\d\b`)
@@ -191,7 +191,7 @@ func TestTransport(t *testing.T) {
 	}
 
 	s.keys(" ")
-	s.waitText("⏸ ", 5*time.Second)
+	s.waitText("⏸  ", 5*time.Second)
 	time.Sleep(time.Second) // let a last position update land
 	p := s.position()
 	time.Sleep(1500 * time.Millisecond)

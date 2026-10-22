@@ -42,7 +42,7 @@ func TestMediaControls(t *testing.T) {
 		t.Error("Play didn't resume")
 	}
 	h.send(MediaMsg(mediactl.Command{Kind: mediactl.Next}))
-	h.contains("▶ Streetlamp")
+	h.contains("▶  Streetlamp")
 	if media.last.Title != "Streetlamp" {
 		t.Errorf("after Next: %q", media.last.Title)
 	}

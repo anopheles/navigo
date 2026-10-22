@@ -82,7 +82,7 @@ func TestPlaylistsSection(t *testing.T) {
 	h.keys("j<CR>")
 	h.contains("Playlists › Morning Mix", "Undertow", "朝霧")
 	h.keys("j<CR>")
-	h.contains("playing · 5 tracks in the queue", "▶ Undertow", "2/5 in queue")
+	h.contains("playing · 5 tracks in the queue", "▶  Undertow", "2/5 in queue")
 }
 
 func TestPlaylistRemoveAsks(t *testing.T) {

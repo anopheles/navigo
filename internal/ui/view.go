@@ -633,7 +633,8 @@ func (m *Model) nowPlaying() []string {
 		if s.Player.Paused {
 			icon = "⏸"
 		}
-		left = fmt.Sprintf(" %s %s — %s · %s", icon, t.Title, t.Artist, t.Album)
+		// Two spaces: some fonts draw ⏸ wider than its cell, over one.
+		left = fmt.Sprintf(" %s  %s — %s · %s", icon, t.Title, t.Artist, t.Album)
 		if row >= 0 {
 			right = append(right, fmt.Sprintf("%d/%d in queue", row+1, len(s.Queue)))
 		} else {

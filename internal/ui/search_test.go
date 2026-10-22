@@ -105,7 +105,7 @@ func TestSearchRows(t *testing.T) {
 	h.keys(":search low tide<CR>")
 	h.cursorOn("Low Tide")
 	h.keys("<CR>")
-	h.contains("▶ Low Tide", "2/6 in queue")
+	h.contains("▶  Low Tide", "2/6 in queue")
 
 	// ga goes to its album, on the track.
 	h.keys("ga")

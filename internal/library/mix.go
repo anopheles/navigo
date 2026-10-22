@@ -19,21 +19,31 @@ const (
 	mixPerAlbum  = 2
 )
 
+// recommendedLift is how much more likely a Mix is to pick one of the
+// user's Recommendations; ListenBrainz's score doesn't count.
+const recommendedLift = 3
+
 // Mix picks up to n tracks at random from the whole library, leaning
-// toward starred and well-rated tracks that haven't played lately. It
+// toward starred and well-rated tracks that haven't played lately, and
+// toward the user's Recommendations (recommended may be nil). It
 // takes at most mixPerArtist tracks of an artist and mixPerAlbum of an
 // album, never puts an artist twice in a row, and leaves out tracks
 // rated one star. Artists whose names differ only by case count as one.
 // It returns fewer than n when the rules run out of tracks.
-func (s *Snapshot) Mix(n int, now time.Time, r *rand.Rand) []Track {
-	return s.pick(s.mixOrder(now, r, nil), n, mixRules{})
+func (s *Snapshot) Mix(n int, now time.Time, r *rand.Rand, recommended map[TrackID]bool) []Track {
+	return s.pick(s.mixOrder(now, r, recommended, nil), n, mixRules{})
 }
 
 // mixOrder is the library's tracks in a weighted random order
 // (Efraimidis–Spirakis): each track's key is -ln(u)/weight, and the
 // smallest keys come first. A track's weight is its Mix weight, times
 // closeness² when closeness is given; tracks of weight 0 are left out.
-func (s *Snapshot) mixOrder(now time.Time, r *rand.Rand, close func(Track) float64) []Track {
+func (s *Snapshot) mixOrder(
+	now time.Time,
+	r *rand.Rand,
+	recommended map[TrackID]bool,
+	close func(Track) float64,
+) []Track {
 	type keyed struct {
 		key float64
 		i   int
@@ -41,6 +51,9 @@ func (s *Snapshot) mixOrder(now time.Time, r *rand.Rand, close func(Track) float
 	order := make([]keyed, 0, len(s.Tracks))
 	for i, t := range s.Tracks {
 		w := s.mixWeight(t, now)
+		if recommended[t.ID] {
+			w *= recommendedLift
+		}
 		if close != nil && w > 0 {
 			c := close(t)
 			w *= c * c

@@ -40,12 +40,15 @@ func (s *Snapshot) MixAround(
 	n int,
 	now time.Time,
 	r *rand.Rand,
+	recommended map[TrackID]bool,
 ) []Track {
 	c := s.closeness(seed, similar)
 	if len(c.seed) == 0 {
 		return nil
 	}
-	order := s.mixOrder(now, r, c.of)
+	// A Recommendation is lifted only if it is close already: closeness 0
+	// still leaves it out.
+	order := s.mixOrder(now, r, recommended, c.of)
 	rules := mixRules{
 		fromSeed:   c.fromSeed,
 		seedCap:    max(1, n/3),

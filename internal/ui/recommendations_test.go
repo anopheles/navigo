@@ -141,3 +141,19 @@ func TestReloadConfigTurnsRecommendationsOnAndOff(t *testing.T) {
 		t.Errorf("stored list after turning them off: %v", err)
 	}
 }
+
+func TestInfoPopupNamesARecommendation(t *testing.T) {
+	h, _ := lbHarness(t, listenbrainztest.User)
+	h.keys("'s")
+	h.typeText("undertow")
+	h.keys("<CR>")
+	if !strings.Contains(h.cursorRow(), "Undertow") {
+		t.Fatalf("cursor on %q, want Undertow", h.cursorRow())
+	}
+	h.keys("i")
+	h.contains("recommended by ListenBrainz")
+	h.keys("q'b")
+	h.keys("i") // an album: no such line
+	h.contains("Tracks")
+	h.lacks("recommended by ListenBrainz")
+}

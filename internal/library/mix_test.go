@@ -28,7 +28,7 @@ func mixLibrary(artists, albums, tracks int) []Track {
 
 func mix(tracks []Track, starred []string, n int, seed uint64) []Track {
 	s := Build("s", "u", time.Time{}, nil, nil, tracks, nil, starred)
-	return s.Mix(n, mixNow, rand.New(rand.NewPCG(seed, seed)))
+	return s.Mix(n, mixNow, rand.New(rand.NewPCG(seed, seed)), nil)
 }
 
 func TestMixVarietyRules(t *testing.T) {
@@ -180,5 +180,49 @@ func TestStaleness(t *testing.T) {
 	}
 	if mid := staleness(day(48), mixNow); mid < 0.5 || mid > 0.6 {
 		t.Errorf("48 days: %v, want about halfway", mid)
+	}
+}
+
+// TestMixLiftsRecommendations checks how often the first pick is track 0,
+// out of two tracks by different artists, when it is a Recommendation.
+func TestMixLiftsRecommendations(t *testing.T) {
+	cases := []struct {
+		name    string
+		change  func(*Track)
+		starred bool
+		share   float64
+	}{
+		{"recommended", func(*Track) {}, false, 3.0 / 4},
+		{"recommended and starred", func(*Track) {}, true, 9.0 / 10},
+		{
+			"recommended, played yesterday",
+			func(t *Track) { t.Played = mixNow.AddDate(0, 0, -1) },
+			false,
+			0.3 / 1.3,
+		},
+		{"recommended, one star", func(t *Track) { t.Rating = 1 }, false, 0},
+	}
+	const runs = 4000
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			tracks := mixLibrary(2, 1, 1)
+			c.change(&tracks[0])
+			var starred []string
+			if c.starred {
+				starred = []string{string(tracks[0].ID)}
+			}
+			s := Build("s", "u", time.Time{}, nil, nil, tracks, nil, starred)
+			recs := map[TrackID]bool{tracks[0].ID: true}
+			first := 0
+			for seed := range uint64(runs) {
+				got := s.Mix(1, mixNow, rand.New(rand.NewPCG(seed, seed)), recs)
+				if len(got) > 0 && got[0].ID == tracks[0].ID {
+					first++
+				}
+			}
+			if got := float64(first) / runs; got < c.share-0.03 || got > c.share+0.03 {
+				t.Errorf("picked first %.3f of the time, want %.3f", got, c.share)
+			}
+		})
 	}
 }

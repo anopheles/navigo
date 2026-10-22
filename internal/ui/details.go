@@ -222,6 +222,9 @@ func (m *Model) info(command.Call) error {
 		add("Length", clock(t.Duration))
 		add("Played", times(t.PlayCount))
 		add("Rating", stars(t.Rating))
+		if m.state.Recommended(t.ID) {
+			add("", "recommended by ListenBrainz")
+		}
 		if np, _, ok := m.state.NowPlaying(); ok && np.ID == t.ID {
 			add("ReplayGain", m.gainText())
 		}

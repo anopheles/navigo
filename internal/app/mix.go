@@ -140,12 +140,12 @@ func (s State) mix(e Mix, similar [][]library.ArtistRef) (State, []Effect) {
 	r := rand.New(rand.NewPCG(e.Seed, e.Seed^0x9e3779b97f4a7c15))
 	var picked []library.Track
 	if e.Around != nil {
-		picked = s.Library.MixAround(*e.Around, similar, e.N, e.At, r)
+		picked = s.Library.MixAround(*e.Around, similar, e.N, e.At, r, s.recs.matched)
 		if len(picked) == 0 {
 			return s, []Effect{Notice{Text: "nothing to mix" + e.from(), Err: true}}
 		}
 	} else {
-		picked = s.Library.Mix(e.N, e.At, r)
+		picked = s.Library.Mix(e.N, e.At, r, s.recs.matched)
 	}
 	if len(picked) == 0 {
 		why := "every track is rated one star"

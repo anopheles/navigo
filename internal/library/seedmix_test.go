@@ -45,7 +45,7 @@ func seedLibrary() *Snapshot {
 }
 
 func mixAround(s *Snapshot, seed Seed, n int, r uint64) []Track {
-	return s.MixAround(seed, nil, n, mixNow, rand.New(rand.NewPCG(r, r)))
+	return s.MixAround(seed, nil, n, mixNow, rand.New(rand.NewPCG(r, r)), nil)
 }
 
 // checkAround checks the rules every Mix around a seed keeps: no track
@@ -269,7 +269,7 @@ func TestClosenessWithSimilarArtists(t *testing.T) {
 }
 
 func mixAroundSimilar(s *Snapshot, seed Seed, similar [][]ArtistRef, n int, r uint64) []Track {
-	return s.MixAround(seed, similar, n, mixNow, rand.New(rand.NewPCG(r, r)))
+	return s.MixAround(seed, similar, n, mixNow, rand.New(rand.NewPCG(r, r)), nil)
 }
 
 func TestSeedArtists(t *testing.T) {
@@ -287,5 +287,30 @@ func TestSeedArtists(t *testing.T) {
 	}
 	if got := s.SeedArtists(Seed{Kind: SeedAlbum, ID: "gone"}, 3); len(got) != 0 {
 		t.Errorf("unknown seed: %v", got)
+	}
+}
+
+func TestMixAroundLiftsOnlyCloseRecommendations(t *testing.T) {
+	s := seedLibrary()
+	// Artist 9 has no genre, so only their own tracks are close. Of their
+	// 18, one is a Recommendation; so is a Jazz track by Artist 5.
+	recs := map[TrackID]bool{"a9-b0-t0": true, "a5-b0-t0": true}
+	seed := Seed{Kind: SeedArtist, ID: "a9", Name: "Artist 9"}
+	const runs = 3000
+	opened := 0
+	for r := range uint64(runs) {
+		got := s.MixAround(seed, nil, 10, mixNow, rand.New(rand.NewPCG(r, r)), recs)
+		for _, tr := range got {
+			if tr.ID == "a5-b0-t0" {
+				t.Fatalf("seed %d: a Recommendation with no closeness got in", r)
+			}
+		}
+		if got[0].ID == "a9-b0-t0" {
+			opened++
+		}
+	}
+	// The opener is a weighted pick from the seed: 3 of 17 + 3.
+	if got, want := float64(opened)/runs, 3.0/20; got < want-0.03 || got > want+0.03 {
+		t.Errorf("the Recommendation opened %.3f of the time, want %.3f", got, want)
 	}
 }

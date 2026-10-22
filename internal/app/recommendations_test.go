@@ -254,3 +254,20 @@ func TestThousands(t *testing.T) {
 		}
 	}
 }
+
+func TestMixLeansTowardRecommendations(t *testing.T) {
+	s, _ := startedWith(nil)
+	s, _ = run(s, fetched(FetchNew, lbList(1, "Track 1")))
+	first := 0
+	const runs = 2000
+	for seed := range uint64(runs) {
+		m, _ := run(s, Mix{N: 1, Seed: seed, At: time.Unix(1, 0)})
+		if len(m.Queue) == 1 && m.Queue[0].Track.ID == "t1" {
+			first++
+		}
+	}
+	// Three tracks by one artist: t1 weighs 3, the others 1 each.
+	if got := float64(first) / runs; got < 0.55 || got > 0.65 {
+		t.Errorf("t1 was picked %.3f of the time, want about 0.6", got)
+	}
+}

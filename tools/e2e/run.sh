@@ -3,7 +3,7 @@
 # synthetic fixture library, as the CI e2e job does. navigo and mpv run in
 # the cached CI image; Navidrome runs beside it on the host network.
 #
-# Needs Docker, Go and ffmpeg on the host (for the fixture library). To run
+# Needs Docker and Go on the host. To run
 # against the live server instead: go test -tags e2e ./e2e (reads .env.e2e).
 set -eu
 

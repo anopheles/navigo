@@ -10,12 +10,12 @@ help:
 	@echo "vet              go vet ./..."
 	@echo "fmt              golangci-lint fmt"
 	@echo "gate             the full CI gate in Docker (tools/ci/local.sh)"
-	@echo "e2e              layer B against a throwaway Navidrome (Docker, ffmpeg)"
+	@echo "e2e              layer B against a throwaway Navidrome (Docker)"
 	@echo "e2e-live         layer B against your own server, from .env.e2e"
 	@echo "fixtures-up      generate the fixture library and start Navidrome"
 	@echo "fixtures-record  seed and record the fixtures"
 	@echo "fixtures-down    stop Navidrome and drop its data"
-	@echo "demo             record docs/media/demo.gif (Docker, ffmpeg)"
+	@echo "demo             record docs/media/demo.gif (Docker)"
 
 build:
 	go build -o navigo ./cmd/navigo

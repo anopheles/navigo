@@ -6,7 +6,7 @@
 #   tools/fixtures.sh record   seed playlists and stars, then record fixtures
 #   tools/fixtures.sh down     stop Navidrome and drop its data
 #
-# Needs ffmpeg, Docker and Go. The library goes to $NAVIGO_FIXTURE_MUSIC
+# Needs Docker and Go. The library goes to $NAVIGO_FIXTURE_MUSIC
 # (default: the user cache dir), never into the repo.
 set -eu
 

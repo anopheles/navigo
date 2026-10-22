@@ -1,7 +1,7 @@
 #!/bin/sh
 # Records docs/media/demo.gif: a throwaway Navidrome serves the synthetic
 # fixture library with generated covers, and VHS (in Docker, with mpv) runs
-# navigo against it. Needs Docker, ffmpeg and Go. Nothing is recorded from a
+# navigo against it. Needs Docker and Go. Nothing is recorded from a
 # real server.
 #
 #   tools/demo/demo.sh

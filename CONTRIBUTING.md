@@ -65,7 +65,7 @@ what you saw, and on which OS, terminal and mpv version.
 
 ```sh
 tools/ci/local.sh   # golangci-lint, vet, tests, licences: what CI runs
-tools/e2e/run.sh    # layer B against a throwaway Navidrome (needs Docker, ffmpeg)
+tools/e2e/run.sh    # layer B against a throwaway Navidrome (needs Docker)
 ```
 
 `go test -tags e2e ./e2e` runs layer B against your own server instead,
@@ -77,7 +77,7 @@ for that account.
 
 `make demo` records `docs/media/demo.gif`: a throwaway Navidrome serves the
 synthetic fixture library with generated covers, and [VHS](https://github.com/charmbracelet/vhs)
-runs navigo against it in Docker (`tools/demo/`). It needs Docker, ffmpeg and
+runs navigo against it in Docker (`tools/demo/`). It needs Docker and
 Go. The script is `tools/demo/demo.tape`; change it when the interface
 changes and record again. Never record a real library: the repository is
 public.

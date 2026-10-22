@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"math/rand/v2"
 	"time"
@@ -31,11 +32,43 @@ func (e Mix) from() string {
 
 func (Mix) isEvent() {}
 
+// mixLookups is how many seed artists a Mix asks similar artists for.
+const mixLookups = 3
+
+// The similar-artist lookups: how many artists each asks for, and how
+// long they may take together. The server is slow the first time it
+// looks an artist up, so running out of time doesn't mean it's gone.
+const (
+	SimilarCount = 20
+	SimilarLimit = 2 * time.Second
+)
+
+// FetchSimilar asks the server for the similar artists of each of
+// Artists, in parallel and within a short time limit, and reports
+// SimilarLoaded with Seq.
+type FetchSimilar struct {
+	Seq     int
+	Artists []library.ArtistID
+}
+
+// SimilarLoaded is the answer to FetchSimilar: one list per artist asked
+// for, closest first, empty where a lookup failed or ran out of time.
+// Unreachable says one couldn't reach the server.
+type SimilarLoaded struct {
+	Seq         int
+	Lists       [][]library.ArtistRef
+	Unreachable bool
+}
+
+func (FetchSimilar) isEffect() {}
+func (SimilarLoaded) isEvent() {}
+
 // mixWait is a Mix asked for before the first sync was done, with what
 // the queue was then. It runs when the sync is done, unless the queue or
 // what plays changed since: then the listener has moved on.
 type mixWait struct {
 	mix             Mix
+	seq             int // the lookup's, for a Mix waiting on similar artists
 	nextID, playing player.EntryID
 	queueLen        int
 }
@@ -50,12 +83,7 @@ func (s State) MixWaiting() bool { return s.mixWait != nil }
 func (s State) applyMix(e Mix) (State, []Effect) {
 	if s.Library == nil {
 		if s.Sync.Running && !s.Offline {
-			s.mixWait = &mixWait{
-				mix:      e,
-				nextID:   s.nextID,
-				playing:  s.playing,
-				queueLen: len(s.Queue),
-			}
+			s.mixWait = s.waiting(e)
 			n := Notice{Text: "the library is syncing · the mix starts once it's done"}
 			if e.Around != nil {
 				n.Text = "mixing" + e.from() + " once the library has synced"
@@ -64,10 +92,53 @@ func (s State) applyMix(e Mix) (State, []Effect) {
 		}
 		return s, []Effect{s.unsynced("nothing to mix" + e.from())}
 	}
+	s.mixLookup = nil // a newer Mix replaces one waiting on the server
+	if e.Around != nil && !s.Offline {
+		if artists := s.Library.SeedArtists(*e.Around, mixLookups); len(artists) > 0 {
+			s.mixSeq++
+			s.mixLookup = s.waiting(e)
+			s.mixLookup.seq = s.mixSeq
+			return s, []Effect{
+				FetchSimilar{Seq: s.mixSeq, Artists: artists},
+				Notice{Text: "mixing" + e.from() + "…"},
+			}
+		}
+	}
+	return s.mix(e, nil)
+}
+
+// waiting is e waiting for something, with what the queue is now.
+func (s State) waiting(e Mix) *mixWait {
+	return &mixWait{mix: e, nextID: s.nextID, playing: s.playing, queueLen: len(s.Queue)}
+}
+
+// applySimilar makes the Mix that waited on similar artists, unless a
+// newer Mix replaced it or the queue or what plays changed meanwhile. A
+// lookup that couldn't reach the server takes navigo offline, but the
+// Mix is still made, from the cache.
+func (s State) applySimilar(e SimilarLoaded) (State, []Effect) {
+	w := s.mixLookup
+	if w == nil || w.seq != e.Seq {
+		return s, nil
+	}
+	s.mixLookup = nil
+	var out []Effect
+	if e.Unreachable {
+		s, out = s.applyOffline(Unreachable{Err: errors.New("similar artists: can't reach the server")})
+	}
+	if !w.still(s) {
+		return s, out
+	}
+	s, more := s.mix(w.mix, e.Lists)
+	return s, append(more, out...)
+}
+
+// mix makes Mix e, around its seed with the given similar artists.
+func (s State) mix(e Mix, similar [][]library.ArtistRef) (State, []Effect) {
 	r := rand.New(rand.NewPCG(e.Seed, e.Seed^0x9e3779b97f4a7c15))
 	var picked []library.Track
 	if e.Around != nil {
-		picked = s.Library.MixAround(*e.Around, e.N, e.At, r)
+		picked = s.Library.MixAround(*e.Around, similar, e.N, e.At, r)
 		if len(picked) == 0 {
 			return s, []Effect{Notice{Text: "nothing to mix" + e.from(), Err: true}}
 		}

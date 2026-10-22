@@ -393,6 +393,20 @@ type Starred struct {
 	Songs   []Song   `json:"song"`
 }
 
+// SimilarArtists returns up to count artists the server finds similar to
+// one, closest first (getArtistInfo2). Only artists in the library come
+// back, since includeNotPresent isn't asked for; a server with no source
+// for them returns none.
+func (c *Client) SimilarArtists(ctx context.Context, id string, count int) ([]Artist, error) {
+	var r struct {
+		ArtistInfo2 struct {
+			SimilarArtist []Artist `json:"similarArtist"`
+		} `json:"artistInfo2"`
+	}
+	err := c.call(ctx, "getArtistInfo2", url.Values{"id": {id}, "count": {strconv.Itoa(count)}}, &r)
+	return r.ArtistInfo2.SimilarArtist, err
+}
+
 // Starred returns the user's starred artists, albums and songs.
 func (c *Client) Starred(ctx context.Context) (Starred, error) {
 	var r struct {

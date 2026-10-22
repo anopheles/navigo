@@ -56,3 +56,32 @@ func TestMixLibraryCompletes(t *testing.T) {
 	h.keys("<Esc>:mix everything<CR>")
 	h.contains("mix: give library, or nothing to mix around the row")
 }
+
+// Online, a Mix around a seed asks the server for its artists' similar
+// artists; offline it doesn't, and is made from the cache at once.
+func TestMixAroundAsksForSimilarArtists(t *testing.T) {
+	h := homeHarness(t, 160, 40, nil)
+	h.keys("'a")
+	artist := h.m.artistsOf(h.m.top())[0]
+	h.keys("gm")
+	h.contains("tracks from " + artist.Name)
+	var asked []string
+	for _, r := range h.srv.Requests() {
+		if r.Endpoint == "getArtistInfo2" {
+			asked = append(asked, r.Params.Encode())
+		}
+	}
+	if want := "count=20&id=" + string(artist.ID); len(asked) != 1 || asked[0] != want {
+		t.Errorf("similar-artist requests = %q, want [%s]", asked, want)
+	}
+
+	h.srv.SetDown(true)
+	h.keys(":sync<CR>")
+	h.contains("offline")
+	h.keys("u") // the old queue back, so the next Mix's message is fresh
+	h.keys("gm")
+	h.contains("tracks from " + artist.Name)
+	if n := h.requests("getArtistInfo2"); n != 1 {
+		t.Errorf("offline, %d similar-artist requests in all, want still 1", n)
+	}
+}

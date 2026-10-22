@@ -217,14 +217,14 @@ func TestMix(t *testing.T) {
 	s := start(t, srv)
 	s.synced()
 
-	s.keys("3gm")
+	s.keys("'hgg3gm") // Home's Mix row is no seed, and nothing plays
 	s.waitText("mixed 3 tracks", 15*time.Second)
 	serverPlays(t, srv, s.playing())
 	if n, _ := strconv.Atoi(queueRE.FindStringSubmatch(s.screen())[2]); n != 3 {
 		t.Errorf("queue after 3gm has %d entries, want 3", n)
 	}
 
-	s.keys(":mix library<CR>")
+	s.keys(":mix library\r")
 	s.waitText("u brings the old queue back", 15*time.Second)
 	// A library with few artists and albums can't fill 50 under the Mix
 	// limits (3 per artist, 2 per album), so the full-size queue is the

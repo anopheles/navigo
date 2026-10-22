@@ -12,6 +12,8 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"charm.land/bubbles/v2/textinput"
@@ -557,6 +559,8 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 			e.After,
 			func(time.Time) tea.Msg { return eventMsg{app.RetryNow{Seq: seq}} },
 		)
+	case app.FetchSimilar:
+		return func() tea.Msg { return eventMsg{similarArtists(ctx, c, e)} }
 	case app.FetchAlbumList:
 		return func() tea.Msg {
 			if c == nil {
@@ -1095,4 +1099,40 @@ func digits(s string) (int, error) {
 		return 0, strconv.ErrSyntax
 	}
 	return strconv.Atoi(s)
+}
+
+// similarArtists runs a Mix's similar-artist lookups in parallel, all
+// within app.SimilarLimit. A lookup that fails or runs out of time leaves
+// its list empty; only one that couldn't reach the server before the
+// limit counts as unreachable.
+func similarArtists(ctx context.Context, c *subsonic.Client, e app.FetchSimilar) app.SimilarLoaded {
+	out := app.SimilarLoaded{Seq: e.Seq, Lists: make([][]library.ArtistRef, len(e.Artists))}
+	if c == nil {
+		return out
+	}
+	lctx, cancel := context.WithTimeout(ctx, app.SimilarLimit)
+	defer cancel()
+	var (
+		wg          sync.WaitGroup
+		unreachable atomic.Bool
+	)
+	for i, id := range e.Artists {
+		wg.Go(func() {
+			list, err := c.SimilarArtists(lctx, string(id), app.SimilarCount)
+			if err != nil {
+				if subsonic.IsUnreachable(err) && lctx.Err() == nil {
+					unreachable.Store(true)
+				}
+				return
+			}
+			refs := make([]library.ArtistRef, len(list))
+			for j, a := range list {
+				refs[j] = library.ArtistRef{ID: library.ArtistID(a.ID), Name: a.Name}
+			}
+			out.Lists[i] = refs // each lookup writes only its own list
+		})
+	}
+	wg.Wait()
+	out.Unreachable = unreachable.Load()
+	return out
 }

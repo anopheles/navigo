@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -102,6 +103,27 @@ func run(c *client, out string) error {
 	for _, a := range albums {
 		rec.get("getAlbum", url.Values{"id": {a.ID}})
 	}
+	// Similar artists of everyone credited, as a Mix around a seed asks
+	// (external services are off here, so the lists are empty).
+	credited := map[string]bool{}
+	for _, ix := range artists.Artists.Index {
+		for _, a := range ix.Artist {
+			credited[a.ID] = true
+		}
+	}
+	for _, a := range albums {
+		for _, s := range a.Song {
+			credited[s.ArtistID] = true
+			for _, sa := range s.Artists {
+				credited[sa.ID] = true
+			}
+		}
+	}
+	for _, id := range slices.Sorted(maps.Keys(credited)) {
+		if id != "" {
+			rec.get("getArtistInfo2", url.Values{"id": {id}, "count": {"20"}})
+		}
+	}
 	rec.files["error-70.json"] = rec.get("getAlbum", url.Values{"id": {subsonictest.NotFoundID}})
 	var playlists struct {
 		Playlists struct{ Playlist []struct{ ID string } }
@@ -173,6 +195,8 @@ type album struct {
 		ID         string
 		Track      int
 		DiscNumber int
+		ArtistID   string
+		Artists    []struct{ ID string }
 	}
 }
 

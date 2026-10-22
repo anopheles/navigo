@@ -62,6 +62,10 @@ type State struct {
 	// mixWait is a Mix asked for during the first sync; it runs once the
 	// library is there (see mix.go).
 	mixWait *mixWait
+	// mixLookup is a Mix around a seed waiting for the server's similar
+	// artists; mixSeq numbers the lookups, so a stale answer is dropped.
+	mixLookup *mixWait
+	mixSeq    int
 
 	// Resume: the saved queue read at startup waits in pending for the
 	// library; saving starts once it is restored or known to be none, so
@@ -480,6 +484,8 @@ func apply(s State, e Event) (State, []Effect) {
 		return s.applyReplayGain(e)
 	case Mix:
 		return s.applyMix(e)
+	case SimilarLoaded:
+		return s.applySimilar(e)
 	case LoadAlbumList, AlbumListLoaded:
 		return s.applyHome(e)
 	case SetStars, StarsWritten:

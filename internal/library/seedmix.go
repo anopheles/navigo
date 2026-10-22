@@ -30,10 +30,12 @@ type Seed struct {
 // track's chance is its closeness² times its Mix weight. Tracks from the
 // seed fill at most a third of the Mix, skip the limit per artist (and
 // per album for an album seed), and one of them opens it: the seed
-// itself for a track. It returns fewer than n, or none, when too few
-// tracks are close; it never pads with unrelated ones.
-func (s *Snapshot) MixAround(seed Seed, n int, now time.Time, r *rand.Rand) []Track {
-	c := s.closeness(seed)
+// itself for a track. similar are the server's similar artists for the
+// seed's top artists (SeedArtists), one list each, closest first; nil
+// when they couldn't be had. It returns fewer than n, or none, when too
+// few tracks are close; it never pads with unrelated ones.
+func (s *Snapshot) MixAround(seed Seed, similar [][]ArtistRef, n int, now time.Time, r *rand.Rand) []Track {
+	c := s.closeness(seed, similar)
 	if len(c.seed) == 0 {
 		return nil
 	}
@@ -58,10 +60,28 @@ type closeness struct {
 	in      map[TrackID]bool
 	artists map[string]float64 // each artist's share of the seed, by artistKey
 	genres  map[string]float64 // each genre's share of the seed, in lower case
+	// similar is each similar artist's rank factor, by artistKey and by
+	// ID: 1 for the server's first, falling evenly to 0.5 for its last.
+	similar   map[string]float64
+	similarID map[ArtistID]float64
 }
 
-func (s *Snapshot) closeness(seed Seed) closeness {
-	c := closeness{s: s, in: map[TrackID]bool{}, artists: map[string]float64{}, genres: map[string]float64{}}
+func (s *Snapshot) closeness(seed Seed, similar [][]ArtistRef) closeness {
+	c := closeness{
+		s: s, in: map[TrackID]bool{}, artists: map[string]float64{}, genres: map[string]float64{},
+		similar: map[string]float64{}, similarID: map[ArtistID]float64{},
+	}
+	for _, list := range similar {
+		for i, a := range list {
+			f := 1.0
+			if len(list) > 1 {
+				f = 1 - 0.5*float64(i)/float64(len(list)-1)
+			}
+			k := s.artistKey(a.ID, a.Name)
+			c.similar[k] = max(c.similar[k], f)
+			c.similarID[a.ID] = max(c.similarID[a.ID], f)
+		}
+	}
 	for _, t := range s.seedTracks(seed) {
 		if !c.in[t.ID] {
 			c.in[t.ID] = true
@@ -86,21 +106,79 @@ func (s *Snapshot) closeness(seed Seed) closeness {
 }
 
 // of is a track's closeness to the seed: 3 for a track in it, plus
-// 2 × √share for the seed artist with the best share, plus the share of
-// the seed with its genre. 0 means it isn't a candidate.
+// 2 × √share for the seed artist with the best share, plus 2.5 × the rank
+// factor of its best similar artist, plus the share of the seed with its
+// genre. With similar artists, the genre only adds to a track that is
+// close otherwise. 0 means it isn't a candidate.
 func (c closeness) of(t Track) float64 {
 	var v float64
 	if c.in[t.ID] {
 		v += 3
 	}
-	best := 0.0
+	seedArtist, similar := 0.0, 0.0
 	for _, k := range c.s.trackArtists(t) {
-		best = max(best, c.artists[k])
+		seedArtist = max(seedArtist, c.artists[k])
+		similar = max(similar, c.similar[k])
 	}
-	if best > 0 {
-		v += 2 * math.Sqrt(best)
+	for _, id := range trackArtistIDs(t) {
+		similar = max(similar, c.similarID[id])
+	}
+	if seedArtist > 0 {
+		v += 2 * math.Sqrt(seedArtist)
+	}
+	v += 2.5 * similar
+	if len(c.similar) > 0 && v == 0 {
+		return 0
 	}
 	return v + c.genres[strings.ToLower(t.Genre)]
+}
+
+// trackArtistIDs are the IDs of the artists a track credits.
+func trackArtistIDs(t Track) []ArtistID {
+	if len(t.Artists) == 0 {
+		return []ArtistID{t.ArtistID}
+	}
+	out := make([]ArtistID, len(t.Artists))
+	for i, a := range t.Artists {
+		out[i] = a.ID
+	}
+	return out
+}
+
+// SeedArtists are the seed's top n artists by their share of it, ties in
+// the order they first appear: the artists whose similar artists a Mix
+// around it asks the server for. An artist seed is just that artist.
+func (s *Snapshot) SeedArtists(seed Seed, n int) []ArtistID {
+	tracks := s.seedTracks(seed)
+	if len(tracks) == 0 {
+		return nil
+	}
+	if seed.Kind == SeedArtist {
+		return []ArtistID{ArtistID(seed.ID)}
+	}
+	type artist struct {
+		id    ArtistID
+		count int
+	}
+	var all []artist
+	at := map[string]int{} // artistKey → index in all
+	for _, t := range tracks {
+		for _, id := range trackArtistIDs(t) {
+			k := s.artistKey(id, "")
+			if i, ok := at[k]; ok {
+				all[i].count++
+				continue
+			}
+			at[k] = len(all)
+			all = append(all, artist{id, 1})
+		}
+	}
+	slices.SortStableFunc(all, func(a, b artist) int { return b.count - a.count })
+	out := make([]ArtistID, 0, n)
+	for _, a := range all[:min(n, len(all))] {
+		out = append(out, a.id)
+	}
+	return out
 }
 
 // fromSeed reports whether a track is from the seed: in it, or by an

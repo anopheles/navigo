@@ -45,7 +45,7 @@ func seedLibrary() *Snapshot {
 }
 
 func mixAround(s *Snapshot, seed Seed, n int, r uint64) []Track {
-	return s.MixAround(seed, n, mixNow, rand.New(rand.NewPCG(r, r)))
+	return s.MixAround(seed, nil, n, mixNow, rand.New(rand.NewPCG(r, r)))
 }
 
 // checkAround checks the rules every Mix around a seed keeps: no track
@@ -197,7 +197,7 @@ func TestMixAroundLeavesOutOneStar(t *testing.T) {
 
 func TestCloseness(t *testing.T) {
 	s := seedLibrary()
-	c := s.closeness(Seed{Kind: SeedAlbum, ID: "a2-b0"})
+	c := s.closeness(Seed{Kind: SeedAlbum, ID: "a2-b0"}, nil)
 	tr := func(id TrackID) Track { t, _ := s.Track(id); return t }
 	for _, tc := range []struct {
 		id   TrackID
@@ -213,10 +213,67 @@ func TestCloseness(t *testing.T) {
 		}
 	}
 	// A playlist: each artist's share is a fraction of it.
-	c = s.closeness(Seed{Kind: SeedPlaylist, ID: "p"})
+	c = s.closeness(Seed{Kind: SeedPlaylist, ID: "p"}, nil)
 	if got, want := c.of(tr("a8-b2-t5")), 2*0.40824829046386296+1; !near(got, want) {
 		t.Errorf("a8 is 1/6 of the playlist: closeness %v, want %v", got, want)
 	}
 }
 
 func near(a, b float64) bool { return a-b < 1e-9 && b-a < 1e-9 }
+
+func TestClosenessWithSimilarArtists(t *testing.T) {
+	s := seedLibrary()
+	tr := func(id TrackID) Track { t, _ := s.Track(id); return t }
+	// Two lists, as for two seed artists. a7 is first in one and last in
+	// the other: the best rank counts. a6 is matched by name, in another
+	// case, under an ID the library doesn't know.
+	similar := [][]ArtistRef{
+		{{ID: "a7", Name: "Artist 7"}, {ID: "x", Name: "Nobody"}, {ID: "a8", Name: "Artist 8"}},
+		{{ID: "zz", Name: "ARTIST 6"}, {ID: "a7", Name: "Artist 7"}},
+	}
+	c := s.closeness(Seed{Kind: SeedAlbum, ID: "a2-b0"}, similar)
+	for _, tc := range []struct {
+		id   TrackID
+		want float64
+	}{
+		{"a2-b0-t0", 3 + 2 + 1}, // in the seed: genre still adds
+		{"a7-b0-t0", 2.5 * 1},   // first in a list
+		{"a8-b0-t0", 2.5 * 0.5}, // last in a list
+		{"a6-b0-t0", 2.5 * 1},   // by name
+		{"a3-b0-t0", 0},         // the genre alone no longer counts
+	} {
+		if got := c.of(tr(tc.id)); !near(got, tc.want) {
+			t.Errorf("%s: closeness %v, want %v", tc.id, got, tc.want)
+		}
+	}
+	got := mixAroundSimilar(s, Seed{Kind: SeedAlbum, ID: "a2-b0"}, similar, 30, 1)
+	saw := map[ArtistID]bool{}
+	for _, tr := range got {
+		saw[tr.ArtistID] = true
+	}
+	if !saw["a7"] || saw["a3"] {
+		t.Errorf("artists in the Mix: %v; want similar a7 in and genre-only a3 out", saw)
+	}
+}
+
+func mixAroundSimilar(s *Snapshot, seed Seed, similar [][]ArtistRef, n int, r uint64) []Track {
+	return s.MixAround(seed, similar, n, mixNow, rand.New(rand.NewPCG(r, r)))
+}
+
+func TestSeedArtists(t *testing.T) {
+	s := seedLibrary()
+	// The playlist: a5 and a6 twice each, a7 and a8 once.
+	if got := s.SeedArtists(Seed{Kind: SeedPlaylist, ID: "p"}, 3); fmt.Sprint(got) != "[a5 a6 a7]" {
+		t.Errorf("playlist: %v", got)
+	}
+	// An artist seed is just that artist, though a1 spells the name too.
+	if got := s.SeedArtists(Seed{Kind: SeedArtist, ID: "a1"}, 3); fmt.Sprint(got) != "[a1]" {
+		t.Errorf("artist: %v", got)
+	}
+	if got := s.SeedArtists(Seed{Kind: SeedTrack, ID: "a4-b0-t0"}, 3); fmt.Sprint(got) != "[a4]" {
+		t.Errorf("track: %v", got)
+	}
+	if got := s.SeedArtists(Seed{Kind: SeedAlbum, ID: "gone"}, 3); len(got) != 0 {
+		t.Errorf("unknown seed: %v", got)
+	}
+}

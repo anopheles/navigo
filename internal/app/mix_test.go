@@ -145,3 +145,66 @@ func TestEditsBeforeTheFirstSyncSayWhy(t *testing.T) {
 		}
 	}
 }
+
+// genreLib is n artists with two albums of five tracks each, every track
+// in one genre, so a Mix around any of them has company.
+func genreLib(n int) *library.Snapshot {
+	var ts []library.Track
+	for a := range n {
+		for b := range 2 {
+			for i := range 5 {
+				ts = append(ts, library.Track{
+					ID:       library.TrackID(fmt.Sprintf("a%d-b%d-t%d", a, b, i)),
+					Title:    fmt.Sprintf("Song %d-%d-%d", a, b, i),
+					ArtistID: library.ArtistID(fmt.Sprintf("a%d", a)),
+					AlbumID:  library.AlbumID(fmt.Sprintf("a%d-b%d", a, b)),
+					Genre:    "Rock",
+				})
+			}
+		}
+	}
+	return library.Build("s", "u", time.Time{}, nil, nil, ts, nil, nil)
+}
+
+func TestMixAroundASeed(t *testing.T) {
+	seed := &library.Seed{Kind: library.SeedTrack, ID: "a3-b1-t2", Name: "Song 3-1-2"}
+	s, out := run(New(), CacheLoaded{Library: genreLib(30)}, Mix{N: 50, Seed: 7, Around: seed})
+	if len(s.Queue) != 50 || s.Queue[0].Track.ID != "a3-b1-t2" {
+		t.Fatalf("queue %d, opening with %v; want 50 from the seed track", len(s.Queue), s.Queue[0].Track.ID)
+	}
+	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mixed 50 tracks from Song 3-1-2" {
+		t.Errorf("notices = %#v", n)
+	}
+
+	small := &library.Seed{Kind: library.SeedTrack, ID: "a1-b0-t0", Name: "Song 1-0-0"}
+	_, out = run(New(), CacheLoaded{Library: genreLib(3)}, Mix{N: 50, Seed: 7, Around: small})
+	if n := only[Notice](out); len(n) != 1 || !strings.HasPrefix(n[0].Text, "mixed ") ||
+		!strings.HasSuffix(n[0].Text, " of 50 tracks from Song 1-0-0") {
+		t.Errorf("too few: notices = %#v", n)
+	}
+
+	gone := &library.Seed{Kind: library.SeedAlbum, ID: "nope", Name: "Gone"}
+	s, out = run(New(), CacheLoaded{Library: genreLib(3)}, PlayNow{Tracks: tracks(2)}, Mix{N: 50, Seed: 7, Around: gone})
+	if n := only[Notice](out); len(s.Queue) != 2 || !n[len(n)-1].Err || n[len(n)-1].Text != "nothing to mix from Gone" {
+		t.Errorf("nothing close: queue %d, notices %#v", len(s.Queue), n)
+	}
+}
+
+func TestMixAroundASeedWaitsForTheFirstSync(t *testing.T) {
+	seed := &library.Seed{Kind: library.SeedTrack, ID: "a3-b1-t2", Name: "Song 3-1-2"}
+	s, out := run(syncing(), Mix{N: 50, Seed: 7, Around: seed})
+	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mixing from Song 3-1-2 once the library has synced" {
+		t.Errorf("notices = %#v", n)
+	}
+	s, out = run(s, Synced{Library: genreLib(30)})
+	if len(s.Queue) != 50 || s.Queue[0].Track.ID != "a3-b1-t2" {
+		t.Errorf("after the sync: queue %d", len(s.Queue))
+	}
+	if n := only[Notice](out); len(n) != 1 || n[0].Text != "mixed 50 tracks from Song 3-1-2" {
+		t.Errorf("notices after the sync = %#v", n)
+	}
+	_, out = run(syncing(), Synced{Err: errDown}, Mix{N: 50, Seed: 7, Around: seed})
+	if n := only[Notice](out); n[len(n)-1].Text != "nothing to mix from Song 3-1-2 · the library couldn't sync" {
+		t.Errorf("failed sync: notices = %#v", n)
+	}
+}

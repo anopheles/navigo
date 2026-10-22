@@ -102,9 +102,9 @@ func TestHomeMix(t *testing.T) {
 		t.Errorf("Mix asked the server for %d album lists", n)
 	}
 
-	// A count sets the size, gm runs it anywhere, and u undoes it.
+	// A count sets the size, and u undoes it.
 	first := h.m.state.Queue
-	h.keys("'a3gm")
+	h.keys("'a'hgg3<CR>")
 	h.contains("mixed 3 tracks · u brings the old queue back")
 	if len(h.m.state.Queue) != 3 {
 		t.Errorf("3gm queued %d", len(h.m.state.Queue))

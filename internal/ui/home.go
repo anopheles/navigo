@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -25,7 +26,7 @@ var homeLists = []struct{ title, kind, empty string }{
 func (m *Model) openHomeList(i int, c command.Call) {
 	l := homeLists[i]
 	if l.kind == "mix" {
-		m.mix(c)
+		m.mixAround(c, nil) // Home's Mix row is always the whole library
 		return
 	}
 	m.lib = append(m.lib, frame{kind: homeAlbums, homeKind: l.kind, title: l.title})
@@ -66,13 +67,87 @@ func (m *Model) emptyHome(kind string) string {
 	return " loading…"
 }
 
-// mix replaces the queue with a Mix of the count's size, or MixSize.
-func (m *Model) mix(c command.Call) {
+// mix is gm and :mix: a Mix of the count's size, or MixSize, around the
+// row under the cursor, else what plays, else the whole library. With
+// the argument library (:mix library) it always mixes the whole library.
+func (m *Model) mix(c command.Call) error {
+	if err := mixArgs(c.Args); err != nil {
+		return err
+	}
+	var seed *library.Seed
+	if len(c.Args) == 0 {
+		seed = m.mixSeed()
+	}
+	m.mixAround(c, seed)
+	return nil
+}
+
+func (m *Model) mixAround(c command.Call, seed *library.Seed) {
 	n := library.MixSize
 	if c.Count > 0 {
 		n = c.Count
 	}
-	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now()})
+	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now(), Around: seed})
+}
+
+func mixArgs(a []string) error {
+	if len(a) > 1 || len(a) == 1 && a[0] != "library" {
+		return errors.New("mix: give library, or nothing to mix around the row")
+	}
+	return nil
+}
+
+func mixWords(*Model) []string { return []string{"library"} }
+
+// mixSeed is what gm mixes around: the artist, album, playlist or track
+// under the cursor, else what plays; nil for the whole library.
+func (m *Model) mixSeed() *library.Seed {
+	if s, ok := m.rowSeed(); ok {
+		return &s
+	}
+	if t, _, ok := m.state.NowPlaying(); ok {
+		return &library.Seed{Kind: library.SeedTrack, ID: string(t.ID), Name: t.Title}
+	}
+	return nil
+}
+
+// rowSeed is the row under the cursor as a seed. A track row is always a
+// track seed; sections, Home's lists, headings and Help are not seeds.
+func (m *Model) rowSeed() (library.Seed, bool) {
+	track := func(t library.Track) (library.Seed, bool) {
+		return library.Seed{Kind: library.SeedTrack, ID: string(t.ID), Name: t.Title}, true
+	}
+	if m.focus == queueWindow {
+		if m.queueCur < len(m.state.Queue) {
+			return track(m.state.Queue[m.queueCur].Track)
+		}
+		return library.Seed{}, false
+	}
+	f, lib := m.top(), m.state.Library
+	if lib == nil {
+		return library.Seed{}, false
+	}
+	playlist := func(p library.Playlist) (library.Seed, bool) {
+		return library.Seed{Kind: library.SeedPlaylist, ID: string(p.ID), Name: p.Name}, true
+	}
+	switch {
+	case f.kind == playlistList && f.cur < len(lib.Playlists):
+		return playlist(lib.Playlists[f.cur])
+	case f.kind == searchList:
+		if p, ok := f.search.playlist(f.cur); ok {
+			return playlist(p)
+		}
+	}
+	it, ok := m.rowItem(f, f.cur)
+	if !ok {
+		return library.Seed{}, false
+	}
+	kind := map[library.Group]library.SeedKind{
+		library.ArtistGroup: library.SeedArtist,
+		library.AlbumGroup:  library.SeedAlbum,
+		library.TrackGroup:  library.SeedTrack,
+	}[it.group]
+	return library.Seed{Kind: kind, ID: it.id, Name: it.name}, kind != 0
 }
 
 // mixRowNote follows Home's Mix row while the first sync runs, since a

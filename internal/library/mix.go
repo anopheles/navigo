@@ -26,41 +26,83 @@ const (
 // rated one star. Artists whose names differ only by case count as one.
 // It returns fewer than n when the rules run out of tracks.
 func (s *Snapshot) Mix(n int, now time.Time, r *rand.Rand) []Track {
-	// A weighted random order (Efraimidis–Spirakis): each track's key is
-	// -ln(u)/weight, and the smallest keys come first.
+	return s.pick(s.mixOrder(now, r, nil), n, mixRules{})
+}
+
+// mixOrder is the library's tracks in a weighted random order
+// (Efraimidis–Spirakis): each track's key is -ln(u)/weight, and the
+// smallest keys come first. A track's weight is its Mix weight, times
+// closeness² when closeness is given; tracks of weight 0 are left out.
+func (s *Snapshot) mixOrder(now time.Time, r *rand.Rand, close func(Track) float64) []Track {
 	type keyed struct {
 		key float64
 		i   int
 	}
 	order := make([]keyed, 0, len(s.Tracks))
 	for i, t := range s.Tracks {
-		if w := s.mixWeight(t, now); w > 0 {
+		w := s.mixWeight(t, now)
+		if close != nil && w > 0 {
+			c := close(t)
+			w *= c * c
+		}
+		if w > 0 {
 			order = append(order, keyed{-math.Log(1-r.Float64()) / w, i})
 		}
 	}
 	slices.SortFunc(order, func(a, b keyed) int { return cmp.Compare(a.key, b.key) })
+	out := make([]Track, len(order))
+	for j, k := range order {
+		out[j] = s.Tracks[k.i]
+	}
+	return out
+}
 
+// mixRules are what a Mix around a seed adds to the variety rules.
+type mixRules struct {
+	opener *Track // plays first, whatever the rules say
+	// fromSeed tracks are at most seedCap of the Mix and skip the limit
+	// per artist, and per album too when seedAlbums is set.
+	fromSeed   func(Track) bool
+	seedCap    int
+	seedAlbums bool
+}
+
+// pick takes up to n tracks from order, in order, keeping the variety
+// rules: at most mixPerArtist tracks of an artist and mixPerAlbum of an
+// album, and never an artist twice in a row.
+func (s *Snapshot) pick(order []Track, n int, rules mixRules) []Track {
 	var (
 		out      []Track
 		held     []Track // the artist just played; tried again after the next pick
 		byArtist = map[string]int{}
 		byAlbum  = map[AlbumID]int{}
+		seedN    int
 	)
+	fromSeed := func(t Track) bool { return rules.fromSeed != nil && rules.fromSeed(t) }
 	fits := func(t Track) bool {
-		return byArtist[s.mixArtist(t)] < mixPerArtist && byAlbum[t.AlbumID] < mixPerAlbum
+		if !fromSeed(t) {
+			return byArtist[s.mixArtist(t)] < mixPerArtist && byAlbum[t.AlbumID] < mixPerAlbum
+		}
+		return seedN < rules.seedCap && (rules.seedAlbums || byAlbum[t.AlbumID] < mixPerAlbum)
 	}
 	take := func(t Track) {
 		out = append(out, t)
-		byArtist[s.mixArtist(t)]++
+		if fromSeed(t) {
+			seedN++
+		} else {
+			byArtist[s.mixArtist(t)]++
+		}
 		byAlbum[t.AlbumID]++
 	}
 	afterLast := func(t Track) bool { return len(out) == 0 || s.mixArtist(out[len(out)-1]) != s.mixArtist(t) }
-	for _, k := range order {
+	if rules.opener != nil && n > 0 {
+		take(*rules.opener)
+	}
+	for _, t := range order {
 		if len(out) == n {
 			break
 		}
-		t := s.Tracks[k.i]
-		if !fits(t) {
+		if rules.opener != nil && t.ID == rules.opener.ID || !fits(t) {
 			continue
 		}
 		if !afterLast(t) {
@@ -81,14 +123,22 @@ func (s *Snapshot) Mix(n int, now time.Time, r *rand.Rand) []Track {
 	return out
 }
 
-// mixArtist is who a track is by for a Mix's variety rules: its
-// artist's name in lower case, so "ELETTRA STORM" and "Elettra Storm"
-// are one artist, or the artist's ID when the name isn't known.
-func (s *Snapshot) mixArtist(t Track) string {
-	if a, ok := s.Artist(t.ArtistID); ok && a.Name != "" {
-		return strings.ToLower(a.Name)
+// mixArtist is who a track is by for a Mix's variety rules: see artistKey.
+func (s *Snapshot) mixArtist(t Track) string { return s.artistKey(t.ArtistID, "") }
+
+// artistKey is one artist for a Mix: their name in lower case, so
+// "ELETTRA STORM" and "Elettra Storm" are one artist, or their ID when
+// no name is known. name, if given, is the name a track credits.
+func (s *Snapshot) artistKey(id ArtistID, name string) string {
+	if name == "" {
+		if a, ok := s.Artist(id); ok {
+			name = a.Name
+		}
 	}
-	return "id:" + string(t.ArtistID)
+	if name == "" {
+		return "id:" + string(id)
+	}
+	return strings.ToLower(name)
 }
 
 // mixWeight is how likely a Mix is to pick a track, relative to an

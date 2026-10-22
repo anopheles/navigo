@@ -210,8 +210,8 @@ func TestTransport(t *testing.T) {
 	)
 }
 
-// Mix: gm replaces the queue with a pick from the whole library and plays
-// it; a second one says u brings the first back.
+// Mix: gm on Home with nothing playing replaces the queue with a pick from
+// the whole library and plays it; :mix library says u brings it back.
 func TestMix(t *testing.T) {
 	srv := target(t)
 	s := start(t, srv)
@@ -224,13 +224,13 @@ func TestMix(t *testing.T) {
 		t.Errorf("queue after 3gm has %d entries, want 3", n)
 	}
 
-	s.keys("gm")
+	s.keys(":mix library<CR>")
 	s.waitText("u brings the old queue back", 15*time.Second)
 	// A library with few artists and albums can't fill 50 under the Mix
 	// limits (3 per artist, 2 per album), so the full-size queue is the
 	// most it can be, not what it must be.
 	if n, _ := strconv.Atoi(queueRE.FindStringSubmatch(s.screen())[2]); n <= 3 || n > 50 {
-		t.Errorf("queue after gm has %d entries, want more than 3 and at most 50", n)
+		t.Errorf("queue after :mix library has %d entries, want more than 3 and at most 50", n)
 	}
 	s.keys("u")
 	s.waitText("Queue (3)", 15*time.Second)

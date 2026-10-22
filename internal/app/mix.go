@@ -5,16 +5,28 @@ import (
 	"math/rand/v2"
 	"time"
 
+	"github.com/anopheles/navigo/internal/library"
 	"github.com/anopheles/navigo/internal/player"
 )
 
 // Mix replaces the queue with N tracks picked from the whole library
-// (library.Snapshot.Mix) and plays the first. Seed makes the pick and At
-// is the time "played lately" counts back from, so Apply stays pure.
+// (library.Snapshot.Mix), or around a seed when Around is set
+// (library.Snapshot.MixAround), and plays the first. Seed makes the pick
+// and At is the time "played lately" counts back from, so Apply stays
+// pure.
 type Mix struct {
-	N    int
-	Seed uint64
-	At   time.Time
+	N      int
+	Seed   uint64
+	At     time.Time
+	Around *library.Seed
+}
+
+// from is " from <name>" for a Mix around a seed, for its messages.
+func (e Mix) from() string {
+	if e.Around == nil {
+		return ""
+	}
+	return " from " + e.Around.Name
 }
 
 func (Mix) isEvent() {}
@@ -44,13 +56,24 @@ func (s State) applyMix(e Mix) (State, []Effect) {
 				playing:  s.playing,
 				queueLen: len(s.Queue),
 			}
-			return s, []Effect{
-				Notice{Text: "the library is syncing · the mix starts once it's done"},
+			n := Notice{Text: "the library is syncing · the mix starts once it's done"}
+			if e.Around != nil {
+				n.Text = "mixing" + e.from() + " once the library has synced"
 			}
+			return s, []Effect{n}
 		}
-		return s, []Effect{s.unsynced("nothing to mix")}
+		return s, []Effect{s.unsynced("nothing to mix" + e.from())}
 	}
-	picked := s.Library.Mix(e.N, e.At, rand.New(rand.NewPCG(e.Seed, e.Seed^0x9e3779b97f4a7c15)))
+	r := rand.New(rand.NewPCG(e.Seed, e.Seed^0x9e3779b97f4a7c15))
+	var picked []library.Track
+	if e.Around != nil {
+		picked = s.Library.MixAround(*e.Around, e.N, e.At, r)
+		if len(picked) == 0 {
+			return s, []Effect{Notice{Text: "nothing to mix" + e.from(), Err: true}}
+		}
+	} else {
+		picked = s.Library.Mix(e.N, e.At, r)
+	}
 	if len(picked) == 0 {
 		why := "every track is rated one star"
 		if len(s.Library.Tracks) == 0 {
@@ -62,9 +85,9 @@ func (s State) applyMix(e Mix) (State, []Effect) {
 	s, played := apply(s, PlayNow{Tracks: picked})
 	// The mix's own message replaces "playing"; an error saying why
 	// nothing plays comes after it, so it stays on the status line.
-	n := Notice{Text: "mixed " + count(len(picked))}
+	n := Notice{Text: "mixed " + count(len(picked)) + e.from()}
 	if len(picked) < e.N {
-		n.Text = fmt.Sprintf("mixed %d of %d tracks", len(picked), e.N)
+		n.Text = fmt.Sprintf("mixed %d of %d tracks%s", len(picked), e.N, e.from())
 	}
 	if had {
 		n.Command, n.Hint = "undo", "brings the old queue back"

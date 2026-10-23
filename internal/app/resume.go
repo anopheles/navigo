@@ -11,11 +11,15 @@ import (
 // Events and effects for Resume: the saved queue is read at startup and
 // written as the queue changes.
 type (
-	// SavedLoaded is the saved queue the file held; Found is false when
-	// there was none.
+	// SavedLoaded is the saved queue to bring back, from the server or this
+	// device's file; Found is false when there was none. Settings is true
+	// when Saved's Volume and Repeat were read from this device's file,
+	// and false when only the queue is known, so the volume and repeat
+	// stay as they are.
 	SavedLoaded struct {
-		Saved resume.Saved
-		Found bool
+		Saved    resume.Saved
+		Found    bool
+		Settings bool
 	}
 	// ConfigureResume turns Resume on or off, at startup and on
 	// :reload-config.
@@ -25,11 +29,15 @@ type (
 )
 
 type (
-	// LoadSaved reads the saved queue, answered with SavedLoaded.
-	LoadSaved struct{}
-	// SaveQueue writes the saved queue; an empty one removes the file.
+	// LoadSaved reads the saved queue, answered with SavedLoaded. With
+	// Server set the server's queue is asked for first and wins when it
+	// has one; without, only this device's file is read.
+	LoadSaved struct{ Server bool }
+	// SaveQueue writes the saved queue to this device's file and to the
+	// server; an empty one removes the file and clears the server's queue.
 	SaveQueue struct{ Saved resume.Saved }
-	// DeleteSaved removes the saved queue, and any write still waiting.
+	// DeleteSaved removes this device's saved queue, and any write still
+	// waiting. The server's queue stays for the other devices.
 	DeleteSaved struct{}
 )
 
@@ -88,7 +96,7 @@ func (s State) applyResume(e Event) (State, []Effect) {
 	case SavedLoaded:
 		s.savedLoaded = true
 		if e.Found {
-			s.pending = &e.Saved
+			s.pending = &e
 		} else {
 			s.restored, s.saving = true, true
 		}
@@ -117,7 +125,8 @@ func (s State) restoreSaved() (State, []Effect) {
 	if !s.ResumeOn || s.restored || s.pending == nil || s.Library == nil {
 		return s, nil
 	}
-	p := *s.pending
+	loaded := *s.pending
+	p := loaded.Saved
 	s.pending, s.restored, s.saving = nil, true, true
 	if len(s.Queue) > 0 { // the user got there first
 		return s, nil
@@ -161,18 +170,32 @@ func (s State) restoreSaved() (State, []Effect) {
 			hint = "plays from " + mmss(pos)
 		}
 	}
-	s.Player.Volume = min(max(p.Volume, 0), 100)
-	if r := Repeat(p.Repeat); r >= RepeatOff && r <= RepeatOne {
-		s.Repeat = r
+	if loaded.Settings {
+		s.Player.Volume = min(max(p.Volume, 0), 100)
+		if r := Repeat(p.Repeat); r >= RepeatOff && r <= RepeatOne {
+			s.Repeat = r
+		}
 	}
 	text := fmt.Sprintf("restored %d %s", len(q), plural(len(q), "track"))
 	if len(q) < len(p.Tracks) {
 		text = fmt.Sprintf("restored %d of %d tracks", len(q), len(p.Tracks))
 	}
-	return s, []Effect{
-		SetVolume{Percent: s.Player.Volume},
-		Notice{Text: text, Command: "play-pause", Hint: hint},
+	out := []Effect{Notice{Text: text, Command: "play-pause", Hint: hint}}
+	if loaded.Settings {
+		out = append([]Effect{SetVolume{Percent: s.Player.Volume}}, out...)
 	}
+	return s, out
+}
+
+// loadSaved asks for the saved queue, once per session: when the login has
+// answered, with server set if it was reached, so the server's queue can
+// be asked for.
+func (s State) loadSaved(server bool) (State, []Effect) {
+	if !s.ResumeOn || s.savedAsked {
+		return s, nil
+	}
+	s.savedAsked = true
+	return s, []Effect{LoadSaved{Server: server}}
 }
 
 // withSaving adds the effects Resume needs after e was applied: the

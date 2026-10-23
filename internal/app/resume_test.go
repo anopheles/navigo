@@ -30,14 +30,14 @@ func saved(ids ...string) resume.Saved {
 }
 
 func TestRestoreLoadsPausedAtThePosition(t *testing.T) {
-	s, out := run(resumeState(), Start{})
+	s, out := run(resumeState(), Start{}, LoggedIn{})
 	if len(only[LoadSaved](out)) != 1 || len(only[LoadCache](out)) != 1 {
-		t.Fatalf("Start effects = %#v", out)
+		t.Fatalf("startup effects = %#v", out)
 	}
 	sv := saved("t1", "t2", "t3")
 	sv.Current, sv.Position, sv.Volume, sv.Repeat = 1, 134*time.Second, 40, int(RepeatAll)
 	// The saved queue arrives before the library: it waits.
-	s, out = run(s, SavedLoaded{Saved: sv, Found: true})
+	s, out = run(s, SavedLoaded{Saved: sv, Found: true, Settings: true})
 	if len(s.Queue) != 0 || len(only[SaveQueue](out)) != 0 {
 		t.Fatalf("restored without a library: %d entries, %#v", len(s.Queue), out)
 	}
@@ -168,8 +168,45 @@ func TestEmptyingTheQueueSavesAnEmptyOne(t *testing.T) {
 	}
 }
 
+func TestSavedQueueIsAskedForOnceTheLoginAnswered(t *testing.T) {
+	s, out := run(resumeState(), Start{})
+	if len(only[LoadSaved](out)) != 0 {
+		t.Errorf("asked before the login answered: %#v", out)
+	}
+	s, out = run(s, LoggedIn{})
+	if l := only[LoadSaved](out); len(l) != 1 || !l[0].Server {
+		t.Errorf("after the login = %#v, want one that asks the server", l)
+	}
+	if _, out = run(s, LoggedIn{}); len(only[LoadSaved](out)) != 0 {
+		t.Error("asked again for a session that already has its queue")
+	}
+
+	s, out = run(resumeState(), Start{}, StartedOffline{})
+	if l := only[LoadSaved](out); len(l) != 1 || l[0].Server {
+		t.Errorf("starting offline = %#v, want one that leaves the server alone", l)
+	}
+	if _, out = run(s, LoggedIn{}); len(only[LoadSaved](out)) != 0 {
+		t.Error("the server was asked once it came back")
+	}
+}
+
+func TestSavedQueueWithoutSettingsKeepsVolumeAndRepeat(t *testing.T) {
+	s, _ := run(resumeState(), Start{}, CacheLoaded{Library: libWith(3)})
+	s, _ = run(s, ChangeVolume{Set: true, To: 55}, CycleRepeat{})
+	repeat := s.Repeat
+	sv := saved("t1", "t2")
+	sv.Volume, sv.Repeat = 10, int(RepeatOne) // not this device's: ignored
+	s, out := run(s, SavedLoaded{Saved: sv, Found: true})
+	if len(s.Queue) != 2 || s.Player.Volume != 55 || s.Repeat != repeat {
+		t.Errorf("queue %d, volume %d, repeat %v", len(s.Queue), s.Player.Volume, s.Repeat)
+	}
+	if len(only[SetVolume](out)) != 0 {
+		t.Errorf("set the volume: %#v", out)
+	}
+}
+
 func TestResumeOffSavesAndRestoresNothing(t *testing.T) {
-	s, out := run(New(), Start{})
+	s, out := run(New(), Start{}, LoggedIn{})
 	if len(only[LoadSaved](out)) != 0 {
 		t.Error("read the saved queue with resume off")
 	}

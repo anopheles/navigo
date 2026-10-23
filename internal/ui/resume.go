@@ -79,7 +79,7 @@ func (m *Model) runResume(e app.Effect) (tea.Cmd, bool) {
 				return eventMsg{app.SavedLoaded{}}
 			}
 			s, err := resume.Load(dir, srv.URL, srv.User)
-			return eventMsg{app.SavedLoaded{Saved: s, Found: err == nil}}
+			return eventMsg{app.SavedLoaded{Saved: s, Found: err == nil, Settings: err == nil}}
 		}, true
 	case app.SaveQueue:
 		w := queueWrite{e.Saved, srv.URL, srv.User}

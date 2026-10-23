@@ -13,7 +13,6 @@ import (
 
 	"github.com/anopheles/navigo/internal/library"
 	"github.com/anopheles/navigo/internal/player"
-	"github.com/anopheles/navigo/internal/resume"
 )
 
 // QueueEntry is one row of the queue.
@@ -69,12 +68,12 @@ type State struct {
 	mixLookup *mixWait
 	mixSeq    int
 
-	// Resume: the saved queue read at startup waits in pending for the
-	// library; saving starts once it is restored or known to be none, so
+	// Resume: the saved queue is asked for once the login has answered
+	// (savedAsked) and waits in pending for the library; saving starts once it is restored or known to be none, so
 	// the file isn't overwritten before it is read.
-	savedLoaded, restored, saving bool
-	pending                       *resume.Saved
-	loggedIn                      bool
+	savedAsked, savedLoaded, restored, saving bool
+	pending                                   *SavedLoaded
+	loggedIn                                  bool
 
 	// Offline: the server can't be reached (see offline.go). Probing is
 	// set while a check of the server is running.
@@ -271,9 +270,6 @@ func apply(s State, e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case Start:
 		out := []Effect{LoadCache{}}
-		if s.ResumeOn {
-			out = append(out, LoadSaved{})
-		}
 		if s.recsOn() {
 			out = append(out, LoadRecs{})
 		}
@@ -305,10 +301,12 @@ func apply(s State, e Event) (State, []Effect) {
 		return s, []Effect{SaveCache{Library: s.Library}}
 	case LoggedIn:
 		s.loggedIn, s.Offline = true, false
+		s, out := s.loadSaved(true)
 		if s.cacheChecked {
-			return s.startSync(false)
+			s, sync := s.startSync(false)
+			return s, append(out, sync...)
 		}
-		return s, nil
+		return s, out
 	case SyncNow:
 		// :sync always asks ListenBrainz too, which doesn't need the server.
 		s, recs := s.fetchRecs(true)
@@ -537,7 +535,11 @@ func apply(s State, e Event) (State, []Effect) {
 		return s.applyMedia(e)
 	case PlayerChecked, Uncap:
 		return s.applyMPV(e)
-	case Unreachable, StartedOffline, RetryNow, Reconnect, BufferingStalled, ProbeResult:
+	case StartedOffline:
+		s, out := s.applyOffline(e)
+		s, more := s.loadSaved(false)
+		return s, append(out, more...)
+	case Unreachable, RetryNow, Reconnect, BufferingStalled, ProbeResult:
 		return s.applyOffline(e)
 	case PlayerFailed:
 		return s, []Effect{Notice{Text: "player: " + e.Err.Error(), Err: true, Unexpected: true}}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"time"
 )
@@ -11,8 +12,11 @@ import (
 // PlayQueue is a play queue as the server holds it: what savePlayQueue
 // stored for a user.
 type PlayQueue struct {
-	IDs       []string
-	Current   string
+	IDs     []string
+	Current string
+	// Index is the entry that is current, when it was saved by index; nil
+	// means the first entry with the Current ID.
+	Index     *int
 	Position  time.Duration
 	Changed   time.Time
 	ChangedBy string
@@ -88,31 +92,57 @@ func (s *Server) servePlayQueue(
 		"serverVersion": "0.64.2 (10114574)",
 		"openSubsonic":  true,
 	}
-	if endpoint == "savePlayQueue" {
+	switch endpoint {
+	case "savePlayQueue", "savePlayQueueByIndex":
 		q := PlayQueue{
 			IDs:       params["id"],
 			Current:   params.Get("current"),
 			Changed:   time.Now().UTC(),
 			ChangedBy: params.Get("c"),
 		}
+		if i, err := strconv.Atoi(params.Get("currentIndex")); err == nil &&
+			endpoint == "savePlayQueueByIndex" && i >= 0 && i < len(q.IDs) {
+			q.Index, q.Current = &i, q.IDs[i]
+		}
 		if ms, err := strconv.ParseInt(params.Get("position"), 10, 64); err == nil {
 			q.Position = time.Duration(ms) * time.Millisecond
 		}
 		s.SetPlayQueue(user, q)
-	} else if q, ok := s.PlayQueue(user); ok {
-		entries := make([]map[string]any, len(q.IDs))
-		for i, id := range q.IDs {
-			entries[i] = map[string]any{"id": id}
-		}
-		resp["playQueue"] = map[string]any{
-			"entry":     entries,
-			"current":   q.Current,
-			"position":  q.Position.Milliseconds(),
-			"username":  user,
-			"changed":   q.Changed.Format(time.RFC3339Nano),
-			"changedBy": q.ChangedBy,
+	case "getPlayQueue", "getPlayQueueByIndex":
+		if q, ok := s.PlayQueue(user); ok {
+			entries := make([]map[string]any, len(q.IDs))
+			for i, id := range q.IDs {
+				entries[i] = map[string]any{"id": id}
+			}
+			out := map[string]any{
+				"entry":     entries,
+				"position":  q.Position.Milliseconds(),
+				"username":  user,
+				"changed":   q.Changed.Format(time.RFC3339Nano),
+				"changedBy": q.ChangedBy,
+			}
+			if endpoint == "getPlayQueue" {
+				out["current"] = q.Current
+				resp["playQueue"] = out
+			} else {
+				if i := q.currentIndex(); i >= 0 {
+					out["currentIndex"] = i
+				}
+				resp["playQueueByIndex"] = out
+			}
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{"subsonic-response": resp})
+}
+
+// currentIndex is the index of the current entry, or -1.
+func (q PlayQueue) currentIndex() int {
+	if q.Index != nil {
+		return *q.Index
+	}
+	if q.Current == "" {
+		return -1
+	}
+	return slices.Index(q.IDs, q.Current)
 }

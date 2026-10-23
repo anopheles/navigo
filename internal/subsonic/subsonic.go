@@ -88,6 +88,9 @@ type Client struct {
 	base     string
 	http     *http.Client
 	formPost atomic.Bool
+	// indexQueue: the server keeps the play queue by index (indexBasedQueue),
+	// so the current entry stays right when a song is in the queue twice.
+	indexQueue atomic.Bool
 }
 
 // New returns a client for creds. It makes no request; call Login to check
@@ -122,8 +125,11 @@ func (c *Client) Login(ctx context.Context) error {
 		return nil
 	}
 	for _, e := range r.OpenSubsonicExtensions {
-		if e.Name == "formPost" {
+		switch e.Name {
+		case "formPost":
 			c.formPost.Store(true)
+		case "indexBasedQueue":
+			c.indexQueue.Store(true)
 		}
 	}
 	return nil
@@ -445,17 +451,22 @@ func (c *Client) Scrobble(ctx context.Context, id string, submission bool) error
 }
 
 // PlayQueue is the queue the server keeps for the user, so another device
-// can pick it up (getPlayQueue and savePlayQueue). Current is the ID of the
-// current song, empty if none; Position is where it stood.
+// can pick it up (getPlayQueue and savePlayQueue). Current is the index in
+// IDs of the current song, or -1 if none; Position is where it stood.
 type PlayQueue struct {
 	IDs      []string
-	Current  string
+	Current  int
 	Position time.Duration
 }
 
 // PlayQueue returns the user's saved play queue. A server with none saved
-// answers with an empty PlayQueue and no error.
+// answers with an empty PlayQueue and no error. With indexBasedQueue the
+// current song is the entry the server was told, even when the song is in
+// the queue twice; without it the first entry with the current song's ID.
 func (c *Client) PlayQueue(ctx context.Context) (PlayQueue, error) {
+	if c.indexQueue.Load() {
+		return c.playQueueByIndex(ctx)
+	}
 	var r struct {
 		PlayQueue struct {
 			Entry    []struct{ ID string } `json:"entry"`
@@ -467,11 +478,38 @@ func (c *Client) PlayQueue(ctx context.Context) (PlayQueue, error) {
 		return PlayQueue{}, err
 	}
 	q := PlayQueue{
-		Current:  r.PlayQueue.Current,
+		Current:  -1,
+		Position: time.Duration(r.PlayQueue.Position) * time.Millisecond,
+	}
+	for i, e := range r.PlayQueue.Entry {
+		q.IDs = append(q.IDs, e.ID)
+		if q.Current < 0 && r.PlayQueue.Current != "" && e.ID == r.PlayQueue.Current {
+			q.Current = i
+		}
+	}
+	return q, nil
+}
+
+func (c *Client) playQueueByIndex(ctx context.Context) (PlayQueue, error) {
+	var r struct {
+		PlayQueue struct {
+			Entry        []struct{ ID string } `json:"entry"`
+			CurrentIndex *int                  `json:"currentIndex"`
+			Position     int64                 `json:"position"` // milliseconds
+		} `json:"playQueueByIndex"`
+	}
+	if err := c.call(ctx, "getPlayQueueByIndex", nil, &r); err != nil {
+		return PlayQueue{}, err
+	}
+	q := PlayQueue{
+		Current:  -1,
 		Position: time.Duration(r.PlayQueue.Position) * time.Millisecond,
 	}
 	for _, e := range r.PlayQueue.Entry {
 		q.IDs = append(q.IDs, e.ID)
+	}
+	if i := r.PlayQueue.CurrentIndex; i != nil && *i >= 0 && *i < len(q.IDs) {
+		q.Current = *i
 	}
 	return q, nil
 }
@@ -482,20 +520,30 @@ func (c *Client) PlayQueue(ctx context.Context) (PlayQueue, error) {
 const maxQuery = 4000
 
 // SavePlayQueue replaces the user's play queue on the server with ids, in
-// order. current is the ID of the current song, or empty if none, and
-// position is where it stood. With no ids it clears the queue.
+// order. current is the index of the current song in ids, or -1 if none,
+// and position is where it stood. With no ids it clears the queue. Without
+// indexBasedQueue the server is told the song's ID, so a song in the queue
+// twice comes back as its first entry.
 func (c *Client) SavePlayQueue(
 	ctx context.Context,
 	ids []string,
-	current string,
+	current int,
 	position time.Duration,
 ) error {
 	q := url.Values{"id": ids}
-	if current != "" {
-		q.Set("current", current)
+	endpoint := "savePlayQueue"
+	if current >= 0 && current < len(ids) {
+		if c.indexQueue.Load() {
+			q.Set("currentIndex", strconv.Itoa(current))
+		} else {
+			q.Set("current", ids[current])
+		}
 		q.Set("position", strconv.FormatInt(position.Milliseconds(), 10))
 	}
-	return c.send(ctx, "savePlayQueue", q, nil, len(q.Encode()) > maxQuery)
+	if c.indexQueue.Load() {
+		endpoint = "savePlayQueueByIndex"
+	}
+	return c.send(ctx, endpoint, q, nil, len(q.Encode()) > maxQuery)
 }
 
 // StreamURL returns a URL that streams the song, signed with a fresh salt.

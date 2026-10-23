@@ -69,12 +69,12 @@ func TestAnotherDeviceRestoresTheQueuePausedAtThePosition(t *testing.T) {
 func TestRestoringTheServersQueueDoesNotSendItBack(t *testing.T) {
 	a := newHarness(t, 120, 40, nil)
 	a.playsThirdPausedAt2m14()
-	saves := a.requests("savePlayQueue")
+	saves := a.pushes()
 
 	b := a.otherDevice()
 	b.contains("restored 6 tracks")
 	b.advance(saveAfter)
-	if got := b.requests("savePlayQueue"); got != saves {
+	if got := b.pushes(); got != saves {
 		t.Errorf("savePlayQueue requests went from %d to %d", saves, got)
 	}
 	if _, err := b.savedFile(); err != nil {
@@ -200,7 +200,7 @@ func TestResumeOffNeverTouchesTheServersQueue(t *testing.T) {
 	h.advance(saveAfter)
 	h.m.FlushSaved()
 	h.lacks("restored")
-	if n := h.requests("getPlayQueue") + h.requests("savePlayQueue"); n != 0 {
+	if n := h.queueReads() + h.pushes(); n != 0 {
 		t.Errorf("%d play queue requests with resume off", n)
 	}
 	if q, ok := h.serverQueue(); !ok || len(q.IDs) != 2 {
@@ -261,14 +261,14 @@ func TestARunningSessionIsNotOverwrittenByAnotherDevice(t *testing.T) {
 	b := a.otherDevice()
 	b.contains("restored 6 tracks")
 	want := b.titles()
-	reads := b.requests("getPlayQueue")
+	reads := b.queueReads()
 
 	a.keys(":queue-clear<CR>")
 	b.advance(10 * time.Minute)
 	if got := b.titles(); !slices.Equal(got, want) {
 		t.Errorf("the running queue changed to %q", got)
 	}
-	if got := b.requests("getPlayQueue"); got != reads {
+	if got := b.queueReads(); got != reads {
 		t.Errorf("getPlayQueue requests went from %d to %d while running", reads, got)
 	}
 }
@@ -327,7 +327,7 @@ func TestWithoutSyncQueueTheServerIsNeverAsked(t *testing.T) {
 	h.advance(saveAfter)
 	h.m.FlushSaved()
 	h.lacks("restored")
-	if n := h.requests("getPlayQueue") + h.requests("savePlayQueue"); n != 0 {
+	if n := h.queueReads() + h.pushes(); n != 0 {
 		t.Errorf("%d play queue requests with sync_queue off", n)
 	}
 	if _, err := h.savedFile(); err != nil {
@@ -344,7 +344,7 @@ func TestSyncQueueTurnedOnByReloadStartsPushing(t *testing.T) {
 	})
 	h.playAlbum()
 	h.advance(saveAfter)
-	if n := h.requests("savePlayQueue"); n != 0 {
+	if n := h.pushes(); n != 0 {
 		t.Fatalf("%d pushes with sync_queue off", n)
 	}
 	if err := os.MkdirAll(filepath.Dir(h.path), 0o700); err != nil {
@@ -363,7 +363,14 @@ func TestSyncQueueTurnedOnByReloadStartsPushing(t *testing.T) {
 }
 
 // pushes is how many times the server was sent a play queue so far.
-func (h *harness) pushes() int { return h.requests("savePlayQueue") }
+func (h *harness) pushes() int {
+	return h.requests("savePlayQueue") + h.requests("savePlayQueueByIndex")
+}
+
+// queueReads is how many times the server was asked for its play queue.
+func (h *harness) queueReads() int {
+	return h.requests("getPlayQueue") + h.requests("getPlayQueueByIndex")
+}
 
 func TestStartingOfflineNeverOverwritesTheServersQueue(t *testing.T) {
 	pc := newHarness(t, 120, 40, nil)
@@ -540,5 +547,26 @@ func TestAServerQueueThatCannotBeReadIsSaidAtTheRestore(t *testing.T) {
 	n.advance(saveAfter)
 	if got := n.pushes(); got != before {
 		t.Errorf("%d pushes from a session that never read the server's queue", got-before)
+	}
+}
+
+func TestAnotherDeviceRestoresTheSecondCopyOfATrackQueuedTwice(t *testing.T) {
+	a := newHarness(t, 120, 40, nil)
+	a.playAlbum()
+	a.keys("A")      // the album's first track again, at the end
+	a.keys("<Tab>G") // to the last row of the queue
+	a.keys("<CR>")
+	a.fake.Tick(30 * time.Second)
+	a.pump()
+	a.keys(" ")
+	a.advance(saveAfter)
+	if got := a.m.state.Current; got != 6 || len(a.m.state.Queue) != 7 {
+		t.Fatalf("setup: current %d of %d, want the last of 7", got, len(a.m.state.Queue))
+	}
+
+	b := a.otherDevice()
+	b.contains("restored 7 tracks")
+	if got := b.m.state.Current; got != 6 {
+		t.Errorf("restored current entry %d, want 6: the second copy", got)
 	}
 }

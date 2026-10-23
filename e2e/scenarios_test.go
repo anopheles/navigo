@@ -284,6 +284,41 @@ func TestQueueFollowsTheUser(t *testing.T) {
 	}
 }
 
+// A track queued twice comes back as the copy that was playing, not the
+// first one.
+func TestQueueKeepsWhichCopyPlays(t *testing.T) {
+	srv := target(t)
+	a := start(t, srv)
+	a.synced()
+	a.openFirstAlbum()
+	a.keys("\r")
+	a.playing()
+	n, _ := strconv.Atoi(queueRE.FindStringSubmatch(a.screen())[2])
+	a.keys("A")     // the album's first track again, at the end
+	a.keys("\tG\r") // and play that copy
+	a.waitText(fmt.Sprintf("%d/%d", n+1, n+1), 10*time.Second)
+	a.keys(" ")
+	a.waitText("⏸  ", 5*time.Second)
+	a.stop()
+
+	ids, current := playQueueByIndex(t, srv)
+	if len(ids) != n+1 || current != n || ids[0] != ids[n] {
+		t.Fatalf(
+			"the server holds %d ids, current index %d; want %d ids, current %d, first = last",
+			len(ids),
+			current,
+			n+1,
+			n,
+		)
+	}
+
+	b := start(t, srv)
+	b.synced()
+	b.waitText(fmt.Sprintf("restored %d", n+1), 30*time.Second)
+	b.keys(" ")
+	b.waitText(fmt.Sprintf("%d/%d", n+1, n+1), 10*time.Second)
+}
+
 // Cold start: the second launch shows the library from the cache file at
 // once and checks the server without a full sync.
 func TestColdStart(t *testing.T) {

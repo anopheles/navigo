@@ -180,7 +180,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	s.reqs = append(s.reqs, Request{Method: r.Method, Endpoint: endpoint, Params: clean})
 	s.mu.Unlock()
 
-	if name != "error-40.json" && (endpoint == "getPlayQueue" || endpoint == "savePlayQueue") {
+	if name != "error-40.json" && isPlayQueueCall(endpoint) {
 		s.servePlayQueue(w, r, endpoint, params)
 		return
 	}
@@ -274,4 +274,12 @@ func CoverPNG(id string) []byte {
 	var buf bytes.Buffer
 	_ = png.Encode(&buf, img)
 	return buf.Bytes()
+}
+
+func isPlayQueueCall(endpoint string) bool {
+	switch endpoint {
+	case "getPlayQueue", "savePlayQueue", "getPlayQueueByIndex", "savePlayQueueByIndex":
+		return true
+	}
+	return false
 }

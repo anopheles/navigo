@@ -47,17 +47,17 @@ type saveMsg struct{}
 // queue, its current entry and the position, not the volume or repeat.
 type serverQueue struct {
 	ids     []string
-	current string
+	current int // the index in ids, or -1
 	pos     time.Duration
 }
 
 func serverQueueOf(v resume.Saved) serverQueue {
-	q := serverQueue{pos: v.Position.Truncate(time.Millisecond)}
+	q := serverQueue{current: -1, pos: v.Position.Truncate(time.Millisecond)}
 	for _, id := range v.Tracks {
 		q.ids = append(q.ids, string(id))
 	}
 	if v.Current >= 0 && v.Current < len(q.ids) {
-		q.current = q.ids[v.Current]
+		q.current = v.Current
 	} else {
 		q.pos = 0
 	}
@@ -182,7 +182,7 @@ func (m *Model) loadSaved(server bool) tea.Cmd {
 		if len(pq.IDs) == 0 {
 			return eventMsg{loaded}
 		}
-		remote := resume.Saved{Current: slices.Index(pq.IDs, pq.Current), Position: pq.Position}
+		remote := resume.Saved{Current: pq.Current, Position: pq.Position}
 		for _, id := range pq.IDs {
 			remote.Tracks = append(remote.Tracks, library.TrackID(id))
 		}

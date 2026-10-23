@@ -348,6 +348,26 @@ func TestMPVCheck(t *testing.T) {
 	}
 }
 
+// A fresh, idle mpv plays the current entry, never its previous one: the
+// first play of a restored queue often has one.
+func TestMPVFirstPlayIsTheCurrentEntry(t *testing.T) {
+	ctx := context.Background()
+	for i := range 15 {
+		h := newMPV(t)
+		if err := h.m.Play(ctx, Span{Prev: entry(1, "5s"), Current: entry(2, "5s")}); err != nil {
+			t.Fatal(err)
+		}
+		e := h.await(
+			"an entry to start",
+			func(e Event) bool { _, ok := e.(TrackStarted); return ok },
+		)
+		if got := e.(TrackStarted).Entry; got != 2 {
+			t.Fatalf("try %d: entry %d started, want 2", i+1, got)
+		}
+		_ = h.m.Close()
+	}
+}
+
 // Play with a start position, as when resuming after mpv died.
 func TestMPVPlaysFromAPosition(t *testing.T) {
 	h := newMPV(t)

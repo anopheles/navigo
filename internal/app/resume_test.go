@@ -278,3 +278,15 @@ func TestSaveNowHasTheExactPosition(t *testing.T) {
 		t.Error("SaveNow said yes with resume off")
 	}
 }
+
+func TestWithoutSyncTheSavedQueueIsReadAtStartWithoutTheNetwork(t *testing.T) {
+	s := resumeState()
+	s.SyncOn = false
+	s, out := run(s, Start{})
+	if l := only[LoadSaved](out); len(l) != 1 || l[0].Server {
+		t.Errorf("at start = %#v, want one that leaves the server alone", l)
+	}
+	if _, out = run(s, LoggedIn{}); len(only[LoadSaved](out)) != 0 {
+		t.Error("asked again after the login")
+	}
+}

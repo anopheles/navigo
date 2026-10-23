@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -25,6 +26,10 @@ var serverQueueTimeout = 3 * time.Second
 // serverPositionStep is how far a playing track's position moves before
 // that alone is sent to the server.
 const serverPositionStep = time.Minute
+
+// serverPositionSlack is how far back a position may fall and still count as
+// the same stretch of playing: a resume after a pause rounds it down.
+const serverPositionSlack = 10 * time.Second
 
 // queueWrite is a saved queue waiting to be written, for the server and
 // user that were logged in when it changed. With keepServer set only this
@@ -79,7 +84,7 @@ type queuePush struct {
 	// read says this session knows what the server holds, or was told to
 	// replace it. Until then nothing is sent, so a device that started
 	// without having read the server's queue can't overwrite it.
-	read bool
+	read atomic.Bool
 }
 
 func newQueuePush() *queuePush { return &queuePush{lock: make(chan struct{}, 1)} }
@@ -99,17 +104,14 @@ func (p *queuePush) release() { <-p.lock }
 // knows records that the server holds q.
 func (p *queuePush) knows(q serverQueue) {
 	p.lock <- struct{}{}
-	p.last, p.read = &q, true
+	p.last = &q
+	p.read.Store(true)
 	p.release()
 }
 
 // allow lets this session replace whatever the server holds, for when
 // sync_queue is turned on while navigo runs.
-func (p *queuePush) allow() {
-	p.lock <- struct{}{}
-	p.read = true
-	p.release()
-}
+func (p *queuePush) allow() { p.read.Store(true) }
 
 // send stores v as the server's play queue. It is best effort: a failure
 // is logged and is neither shown nor counted as the server being offline.
@@ -131,7 +133,7 @@ func (p *queuePush) send(
 		return
 	}
 	defer p.release()
-	if seq < p.sent || !p.read {
+	if seq < p.sent || !p.read.Load() {
 		return
 	}
 	p.sent = seq
@@ -140,7 +142,7 @@ func (p *queuePush) send(
 		return
 	}
 	if !exact && p.last != nil && p.last.sameQueue(q) &&
-		q.pos >= p.last.pos && q.pos-p.last.pos < serverPositionStep {
+		q.pos-p.last.pos > -serverPositionSlack && q.pos-p.last.pos < serverPositionStep {
 		return
 	}
 	if err := c.SavePlayQueue(ctx, q.ids, q.current, q.pos); err != nil {
@@ -244,7 +246,9 @@ func (m *Model) flushPending() {
 	if m.pendingSave == nil {
 		return
 	}
-	if cmd := m.writeSaved(*m.pendingSave); cmd != nil {
+	w := *m.pendingSave
+	w.keepServer = true // a slow old server must not hold up the new login
+	if cmd := m.writeSaved(w); cmd != nil {
 		cmd()
 	}
 	m.pendingSave = nil

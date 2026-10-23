@@ -31,7 +31,7 @@ type Config struct {
 	Resume Resume `yaml:"resume"`
 	// SyncQueue keeps the saved queue on the server too, so other devices
 	// start from it; off unless set to true.
-	SyncQueue bool `yaml:"sync_queue"`
+	SyncQueue SyncQueue `yaml:"sync_queue"`
 	// Theme names a palette for the colour roles; Colors changes single
 	// roles on top of it.
 	Theme  Theme  `yaml:"theme"`
@@ -62,6 +62,24 @@ func (r *Resume) UnmarshalYAML(n *yaml.Node) error {
 	return nil
 }
 
+// SyncQueue is the sync_queue: setting.
+type SyncQueue struct {
+	On       bool
+	Problems []Problem
+}
+
+// UnmarshalYAML reads true or false; anything else is a Problem and
+// leaves SyncQueue off.
+func (r *SyncQueue) UnmarshalYAML(n *yaml.Node) error {
+	var v bool
+	if n.Kind != yaml.ScalarNode || n.Decode(&v) != nil {
+		r.Problems = append(r.Problems, Problem{pos(n), "sync_queue: give true or false"})
+		return nil
+	}
+	r.On = v
+	return nil
+}
+
 // ResumeOn reports whether the queue is kept between runs.
 func (c Config) ResumeOn() bool { return !c.Resume.Off }
 
@@ -70,8 +88,13 @@ func (c Config) ResumeOn() bool { return !c.Resume.Off }
 // defaults.
 func (c Config) Problems() []Problem {
 	return slices.Concat(
-		c.Player.Problems, c.Resume.Problems, c.Theme.Problems, c.Colors.Problems,
-		c.CoverArt.Problems, c.ListenBrainz.Problems,
+		c.Player.Problems,
+		c.Resume.Problems,
+		c.SyncQueue.Problems,
+		c.Theme.Problems,
+		c.Colors.Problems,
+		c.CoverArt.Problems,
+		c.ListenBrainz.Problems,
 	)
 }
 

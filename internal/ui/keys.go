@@ -375,8 +375,9 @@ func (m *Model) reloadConfig(command.Call) error {
 		return fmt.Errorf("%s: %w; the old bindings stay", m.deps.ConfigPath, err)
 	}
 	m.deps.Config.Keys, m.keys = cfg.Keys, set
+	wasResume, wasSync := m.deps.Config.ResumeOn(), m.deps.Config.SyncQueue.On
 	m.deps.Config.Player, m.deps.Config.Resume = cfg.Player, cfg.Resume
-	if cfg.SyncQueue && !m.deps.Config.SyncQueue {
+	if cfg.SyncQueue.On && cfg.ResumeOn() && (!wasSync || !wasResume) {
 		m.push.allow()
 	}
 	m.deps.Config.SyncQueue = cfg.SyncQueue
@@ -386,7 +387,7 @@ func (m *Model) reloadConfig(command.Call) error {
 	m.covers.accentFor = "" // the cover colour is put on again if it applies
 	m.setTable(t)
 	m.event(app.ConfigureReplayGain{ReplayGain: gainOf(cfg.Player)})
-	m.event(app.ConfigureResume{On: cfg.ResumeOn(), Sync: cfg.SyncQueue})
+	m.event(app.ConfigureResume{On: cfg.ResumeOn(), Sync: cfg.SyncQueue.On})
 	user, api := lbOf(cfg.ListenBrainz)
 	m.event(app.ConfigureListenBrainz{User: user, API: api})
 	m.setMsg("config reloaded", false)

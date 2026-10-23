@@ -276,6 +276,11 @@ func apply(s State, e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case Start:
 		out := []Effect{LoadCache{}}
+		if !s.SyncOn {
+			var load []Effect
+			s, load = s.loadSaved(false)
+			out = append(out, load...)
+		}
 		if s.recsOn() {
 			out = append(out, LoadRecs{})
 		}

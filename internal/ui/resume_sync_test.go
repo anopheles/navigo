@@ -317,7 +317,7 @@ func TestAPushThatWasOvertakenDoesNotReplaceANewerOne(t *testing.T) {
 
 func TestWithoutSyncQueueTheServerIsNeverAsked(t *testing.T) {
 	h := newHarness(t, 120, 40, func(c *config.Config, srv *subsonictest.Server) {
-		c.SyncQueue = false
+		c.SyncQueue.On = false
 		srv.SetPlayQueue(
 			subsonictest.Username,
 			subsonictest.PlayQueue{IDs: []string{"x", "y"}, Current: "x"},
@@ -340,7 +340,7 @@ func TestWithoutSyncQueueTheServerIsNeverAsked(t *testing.T) {
 
 func TestSyncQueueTurnedOnByReloadStartsPushing(t *testing.T) {
 	h := newHarness(t, 120, 40, func(c *config.Config, _ *subsonictest.Server) {
-		c.SyncQueue = false
+		c.SyncQueue.On = false
 	})
 	h.playAlbum()
 	h.advance(saveAfter)
@@ -450,7 +450,7 @@ func TestPositionAloneIsSentOncePerMinuteWhilePlaying(t *testing.T) {
 
 func TestQuitWaitsForOneDeadlineNotTwo(t *testing.T) {
 	old := serverQueueTimeout
-	serverQueueTimeout = 200 * time.Millisecond
+	serverQueueTimeout = 400 * time.Millisecond
 	t.Cleanup(func() { serverQueueTimeout = old })
 	srv := subsonictest.NewServer(t)
 	srv.SetPlayQueueFault(subsonictest.PlayQueueHangs)
@@ -466,10 +466,63 @@ func TestQuitWaitsForOneDeadlineNotTwo(t *testing.T) {
 	start := time.Now()
 	done := make(chan struct{})
 	go func() { p.send(ctx, c, 1, saved("a"), false); close(done) }()
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	p.send(ctx, c, 2, saved("b"), true)
 	<-done
-	if took := time.Since(start); took > 320*time.Millisecond {
+	if took := time.Since(start); took > 650*time.Millisecond {
 		t.Errorf("two sends to a hung server took %v, want about one timeout", took)
+	}
+}
+
+func TestARestoreThatFindsNoTrackLeavesTheServersQueueWhole(t *testing.T) {
+	a := newHarness(t, 120, 40, nil)
+	elsewhere := subsonictest.PlayQueue{IDs: []string{"gone-1", "gone-2"}, Current: "gone-1"}
+	a.srv.SetPlayQueue(subsonictest.Username, elsewhere)
+
+	b := a.otherDevice()
+	b.advance(saveAfter)
+	if got, ok := b.serverQueue(); !ok || !slices.Equal(got.IDs, elsewhere.IDs) {
+		t.Errorf("a device that restored nothing left the server with %q", got.IDs)
+	}
+	b.playAlbum()
+	b.advance(saveAfter)
+	if got, _ := b.serverQueue(); len(got.IDs) != 6 {
+		t.Errorf("a queue built after that didn't reach the server: %q", got.IDs)
+	}
+}
+
+func TestTurningResumeOnStartsPushingWhenSyncWasAlreadyOn(t *testing.T) {
+	h := newHarness(t, 120, 40, func(c *config.Config, _ *subsonictest.Server) {
+		c.Resume.Off = true
+	})
+	if err := os.MkdirAll(filepath.Dir(h.path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(h.path, []byte("sync_queue: true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.keys(":reload-config<CR>")
+	h.playAlbum()
+	h.advance(saveAfter)
+	if _, ok := h.serverQueue(); !ok {
+		t.Error("the server got no queue after resume was turned on")
+	}
+}
+
+func TestResumingAfterAPauseDoesNotPushTheRoundedPosition(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.playAlbum()
+	h.fake.Tick(134 * time.Second)
+	h.pump()
+	h.keys(" ")
+	h.advance(saveAfter)
+	base := h.pushes()
+	h.keys(" ")
+	h.advance(saveAfter)
+	if got := h.pushes(); got != base {
+		t.Errorf("%d pushes for playing on after a pause", got-base)
+	}
+	if q, _ := h.serverQueue(); q.Position != 134*time.Second {
+		t.Errorf("the server holds position %v, want the paused 2m14s", q.Position)
 	}
 }

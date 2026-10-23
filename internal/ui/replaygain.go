@@ -78,6 +78,6 @@ func (m *Model) gainText() string {
 func newState(cfg config.Config) app.State {
 	s := app.New()
 	s.ReplayGain = gainOf(cfg.Player)
-	s.ResumeOn, s.SyncOn = cfg.ResumeOn(), cfg.SyncQueue
+	s.ResumeOn, s.SyncOn = cfg.ResumeOn(), cfg.SyncQueue.On
 	return s.WithListenBrainz(lbOf(cfg.ListenBrainz))
 }

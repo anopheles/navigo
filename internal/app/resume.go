@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/anopheles/navigo/internal/library"
 	"github.com/anopheles/navigo/internal/resume"
 )
 
@@ -160,6 +161,9 @@ func (s State) restoreSaved() (State, []Effect) {
 		q = append(q, QueueEntry{ID: s.nextID, Track: t})
 	}
 	if len(q) == 0 {
+		if len(p.Tracks) > 0 {
+			s.heldBack = []library.TrackID{}
+		}
 		return s, nil
 	}
 	pos := p.Position

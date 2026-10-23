@@ -32,8 +32,8 @@ func TestPlayQueueRoundTrip(t *testing.T) {
 		q.Position != 134500*time.Millisecond {
 		t.Errorf("queue = %+v", q)
 	}
-	if q.ChangedBy != "navigo" || q.Changed.IsZero() {
-		t.Errorf("changed %v by %q, want a time and navigo", q.Changed, q.ChangedBy)
+	if held, _ := srv.PlayQueue(subsonictest.Username); held.ChangedBy != "navigo" {
+		t.Errorf("changed by %q, want navigo", held.ChangedBy)
 	}
 	if err := c.SavePlayQueue(ctx, nil, "", 0); err != nil {
 		t.Fatal(err)

@@ -448,11 +448,9 @@ func (c *Client) Scrobble(ctx context.Context, id string, submission bool) error
 // can pick it up (getPlayQueue and savePlayQueue). Current is the ID of the
 // current song, empty if none; Position is where it stood.
 type PlayQueue struct {
-	IDs       []string
-	Current   string
-	Position  time.Duration
-	Changed   time.Time
-	ChangedBy string
+	IDs      []string
+	Current  string
+	Position time.Duration
 }
 
 // PlayQueue returns the user's saved play queue. A server with none saved
@@ -460,21 +458,17 @@ type PlayQueue struct {
 func (c *Client) PlayQueue(ctx context.Context) (PlayQueue, error) {
 	var r struct {
 		PlayQueue struct {
-			Entry     []struct{ ID string } `json:"entry"`
-			Current   string                `json:"current"`
-			Position  int64                 `json:"position"` // milliseconds
-			Changed   time.Time             `json:"changed"`
-			ChangedBy string                `json:"changedBy"`
+			Entry    []struct{ ID string } `json:"entry"`
+			Current  string                `json:"current"`
+			Position int64                 `json:"position"` // milliseconds
 		} `json:"playQueue"`
 	}
 	if err := c.call(ctx, "getPlayQueue", nil, &r); err != nil {
 		return PlayQueue{}, err
 	}
 	q := PlayQueue{
-		Current:   r.PlayQueue.Current,
-		Position:  time.Duration(r.PlayQueue.Position) * time.Millisecond,
-		Changed:   r.PlayQueue.Changed,
-		ChangedBy: r.PlayQueue.ChangedBy,
+		Current:  r.PlayQueue.Current,
+		Position: time.Duration(r.PlayQueue.Position) * time.Millisecond,
 	}
 	for _, e := range r.PlayQueue.Entry {
 		q.IDs = append(q.IDs, e.ID)

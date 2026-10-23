@@ -103,7 +103,7 @@ func (p *queuePush) send(ctx context.Context, c *subsonic.Client, seq int, v res
 // its play queue when it has one, else this device's file. The volume and
 // repeat always come from the file.
 func (m *Model) loadSaved(server bool) tea.Cmd {
-	ctx, c, dir, srv := m.ctx, m.client, m.deps.StateDir, m.deps.Config.Server
+	ctx, c, dir, srv, push := m.ctx, m.client, m.deps.StateDir, m.deps.Config.Server, m.push
 	return func() tea.Msg {
 		var local resume.Saved
 		found := false
@@ -123,7 +123,7 @@ func (m *Model) loadSaved(server bool) tea.Cmd {
 			slog.Warn("couldn't read the play queue from the server", "err", err)
 			return eventMsg{loaded}
 		}
-		m.push.knows(serverQueue{ids: pq.IDs, current: pq.Current, pos: pq.Position})
+		push.knows(serverQueue{ids: pq.IDs, current: pq.Current, pos: pq.Position})
 		if len(pq.IDs) == 0 {
 			return eventMsg{loaded}
 		}
@@ -144,12 +144,12 @@ func (m *Model) loadSaved(server bool) tea.Cmd {
 // writeSaved is the command that writes w: this device's file, or its
 // removal for an empty queue, and the server's play queue.
 func (m *Model) writeSaved(w queueWrite) tea.Cmd {
-	dir, c, ctx := m.deps.StateDir, m.client, m.ctx
+	dir, c, ctx, p := m.deps.StateDir, m.client, m.ctx, m.push
 	push := !w.keepServer && c != nil && m.state.SyncOn && !m.state.Offline
 	seq := 0
 	if push {
-		m.push.seq++
-		seq = m.push.seq
+		p.seq++
+		seq = p.seq
 	}
 	return func() tea.Msg {
 		var err error
@@ -161,7 +161,7 @@ func (m *Model) writeSaved(w queueWrite) tea.Cmd {
 			err = resume.Save(dir, w.url, w.user, w.saved)
 		}
 		if push {
-			m.push.send(ctx, c, seq, w.saved)
+			p.send(ctx, c, seq, w.saved)
 		}
 		if err != nil {
 			return eventMsg{app.Failed{What: "couldn't save the queue", Err: err}}

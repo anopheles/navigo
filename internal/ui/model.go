@@ -143,8 +143,9 @@ type Model struct {
 	// removes and nothing else.
 	connecting int
 	saveArmed  bool
-	// push sends the saved queue to the server (resume.go).
-	push   queuePush
+	// push sends the saved queue to the server (resume.go); a new login gets a
+	// new one, since what the server holds belongs to the old session.
+	push   *queuePush
 	client *subsonic.Client
 	ctx    context.Context
 
@@ -226,6 +227,7 @@ func New(deps Deps) (*Model, error) {
 	line := newInput()
 	line.Prompt = ":"
 	m := &Model{
+		push:     &queuePush{},
 		deps:     deps,
 		state:    newState(deps.Config),
 		ctx:      context.Background(),
@@ -429,6 +431,7 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 		m.state = m.state.StopSaving()
 		stop = tea.Batch(m.dispatch(app.StopPlayback{}))
 		m.state = newState(m.deps.Config)
+		m.push = &queuePush{}
 		m.lib, m.paths = startPath(), map[listKind][]frame{}
 		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
 		stop = tea.Batch(stop, m.dispatch(app.Start{}))

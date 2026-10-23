@@ -71,8 +71,9 @@ type State struct {
 	mixSeq    int
 
 	// Resume: the saved queue is asked for once the login has answered
-	// (savedAsked) and waits in pending for the library; saving starts once it is restored or known to be none, so
-	// the file isn't overwritten before it is read.
+	// (savedAsked) and waits in pending for the library; saving starts once
+	// it is restored or known to be none, so the file isn't overwritten
+	// before it is read.
 	savedAsked, savedLoaded, restored, saving bool
 	pending                                   *SavedLoaded
 	loggedIn                                  bool

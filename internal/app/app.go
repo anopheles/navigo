@@ -74,7 +74,7 @@ type State struct {
 	// (savedAsked) and waits in pending for the library; saving starts once
 	// it is restored or known to be none, so the file isn't overwritten
 	// before it is read.
-	savedAsked, savedLoaded, restored, saving bool
+	savedAsked, savedLoaded, restored, saving, queueUnsynced bool
 	// heldBack is the queue a restore left after dropping tracks; the
 	// server keeps its fuller one until the queue changes.
 	heldBack []library.TrackID
@@ -276,16 +276,19 @@ func apply(s State, e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case Start:
 		out := []Effect{LoadCache{}}
-		if !s.SyncOn {
+		switch {
+		case !s.SyncOn:
 			var load []Effect
 			s, load = s.loadSaved(false)
 			out = append(out, load...)
+		case s.ResumeOn:
+			out = append(out, ScheduleSavedGrace{After: savedGrace})
 		}
 		if s.recsOn() {
 			out = append(out, LoadRecs{})
 		}
 		return s, out
-	case SavedLoaded, ConfigureResume:
+	case SavedLoaded, ConfigureResume, SavedGraceElapsed, LoginFailed:
 		return s.applyResume(e)
 	case LoggedOut:
 		s, out := s.applyResume(e)

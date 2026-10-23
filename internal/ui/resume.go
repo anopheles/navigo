@@ -175,6 +175,7 @@ func (m *Model) loadSaved(server bool) tea.Cmd {
 		pq, err := c.PlayQueue(ctx)
 		if err != nil {
 			slog.Warn("couldn't read the play queue from the server", "err", err)
+			loaded.Unsynced = true
 			return eventMsg{loaded}
 		}
 		push.knows(serverQueue{ids: pq.IDs, current: pq.Current, pos: pq.Position})

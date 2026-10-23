@@ -18,11 +18,20 @@ type (
 	// when Saved's Volume and Repeat were read from this device's file,
 	// and false when only the queue is known, so the volume and repeat
 	// stay as they are.
+	// Unsynced is true when the server's queue was asked for and could not
+	// be read, so this session does not sync it.
 	SavedLoaded struct {
 		Saved    resume.Saved
 		Found    bool
 		Settings bool
+		Unsynced bool
 	}
+	// SavedGraceElapsed: the login had not answered savedGrace after the
+	// start, so the queue is restored from this device's file without it.
+	SavedGraceElapsed struct{}
+	// LoginFailed: the login failed in a way that is neither an
+	// unreachable server nor rejected credentials.
+	LoginFailed struct{}
 	// ConfigureResume turns Resume on or off, at startup and on
 	// :reload-config.
 	ConfigureResume struct{ On, Sync bool }
@@ -49,14 +58,26 @@ type (
 	// DeleteSaved removes this device's saved queue, and any write still
 	// waiting. The server's queue stays for the other devices.
 	DeleteSaved struct{}
+	// ScheduleSavedGrace asks for SavedGraceElapsed after After.
+	ScheduleSavedGrace struct{ After time.Duration }
 )
 
-func (SavedLoaded) isEvent()     {}
-func (ConfigureResume) isEvent() {}
-func (LoggedOut) isEvent()       {}
-func (LoadSaved) isEffect()      {}
-func (SaveQueue) isEffect()      {}
-func (DeleteSaved) isEffect()    {}
+func (SavedLoaded) isEvent()         {}
+func (ConfigureResume) isEvent()     {}
+func (LoggedOut) isEvent()           {}
+func (SavedGraceElapsed) isEvent()   {}
+func (LoginFailed) isEvent()         {}
+func (LoadSaved) isEffect()          {}
+func (SaveQueue) isEffect()          {}
+func (DeleteSaved) isEffect()        {}
+func (ScheduleSavedGrace) isEffect() {}
+
+// savedGrace is how long the start waits for the login before it restores
+// from this device's file, when the queue would sync.
+const savedGrace = 3 * time.Second
+
+// unsyncedNote is what the user is told when the queue won't sync.
+const unsyncedNote = "queue not synced this session · couldn't get the server's queue"
 
 // positionStep is how coarsely the position of a playing track is saved,
 // so playing doesn't rewrite the file every second.
@@ -109,12 +130,18 @@ func (s State) savedAt(step time.Duration) resume.Saved {
 // applyResume handles the events of Resume.
 func (s State) applyResume(e Event) (State, []Effect) {
 	switch e := e.(type) {
+	case SavedGraceElapsed, LoginFailed:
+		return s.loadSaved(false)
 	case SavedLoaded:
 		s.savedLoaded = true
 		if e.Found {
 			s.pending = &e
 		} else {
 			s.restored, s.saving = true, true
+		}
+		if e.Unsynced {
+			s.queueUnsynced = true
+			return s, []Effect{Notice{Text: unsyncedNote}}
 		}
 	case ConfigureResume:
 		was := s.ResumeOn
@@ -200,6 +227,9 @@ func (s State) restoreSaved() (State, []Effect) {
 		text = fmt.Sprintf("restored %d of %d tracks", len(q), len(p.Tracks))
 		s.heldBack = s.saved().Tracks
 	}
+	if s.queueUnsynced {
+		text += " (not synced this session)"
+	}
 	out := []Effect{Notice{Text: text, Command: "play-pause", Hint: hint}}
 	if loaded.Settings {
 		out = append([]Effect{SetVolume{Percent: s.Player.Volume}}, out...)
@@ -215,7 +245,14 @@ func (s State) loadSaved(server bool) (State, []Effect) {
 		return s, nil
 	}
 	s.savedAsked = true
-	return s, []Effect{LoadSaved{Server: server && s.SyncOn}}
+	out := []Effect{LoadSaved{Server: server && s.SyncOn}}
+	if s.SyncOn && !server && !s.Offline {
+		// Offline explains itself; any other way to here leaves the queue
+		// unsynced without the user knowing.
+		s.queueUnsynced = true
+		out = append(out, Notice{Text: unsyncedNote})
+	}
+	return s, out
 }
 
 // withSaving adds the effects Resume needs after e was applied: the

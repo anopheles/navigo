@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -288,5 +289,85 @@ func TestWithoutSyncTheSavedQueueIsReadAtStartWithoutTheNetwork(t *testing.T) {
 	}
 	if _, out = run(s, LoggedIn{}); len(only[LoadSaved](out)) != 0 {
 		t.Error("asked again after the login")
+	}
+}
+
+func notices(out []Effect) []string {
+	var texts []string
+	for _, n := range only[Notice](out) {
+		texts = append(texts, n.Text)
+	}
+	return texts
+}
+
+func hasNote(out []Effect, part string) bool {
+	for _, t := range notices(out) {
+		if strings.Contains(t, part) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestWithSyncTheRestoreWaitsForTheLoginOnlyForTheGrace(t *testing.T) {
+	s, out := run(resumeState(), Start{})
+	if len(only[LoadSaved](out)) != 0 {
+		t.Fatalf("asked at start with sync on: %#v", out)
+	}
+	if g := only[ScheduleSavedGrace](out); len(g) != 1 || g[0].After != savedGrace {
+		t.Fatalf("grace = %#v, want one of %v", g, savedGrace)
+	}
+
+	late, out := run(s, SavedGraceElapsed{})
+	if l := only[LoadSaved](out); len(l) != 1 || l[0].Server {
+		t.Errorf("after the grace = %#v, want this device's file only", l)
+	}
+	if !hasNote(out, "not synced") {
+		t.Errorf("the user isn't told the queue won't sync: %q", notices(out))
+	}
+	if _, out = run(late, LoggedIn{}); len(only[LoadSaved](out)) != 0 {
+		t.Error("asked again when the late login answered")
+	}
+
+	answered, _ := run(s, LoggedIn{})
+	if _, out = run(answered, SavedGraceElapsed{}); len(only[LoadSaved](out)) != 0 {
+		t.Error("the grace asked again after the login answered")
+	}
+}
+
+func TestALoginThatFailsOtherwiseStillRestoresThisDevicesQueue(t *testing.T) {
+	s, _ := run(resumeState(), Start{})
+	_, out := run(s, LoginFailed{})
+	if l := only[LoadSaved](out); len(l) != 1 || l[0].Server {
+		t.Errorf("after a failed login = %#v, want this device's file only", l)
+	}
+	if !hasNote(out, "not synced") {
+		t.Errorf("the user isn't told the queue won't sync: %q", notices(out))
+	}
+}
+
+func TestStartingOfflineNeedsNoSecondNoteAboutSync(t *testing.T) {
+	s, _ := run(resumeState(), Start{})
+	_, out := run(s, StartedOffline{})
+	if len(only[LoadSaved](out)) != 1 {
+		t.Fatalf("offline start = %#v", out)
+	}
+	if hasNote(out, "not synced") {
+		t.Errorf("offline already says why: %q", notices(out))
+	}
+}
+
+func TestAServerQueueThatCouldNotBeReadIsSaidWhenRestoring(t *testing.T) {
+	s, _ := run(resumeState(), Start{}, LoggedIn{})
+	s, out := run(
+		s,
+		SavedLoaded{Saved: saved("t1", "t2"), Found: true, Settings: true, Unsynced: true},
+	)
+	if !hasNote(out, "not synced") {
+		t.Errorf("no note when the read failed: %q", notices(out))
+	}
+	_, out = run(s, CacheLoaded{Library: libWith(2)})
+	if !hasNote(out, "(not synced this session)") {
+		t.Errorf("the restore doesn't say so: %q", notices(out))
 	}
 }

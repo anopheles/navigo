@@ -415,7 +415,7 @@ func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
 	}
 	if msg.err != nil {
 		m.setMsg("can't log in: "+msg.err.Error(), true)
-		return nil
+		return m.dispatch(app.LoginFailed{})
 	}
 	return m.ready(msg.client)
 }
@@ -560,6 +560,11 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		return nil
 	case app.ScheduleUncap:
 		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.Uncap{}} })
+	case app.ScheduleSavedGrace:
+		return m.clock.After(
+			e.After,
+			func(time.Time) tea.Msg { return eventMsg{app.SavedGraceElapsed{}} },
+		)
 	case app.ScheduleRetry:
 		m.retryAt = m.clock.Now().Add(e.After)
 		m.tick()

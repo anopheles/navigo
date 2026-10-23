@@ -526,3 +526,19 @@ func TestResumingAfterAPauseDoesNotPushTheRoundedPosition(t *testing.T) {
 		t.Errorf("the server holds position %v, want the paused 2m14s", q.Position)
 	}
 }
+
+func TestAServerQueueThatCannotBeReadIsSaidAtTheRestore(t *testing.T) {
+	a := newHarness(t, 120, 40, nil)
+	a.playAlbum()
+	a.advance(saveAfter)
+	a.srv.SetPlayQueueFault(subsonictest.PlayQueueBroken)
+
+	n := a.restart()
+	n.contains("restored 6 tracks (not synced this session)")
+	before := n.pushes()
+	n.keys(":queue-clear<CR>")
+	n.advance(saveAfter)
+	if got := n.pushes(); got != before {
+		t.Errorf("%d pushes from a session that never read the server's queue", got-before)
+	}
+}

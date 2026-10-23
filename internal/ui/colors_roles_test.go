@@ -344,3 +344,40 @@ func distinct(all []string, prefix string) []string {
 	}
 	return out
 }
+
+func TestAccentTintsTheSelectionInATurnedHue(t *testing.T) {
+	h := accentHarness(t, "#c25bd8")
+	h.keys("Vj") // the first row is selected, the cursor is on the second
+	it, ok := h.m.rowItem(h.m.top(), h.m.top().cur-1)
+	if !ok {
+		t.Fatal("the selected row isn't an item")
+	}
+	sel := lineWith(t, h.m.render(), it.name)
+	r, g, b, _ := h.m.selectionTint().RGBA()
+	want := fmt.Sprintf("48;2;%d;%d;%d", r>>8, g>>8, b>>8)
+	if !strings.Contains(sel, want) || has(sel, 4) || has(sel, 44) {
+		t.Errorf("the selection should be the tint %s, without underline: %q", want, sel)
+	}
+	if fmt.Sprint(h.m.selectionTint()) == fmt.Sprint(h.m.tint()) {
+		t.Error("the selection looks like the cursor")
+	}
+	h.send(tea.BackgroundColorMsg{Color: color.RGBA{250, 250, 250, 255}})
+	lr, _, _, _ := h.m.selectionTint().RGBA()
+	if lr <= r {
+		t.Errorf("the selection tint should follow the background: dark %d, light %d", r>>8, lr>>8)
+	}
+}
+
+func TestASetSelectionColourIsNotTinted(t *testing.T) {
+	colors := config.Colors{Playing: "#c25bd8", Selection: "#45475a"}
+	h := setupHarness(t, 120, 40, withColors(colors), func(hs *harness) {
+		hs.m.deps.TrueColor = true
+	})
+	h.toAlbums()
+	h.keys("3j<CR>Vj")
+	it, _ := h.m.rowItem(h.m.top(), h.m.top().cur-1)
+	l := lineWith(t, h.m.render(), it.name)
+	if !strings.Contains(l, "48;2;69;71;90") || !has(l, 4) {
+		t.Errorf("the configured selection should stay, underlined: %q", l)
+	}
+}

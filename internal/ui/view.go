@@ -467,6 +467,8 @@ func (m *Model) styleRow(line string, cursor, focused, current, selected bool) s
 		return cursorMark + line[1:]
 	case cursor:
 		return cursorDim.Render(line)
+	case selected && selectionTinted && m.accentOn():
+		return lipgloss.NewStyle().Background(m.selectionTint()).Render(line)
 	case selected:
 		return visualStyle.Render(line)
 	case current:

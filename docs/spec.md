@@ -54,7 +54,7 @@ This spec collects the decisions made on the planning map, [anopheles/navigo#1](
 
 ## Architecture
 
-Decided in [What is navigo's architecture and domain model?](https://github.com/anopheles/navigo/issues/10), with ADRs [0001](adr/0001-single-writer-core-with-effects-as-data.md)–[0004](adr/0004-shuffle-reorders-the-queue.md); [0006](adr/0006-mix-is-picked-from-the-cache.md) and [0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md) came after v1.
+Decided in [What is navigo's architecture and domain model?](https://github.com/anopheles/navigo/issues/10), with ADRs [0001](adr/0001-single-writer-core-with-effects-as-data.md)–[0004](adr/0004-shuffle-reorders-the-queue.md); [0006](adr/0006-mix-is-picked-from-the-cache.md), [0007](adr/0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md) and [0009](adr/0009-the-saved-queue-lives-on-the-server.md) came after v1.
 
 **State flow:**
 - A **UI-free core** (`internal/app`) holds the session state: library snapshot, queue, register, undo history, player status and offline state.
@@ -116,12 +116,13 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 - **Endpoints:**
   - session and library: `ping`, `getOpenSubsonicExtensions`, `getArtists`, `getArtist`, `getArtistInfo2` (similar artists for a Mix around a seed: `count=20`, without `includeNotPresent`, so only library artists come back), `getAlbumList2`, `getAlbum`, `getPlaylists`, `getPlaylist`, `search3`;
   - playback: `stream`, `getCoverArt`, `scrobble`;
+  - the saved queue: `getPlayQueue`, `savePlayQueue` ([Resume](#resume));
   - stars, ratings and change detection: `star`/`unstar`, `setRating` (one call per track), `getStarred2`, `getScanStatus`, `getIndexes`;
   - playlist edits: `createPlaylist` (also with `playlistId`, to reorder: it replaces the tracks), `updatePlaylist` (also with `name`, to rename), `deletePlaylist`.
 - **Extensions:** `formPost` (calls go as POST once offered, keeping tokens out of URLs) and `transcodeOffset` (seeking in transcoded streams). Optional features are gated on `getOpenSubsonicExtensions`.
 - **Limits:** Navidrome caps list endpoints at 500. An empty-query `search3` lists the whole library with offsets; that's the sync path, with a `getAlbumList2`+`getAlbum` fallback.
 - **Scrobbles:** `stream` doesn't count a play. navigo sends `scrobble submission=false` when a track starts and `submission=true` after half the track or 4 minutes listened, whichever comes first, once per queue-entry play. Seeks don't count toward that.
-- **Timeouts:** 10 s for API calls, 60 s per sync page, 2 s for a Mix's similar-artist lookups.
+- **Timeouts:** 10 s for API calls, 60 s per sync page, 2 s for a Mix's similar-artist lookups, 3 s for the saved queue ([Resume](#resume)).
 - **Errors:** a failed response is `subsonic-response.status="failed"` with a code: 40 wrong credentials, 41 token auth unsupported (clear message, no fallback to a plain password), 70 not found.
 
 ## Login and credentials
@@ -215,7 +216,7 @@ keys:
 - `theme` names a palette for the roles; `colors` then recolours single roles on top of it. [Colours](#colours).
 - `colors` takes the roles `playing`, `key`, `error` and `selection`. [Colours](#colours).
 - **Validation:** a bad value (an unknown mode, a preamp that isn't a number or is out of range, a colour that can't be read) is skipped, keeps its default and is listed in the same popup as bad bindings, as `config.yaml:LINE:COL: message`. Unknown top-level keys are still ignored, but an unknown role inside `colors` is reported. `navigo check-config` covers all of it.
-- **`:reload-config`** applies all three again: ReplayGain returns to the configured mode and preamp (dropping a `:replaygain` override), colours change at once, and `resume: false` stops saving and deletes the saved queue.
+- **`:reload-config`** applies all three again: ReplayGain returns to the configured mode and preamp (dropping a `:replaygain` override), colours change at once, and `resume: false` stops saving, deletes this device's saved queue and stops reading and writing the server's, which stays as it is.
 
 **`listenbrainz`** ([How does the user turn it on?](https://github.com/anopheles/navigo/issues/82)):
 - `user` turns [Recommendations](#listenbrainz-recommendations) on; without it they're off. There's no `enabled` key and no `:` command that sets it. `url` defaults to `https://api.listenbrainz.org`.
@@ -451,13 +452,20 @@ The `:` line has Tab completion for command names and arguments.
 [Should navigo restore the last session, and what exactly?](https://github.com/anopheles/navigo/issues/51), which reverses the choice in [#9](https://github.com/anopheles/navigo/issues/9) to start with an empty queue. Terms: **Saved queue**, **Resume**.
 
 - **What is saved:** the queue entries (track IDs in order), the current entry, the position in seconds, the volume and the repeat mode. Not the cursor, section, register or undo history; the restored queue starts a fresh undo history.
-- **Where:** its own small versioned file per server and user in the state directory, not in the disposable cache, written atomically with mode 0600. A version mismatch or a corrupt file is dropped.
-- **When it is written:** on a change to the queue, current entry, volume or repeat (debounced to about 1 s), and on quit; the position every 10 s while playing, and on pause and quit.
-- **Restore:** at startup the queue loads **paused at the saved position**: `restored 12 tracks · <Space> plays from 2:14`. Nothing starts on its own; the first play seeks to the position.
-- **Missing tracks:** entries that are not in the loaded library are dropped once, at startup, with a count (`restored 11 of 12 tracks`). With nothing left, navigo starts empty and says nothing. The later background sync does not check again.
-- **Settings:** on unless `resume: false`. Emptying the queue empties the saved one; `:logout` deletes the file; another user or server has its own file.
-- **Offline** needs nothing extra: the cached library resolves the entries, and `<Space>` gives the usual "the queue is ready" message.
-- **Two navigo instances:** the last one to write wins.
+- **What is shared between devices** ([ADR 0009](adr/0009-the-saved-queue-lives-on-the-server.md)): the queue, the current entry and the position, kept on the server as its play queue (`savePlayQueue`, `getPlayQueue`). The volume and repeat mode stay on the device, since the speakers differ, and are never sent. The server records `navigo` as the client that changed the queue.
+- **Where:** each device keeps its own small versioned file per server and user in the state directory, not in the disposable cache, written atomically with mode 0600. A version mismatch or a corrupt file is dropped. The file holds everything above and is the fallback when the server's queue can't be used.
+- **When it is written:** on a change to the queue, current entry, volume or repeat (debounced to about 1 s), and on quit; the position every 10 s while playing, and on pause and quit. Each write goes to the file and to the server. A queue the server already holds is not sent again, so a change of volume or repeat alone costs no request, and neither does restoring the server's own queue.
+- **Restore:** at startup, once the login has answered, the queue loads **paused at the saved position**: `restored 12 tracks · <Space> plays from 2:14`. Nothing starts on its own; the first play seeks to the position.
+- **Which queue wins at startup:** the server's. navigo asks for it for up to 3 s. If the server answers with a queue, that queue is restored, with the volume and repeat from this device's file. In every other case the file is used: the server is unreachable, slow, errors, doesn't have the calls, or holds an empty queue. A device with no file restores the server's queue and leaves its volume and repeat alone.
+- **A running session is never changed by another device.** navigo reads the server's queue once, at startup. There is no polling and no live channel: a queue another device saves later shows up at the next start.
+- **Edits that never reached the server lose.** Changes made while the server could not be reached stay in the file only. At the next start, if the server then holds a queue, that queue wins and the edits are gone. Two devices running at once overwrite each other: the last write wins.
+- **A failed write to the server is quiet.** It is logged, shows no message, and never marks navigo as offline. While navigo is offline nothing is sent. The next change sends the queue again.
+- **Missing tracks:** entries that are not in the loaded library are dropped once, at startup, with a count (`restored 11 of 12 tracks`). With nothing left, navigo starts empty and says nothing. The later background sync does not check again. The dropped entries are also gone from the server's queue after the next write.
+- **The same track twice:** the server stores the current entry as a track ID, so when a track is in the queue twice, the restored current entry is the first of them.
+- **Long queues:** the IDs of a long queue would not fit in a GET URL. `savePlayQueue` goes out as a POST form once its query passes about 4,000 characters, or always when the server offers `formPost`.
+- **Settings:** on unless `resume: false`, which turns off both the file and the server's queue, reading and writing. Emptying the queue empties the saved one and clears the server's. `:logout` deletes this device's file and leaves the server's queue, which the other devices still want; another user or server has its own file and its own queue.
+- **Offline** needs nothing extra: the cached library resolves the entries, the file is used, and `<Space>` gives the usual "the queue is ready" message. A start where the login can't reach the server doesn't ask for the server's queue.
+- **Two navigo instances on one device:** the last one to write wins, in the file and on the server.
 
 ## Offline, errors and messages
 
@@ -473,7 +481,7 @@ The `:` line has Tab completion for command names and arguments.
 **While offline:**
 - Lists and search work.
 - **Queue changes still work**, but playback doesn't start: "offline · the queue is ready · `<Space>` plays it once the server is back".
-- **Writes are refused.** Their keys stay in the hints and explain why when pressed.
+- **Writes are refused.** Their keys stay in the hints and explain why when pressed. Saving the queue to the server is not one of them: it is skipped without a word, and the file keeps the queue ([Resume](#resume)).
 - A sync cut off by going offline is thrown away; the old snapshot stays.
 - **Playback never starts on its own on reconnect.**
 
@@ -564,8 +572,8 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
   - the mpv IPC client, against a fake socket;
   - the subsonic client, against the `httptest` fake server;
   - the ListenBrainz client, against an `httptest` fake ListenBrainz with hand-written fixtures (a list, an unchanged `last_updated`, 204, 404, 429 then success, 5xx, metadata missing MBIDs), and Recommendation matching as a pure function. There's no e2e scenario: a synthetic ListenBrainz user can't be recorded, and CI doesn't call the live API;
-  - the config values and errors for ReplayGain, Resume and colours, the saved queue's round trip (including a corrupt file, missing tracks, offline start and `:logout`), colour parsing and its degrade at each depth, and the Player call order for `SetReplayGain` on the fake.
-- **The fake server** (`internal/subsonic/subsonictest`) replays JSON recorded from a throwaway Navidrome serving a **synthetic fixture library**; never the live one, since the repo is public. It checks token+salt auth and fails a test on a plain password, a reused salt or an unrecorded request. Re-record with `tools/fixtures.sh up && tools/fixtures.sh record`.
+  - the config values and errors for ReplayGain, Resume and colours, the saved queue's round trip (including a corrupt file, missing tracks, offline start and `:logout`) and its sync between two devices (a second device restoring the first one's queue paused at its position, the server being unreachable, slow, erroring, lacking the calls or empty, volume and repeat staying local, `:logout` and `resume: false` leaving the server's queue, a failed write staying quiet), colour parsing and its degrade at each depth, and the Player call order for `SetReplayGain` on the fake.
+- **The fake server** (`internal/subsonic/subsonictest`) replays JSON recorded from a throwaway Navidrome serving a **synthetic fixture library**; never the live one, since the repo is public. It checks token+salt auth and fails a test on a plain password, a reused salt or an unrecorded request. The exception is the play queue calls, which it answers from one queue per user, so tests can run two devices against it, and which it can fail on demand. Those answers are not recorded from Navidrome. Re-record with `tools/fixtures.sh up && tools/fixtures.sh record`.
 - **Layer A (in-process UI):** the real Bubble Tea model, core and runner, with the real client against the fake server and the fake Player. Most checks are targeted assertions; a few golden frames cover the layouts (120×40, plus 80×40 for narrow), refreshed with `-update`.
 - **Layer B (e2e):** `go test -tags e2e ./e2e` builds the binary and drives it in a pty through a terminal emulator, against a real Navidrome and real mpv (`--ao=null`), with its own HOME and XDG dirs. It runs against the live server from `.env.e2e` locally, and against the docker Navidrome with the fixture library through `tools/e2e/run.sh` in CI. It skips without credentials. There are three scenarios: the new-user path, transport, and cold start from the cache. Keymap edge cases stay in layer A.
 - **CI:**

@@ -338,8 +338,8 @@ func (m *Model) coverArt(id string, cols, rows int) []string {
 }
 
 // queueCard heads the queue window, w cells wide, while something plays:
-// the cover on the left, then the title, artist and album; the bar below
-// the windows has the rest.
+// the cover on the left, then the title, artist, album, its year and genre,
+// and what plays next; the bar below the windows has the rest.
 func (m *Model) queueCard(w int) []string {
 	if m.cardHeight() == 0 {
 		return nil
@@ -347,17 +347,31 @@ func (m *Model) queueCard(w int) []string {
 	t, _, _ := m.state.NowPlaying()
 	id, _ := m.playingCover()
 	art := m.coverArt(id, cardCols, cardRows)
+	var about []string
+	if t.Year > 0 {
+		about = append(about, fmt.Sprint(t.Year))
+	}
+	if t.Genre != "" {
+		about = append(about, t.Genre)
+	}
+	next := ""
+	if n, ok := m.state.UpNext(); ok {
+		next = "next: " + n.Title
+		if n.Artist != "" {
+			next += " — " + n.Artist
+		}
+	}
 	text := []string{
-		"",
 		m.accent(m.playIcon() + "  " + t.Title),
 		titleOff.Render(t.Artist),
 		dimStyle.Render(t.Album),
+		dimStyle.Render(strings.Join(about, " · ")),
 		"",
-		"",
+		dimStyle.Render(next),
 	}
 	out := make([]string, 0, cardRows+1)
 	for i := range cardRows {
-		out = append(out, art[i]+" "+fit(text[i], w-cardCols-1))
+		out = append(out, " "+art[i]+"  "+fit(text[i], w-cardCols-3))
 	}
 	return append(out, dimStyle.Render(strings.Repeat("─", max(w, 0))))
 }

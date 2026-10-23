@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"slices"
+
+	"github.com/anopheles/navigo/internal/library"
 )
 
 // Repeat is what happens at the end of a track or of the queue.
@@ -93,6 +95,25 @@ func (s State) nextRow(i int) int {
 		return 0
 	}
 	return -1
+}
+
+// UpNext is the track that plays after the playing one: the queue's next
+// row, or where the queue goes on after the playing entry was removed.
+// ok is false when nothing plays, nothing follows, or the entry repeats.
+func (s State) UpNext() (t library.Track, ok bool) {
+	_, row, playing := s.NowPlaying()
+	n := -1
+	switch {
+	case !playing:
+	case row >= 0:
+		n = s.nextRow(row)
+	case s.orphanNext != 0:
+		n = s.index(s.orphanNext)
+	}
+	if n < 0 {
+		return library.Track{}, false
+	}
+	return s.Queue[n].Track, true
 }
 
 // replays reports whether row i starts again when it ends: repeat one,

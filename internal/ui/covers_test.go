@@ -57,6 +57,14 @@ func TestCardHasTheBarsFacts(t *testing.T) {
 	h.contains("▶  Low Tide", "Aurora Lane", "Blue Hour", " 2/6 ", "0:42 / 3:05")
 }
 
+func TestCardSaysWhatPlaysNext(t *testing.T) {
+	h := coverHarness(t, 120, 40, config.CoverAuto, false)
+	h.play()
+	h.contains("2021 · Dream Pop", "next: Streetlamp — Aurora Lane")
+	h.keys("RR") // repeat one: the same track again
+	h.lacks("next:")
+}
+
 func TestNoCardOnASmallTerminal(t *testing.T) {
 	for _, size := range [][2]int{{120, 27}, {99, 40}} {
 		h := coverHarness(t, size[0], size[1], config.CoverAuto, false)

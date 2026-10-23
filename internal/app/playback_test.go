@@ -255,3 +255,36 @@ func TestPublishNowPlaying(t *testing.T) {
 		t.Errorf("SeekAt: %#v", out)
 	}
 }
+
+func TestUpNext(t *testing.T) {
+	if _, ok := New().UpNext(); ok {
+		t.Error("something is up next with nothing playing")
+	}
+	s := playing4(t)
+	if n, ok := s.UpNext(); !ok || n.ID != "t3" {
+		t.Errorf("up next %q %v, want t3", n.ID, ok)
+	}
+	// Removed while it plays: the queue goes on with what followed it.
+	r, _ := run(s, Remove{From: 1, To: 3})
+	if n, ok := r.UpNext(); !ok || n.ID != "t4" {
+		t.Errorf("after removing it: up next %q %v, want t4", n.ID, ok)
+	}
+	r, _ = run(s, Remove{From: 1, To: 4})
+	if _, ok := r.UpNext(); ok {
+		t.Error("something is up next with the rest removed")
+	}
+	// The last row: nothing, or the first under repeat all; repeat one
+	// plays the same entry again.
+	s, _ = run(s, FromPlayer{player.TrackStarted{Entry: 4}})
+	if _, ok := s.UpNext(); ok {
+		t.Error("something is up next after the last row")
+	}
+	s, _ = run(s, CycleRepeat{})
+	if n, ok := s.UpNext(); !ok || n.ID != "t1" {
+		t.Errorf("repeat all: up next %q %v, want t1", n.ID, ok)
+	}
+	s, _ = run(s, CycleRepeat{})
+	if _, ok := s.UpNext(); ok {
+		t.Error("something is up next under repeat one")
+	}
+}

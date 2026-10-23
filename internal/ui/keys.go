@@ -376,13 +376,14 @@ func (m *Model) reloadConfig(command.Call) error {
 	}
 	m.deps.Config.Keys, m.keys = cfg.Keys, set
 	m.deps.Config.Player, m.deps.Config.Resume = cfg.Player, cfg.Resume
+	m.deps.Config.SyncQueue = cfg.SyncQueue
 	m.deps.Config.Theme, m.deps.Config.Colors = cfg.Theme, cfg.Colors
 	m.deps.Config.ListenBrainz, m.deps.Config.Powerline = cfg.ListenBrainz, cfg.Powerline
 	applyColors(cfg.RoleColors(), m.deps.TrueColor)
 	m.covers.accentFor = "" // the cover colour is put on again if it applies
 	m.setTable(t)
 	m.event(app.ConfigureReplayGain{ReplayGain: gainOf(cfg.Player)})
-	m.event(app.ConfigureResume{On: cfg.ResumeOn()})
+	m.event(app.ConfigureResume{On: cfg.ResumeOn(), Sync: cfg.SyncQueue})
 	user, api := lbOf(cfg.ListenBrainz)
 	m.event(app.ConfigureListenBrainz{User: user, API: api})
 	m.setMsg("config reloaded", false)

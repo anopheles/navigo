@@ -313,3 +313,50 @@ func TestAPushThatWasOvertakenDoesNotReplaceANewerOne(t *testing.T) {
 		t.Errorf("%d savePlayQueue requests, want 1: the server already held that queue", n)
 	}
 }
+
+func TestWithoutSyncQueueTheServerIsNeverAsked(t *testing.T) {
+	h := newHarness(t, 120, 40, func(c *config.Config, srv *subsonictest.Server) {
+		c.SyncQueue = false
+		srv.SetPlayQueue(
+			subsonictest.Username,
+			subsonictest.PlayQueue{IDs: []string{"x", "y"}, Current: "x"},
+		)
+	})
+	h.playAlbum()
+	h.advance(saveAfter)
+	h.m.FlushSaved()
+	h.lacks("restored")
+	if n := h.requests("getPlayQueue") + h.requests("savePlayQueue"); n != 0 {
+		t.Errorf("%d play queue requests with sync_queue off", n)
+	}
+	if _, err := h.savedFile(); err != nil {
+		t.Errorf("this device's file wasn't written: %v", err)
+	}
+	if q, ok := h.serverQueue(); !ok || len(q.IDs) != 2 {
+		t.Errorf("the server's queue changed: %+v", q)
+	}
+}
+
+func TestSyncQueueTurnedOnByReloadStartsPushing(t *testing.T) {
+	h := newHarness(t, 120, 40, func(c *config.Config, _ *subsonictest.Server) {
+		c.SyncQueue = false
+	})
+	h.playAlbum()
+	h.advance(saveAfter)
+	if n := h.requests("savePlayQueue"); n != 0 {
+		t.Fatalf("%d pushes with sync_queue off", n)
+	}
+	if err := os.MkdirAll(filepath.Dir(h.path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(h.path, []byte("sync_queue: true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.keys(":reload-config<CR>")
+	h.keys(":queue-clear<CR>")
+	h.playAlbum()
+	h.advance(saveAfter)
+	if _, ok := h.serverQueue(); !ok {
+		t.Error("the server got no queue after sync_queue was turned on")
+	}
+}

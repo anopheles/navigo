@@ -125,7 +125,7 @@ func startIn(t *testing.T, s server, home string) *session {
 	}
 	cfgDir := filepath.Join(home, "config_home", "navigo")
 	cfg := fmt.Sprintf(
-		"server:\n  url: %q\n  user: %q\n  password: %q\nplayer:\n  mpv_args: [--ao=null]\n",
+		"server:\n  url: %q\n  user: %q\n  password: %q\nplayer:\n  mpv_args: [--ao=null]\nsync_queue: true\n",
 		s.url,
 		s.user,
 		s.password,

@@ -101,7 +101,7 @@ A named set of colours for the four roles, picked with `theme:` and changed role
 _Avoid_: preset, skin
 
 **Saved queue**:
-The queue, its current entry and position, the volume and the repeat mode, kept between runs per server and user so that Resume can bring them back. The queue, current entry and position are also kept on the server as its play queue and follow the user between devices; the volume and repeat mode stay on the device.
+The queue, its current entry and position, the volume and the repeat mode, kept between runs per server and user so that Resume can bring them back. With `sync_queue` on, the queue, current entry and position are also kept on the server as its play queue and follow the user between devices; the volume and repeat mode stay on the device.
 _Avoid_: session, playback state, synced queue
 
 **Resume**:

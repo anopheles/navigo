@@ -17,7 +17,7 @@ func libWith(n int) *library.Snapshot {
 
 func resumeState() State {
 	s := New()
-	s.ResumeOn = true
+	s.ResumeOn, s.SyncOn = true, true
 	return s
 }
 

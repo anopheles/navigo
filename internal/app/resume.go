@@ -23,7 +23,7 @@ type (
 	}
 	// ConfigureResume turns Resume on or off, at startup and on
 	// :reload-config.
-	ConfigureResume struct{ On bool }
+	ConfigureResume struct{ On, Sync bool }
 	// LoggedOut forgets the saved queue and stops saving it.
 	LoggedOut struct{}
 )
@@ -102,7 +102,7 @@ func (s State) applyResume(e Event) (State, []Effect) {
 		}
 	case ConfigureResume:
 		was := s.ResumeOn
-		s.ResumeOn = e.On
+		s.ResumeOn, s.SyncOn = e.On, e.Sync
 		switch {
 		case !e.On:
 			s.saving = false
@@ -195,7 +195,7 @@ func (s State) loadSaved(server bool) (State, []Effect) {
 		return s, nil
 	}
 	s.savedAsked = true
-	return s, []Effect{LoadSaved{Server: server}}
+	return s, []Effect{LoadSaved{Server: server && s.SyncOn}}
 }
 
 // withSaving adds the effects Resume needs after e was applied: the

@@ -196,6 +196,15 @@ func TestParseReplayGainProblems(t *testing.T) {
 	}
 }
 
+func TestParseSyncQueue(t *testing.T) {
+	for yaml, want := range map[string]bool{"": false, "sync_queue: true\n": true, "sync_queue: false\n": false} {
+		c, err := Parse([]byte(yaml))
+		if err != nil || c.SyncQueue != want {
+			t.Errorf("%q: SyncQueue = %v, err %v", yaml, c.SyncQueue, err)
+		}
+	}
+}
+
 func TestParseResume(t *testing.T) {
 	for _, tc := range []struct {
 		yaml string

@@ -53,6 +53,8 @@ type State struct {
 	Gain player.GainTags
 	// ResumeOn says the queue is kept between runs (see resume.go).
 	ResumeOn bool
+	// SyncOn says the saved queue is also kept on the server.
+	SyncOn bool
 	// recs are the user's Recommendations (see recommendations.go).
 	recs recsState
 	// Home is Home's album lists by kind, as the server last sent them.

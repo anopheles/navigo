@@ -171,6 +171,7 @@ player:
 hints: true          # the hint line; :hints on|off for the session
 powerline: false     # Nerd Font arrows between the now-playing bar's blocks
 resume: true         # bring the queue back at the next start (false = off)
+sync_queue: false    # also keep the queue on the server, so other devices start from it
 
 cover_art: true      # the playing album's cover: true, false, blocks or kitty
 
@@ -463,7 +464,7 @@ The `:` line has Tab completion for command names and arguments.
 - **Missing tracks:** entries that are not in the loaded library are dropped once, at startup, with a count (`restored 11 of 12 tracks`). With nothing left, navigo starts empty and says nothing. The later background sync does not check again. The dropped entries are also gone from the server's queue after the next write.
 - **The same track twice:** the server stores the current entry as a track ID, so when a track is in the queue twice, the restored current entry is the first of them.
 - **Long queues:** the IDs of a long queue would not fit in a GET URL. `savePlayQueue` goes out as a POST form once its query passes about 4,000 characters, or always when the server offers `formPost`.
-- **Settings:** on unless `resume: false`, which turns off both the file and the server's queue, reading and writing. Emptying the queue empties the saved one and clears the server's. `:logout` deletes this device's file and leaves the server's queue, which the other devices still want; another user or server has its own file and its own queue.
+- **Settings:** on unless `resume: false`, which turns off both the file and the server's queue, reading and writing. The server's queue is **opt in**: it is used only with `sync_queue: true`, and without it navigo never reads or writes the play queue. `:reload-config` applies `sync_queue` at once for writes; the server's queue is still read only at startup. Emptying the queue empties the saved one and clears the server's. `:logout` deletes this device's file and leaves the server's queue, which the other devices still want; another user or server has its own file and its own queue.
 - **Offline** needs nothing extra: the cached library resolves the entries, the file is used, and `<Space>` gives the usual "the queue is ready" message. A start where the login can't reach the server doesn't ask for the server's queue.
 - **Two navigo instances on one device:** the last one to write wins, in the file and on the server.
 

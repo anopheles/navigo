@@ -29,6 +29,9 @@ type Config struct {
 	Powerline bool `yaml:"powerline"`
 	// Resume keeps the queue between runs; on unless set to false.
 	Resume Resume `yaml:"resume"`
+	// SyncQueue keeps the saved queue on the server too, so other devices
+	// start from it; off unless set to true.
+	SyncQueue bool `yaml:"sync_queue"`
 	// Theme names a palette for the colour roles; Colors changes single
 	// roles on top of it.
 	Theme  Theme  `yaml:"theme"`

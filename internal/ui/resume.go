@@ -145,7 +145,7 @@ func (m *Model) loadSaved(server bool) tea.Cmd {
 // removal for an empty queue, and the server's play queue.
 func (m *Model) writeSaved(w queueWrite) tea.Cmd {
 	dir, c, ctx := m.deps.StateDir, m.client, m.ctx
-	push := !w.keepServer && c != nil && !m.state.Offline
+	push := !w.keepServer && c != nil && m.state.SyncOn && !m.state.Offline
 	seq := 0
 	if push {
 		m.push.seq++

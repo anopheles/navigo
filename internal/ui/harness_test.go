@@ -138,6 +138,7 @@ func setupHarness(
 	t.Helper()
 	srv := subsonictest.NewServer(t)
 	cfg := config.Config{
+		SyncQueue: true,
 		Server: config.Server{
 			URL:      srv.URL,
 			User:     subsonictest.Username,

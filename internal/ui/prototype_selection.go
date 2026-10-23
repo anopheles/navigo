@@ -7,6 +7,7 @@ package ui
 
 import (
 	"image/color"
+	"math"
 	"os"
 	"strings"
 
@@ -21,6 +22,9 @@ var protoSelNames = []string{
 	"C gutter: coloured bar in the margin + bold text",
 	"D contrast: solid bg with forced black/white text",
 	"E gray: neutral gray bg, text untouched",
+	"F tint from playing: cover colour faded in",
+	"G tint from playing, turned 75°: cover colour's neighbour hue",
+	"H tint from playing, opposite: cover colour's complement",
 }
 
 var protoSel = func() int {
@@ -54,6 +58,8 @@ func (m *Model) protoSelStyle(line string) string {
 			}
 		}
 		return lipgloss.NewStyle().Background(selectionColor).Foreground(fg).Bold(true).Render(line)
+	case 5, 6, 7:
+		return lipgloss.NewStyle().Background(m.protoPlayingTint([]float64{0, 75, 180}[protoSel-5])).Render(line)
 	case 4:
 		bg := color.Color(ansi.BrightBlack)
 		if m.deps.TrueColor {
@@ -97,4 +103,19 @@ func (m *Model) protoGray() color.Color {
 		return m.protoMix(color.Black, 6)
 	}
 	return m.protoMix(color.White, 6)
+}
+
+// protoPlayingTint is a third of the playing colour, its hue turned by
+// turn degrees, over the terminal's background; B's tint where there is no
+// exact playing colour.
+func (m *Model) protoPlayingTint(turn float64) color.Color {
+	if !m.accentOn() {
+		return m.protoTint(3)
+	}
+	base, ok := colorful.MakeColor(accentStops[0])
+	if !ok {
+		return m.protoTint(3)
+	}
+	h, s, l := base.Hsl()
+	return m.protoMix(colorful.Hsl(math.Mod(h-turn+360, 360), s, l), 3)
 }

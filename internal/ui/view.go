@@ -101,7 +101,7 @@ func (m *Model) render() string {
 		}
 	}
 	if m.hints {
-		lines = append(lines, fit(m.hintLine(), m.w))
+		lines = append(lines, fit(protoSelLabel()+m.hintLine(), m.w)) // PROTOTYPE
 	}
 	m.bar = barHit{}
 	m.npRows[0] = len(lines)
@@ -468,7 +468,7 @@ func (m *Model) styleRow(line string, cursor, focused, current, selected bool) s
 	case cursor:
 		return cursorDim.Render(line)
 	case selected:
-		return visualStyle.Render(line)
+		return m.protoSelStyle(line) // PROTOTYPE
 	case current:
 		return m.accent(line)
 	}

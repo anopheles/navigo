@@ -21,7 +21,7 @@ var homeLists = []homeRow{
 	{"Recently added", "newest", "nothing here yet"},
 	{"Most played", "frequent", "nothing played yet"},
 	{"Recently played", "recent", "nothing played yet"},
-	{"Random", "random", "nothing here yet"},
+	{"Random albums", "random", "nothing here yet"},
 	{"Starred", "starred", "nothing starred yet · * stars an album"},
 	{"Recommended", "recommended", ""},
 }

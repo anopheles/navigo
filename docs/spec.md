@@ -244,7 +244,7 @@ keys:
 **Popups** (a Confirmation, track info, the key menu, `:messages`) appear over both windows. They take the `popup` scope, and `q`/`<Esc>` close them.
 
 **Sections:** Home, Artists, Albums, Playlists, Search, Help. There is no Tracks section. Each section remembers its drill-down path and cursor.
-- **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random, Starred; then, while [Recommendations](#listenbrainz-recommendations) are on, Recommended.
+- **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random albums, Starred; then, while [Recommendations](#listenbrainz-recommendations) are on, Recommended.
 - **Artists:** every artist with at least one track, sorted by the server's sort name. Each row shows the artist's own album count, or "appears on N" for artists with no albums of their own.
 - **An artist's page:** their own albums, then a `── Appears on ──` heading (skipped by the cursor) and the albums where they only have tracks. `{`/`}` jump between the two groups. Opening an Appears on album puts the cursor on that artist's first track.
 - **Help:** generated from the bindings in effect, and searchable with `/`. It describes `gm`'s chain (row, what plays, whole library) once.

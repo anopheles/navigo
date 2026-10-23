@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"slices"
-	"sync"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -23,6 +22,10 @@ const saveAfter = time.Second
 // before it uses this device's file, and how long a write of it may take.
 var serverQueueTimeout = 3 * time.Second
 
+// serverPositionStep is how far a playing track's position moves before
+// that alone is sent to the server.
+const serverPositionStep = time.Minute
+
 // queueWrite is a saved queue waiting to be written, for the server and
 // user that were logged in when it changed. With keepServer set only this
 // device's file is touched, and the server's play queue stays as it is.
@@ -30,6 +33,7 @@ type queueWrite struct {
 	saved      resume.Saved
 	url, user  string
 	keepServer bool
+	exact      bool
 }
 
 type saveMsg struct{}
@@ -55,6 +59,11 @@ func serverQueueOf(v resume.Saved) serverQueue {
 	return q
 }
 
+// sameQueue is equal but for the position.
+func (q serverQueue) sameQueue(o serverQueue) bool {
+	return q.current == o.current && slices.Equal(q.ids, o.ids)
+}
+
 func (q serverQueue) equal(o serverQueue) bool {
 	return q.current == o.current && q.pos == o.pos && slices.Equal(q.ids, o.ids)
 }
@@ -63,25 +72,66 @@ func (q serverQueue) equal(o serverQueue) bool {
 // are made, so one that was overtaken never replaces a newer one, and a
 // write is skipped when the server already holds that queue.
 type queuePush struct {
-	seq  int // the newest write made; only the Update loop touches it
-	mu   sync.Mutex
-	sent int          // the newest write that was sent
-	last *serverQueue // what the server holds, if known
+	seq  int           // the newest write made; only the Update loop touches it
+	lock chan struct{} // held while the fields below change or a send is out
+	sent int           // the newest write that was sent
+	last *serverQueue  // what the server holds, if known
+	// read says this session knows what the server holds, or was told to
+	// replace it. Until then nothing is sent, so a device that started
+	// without having read the server's queue can't overwrite it.
+	read bool
 }
+
+func newQueuePush() *queuePush { return &queuePush{lock: make(chan struct{}, 1)} }
+
+// acquire takes the lock, or gives up when ctx ends first.
+func (p *queuePush) acquire(ctx context.Context) bool {
+	select {
+	case p.lock <- struct{}{}:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+func (p *queuePush) release() { <-p.lock }
 
 // knows records that the server holds q.
 func (p *queuePush) knows(q serverQueue) {
-	p.mu.Lock()
-	p.last = &q
-	p.mu.Unlock()
+	p.lock <- struct{}{}
+	p.last, p.read = &q, true
+	p.release()
+}
+
+// allow lets this session replace whatever the server holds, for when
+// sync_queue is turned on while navigo runs.
+func (p *queuePush) allow() {
+	p.lock <- struct{}{}
+	p.read = true
+	p.release()
 }
 
 // send stores v as the server's play queue. It is best effort: a failure
 // is logged and is neither shown nor counted as the server being offline.
-func (p *queuePush) send(ctx context.Context, c *subsonic.Client, seq int, v resume.Saved) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if seq < p.sent {
+//
+// One deadline covers waiting for a send still out and the send itself.
+// While a track plays, a change of position alone is sent once it has moved
+// serverPositionStep; exact positions (paused, stopped, quitting) always go.
+func (p *queuePush) send(
+	ctx context.Context,
+	c *subsonic.Client,
+	seq int,
+	v resume.Saved,
+	exact bool,
+) {
+	ctx, cancel := context.WithTimeout(ctx, serverQueueTimeout)
+	defer cancel()
+	if !p.acquire(ctx) {
+		slog.Warn("couldn't save the play queue on the server", "err", ctx.Err())
+		return
+	}
+	defer p.release()
+	if seq < p.sent || !p.read {
 		return
 	}
 	p.sent = seq
@@ -89,8 +139,10 @@ func (p *queuePush) send(ctx context.Context, c *subsonic.Client, seq int, v res
 	if p.last != nil && p.last.equal(q) {
 		return
 	}
-	ctx, cancel := context.WithTimeout(ctx, serverQueueTimeout)
-	defer cancel()
+	if !exact && p.last != nil && p.last.sameQueue(q) &&
+		q.pos >= p.last.pos && q.pos-p.last.pos < serverPositionStep {
+		return
+	}
 	if err := c.SavePlayQueue(ctx, q.ids, q.current, q.pos); err != nil {
 		slog.Warn("couldn't save the play queue on the server", "err", err)
 		p.last = nil
@@ -161,7 +213,7 @@ func (m *Model) writeSaved(w queueWrite) tea.Cmd {
 			err = resume.Save(dir, w.url, w.user, w.saved)
 		}
 		if push {
-			p.send(ctx, c, seq, w.saved)
+			p.send(ctx, c, seq, w.saved, w.exact)
 		}
 		if err != nil {
 			return eventMsg{app.Failed{What: "couldn't save the queue", Err: err}}
@@ -179,7 +231,9 @@ func (m *Model) FlushSaved() {
 		return
 	}
 	srv := m.deps.Config.Server
-	if cmd := m.writeSaved(queueWrite{saved: v, url: srv.URL, user: srv.User}); cmd != nil {
+	if cmd := m.writeSaved(queueWrite{
+		saved: v, url: srv.URL, user: srv.User, keepServer: m.state.KeepsServerQueue(), exact: true,
+	}); cmd != nil {
 		cmd()
 	}
 }
@@ -202,7 +256,9 @@ func (m *Model) runResume(e app.Effect) (tea.Cmd, bool) {
 	case app.LoadSaved:
 		return m.loadSaved(e.Server), true
 	case app.SaveQueue:
-		w := queueWrite{saved: e.Saved, url: srv.URL, user: srv.User}
+		w := queueWrite{
+			saved: e.Saved, url: srv.URL, user: srv.User, keepServer: e.KeepServer, exact: e.Exact,
+		}
 		if len(e.Saved.Tracks) == 0 {
 			m.pendingSave = nil
 			return m.writeSaved(w), true

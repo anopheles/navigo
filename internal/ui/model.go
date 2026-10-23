@@ -227,7 +227,7 @@ func New(deps Deps) (*Model, error) {
 	line := newInput()
 	line.Prompt = ":"
 	m := &Model{
-		push:     &queuePush{},
+		push:     newQueuePush(),
 		deps:     deps,
 		state:    newState(deps.Config),
 		ctx:      context.Background(),
@@ -431,7 +431,7 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 		m.state = m.state.StopSaving()
 		stop = tea.Batch(m.dispatch(app.StopPlayback{}))
 		m.state = newState(m.deps.Config)
-		m.push = &queuePush{}
+		m.push = newQueuePush()
 		m.lib, m.paths = startPath(), map[listKind][]frame{}
 		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
 		stop = tea.Batch(stop, m.dispatch(app.Start{}))

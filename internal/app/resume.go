@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"time"
 
 	"github.com/anopheles/navigo/internal/resume"
@@ -35,7 +36,15 @@ type (
 	LoadSaved struct{ Server bool }
 	// SaveQueue writes the saved queue to this device's file and to the
 	// server; an empty one removes the file and clears the server's queue.
-	SaveQueue struct{ Saved resume.Saved }
+	// KeepServer says the server's queue stays as it is, because this one
+	// was cut down by a restore that dropped tracks the cache lacked.
+	// Exact says the position is where playback stands now, not rounded,
+	// so the server gets it even when little has changed.
+	SaveQueue struct {
+		Saved      resume.Saved
+		KeepServer bool
+		Exact      bool
+	}
 	// DeleteSaved removes this device's saved queue, and any write still
 	// waiting. The server's queue stays for the other devices.
 	DeleteSaved struct{}
@@ -56,6 +65,12 @@ const positionStep = 10 * time.Second
 // one (rounded down, but exact once paused), or where a restored or
 // interrupted track will start from.
 func (s State) saved() resume.Saved { return s.savedAt(positionStep) }
+
+// KeepsServerQueue says a write now would cut the server's queue down: the
+// queue is still the one a restore left after dropping tracks.
+func (s State) KeepsServerQueue() bool {
+	return s.heldBack != nil && slices.Equal(s.saved().Tracks, s.heldBack)
+}
 
 // SaveNow is the saved queue with the exact position, for when navigo
 // quits. ok is false when nothing is being saved.
@@ -179,6 +194,7 @@ func (s State) restoreSaved() (State, []Effect) {
 	text := fmt.Sprintf("restored %d %s", len(q), plural(len(q), "track"))
 	if len(q) < len(p.Tracks) {
 		text = fmt.Sprintf("restored %d of %d tracks", len(q), len(p.Tracks))
+		s.heldBack = s.saved().Tracks
 	}
 	out := []Effect{Notice{Text: text, Command: "play-pause", Hint: hint}}
 	if loaded.Settings {
@@ -205,7 +221,15 @@ func withSaving(old, n State, out []Effect) (State, []Effect) {
 	out = append(out, more...)
 	if n.ResumeOn && n.saving {
 		if v := n.saved(); !old.saving || !reflect.DeepEqual(v, old.saved()) {
-			out = append(out, SaveQueue{Saved: v})
+			keep := n.KeepsServerQueue()
+			if !keep {
+				n.heldBack = nil
+			}
+			out = append(out, SaveQueue{
+				Saved:      v,
+				KeepServer: keep,
+				Exact:      !n.Player.Playing || n.Player.Paused,
+			})
 		}
 	}
 	return n, out

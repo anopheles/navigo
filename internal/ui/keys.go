@@ -376,6 +376,9 @@ func (m *Model) reloadConfig(command.Call) error {
 	}
 	m.deps.Config.Keys, m.keys = cfg.Keys, set
 	m.deps.Config.Player, m.deps.Config.Resume = cfg.Player, cfg.Resume
+	if cfg.SyncQueue && !m.deps.Config.SyncQueue {
+		m.push.allow()
+	}
 	m.deps.Config.SyncQueue = cfg.SyncQueue
 	m.deps.Config.Theme, m.deps.Config.Colors = cfg.Theme, cfg.Colors
 	m.deps.Config.ListenBrainz, m.deps.Config.Powerline = cfg.ListenBrainz, cfg.Powerline

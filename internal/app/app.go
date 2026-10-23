@@ -75,8 +75,11 @@ type State struct {
 	// it is restored or known to be none, so the file isn't overwritten
 	// before it is read.
 	savedAsked, savedLoaded, restored, saving bool
-	pending                                   *SavedLoaded
-	loggedIn                                  bool
+	// heldBack is the queue a restore left after dropping tracks; the
+	// server keeps its fuller one until the queue changes.
+	heldBack []library.TrackID
+	pending  *SavedLoaded
+	loggedIn bool
 
 	// Offline: the server can't be reached (see offline.go). Probing is
 	// set while a check of the server is running.

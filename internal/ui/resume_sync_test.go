@@ -296,13 +296,14 @@ func TestAPushThatWasOvertakenDoesNotReplaceANewerOne(t *testing.T) {
 		return resume.Saved{Tracks: []library.TrackID{library.TrackID(id)}, Current: 0}
 	}
 	ctx := context.Background()
-	var p queuePush
-	p.send(ctx, c, 2, saved("newer"))
-	p.send(ctx, c, 1, saved("older"))
+	p := newQueuePush()
+	p.allow()
+	p.send(ctx, c, 2, saved("newer"), false)
+	p.send(ctx, c, 1, saved("older"), false)
 	if q, _ := srv.PlayQueue(subsonictest.Username); !slices.Equal(q.IDs, []string{"newer"}) {
 		t.Errorf("the server holds %q, want the newer write", q.IDs)
 	}
-	p.send(ctx, c, 3, saved("newer"))
+	p.send(ctx, c, 3, saved("newer"), false)
 	n := 0
 	for _, r := range srv.Requests() {
 		if r.Endpoint == "savePlayQueue" {
@@ -358,5 +359,117 @@ func TestSyncQueueTurnedOnByReloadStartsPushing(t *testing.T) {
 	h.advance(saveAfter)
 	if _, ok := h.serverQueue(); !ok {
 		t.Error("the server got no queue after sync_queue was turned on")
+	}
+}
+
+// pushes is how many times the server was sent a play queue so far.
+func (h *harness) pushes() int { return h.requests("savePlayQueue") }
+
+func TestStartingOfflineNeverOverwritesTheServersQueue(t *testing.T) {
+	pc := newHarness(t, 120, 40, nil)
+	pc.playAlbum()
+	pc.advance(saveAfter)
+	q, _ := pc.serverQueue()
+	ids := slices.Clone(q.IDs)
+	slices.Reverse(ids)
+	elsewhere := subsonictest.PlayQueue{IDs: ids, Current: ids[0]}
+
+	pc.srv.SetDown(true)
+	laptop := pc.restart()
+	pc.srv.SetPlayQueue(subsonictest.Username, elsewhere)
+	laptop.keys(":queue-clear<CR>")
+	laptop.advance(saveAfter)
+	pc.srv.SetDown(false)
+	laptop.cmd("reconnect")
+	laptop.contains("back online")
+	before := laptop.pushes()
+	laptop.playAlbum()
+	laptop.advance(saveAfter)
+	if got := laptop.pushes(); got != before {
+		t.Errorf("%d pushes from a session that never read the server's queue", got-before)
+	}
+	if got, _ := laptop.serverQueue(); !slices.Equal(got.IDs, ids) {
+		t.Errorf("the server holds %q, want the other device's %q", got.IDs, ids)
+	}
+}
+
+func TestARestoreThatDroppedTracksLeavesTheServersQueueWhole(t *testing.T) {
+	a := newHarness(t, 120, 40, nil)
+	a.playAlbum()
+	a.advance(saveAfter)
+	q, _ := a.serverQueue()
+	whole := append(slices.Clone(q.IDs), "not-in-this-library", "nor-this-one")
+	a.srv.SetPlayQueue(subsonictest.Username, subsonictest.PlayQueue{IDs: whole, Current: whole[0]})
+
+	b := a.otherDevice()
+	b.contains("restored 6 of 8 tracks")
+	b.advance(saveAfter)
+	if got, _ := b.serverQueue(); !slices.Equal(got.IDs, whole) {
+		t.Fatalf("restoring cut the server's queue to %q", got.IDs)
+	}
+	if s, err := b.savedFile(); err != nil || len(s.Tracks) != 6 {
+		t.Errorf("this device's file = %+v, %v; want the 6 restored tracks", s, err)
+	}
+
+	b.keys(":queue-clear<CR>")
+	b.advance(saveAfter)
+	if got, ok := b.serverQueue(); ok {
+		t.Errorf("an edit after the restore didn't reach the server: %q", got.IDs)
+	}
+}
+
+func TestPositionAloneIsSentOncePerMinuteWhilePlaying(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.playAlbum()
+	h.advance(saveAfter)
+	base := h.pushes()
+
+	h.fake.Tick(20 * time.Second)
+	h.pump()
+	h.advance(saveAfter)
+	if got := h.pushes(); got != base {
+		t.Errorf("%d pushes for 20 s of playing", got-base)
+	}
+	h.fake.Tick(50 * time.Second)
+	h.pump()
+	h.advance(saveAfter)
+	if got := h.pushes(); got != base+1 {
+		t.Errorf("%d pushes after 70 s of playing, want 1", got-base)
+	}
+	h.fake.Tick(5 * time.Second)
+	h.pump()
+	h.keys(" ")
+	h.advance(saveAfter)
+	if got := h.pushes(); got != base+2 {
+		t.Errorf("pausing sent %d pushes, want 1 more", got-base-1)
+	}
+	if q, _ := h.serverQueue(); q.Position != 75*time.Second {
+		t.Errorf("the server holds position %v, want 1m15s", q.Position)
+	}
+}
+
+func TestQuitWaitsForOneDeadlineNotTwo(t *testing.T) {
+	old := serverQueueTimeout
+	serverQueueTimeout = 200 * time.Millisecond
+	t.Cleanup(func() { serverQueueTimeout = old })
+	srv := subsonictest.NewServer(t)
+	srv.SetPlayQueueFault(subsonictest.PlayQueueHangs)
+	c := subsonic.New(subsonic.Credentials{
+		URL: srv.URL, Username: subsonictest.Username, Password: subsonictest.Password,
+	})
+	saved := func(id string) resume.Saved {
+		return resume.Saved{Tracks: []library.TrackID{library.TrackID(id)}, Current: 0}
+	}
+	p := newQueuePush()
+	p.allow()
+	ctx := context.Background()
+	start := time.Now()
+	done := make(chan struct{})
+	go func() { p.send(ctx, c, 1, saved("a"), false); close(done) }()
+	time.Sleep(50 * time.Millisecond)
+	p.send(ctx, c, 2, saved("b"), true)
+	<-done
+	if took := time.Since(start); took > 320*time.Millisecond {
+		t.Errorf("two sends to a hung server took %v, want about one timeout", took)
 	}
 }

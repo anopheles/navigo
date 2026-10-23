@@ -4,6 +4,7 @@
 Output demo.gif
 
 Set Shell bash
+Set FontFamily "JetBrainsMono Nerd Font Mono"
 Set FontSize 15
 Set Width 1360
 Set Height 780
@@ -32,7 +33,7 @@ Type "navigo"
 Enter
 Sleep 3s
 
-# Albums, open one, play a track: the card shows its cover.
+# Albums, open one, play a track: its cover heads the queue window.
 Type "'b"
 Sleep 2s
 Type "jjj"
@@ -54,7 +55,12 @@ Sleep 2s
 Type ","
 Sleep 2s
 
-# Find in the list, then the keys that apply here.
+# Select a few rows in Visual mode, then find in the list, then the keys
+# that apply here.
+Type "Vjj"
+Sleep 2s
+Escape
+Sleep 1s
 Type "/blue"
 Sleep 1s
 Enter

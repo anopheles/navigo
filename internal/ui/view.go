@@ -26,8 +26,11 @@ const narrow = 100
 // red an error, blue the selection. With colours off (NO_COLOR)
 // the attributes and marks (▶, ★, ──) still tell everything apart.
 var (
-	cursorStyle = lipgloss.NewStyle().Reverse(true)   // the cursor in the focused window
-	cursorDim   = lipgloss.NewStyle().Underline(true) // the cursor in the other one
+	cursorStyle = lipgloss.NewStyle().Reverse(true) // the cursor in the focused window
+	cursorDim   = lipgloss.NewStyle().
+			Underline(true)
+		// the cursor in the other one, as a last resort
+	cursorMark  = "▎" // marks it where the accent can't tint it
 	visualStyle = lipgloss.NewStyle().Background(ansi.Blue).Underline(true)
 	dimStyle    = lipgloss.NewStyle().Faint(true)
 	keyStyle    = lipgloss.NewStyle().Foreground(ansi.Cyan).Bold(true)
@@ -461,6 +464,11 @@ func (m *Model) styleRow(line string, cursor, focused, current, selected bool) s
 		return lipgloss.NewStyle().Background(m.tint()).Bold(true).Render(line)
 	case cursor && focused:
 		return cursorStyle.Render(line)
+	case cursor && m.accentOn():
+		return lipgloss.NewStyle().Background(m.restTint()).Render(line)
+	case cursor && strings.HasPrefix(line, " "):
+		// A mark in the row's blank first column, in any palette.
+		return cursorMark + line[1:]
 	case cursor:
 		return cursorDim.Render(line)
 	case selected:

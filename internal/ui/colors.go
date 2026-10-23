@@ -109,14 +109,22 @@ func (m *Model) accent(s string) string {
 	return b.String()
 }
 
-// tint is the cursor row's background: a fifth of the accent over the
-// terminal's own background, which is black until the terminal has said.
-func (m *Model) tint() color.Color {
+// tint is the cursor row's background in the focused window: a fifth of
+// the accent over the terminal's own background, which is black until the
+// terminal has said.
+func (m *Model) tint() color.Color { return m.tintOf(5) }
+
+// restTint is the cursor row's background in the other window: a tenth
+// of the accent, the same cursor at rest.
+func (m *Model) restTint() color.Color { return m.tintOf(10) }
+
+// tintOf is 1/part of the accent over the terminal's background.
+func (m *Model) tintOf(part uint32) color.Color {
 	var br, bg, bb uint32
 	if m.covers.bg != nil {
 		br, bg, bb, _ = m.covers.bg.RGBA()
 	}
 	ar, ag, ab, _ := accentStops[0].RGBA()
-	mix := func(back, acc uint32) uint8 { return uint8((back>>8)*4/5 + (acc>>8)/5) }
+	mix := func(back, acc uint32) uint8 { return uint8((back>>8)*(part-1)/part + (acc>>8)/part) }
 	return color.RGBA{mix(br, ar), mix(bg, ag), mix(bb, ab), 255}
 }

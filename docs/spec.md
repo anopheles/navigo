@@ -516,7 +516,7 @@ All of it sits behind one `MediaControls` interface, with a build-tagged file pe
 
 | Element | Look |
 |---|---|
-| Cursor row, focused window / other window | reverse / underline; with the accent fades (below), the focused window's cursor row is a tint instead of reverse |
+| Cursor row, focused window / other window | reverse / a `▎` in the row's first column; with the accent fades (below), a tint of the accent instead: a fifth of it in the focused window, a tenth in the other |
 | Playing row, progress fill | bold magenta (the row fades across when the accent fades are on); the progress bar moves in half cells (`━` for a whole, `╸` for a half), and when `playing` is a `#rrggbb` colour the fill fades up to it from a darker shade of it |
 | Keys (hint line, key menu, empty-queue message, prefix menus) | bold cyan |
 | Error messages | red |

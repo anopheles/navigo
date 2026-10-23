@@ -95,8 +95,8 @@ func TestColoursOff(t *testing.T) {
 		!strings.Contains(";"+before[len(before)-1]+";", ";7;") {
 		t.Errorf("titles don't show the focus: %q", title)
 	}
-	// The cursor is reverse in the focused queue (on its first row),
-	// underlined in the library (on Blue Hour).
+	// The cursor is reverse in the focused queue (on its first row), and
+	// marked with ▎ in the library (on Blue Hour).
 	// A row reads: edge, library, edge, edge, queue, edge; the focused
 	// window's edges have no escape codes, so the parts between vary.
 	q := strings.Split(find("Dusk Signal"), "│")
@@ -104,8 +104,8 @@ func TestColoursOff(t *testing.T) {
 		t.Errorf("the queue's cursor row isn't reverse: %q", find("Dusk Signal"))
 	}
 	lib := strings.Split(find("4 Blue Hour"), "│")[1]
-	if !has(lib, 4) {
-		t.Errorf("the library's cursor row isn't underlined: %q", lib)
+	if !strings.Contains(lib, "▎  4 Blue Hour") || has(lib, 4) {
+		t.Errorf("the library's cursor row isn't marked: %q", lib)
 	}
 	// What plays is bold, with ▶.
 	playing := strings.Split(find("▶ "), "│")

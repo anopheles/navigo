@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"image/color"
 	"os"
 	"path/filepath"
@@ -260,6 +261,24 @@ func TestAccentTintsTheCursorAndFadesThePlayingRow(t *testing.T) {
 	playing := lineWith(t, screen, "▶")
 	if n := len(distinct(sgrs(playing), "38;2;")); n < 5 {
 		t.Errorf("the playing row has %d colours, want a fade: %q", n, playing)
+	}
+}
+
+func TestAccentTintsTheOtherWindowsCursorFainter(t *testing.T) {
+	h := accentHarness(t, "#c25bd8")
+	h.keys("<Tab>") // the library keeps its cursor, out of focus
+	it, ok := h.m.rowItem(h.m.top(), h.m.top().cur)
+	if !ok {
+		t.Fatal("the library's cursor isn't on an item")
+	}
+	lib, _, _ := strings.Cut(lineWith(t, h.m.render(), it.name), "││")
+	r, g, b, _ := h.m.restTint().RGBA()
+	rest := fmt.Sprintf("48;2;%d;%d;%d", r>>8, g>>8, b>>8)
+	if !strings.Contains(lib, rest) || has(lib, 4) || strings.Contains(lib, "▎") {
+		t.Errorf("the other window's cursor should be the faint tint %s: %q", rest, lib)
+	}
+	if fmt.Sprint(h.m.restTint()) == fmt.Sprint(h.m.tint()) {
+		t.Error("the resting tint is as strong as the focused one")
 	}
 }
 

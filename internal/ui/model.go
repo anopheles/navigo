@@ -143,8 +143,10 @@ type Model struct {
 	// removes and nothing else.
 	connecting int
 	saveArmed  bool
-	client     *subsonic.Client
-	ctx        context.Context
+	// push sends the saved queue to the server (resume.go).
+	push   queuePush
+	client *subsonic.Client
+	ctx    context.Context
 
 	screen screen
 	login  loginForm

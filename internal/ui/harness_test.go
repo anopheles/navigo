@@ -187,14 +187,27 @@ func setupHarness(
 // second launch would.
 func (h *harness) restart() *harness {
 	h.t.Helper()
+	return h.launch(h.cache, h.state)
+}
+
+// otherDevice starts navigo on the same server, user and config, but with
+// a cache and state directory of its own, as on a second computer.
+func (h *harness) otherDevice() *harness {
+	h.t.Helper()
+	return h.launch(h.t.TempDir(), h.t.TempDir())
+}
+
+// launch starts navigo with the given cache and state directories.
+func (h *harness) launch(cache, state string) *harness {
+	h.t.Helper()
 	n := &harness{
 		t:     h.t,
 		srv:   h.srv,
 		fake:  player.NewFake(),
 		kr:    h.kr,
 		path:  h.path,
-		cache: h.cache,
-		state: h.state,
+		cache: cache,
+		state: state,
 	}
 	m, err := New(
 		Deps{

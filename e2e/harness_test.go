@@ -87,6 +87,9 @@ func target(t *testing.T) server {
 	if _, err := exec.LookPath("mpv"); err != nil {
 		t.Fatal("e2e needs mpv on PATH")
 	}
+	// The saved queue lives on the server, so a test starts from none; one
+	// left by the test before would be restored by every new HOME.
+	savePlayQueue(t, s, nil, "")
 	return s
 }
 
@@ -223,14 +226,14 @@ func (s *session) quit() {
 	_ = s.pty.Close()
 }
 
-// nowPlaying asks the server what is playing for this user.
-func nowPlaying(t *testing.T, s server) []string {
-	t.Helper()
+// signed is the auth parameters for a request of the test itself, with a
+// fresh salt.
+func signed(s server) url.Values {
 	b := make([]byte, 8)
 	_, _ = rand.Read(b)
 	salt := hex.EncodeToString(b)
 	sum := md5.Sum([]byte(s.password + salt))
-	q := url.Values{
+	return url.Values{
 		"u": {s.user},
 		"t": {hex.EncodeToString(sum[:])},
 		"s": {salt},
@@ -238,6 +241,73 @@ func nowPlaying(t *testing.T, s server) []string {
 		"c": {"navigo-e2e"},
 		"f": {"json"},
 	}
+}
+
+// playQueue is the play queue the server holds for the user: the song IDs
+// in order, the current one, and the position in milliseconds.
+func playQueue(t *testing.T, s server) (ids []string, current string, positionMS int64) {
+	t.Helper()
+	resp, err := http.Get(
+		strings.TrimRight(s.url, "/") + "/rest/getPlayQueue?" + signed(s).Encode(),
+	)
+	if err != nil {
+		t.Fatal(errors.Unwrap(err)) // the URL holds a token
+	}
+	defer resp.Body.Close()
+	var r struct {
+		Response struct {
+			Status    string `json:"status"`
+			PlayQueue struct {
+				Entry     []struct{ ID string } `json:"entry"`
+				Current   string                `json:"current"`
+				Position  int64                 `json:"position"`
+				ChangedBy string                `json:"changedBy"`
+			} `json:"playQueue"`
+		} `json:"subsonic-response"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil || r.Response.Status != "ok" {
+		t.Fatalf("getPlayQueue: %v, status %q", err, r.Response.Status)
+	}
+	pq := r.Response.PlayQueue
+	if len(pq.Entry) > 0 && pq.ChangedBy != "navigo" {
+		t.Errorf("the play queue was changed by %q, want navigo", pq.ChangedBy)
+	}
+	for _, e := range pq.Entry {
+		ids = append(ids, e.ID)
+	}
+	return ids, pq.Current, pq.Position
+}
+
+// savePlayQueue replaces the user's play queue on the server; with no ids
+// it clears it.
+func savePlayQueue(t *testing.T, s server, ids []string, current string) {
+	t.Helper()
+	q := signed(s)
+	for _, id := range ids {
+		q.Add("id", id)
+	}
+	if current != "" {
+		q.Set("current", current)
+	}
+	resp, err := http.PostForm(strings.TrimRight(s.url, "/")+"/rest/savePlayQueue", q)
+	if err != nil {
+		t.Fatal(errors.Unwrap(err))
+	}
+	defer resp.Body.Close()
+	var r struct {
+		Response struct {
+			Status string `json:"status"`
+		} `json:"subsonic-response"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil || r.Response.Status != "ok" {
+		t.Fatalf("savePlayQueue: %v, status %q", err, r.Response.Status)
+	}
+}
+
+// nowPlaying asks the server what is playing for this user.
+func nowPlaying(t *testing.T, s server) []string {
+	t.Helper()
+	q := signed(s)
 	resp, err := http.Get(strings.TrimRight(s.url, "/") + "/rest/getNowPlaying?" + q.Encode())
 	if err != nil {
 		t.Fatal(errors.Unwrap(err)) // the URL holds a token

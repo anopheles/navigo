@@ -134,11 +134,8 @@ func (m *MPV) Play(ctx context.Context, w Span) error {
 			return err
 		}
 	}
-	if w.Prev.ID != 0 {
-		if _, err := m.load(ctx, p, w.Prev, "insert-at", 0); err != nil {
-			return err
-		}
-	}
+	// w.Prev waits for the SetNeighbours that answers TrackStarted: an
+	// entry inserted before Current until it starts can play instead of it.
 	return nil
 }
 

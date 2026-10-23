@@ -28,6 +28,10 @@ var (
 // is one of the terminal's own colours, which have no exact value to blend.
 var accentStops []color.Color
 
+// selectionTinted is whether the Visual selection is a tint of the accent:
+// no theme and no colors: entry sets the selection role.
+var selectionTinted bool
+
 // defaultPlaying is the playing colour on a true-colour terminal when the
 // config sets none, or until the cover has given one: a mid-tone magenta that reads on light and dark
 // backgrounds, and that the progress bar can fade up to. Elsewhere the
@@ -62,6 +66,7 @@ func applyColors(c config.Colors, trueColor bool) {
 	keyColor = pick(c.Key, ansi.Cyan)
 	errorColor = pick(c.Error, ansi.Red)
 	selectionColor = pick(c.Selection, ansi.Blue)
+	selectionTinted = c.Selection == ""
 
 	// The selection keeps its underline, so a colour close to the text's
 	// can't hide it, and it shows without colour.
@@ -118,13 +123,22 @@ func (m *Model) tint() color.Color { return m.tintOf(5) }
 // of the accent, the same cursor at rest.
 func (m *Model) restTint() color.Color { return m.tintOf(10) }
 
+// selectionTint is the Visual selection's background when it follows the
+// accent: a third of the accent's last hue, turned 75° from the cursor's,
+// so a selection and the cursor in it stay apart.
+func (m *Model) selectionTint() color.Color { return m.mixOver(accentStops[len(accentStops)-1], 3) }
+
 // tintOf is 1/part of the accent over the terminal's background.
-func (m *Model) tintOf(part uint32) color.Color {
+func (m *Model) tintOf(part uint32) color.Color { return m.mixOver(accentStops[0], part) }
+
+// mixOver is 1/part of c over the terminal's background, which is black
+// until the terminal has said.
+func (m *Model) mixOver(c color.Color, part uint32) color.Color {
 	var br, bg, bb uint32
 	if m.covers.bg != nil {
 		br, bg, bb, _ = m.covers.bg.RGBA()
 	}
-	ar, ag, ab, _ := accentStops[0].RGBA()
+	ar, ag, ab, _ := c.RGBA()
 	mix := func(back, acc uint32) uint8 { return uint8((back>>8)*(part-1)/part + (acc>>8)/part) }
 	return color.RGBA{mix(br, ar), mix(bg, ag), mix(bb, ab), 255}
 }

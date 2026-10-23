@@ -143,8 +143,11 @@ type Model struct {
 	// removes and nothing else.
 	connecting int
 	saveArmed  bool
-	client     *subsonic.Client
-	ctx        context.Context
+	// push sends the saved queue to the server (resume.go); a new login gets a
+	// new one, since what the server holds belongs to the old session.
+	push   *queuePush
+	client *subsonic.Client
+	ctx    context.Context
 
 	screen screen
 	login  loginForm
@@ -224,6 +227,7 @@ func New(deps Deps) (*Model, error) {
 	line := newInput()
 	line.Prompt = ":"
 	m := &Model{
+		push:     newQueuePush(),
 		deps:     deps,
 		state:    newState(deps.Config),
 		ctx:      context.Background(),
@@ -411,7 +415,7 @@ func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
 	}
 	if msg.err != nil {
 		m.setMsg("can't log in: "+msg.err.Error(), true)
-		return nil
+		return m.dispatch(app.LoginFailed{})
 	}
 	return m.ready(msg.client)
 }
@@ -427,6 +431,7 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 		m.state = m.state.StopSaving()
 		stop = tea.Batch(m.dispatch(app.StopPlayback{}))
 		m.state = newState(m.deps.Config)
+		m.push = newQueuePush()
 		m.lib, m.paths = startPath(), map[listKind][]frame{}
 		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
 		stop = tea.Batch(stop, m.dispatch(app.Start{}))
@@ -555,6 +560,11 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		return nil
 	case app.ScheduleUncap:
 		return m.clock.After(e.After, func(time.Time) tea.Msg { return eventMsg{app.Uncap{}} })
+	case app.ScheduleSavedGrace:
+		return m.clock.After(
+			e.After,
+			func(time.Time) tea.Msg { return eventMsg{app.SavedGraceElapsed{}} },
+		)
 	case app.ScheduleRetry:
 		m.retryAt = m.clock.Now().Add(e.After)
 		m.tick()

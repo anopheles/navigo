@@ -101,11 +101,11 @@ A named set of colours for the four roles, picked with `theme:` and changed role
 _Avoid_: preset, skin
 
 **Saved queue**:
-The queue, its current entry and position, the volume and the repeat mode, kept between runs per server and user so that Resume can bring them back.
-_Avoid_: session, playback state
+The queue, its current entry and position, the volume and the repeat mode, kept between runs per server and user so that Resume can bring them back. With `sync_queue` on, the queue, current entry and position are also kept on the server as its play queue and follow the user between devices; the volume and repeat mode stay on the device.
+_Avoid_: session, playback state, synced queue
 
 **Resume**:
-Starting navigo with the saved queue loaded and paused where it stopped; nothing plays until the user asks.
+Starting navigo with the saved queue loaded and paused where it stopped, from the server's copy when it has one and from this device's file otherwise; nothing plays until the user asks.
 _Avoid_: session restore, autoplay
 
 **Group**:

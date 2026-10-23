@@ -247,6 +247,43 @@ func TestMix(t *testing.T) {
 	s.waitText("Queue (3)", 15*time.Second)
 }
 
+// The saved queue follows the user: what one device leaves on the server
+// is restored, paused, by a device that has never run before (a new HOME).
+func TestQueueFollowsTheUser(t *testing.T) {
+	srv := target(t)
+	a := start(t, srv)
+	a.synced()
+	a.openFirstAlbum()
+	a.keys("\r")
+	first := a.playing()
+	n, _ := strconv.Atoi(queueRE.FindStringSubmatch(a.screen())[2])
+	a.keys(" ")
+	a.waitText("⏸  ", 5*time.Second)
+	a.stop() // quitting writes the queue to the server
+
+	ids, current, pos := playQueue(t, srv)
+	if len(ids) != n || !slices.Contains(ids, current) || pos < time.Second.Milliseconds() {
+		t.Fatalf(
+			"the server holds %d ids, current %q, position %d ms; want %d ids, one of them current, and a position past 1 s",
+			len(ids),
+			current,
+			pos,
+			n,
+		)
+	}
+
+	b := start(t, srv)
+	b.synced()
+	b.waitText(fmt.Sprintf("restored %d", n), 30*time.Second)
+	if strings.Contains(b.screen(), "▶  ") {
+		t.Error("restoring started playback")
+	}
+	b.keys(" ")
+	if got := b.playing(); got != first {
+		t.Errorf("<Space> played %q, want %q", got, first)
+	}
+}
+
 // Cold start: the second launch shows the library from the cache file at
 // once and checks the server without a full sync.
 func TestColdStart(t *testing.T) {

@@ -71,7 +71,7 @@ tools/e2e/run.sh    # layer B against a throwaway Navidrome (needs Docker)
 `go test -tags e2e ./e2e` runs layer B against your own server instead,
 from `.env.e2e` (`NAVIGO_E2E_URL`, `NAVIGO_E2E_USER`,
 `NAVIGO_E2E_PASSWORD`). It plays tracks there, so they count as played
-for that account.
+for that account, and it replaces that account's saved play queue.
 
 ## Recording the README demo
 

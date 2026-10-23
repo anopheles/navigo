@@ -444,6 +444,66 @@ func (c *Client) Scrobble(ctx context.Context, id string, submission bool) error
 	)
 }
 
+// PlayQueue is the queue the server keeps for the user, so another device
+// can pick it up (getPlayQueue and savePlayQueue). Current is the ID of the
+// current song, empty if none; Position is where it stood.
+type PlayQueue struct {
+	IDs       []string
+	Current   string
+	Position  time.Duration
+	Changed   time.Time
+	ChangedBy string
+}
+
+// PlayQueue returns the user's saved play queue. A server with none saved
+// answers with an empty PlayQueue and no error.
+func (c *Client) PlayQueue(ctx context.Context) (PlayQueue, error) {
+	var r struct {
+		PlayQueue struct {
+			Entry     []struct{ ID string } `json:"entry"`
+			Current   string                `json:"current"`
+			Position  int64                 `json:"position"` // milliseconds
+			Changed   time.Time             `json:"changed"`
+			ChangedBy string                `json:"changedBy"`
+		} `json:"playQueue"`
+	}
+	if err := c.call(ctx, "getPlayQueue", nil, &r); err != nil {
+		return PlayQueue{}, err
+	}
+	q := PlayQueue{
+		Current:   r.PlayQueue.Current,
+		Position:  time.Duration(r.PlayQueue.Position) * time.Millisecond,
+		Changed:   r.PlayQueue.Changed,
+		ChangedBy: r.PlayQueue.ChangedBy,
+	}
+	for _, e := range r.PlayQueue.Entry {
+		q.IDs = append(q.IDs, e.ID)
+	}
+	return q, nil
+}
+
+// maxQuery is how long a query may grow before a call that can carry a
+// long list of IDs goes out as a POST form instead, which servers and
+// proxies cap far later than a URL.
+const maxQuery = 4000
+
+// SavePlayQueue replaces the user's play queue on the server with ids, in
+// order. current is the ID of the current song, or empty if none, and
+// position is where it stood. With no ids it clears the queue.
+func (c *Client) SavePlayQueue(
+	ctx context.Context,
+	ids []string,
+	current string,
+	position time.Duration,
+) error {
+	q := url.Values{"id": ids}
+	if current != "" {
+		q.Set("current", current)
+		q.Set("position", strconv.FormatInt(position.Milliseconds(), 10))
+	}
+	return c.send(ctx, "savePlayQueue", q, nil, len(q.Encode()) > maxQuery)
+}
+
 // StreamURL returns a URL that streams the song, signed with a fresh salt.
 // It carries a token, so hand it to mpv over IPC only and never log it.
 func (c *Client) StreamURL(id string) string {
@@ -471,6 +531,14 @@ func (c *Client) auth() url.Values {
 // call sends one request and decodes the subsonic-response into v, which
 // may be nil.
 func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v any) error {
+	return c.send(ctx, endpoint, params, v, false)
+}
+
+// send is call, as a POST form when post is set even if the server hasn't
+// offered formPost.
+func (c *Client) send(
+	ctx context.Context, endpoint string, params url.Values, v any, post bool,
+) error {
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, Timeout)
@@ -481,7 +549,7 @@ func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v
 	for k, vs := range params {
 		q[k] = vs
 	}
-	req, err := c.newRequest(ctx, endpoint, q)
+	req, err := c.newRequest(ctx, endpoint, q, post)
 	if err != nil {
 		return fmt.Errorf("%s: %w", endpoint, err)
 	}
@@ -516,14 +584,14 @@ func (c *Client) call(ctx context.Context, endpoint string, params url.Values, v
 }
 
 // newRequest is a request for endpoint with the signed parameters q: a
-// POST form once the server offers formPost, which keeps the token out of
-// the URL, and a GET otherwise.
+// POST form once the server offers formPost (or post asks for one), which
+// keeps the token out of the URL, and a GET otherwise.
 func (c *Client) newRequest(
-	ctx context.Context, endpoint string, q url.Values,
+	ctx context.Context, endpoint string, q url.Values, post bool,
 ) (*http.Request, error) {
 	var req *http.Request
 	var err error
-	if c.formPost.Load() {
+	if post || c.formPost.Load() {
 		req, err = http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,

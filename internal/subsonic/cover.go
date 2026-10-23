@@ -37,7 +37,7 @@ func (c *Client) CoverArt(ctx context.Context, id string) ([]byte, error) {
 	q.Del("f") // the answer is an image, not JSON
 	q.Set("id", id)
 	q.Set("size", strconv.Itoa(coverSize))
-	req, err := c.newRequest(ctx, endpoint, q)
+	req, err := c.newRequest(ctx, endpoint, q, false)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", endpoint, err)
 	}

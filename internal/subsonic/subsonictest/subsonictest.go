@@ -8,6 +8,10 @@
 // fails the test. To add fixtures, add the request to tools/recordfixtures
 // and re-record with tools/fixtures.sh.
 //
+// The play queue calls (getPlayQueue, savePlayQueue) are the exception:
+// the fake keeps one queue per user and answers from it, so tests can model
+// several devices of one user. See playqueue.go.
+//
 // The server checks token+salt auth like a real one: a wrong user or token
 // gets the recorded error 40. A plain password or a reused salt fails the
 // test, because navigo must sign every request with a fresh salt.
@@ -96,6 +100,9 @@ type Server struct {
 	salts map[string]bool
 	reqs  []Request
 	down  bool
+
+	queues map[string]PlayQueue // by user
+	fault  PlayQueueFault
 }
 
 // SetDown makes the server drop every connection without answering, as an
@@ -109,7 +116,7 @@ func (s *Server) SetDown(down bool) {
 // NewServer starts a fake server for the duration of the test.
 func NewServer(t testing.TB) *Server {
 	t.Helper()
-	s := &Server{t: t, salts: map[string]bool{}}
+	s := &Server{t: t, salts: map[string]bool{}, queues: map[string]PlayQueue{}}
 	srv := httptest.NewServer(http.HandlerFunc(s.serve))
 	t.Cleanup(srv.Close)
 	s.URL = srv.URL
@@ -172,6 +179,11 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	s.reqs = append(s.reqs, Request{Method: r.Method, Endpoint: endpoint, Params: clean})
 	s.mu.Unlock()
+
+	if name != "error-40.json" && (endpoint == "getPlayQueue" || endpoint == "savePlayQueue") {
+		s.servePlayQueue(w, r, endpoint, params)
+		return
+	}
 
 	body, err := fixtures.ReadFile("testdata/" + name)
 	if err != nil {

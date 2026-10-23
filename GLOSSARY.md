@@ -126,7 +126,7 @@ A named place you jump to with `'` followed by a key, such as `'a` for Artists.
 _Avoid_: bookmark, hotkey
 
 **Now-playing bar**:
-The two lines at the bottom of the screen showing the current track and its progress; it is never focused.
+The line above the status line showing the mode, the current track, the indicators and the time, under a rule that fills as the track plays; it is never focused.
 _Avoid_: status bar, player bar
 
 **Popup**:
@@ -142,7 +142,7 @@ A short note in the now-playing bar about a state that lasts, such as being offl
 _Avoid_: badge, status, icon
 
 **Hint line**:
-The row above the now-playing bar that lists the keys that matter for the row under the cursor and the current mode, drawn from the bindings in effect; on by default.
+The row under the windows that lists the keys that matter for the row under the cursor and the current mode, drawn from the bindings in effect; on by default.
 _Avoid_: status bar, footer, cheat sheet
 
 **Key menu**:

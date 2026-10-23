@@ -80,7 +80,7 @@ func TestStreamFailureWithTheServerGone(t *testing.T) {
 	if h.lastCall() != "Stop" {
 		t.Errorf("player calls = %q, want them to end with Stop", h.fake.Calls())
 	}
-	h.contains("offline · next try in 2s", "■ nothing playing")
+	h.contains("offline · next try in 2s", "■  nothing playing")
 	if h.m.state.Current != 0 {
 		t.Errorf("current row %d, want the failed track", h.m.state.Current)
 	}
@@ -176,7 +176,7 @@ func TestNoAudioOutput(t *testing.T) {
 	}
 	h.contains(
 		"couldn't play Dusk Signal · no audio output · check the system's sound",
-		"<Space> tries again", "■ nothing playing", "no audio output",
+		"<Space> tries again", "■  nothing playing", "no audio output",
 	)
 	h.lacks("skipped", "offline")
 	if h.m.state.Current != 0 {

@@ -47,7 +47,7 @@ func TestShuffleAndRepeatKeys(t *testing.T) {
 	// The track ends and plays again.
 	h.fake.Finish()
 	h.pump()
-	h.contains("▶  Streetlamp", "3/6 in queue")
+	h.contains("▶  Streetlamp", " 3/6 ")
 	h.keys("R")
 	h.contains("repeat off")
 	h.lacks("repeat one", "repeat all")

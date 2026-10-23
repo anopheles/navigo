@@ -40,7 +40,7 @@ func TestBrowseOpenPlay(t *testing.T) {
 	h.pump()
 	h.contains(
 		"▶  Low Tide — Aurora Lane · Blue Hour",
-		"2/6 in queue",
+		" 2/6 ",
 		"0:42 / 3:05",
 		"playing · 6 tracks in the queue",
 	)
@@ -89,7 +89,7 @@ func TestAutoAdvanceAndTransport(t *testing.T) {
 	h.keys("3j<CR><CR>")
 	h.fake.Finish()
 	h.pump()
-	h.contains("▶  Low Tide", "2/6 in queue")
+	h.contains("▶  Low Tide", " 2/6 ")
 	if calls := h.fake.Calls(); calls[len(calls)-1] != "SetNeighbours(1 3)" {
 		t.Errorf("after the track ended: %q", calls)
 	}
@@ -366,4 +366,27 @@ func TestParseSeek(t *testing.T) {
 			t.Errorf("parseSeek(%q) took it", arg)
 		}
 	}
+}
+
+func TestNowPlayingBarNamesTheMode(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.contains(" NORMAL ")
+	h.keys("V")
+	h.contains(" VISUAL ")
+	h.keys("<Esc>:")
+	h.contains(" COMMAND ")
+	h.keys("<Esc>/")
+	h.contains(" SEARCH ")
+}
+
+func TestPowerlineArrowsOnlyWhenSet(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.lacks(arrowRight, arrowLeft)
+	h = newHarness(
+		t,
+		120,
+		40,
+		func(c *config.Config, _ *subsonictest.Server) { c.Powerline = true },
+	)
+	h.contains(" NORMAL "+arrowRight, arrowLeft+" 0 in queue ")
 }

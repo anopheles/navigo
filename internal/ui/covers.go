@@ -27,8 +27,6 @@ const (
 	// cardCols and cardRows are the card's art: square in cells, as a cell
 	// is twice as tall as wide.
 	cardCols, cardRows = 12, 6
-	// cardExtra is how many rows the card takes beyond the bar's two.
-	cardExtra = cardRows - 2
 	// coverMinW and coverMinH are the smallest terminal the card is shown on.
 	coverMinW, coverMinH = narrow, 28
 	// coverRetry is how long after a failed fetch the cover is asked for again.
@@ -96,17 +94,18 @@ func (m *Model) coverMode() string {
 	return config.CoverBlocks
 }
 
-// cardOn reports whether the bar is the card: cover art is on, the
-// terminal is big enough, and the main screen shows.
+// cardOn reports whether the queue window can head with the card: cover
+// art is on, the terminal is big enough, and the main screen shows.
 func (m *Model) cardOn() bool {
 	return m.coverMode() != "" && m.screen != screenLogin && m.w >= coverMinW &&
 		m.h >= coverMinH
 }
 
-// coverRows is how many rows the card takes from the windows.
-func (m *Model) coverRows() int {
-	if m.cardOn() {
-		return cardExtra
+// cardHeight is how many rows the card takes from the queue window: the
+// art and the rule under it, while something plays.
+func (m *Model) cardHeight() int {
+	if _, _, playing := m.state.NowPlaying(); playing && m.cardOn() {
+		return cardRows + 1
 	}
 	return 0
 }
@@ -338,68 +337,29 @@ func (m *Model) coverArt(id string, cols, rows int) []string {
 	return art
 }
 
-// nowPlayingCard is the bar as a card: the cover on the left and six rows
-// of the same facts the two-line bar has.
-func (m *Model) nowPlayingCard() []string {
-	s := m.state
-	t, row, playing := s.NowPlaying()
-	art := make([]string, cardRows)
-	if playing {
-		id, _ := m.playingCover()
-		art = m.coverArt(id, cardCols, cardRows)
-	} else {
-		for i := range art {
-			art[i] = strings.Repeat(" ", cardCols)
-		}
+// queueCard heads the queue window, w cells wide, while something plays:
+// the cover on the left, then the title, artist and album; the bar below
+// the windows has the rest.
+func (m *Model) queueCard(w int) []string {
+	if m.cardHeight() == 0 {
+		return nil
 	}
-	w := m.w - cardCols - 3
-	text := make([]string, cardRows)
-	flags := m.flags()
-	if !playing {
-		text[1] = fit(" ■ nothing playing", w)
-		text[4] = fit(m.cardRight(nil, w), w)
-		text[5] = fit(strings.Repeat(" ", max(w-lipgloss.Width(flags), 0))+flags, w)
-	} else {
-		icon := "▶"
-		if s.Player.Paused {
-			icon = "⏸"
-		}
-		var right []string
-		if row >= 0 {
-			right = append(right, fmt.Sprintf("%d/%d in queue", row+1, len(s.Queue)))
-		} else {
-			right = append(right, "not in the queue")
-		}
-		if s.Player.Buffering {
-			right = append([]string{"buffering"}, right...)
-		}
-		// Two spaces: some fonts draw ⏸ wider than its cell, over one.
-		text[1] = fit(" "+m.accent(icon+"  "+t.Title), w)
-		text[2] = fit(" "+titleOff.Render(t.Artist), w)
-		text[3] = fit(" "+dimStyle.Render(t.Album), w)
-		text[4] = fit(m.cardRight(right, w), w)
-		dur := s.Player.Duration
-		times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur)) + flags
-		pw := max(w-lipgloss.Width(times)-2, 0)
-		text[5] = fit(" "+progressBar(halvesDone(s.Player.Position, dur, pw), pw)+times, w)
-		m.bar = barHit{y: m.npRows[0] + 5, x: 1 + cardCols + 2 + 1, w: pw}
+	t, _, _ := m.state.NowPlaying()
+	id, _ := m.playingCover()
+	art := m.coverArt(id, cardCols, cardRows)
+	text := []string{
+		"",
+		m.accent(m.playIcon() + "  " + t.Title),
+		titleOff.Render(t.Artist),
+		dimStyle.Render(t.Album),
+		"",
+		"",
 	}
-	out := make([]string, cardRows)
-	for i := range out {
-		out[i] = " " + art[i] + "  " + fit(text[i], w)
+	out := make([]string, 0, cardRows+1)
+	for i := range cardRows {
+		out = append(out, art[i]+" "+fit(text[i], w-cardCols-1))
 	}
-	return out
-}
-
-// cardRight is the card's fourth line: the lasting states, then right.
-func (m *Model) cardRight(right []string, w int) string {
-	if ind := fitIndicators(
-		m.indicators(),
-		w-lipgloss.Width(strings.Join(right, " · "))-4,
-	); ind != "" {
-		right = append([]string{ind}, right...)
-	}
-	return " " + dimStyle.Render(strings.Join(right, " · "))
+	return append(out, dimStyle.Render(strings.Repeat("─", max(w, 0))))
 }
 
 // coverPopupSize is the size of the cover in the popup: as large as the

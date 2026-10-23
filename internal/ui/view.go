@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 	"slices"
 	"strings"
@@ -29,7 +30,7 @@ var (
 	cursorStyle = lipgloss.NewStyle().Reverse(true) // the cursor in the focused window
 	cursorDim   = lipgloss.NewStyle().
 			Underline(true)
-		// the cursor in the other one, as a last resort
+	// the cursor in the other one, as a last resort
 	cursorMark  = "▎" // marks it where the accent can't tint it
 	visualStyle = lipgloss.NewStyle().Background(ansi.Blue).Underline(true)
 	dimStyle    = lipgloss.NewStyle().Faint(true)
@@ -88,7 +89,10 @@ func (m *Model) render() string {
 		)
 		right := m.pane(
 			m.queueTitle(),
-			m.queueRows(rw-2, h, m.focus == queueWindow),
+			append(
+				m.queueCard(rw-2),
+				m.queueRows(rw-2, m.listHeight(queueWindow), m.focus == queueWindow)...,
+			),
 			rw,
 			m.focus == queueWindow,
 		)
@@ -99,17 +103,9 @@ func (m *Model) render() string {
 	if m.hints {
 		lines = append(lines, fit(m.hintLine(), m.w))
 	}
-	lines = append(
-		lines,
-		dimStyle.Render(strings.Repeat("─", max(m.w, 0))),
-	) // the rule above the bar
 	m.bar = barHit{}
 	m.npRows[0] = len(lines)
-	if m.cardOn() {
-		lines = append(lines, m.nowPlayingCard()...)
-	} else {
-		lines = append(lines, m.nowPlaying()...)
-	}
+	lines = append(lines, m.progressRule(), m.nowPlaying())
 	m.npRows[1] = len(lines) - m.npRows[0]
 	lines = append(lines, m.status())
 	if pm := m.prefixMenu(); len(pm) > 0 {
@@ -637,54 +633,147 @@ func fitIndicators(items []string, width int) string {
 	return ""
 }
 
-// nowPlaying is the two-line bar: the track and indicators, then progress.
-func (m *Model) nowPlaying() []string {
+// progressRule is the rule above the now-playing bar, filled as the
+// track plays.
+func (m *Model) progressRule() string {
+	s := m.state
+	if _, _, playing := s.NowPlaying(); !playing {
+		return dimStyle.Render(strings.Repeat("─", max(m.w, 0)))
+	}
+	m.bar = barHit{y: m.npRows[0], x: 0, w: m.w}
+	return progressBar(halvesDone(s.Player.Position, s.Player.Duration, m.w), m.w)
+}
+
+// playIcon is ▶ or ⏸ for the playing track, ■ with none.
+func (m *Model) playIcon() string {
+	switch _, _, playing := m.state.NowPlaying(); {
+	case !playing:
+		return "■"
+	case m.state.Player.Paused:
+		return "⏸"
+	}
+	return "▶"
+}
+
+// barSegment is a run of the now-playing bar on one background.
+type barSegment struct {
+	text   string
+	fg, bg color.Color
+	bold   bool
+}
+
+func (g barSegment) render() string {
+	st := lipgloss.NewStyle().Bold(g.bold)
+	if g.fg != nil {
+		st = st.Foreground(g.fg)
+	}
+	if g.bg != nil {
+		st = st.Background(g.bg)
+	}
+	return st.Render(g.text)
+}
+
+// Nerd Font arrows between segments, with the powerline setting.
+const (
+	arrowRight = "\ue0b0"
+	arrowLeft  = "\ue0b2"
+)
+
+// joinSegments draws segs in a row. Between two, with the powerline
+// setting, an arrow points away from the middle: in the left one's colour
+// on the right one's background on the left side, mirrored on the right.
+func (m *Model) joinSegments(segs []barSegment, left bool) string {
+	var b strings.Builder
+	for i, g := range segs {
+		if !left && m.deps.Config.Powerline && g.bg != nil {
+			var prev color.Color
+			if i > 0 {
+				prev = segs[i-1].bg
+			}
+			b.WriteString(barSegment{text: arrowLeft, fg: g.bg, bg: prev}.render())
+		}
+		b.WriteString(g.render())
+		if left && m.deps.Config.Powerline && g.bg != nil {
+			var next color.Color
+			if i+1 < len(segs) {
+				next = segs[i+1].bg
+			}
+			b.WriteString(barSegment{text: arrowRight, fg: g.bg, bg: next}.render())
+		}
+	}
+	return b.String()
+}
+
+// mode is the now-playing bar's first barSegment: the mode's name in the role
+// that goes with it, the selection's for Visual and the key's for typing.
+func (m *Model) modeSegment() barSegment {
+	name, bg := "NORMAL", playingColor
+	switch {
+	case m.mode == keymap.Cmdline:
+		name, bg = "COMMAND", keyColor
+	case m.mode == keymap.Search:
+		name, bg = "SEARCH", keyColor
+	case m.visual != nil:
+		name, bg = "VISUAL", selectionColor
+	}
+	return barSegment{text: " " + name + " ", fg: ansi.Black, bg: bg, bold: true}
+}
+
+// nowPlaying is the bar under the rule: the mode and ▶/⏸, the track, then
+// the indicators and modes, the position in the queue and the time.
+func (m *Model) nowPlaying() string {
 	s := m.state
 	t, row, playing := s.NowPlaying()
-	left := " ■ nothing playing"
-	var right []string
-	if playing {
-		icon := "▶"
-		if s.Player.Paused {
-			icon = "⏸"
-		}
-		// Two spaces: some fonts draw ⏸ wider than its cell, over one.
-		left = fmt.Sprintf(" %s  %s — %s · %s", icon, t.Title, t.Artist, t.Album)
-		if row >= 0 {
-			right = append(right, fmt.Sprintf("%d/%d in queue", row+1, len(s.Queue)))
-		} else {
-			right = append(right, "not in the queue")
-		}
-	}
+	mode := m.modeSegment()
+	state := " " + m.playIcon() + " "
 	if s.Player.Buffering {
-		right = append([]string{"buffering"}, right...)
+		state += "buffering "
 	}
-	// Indicators get what's left after a readable start of the left part.
-	room := m.w - min(lipgloss.Width(left), 30) - 2 - lipgloss.Width(strings.Join(right, " · "))
-	if ind := fitIndicators(m.indicators(), room-3); ind != "" {
-		right = append([]string{ind}, right...)
-	}
-	r := strings.Join(right, " · ")
-	if r != "" {
-		r += " "
-	}
-	l1 := fit(left, m.w-lipgloss.Width(r)) + r
-	flags := m.flags()
-	if !playing {
-		return []string{(l1), (fit("", m.w-lipgloss.Width(flags)) + flags)}
-	}
+	left := m.joinSegments(
+		[]barSegment{mode, {text: state, fg: mode.bg, bg: ansi.BrightBlack}},
+		true,
+	)
 
-	dur := s.Player.Duration
-	times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(dur)) + flags
-	pw := max(m.w-lipgloss.Width(times)-2, 0)
-	l2 := " " + progressBar(halvesDone(s.Player.Position, dur, pw), pw) + times + " "
-	m.bar = barHit{y: m.npRows[0] + 1, x: 1, w: pw}
-	return []string{(l1), (fit(l2, m.w))}
+	pos := fmt.Sprintf(" %d in queue ", len(s.Queue))
+	switch {
+	case playing && row >= 0:
+		pos = fmt.Sprintf(" %d/%d ", row+1, len(s.Queue))
+	case playing:
+		pos = " not in the queue "
+	}
+	segs := []barSegment{{text: pos, fg: mode.bg, bg: ansi.BrightBlack}}
+	if playing {
+		times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(s.Player.Duration))
+		segs = append(segs, barSegment{text: times, fg: ansi.Black, bg: mode.bg, bold: true})
+	}
+	right := m.joinSegments(segs, false)
+
+	track := dimStyle.Render("nothing playing")
+	if playing {
+		track = m.accent(
+			t.Title,
+		) + dimStyle.Render(
+			" — ",
+		) + t.Artist + dimStyle.Render(
+			" · "+t.Album,
+		)
+	}
+	// Flags get what's left after a readable start of the track.
+	room := m.w - lipgloss.Width(left) - lipgloss.Width(right) - 2
+	flags := fitIndicators(
+		append(m.indicators(), m.flags()...),
+		room-min(lipgloss.Width(track), 30)-2,
+	)
+	if flags != "" {
+		flags += " "
+	}
+	mid := m.w - lipgloss.Width(left) - lipgloss.Width(right)
+	return left + fit(" "+track, mid-lipgloss.Width(flags)) + flags + right
 }
 
 // flags are the now-playing bar's modes: repeat, and the volume when it
 // isn't full.
-func (m *Model) flags() string {
+func (m *Model) flags() []string {
 	var out []string
 	if r := m.state.Repeat; r != app.RepeatOff {
 		out = append(out, "repeat "+r.String())
@@ -692,10 +781,7 @@ func (m *Model) flags() string {
 	if v := m.state.Player.Volume; v != 100 {
 		out = append(out, fmt.Sprintf("vol %d%%", v))
 	}
-	if len(out) == 0 {
-		return ""
-	}
-	return " " + strings.Join(out, " · ") + " "
+	return out
 }
 
 // status is the bottom line: the ":" line, or a message, and pending keys.

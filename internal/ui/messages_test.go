@@ -76,7 +76,7 @@ func TestSyncingIndicator(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.lacks("⟳ syncing")
 	h.m.state.Sync.Running = true
-	h.contains("■ nothing playing", "⟳ syncing")
+	h.contains("■  nothing playing", "⟳ syncing")
 }
 
 func TestFitIndicators(t *testing.T) {

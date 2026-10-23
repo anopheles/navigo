@@ -30,7 +30,7 @@ func (m *Model) place(i, dir int) {
 }
 
 // visible is the number of the focused list's rows on screen from off.
-func (m *Model) visible(off, n int) int { return max(min(m.bodyHeight(), n-off), 1) }
+func (m *Model) visible(off, n int) int { return max(min(m.listHeight(m.focus), n-off), 1) }
 
 // page is <C-f> and <C-b>: a page on, the cursor at the top of it (or
 // back, at the bottom).
@@ -40,7 +40,7 @@ func (m *Model) page(c command.Call, dir int) {
 		return
 	}
 	cur, off, _ := m.view()
-	h := m.bodyHeight()
+	h := m.listHeight(m.focus)
 	m.place(*cur+dir*c.N()*h, dir)
 	if dir > 0 {
 		*off = *cur
@@ -57,7 +57,7 @@ func (m *Model) scrollBy(c command.Call, dir int) {
 		return
 	}
 	cur, off, n := m.view()
-	h := m.bodyHeight()
+	h := m.listHeight(m.focus)
 	*off = min(max(*off+dir*c.N(), 0), max(n-h, 0))
 	switch {
 	case *cur < *off:
@@ -92,7 +92,7 @@ func (m *Model) scrollTo(where int) {
 		return
 	}
 	cur, off, _ := m.view()
-	h := m.bodyHeight()
+	h := m.listHeight(m.focus)
 	switch where {
 	case -1:
 		*off = *cur

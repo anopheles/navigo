@@ -163,10 +163,10 @@ type Model struct {
 	registry *command.Registry[*Model]
 	line     textinput.Model
 	seq      int // bumps on every key, to drop stale timeouts
-	// bar and npRows are where the last render put the progress bar and the
+	// bar and npRows are where the last render put the progress rule and the
 	// now-playing rows, for the mouse; bar.w is 0 with no bar drawn.
 	bar    barHit
-	npRows [2]int // first screen row of the now-playing bar, and its height
+	npRows [2]int // first screen row of the rule and the now-playing bar, and their height
 	// paneAt is where each window sits (columns from x, w wide; w 0 when
 	// hidden) and click is the last click on a row, for a double-click.
 	paneAt [2]paneHit
@@ -1079,14 +1079,22 @@ func (m *Model) clamp() {
 	m.queueCur = min(m.queueCur, max(len(m.state.Queue)-1, 0))
 }
 
-// bodyHeight is the number of list rows each window shows.
+// bodyHeight is the number of rows inside each window.
 func (m *Model) bodyHeight() int {
-	h := m.h - 6 // the pane's two edges, the rule, now-playing bar (2), status line
+	h := m.h - 5 // the pane's two edges, the rule, now-playing bar, status line
 	if m.hints {
 		h--
 	}
-	h -= m.coverRows()
 	return max(h, 1)
+}
+
+// listHeight is how many of the window's list rows fit: the queue gives
+// the top of its window to the card.
+func (m *Model) listHeight(win window) int {
+	if win == queueWindow {
+		return max(m.bodyHeight()-m.cardHeight(), 1)
+	}
+	return m.bodyHeight()
 }
 
 // seekTo is a :seek argument: by seconds or a time, forward or back when

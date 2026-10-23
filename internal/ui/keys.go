@@ -377,7 +377,7 @@ func (m *Model) reloadConfig(command.Call) error {
 	m.deps.Config.Keys, m.keys = cfg.Keys, set
 	m.deps.Config.Player, m.deps.Config.Resume = cfg.Player, cfg.Resume
 	m.deps.Config.Theme, m.deps.Config.Colors = cfg.Theme, cfg.Colors
-	m.deps.Config.ListenBrainz = cfg.ListenBrainz
+	m.deps.Config.ListenBrainz, m.deps.Config.Powerline = cfg.ListenBrainz, cfg.Powerline
 	applyColors(cfg.RoleColors(), m.deps.TrueColor)
 	m.covers.accentFor = "" // the cover colour is put on again if it applies
 	m.setTable(t)

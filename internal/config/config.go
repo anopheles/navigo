@@ -24,6 +24,9 @@ type Config struct {
 	Player Player `yaml:"player"`
 	// Hints shows the hint line; on unless set to false.
 	Hints *bool `yaml:"hints"`
+	// Powerline draws the now-playing bar's segments with a Nerd Font's
+	// arrows; off, since not every font has them.
+	Powerline bool `yaml:"powerline"`
 	// Resume keeps the queue between runs; on unless set to false.
 	Resume Resume `yaml:"resume"`
 	// Theme names a palette for the colour roles; Colors changes single

@@ -34,8 +34,8 @@ type barHit struct{ y, x, w int }
 // at reports whether the cell is on the bar.
 func (b barHit) at(x, y int) bool { return b.w > 0 && y == b.y && x >= b.x && x < b.x+b.w }
 
-// mouse acts on a mouse event: a click or drag on the progress bar seeks
-// there, and the wheel over the now-playing bar changes the volume.
+// mouse acts on a mouse event: a click or drag on the progress rule seeks
+// there, and the wheel over it or the now-playing bar changes the volume.
 func (m *Model) mouse(msg tea.MouseMsg) tea.Cmd {
 	if m.screen == screenLogin || m.popup != nil {
 		return nil
@@ -96,14 +96,22 @@ func (m *Model) windowAt(x, y int) (window, bool) {
 	return 0, false
 }
 
+// listTop is the screen row of the window's first list row.
+func (m *Model) listTop(win window) int {
+	return 1 + m.bodyHeight() - m.listHeight(win)
+}
+
 // rowAt is the list row under the cell: in the window, the row's index.
 func (m *Model) rowAt(x, y int) (window, int, bool) {
 	win, ok := m.windowAt(x, y)
 	if !ok {
 		return 0, 0, false
 	}
+	if y < m.listTop(win) {
+		return 0, 0, false // the card
+	}
 	_, off, n := m.viewOf(win)
-	row := *off + y - 1
+	row := *off + y - m.listTop(win)
 	return win, row, row < n
 }
 
@@ -131,7 +139,7 @@ func (m *Model) clickRow(win window, row int) tea.Cmd {
 // cursor goes along only when it would leave the screen.
 func (m *Model) wheelList(win window, d int) {
 	cur, off, n := m.viewOf(win)
-	h := m.bodyHeight()
+	h := m.listHeight(win)
 	*off = min(max(*off+d, 0), max(n-h, 0))
 	to := min(max(*cur, *off), max(*off+h-1, 0))
 	*cur = min(to, max(n-1, 0))

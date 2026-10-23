@@ -54,7 +54,7 @@ func TestCardHasTheBarsFacts(t *testing.T) {
 	h.play()
 	h.fake.Tick(42 * time.Second)
 	h.pump()
-	h.contains("▶  Low Tide", "Aurora Lane", "Blue Hour", "2/6 in queue", "0:42 / 3:05")
+	h.contains("▶  Low Tide", "Aurora Lane", "Blue Hour", " 2/6 ", "0:42 / 3:05")
 }
 
 func TestNoCardOnASmallTerminal(t *testing.T) {
@@ -64,17 +64,24 @@ func TestNoCardOnASmallTerminal(t *testing.T) {
 		if n := h.requests("getCoverArt"); n != 0 {
 			t.Errorf("%dx%d asked for %d covers; nothing shows them", size[0], size[1], n)
 		}
-		if got, want := h.m.bodyHeight(), size[1]-6-1; got != want {
+		if got, want := h.m.listHeight(queueWindow), size[1]-5-1; got != want {
 			t.Errorf("%dx%d: %d body rows, want %d (no card)", size[0], size[1], got, want)
 		}
 	}
 }
 
-func TestCardTakesFourRows(t *testing.T) {
+func TestCardTakesSevenQueueRows(t *testing.T) {
 	plain := homeHarness(t, 120, 40, nil)
 	card := coverHarness(t, 120, 40, config.CoverAuto, false)
-	if d := plain.m.bodyHeight() - card.m.bodyHeight(); d != 4 {
-		t.Errorf("the card takes %d rows, want 4", d)
+	if d := plain.m.bodyHeight() - card.m.listHeight(queueWindow); d != 0 {
+		t.Errorf("the card takes %d rows with nothing playing, want none", d)
+	}
+	card.play()
+	if d := plain.m.bodyHeight() - card.m.listHeight(queueWindow); d != 7 {
+		t.Errorf("the card takes %d queue rows, want 7", d)
+	}
+	if d := plain.m.bodyHeight() - card.m.listHeight(libraryWindow); d != 0 {
+		t.Errorf("the card takes %d library rows, want none", d)
 	}
 	if got := len(strings.Split(card.m.render(), "\n")); got != 40 {
 		t.Errorf("the screen is %d lines, want 40", got)
@@ -299,5 +306,20 @@ func TestCoverPopupDrawsTheSameEveryTime(t *testing.T) {
 		if w := ansi.StringWidth(l); w != cols {
 			t.Fatalf("the kept row %d is %d cells wide, want %d: the popup padded it", i, w, cols)
 		}
+	}
+}
+
+func TestClickOnTheCardPicksNoRow(t *testing.T) {
+	h := coverHarness(t, 120, 40, config.CoverAuto, false)
+	h.play()
+	h.screen()
+	x := h.m.paneAt[queueWindow].x + 3
+	h.send(click1(x, 3)) // the cover
+	if h.m.focus == queueWindow {
+		t.Fatal("a click on the card focused the queue")
+	}
+	h.send(click1(x, 1+cardRows+1)) // the first row under the card's rule
+	if h.m.focus != queueWindow || h.m.queueCur != 0 {
+		t.Errorf("focus %v, cursor %d; want the queue's first row", h.m.focus, h.m.queueCur)
 	}
 }

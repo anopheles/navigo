@@ -32,9 +32,9 @@
 │ h          back               Go back out to the list you came from. ││                                              │
 │ <Space>    play-pause         Pause or resume playback, or start the…││                                              │
 │ >          next-track         Play the next track in the queue.      ││                                              │
+│ <          prev-track         Play the previous track, or restart th…││                                              │
 ╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  h back  <Tab> other window  ? keys                                                                                     
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- ■ nothing playing                                                                                             RG track 
-                                                                                                                        
+ NORMAL  ■  nothing playing                                                                        RG track  0 in queue 
                                                                                                                         

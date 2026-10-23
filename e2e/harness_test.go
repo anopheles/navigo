@@ -278,6 +278,40 @@ func playQueue(t *testing.T, s server) (ids []string, current string, positionMS
 	return ids, pq.Current, pq.Position
 }
 
+// playQueueByIndex is the play queue the server holds, read by index: the
+// song IDs in order and the index of the current entry, or -1.
+func playQueueByIndex(t *testing.T, s server) (ids []string, current int) {
+	t.Helper()
+	resp, err := http.Get(
+		strings.TrimRight(s.url, "/") + "/rest/getPlayQueueByIndex?" + signed(s).Encode(),
+	)
+	if err != nil {
+		t.Fatal(errors.Unwrap(err)) // the URL holds a token
+	}
+	defer resp.Body.Close()
+	var r struct {
+		Response struct {
+			Status           string `json:"status"`
+			PlayQueueByIndex struct {
+				Entry        []struct{ ID string } `json:"entry"`
+				CurrentIndex *int                  `json:"currentIndex"`
+			} `json:"playQueueByIndex"`
+		} `json:"subsonic-response"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil || r.Response.Status != "ok" {
+		t.Fatalf("getPlayQueueByIndex: %v, status %q", err, r.Response.Status)
+	}
+	q := r.Response.PlayQueueByIndex
+	for _, e := range q.Entry {
+		ids = append(ids, e.ID)
+	}
+	current = -1
+	if q.CurrentIndex != nil {
+		current = *q.CurrentIndex
+	}
+	return ids, current
+}
+
 // savePlayQueue replaces the user's play queue on the server; with no ids
 // it clears it.
 func savePlayQueue(t *testing.T, s server, ids []string, current string) {

@@ -16,12 +16,13 @@ import (
 // find their way from what the screen shows, not from known names.
 
 var (
-	// the playing track on a line of the now-playing bar: the two-line bar
-	// has "▶  title — artist", the cover card the title alone
-	playingRE  = regexp.MustCompile(`[▶⏸] (.+?)(?: — |\s*$)`)
-	barRuleRE  = regexp.MustCompile(`^─+$`)
+	// the playing track on the now-playing bar: "▶  title — artist"
+	playingRE = regexp.MustCompile(`[▶⏸] (.+?)(?: — |\s*$)`)
+	// the rule above the bar, which fills as the track plays
+	barRuleRE  = regexp.MustCompile(`^[━╸─]+$`)
 	positionRE = regexp.MustCompile(` (\d+):(\d\d) / \d+:\d\d\b`)
-	queueRE    = regexp.MustCompile(`(\d+)/(\d+) in queue`)
+	// the position in the queue, just before the time
+	queueRE = regexp.MustCompile(` (\d+)/(\d+) +\d+:\d\d / `)
 	// a track row in the library window ends in its duration
 	trackRowRE = regexp.MustCompile(`(?m)\d+:\d\d│`)
 	// the title and artist columns of a track row
@@ -61,8 +62,8 @@ func (s *session) line(n int) string {
 }
 
 // barTitle is the title the now-playing bar shows. It reads only the lines
-// under the rule above the bar, since the queue marks the playing row with
-// ▶ too.
+// under the rule above the bar, since the queue's row and card mark the
+// playing track with ▶ too.
 func barTitle(scr string) (string, bool) {
 	lines := strings.Split(scr, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
@@ -77,6 +78,16 @@ func barTitle(scr string) (string, bool) {
 		break
 	}
 	return "", false
+}
+
+// waitQueuePos waits until the bar shows the track at i of n in the queue.
+func (s *session) waitQueuePos(i, n int) {
+	s.t.Helper()
+	want := fmt.Sprintf("%d/%d", i, n)
+	s.waitFor(want+" in the queue", 15*time.Second, func(scr string) bool {
+		m := queueRE.FindStringSubmatch(scr)
+		return m != nil && m[1]+"/"+m[2] == want
+	})
 }
 
 // position is the now-playing bar's elapsed time, or -1.
@@ -182,9 +193,9 @@ func TestTransport(t *testing.T) {
 
 	if n >= 2 {
 		s.keys(">")
-		s.waitText(fmt.Sprintf("2/%d in queue", n), 15*time.Second)
+		s.waitQueuePos(2, n)
 		s.keys("<") // well within 3 s of its start: the previous track
-		s.waitText(fmt.Sprintf("1/%d in queue", n), 15*time.Second)
+		s.waitQueuePos(1, n)
 		if got := s.playing(); got != first {
 			t.Errorf("after > and <: %q, want %q", got, first)
 		}

@@ -16,8 +16,8 @@ import (
 // find their way from what the screen shows, not from known names.
 
 var (
-	// the playing track on the now-playing bar: "▶  title — artist"
-	playingRE = regexp.MustCompile(`[▶⏸] (.+?)(?: — |\s*$)`)
+	// the playing track on the now-playing bar: "▶  [buffering  ]title — artist"
+	playingRE = regexp.MustCompile(`[▶⏸]\s+(?:buffering\s+)?(.+?)(?: — |\s*$)`)
 	// the rule above the bar, which fills as the track plays
 	barRuleRE  = regexp.MustCompile(`^[━╸─]+$`)
 	positionRE = regexp.MustCompile(` (\d+):(\d\d) / \d+:\d\d\b`)

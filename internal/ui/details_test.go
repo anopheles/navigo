@@ -62,6 +62,7 @@ func TestInfoPopup(t *testing.T) {
 	h.contains(
 		"Low Tide",
 		"Artists    Aurora Lane",
+		"Year       2021",
 		"Track      2 on disc 1",
 		"Length     3:05",
 		"Starred    no",

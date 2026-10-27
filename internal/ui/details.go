@@ -218,6 +218,9 @@ func (m *Model) info(command.Call) error {
 		}
 		add("Artists", strings.Join(names, ", "))
 		add("Album", t.Album)
+		if t.Year > 0 {
+			add("Year", strconv.Itoa(t.Year))
+		}
 		if t.Number > 0 {
 			add("Track", fmt.Sprintf("%d on disc %d", t.Number, max(t.Disc, 1)))
 		}

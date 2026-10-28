@@ -199,6 +199,13 @@ type Model struct {
 	// is the filter <Esc> puts back.
 	promptHelp bool
 	helpBefore string
+	// The playlist popup (gl): its state while open, its / filter prompt,
+	// the new playlist's name prompt, and the playlists added to this
+	// session, the most recent first.
+	pick            *playlistPick
+	promptPick      bool
+	naming          *newName
+	recentPlaylists []library.PlaylistID
 	// prefixShown: a pure prefix has waited long enough for its menu.
 	prefixShown bool
 	finding     finder
@@ -373,13 +380,16 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.restoreCursors(keep)
 			return m, cmd
 		}
+		if w, ok := msg.Event.(app.PlaylistWritten); ok {
+			m.playlistWritten(w)
+		}
 		return m, m.dispatch(msg.Event)
 	case prefixMsg:
 		m.prefixShown = msg.seq == m.seq && m.engine.Pending() != ""
 		return m, nil
 	case timeoutMsg:
 		if msg.seq == m.seq {
-			return m, m.result(m.engine.Timeout(m.mode, m.scopes()))
+			return m, m.result(m.engine.Timeout(m.keyMode(), m.scopes()))
 		}
 		return m, nil
 	case tea.MouseMsg:
@@ -808,7 +818,16 @@ func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
 			return m.exec("search "+q, 0)
 		}
 	}
-	return m.result(m.engine.Feed(m.mode, m.scopes(), token))
+	return m.result(m.engine.Feed(m.keyMode(), m.scopes(), token))
+}
+
+// keyMode is the mode keys are read in: a popup takes Normal mode's keys
+// even over a selection, which it leaves as it is.
+func (m *Model) keyMode() keymap.Mode {
+	if m.popup != nil && m.mode == keymap.Visual {
+		return keymap.Normal
+	}
+	return m.mode
 }
 
 func (m *Model) result(r keymap.Result) tea.Cmd {
@@ -896,6 +915,10 @@ func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
 		cmd, done = m.findKey(key)
 	case m.promptHelp:
 		cmd, done = m.helpKey(key)
+	case m.promptPick:
+		cmd, done = m.pickFilterKey(key)
+	case m.naming != nil:
+		cmd, done = m.newNameKey(key)
 	case m.mode == keymap.Search:
 		cmd, done = m.searchKey(key, k)
 	default:
@@ -926,6 +949,9 @@ func (m *Model) lineChanged(before string) {
 	case m.line.Value() == before, m.finding.prompting:
 	case m.promptHelp:
 		m.filterHelp(m.line.Value())
+	case m.promptPick:
+		m.filterPick(m.line.Value())
+	case m.naming != nil:
 	case m.mode == keymap.Search:
 		m.selected = false
 		m.liveSearch(m.line.Value())
@@ -934,7 +960,11 @@ func (m *Model) lineChanged(before string) {
 
 func (m *Model) leaveLine() {
 	m.mode = keymap.Normal
+	if m.visual != nil { // a selection outlives a prompt that didn't use it
+		m.mode = keymap.Visual
+	}
 	m.selected, m.compl, m.promptHelp, m.finding.prompting = false, nil, false, false
+	m.promptPick, m.naming = false, nil
 	m.line.Reset()
 	m.line.Blur()
 }

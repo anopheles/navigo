@@ -60,7 +60,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "artists", Jump: true, Label: "artists", Desc: "Show the Artists section.", Run: func(m *Model, _ command.Call) error { m.showSection(artistList); return nil }},
 		{Name: "albums", Jump: true, Label: "albums", Desc: "Show the Albums section.", Run: func(m *Model, _ command.Call) error { m.showSection(albumList); return nil }},
 		{Name: "playlists", Jump: true, Label: "playlists", Desc: "Show the Playlists section.", Run: func(m *Model, _ command.Call) error { m.showSection(playlistList); return nil }},
-		{Name: "playlist-add", Args: someArgs, Label: "add to playlist", Desc: "Add the selection or the row under the cursor to the end of a playlist: playlist-add Rock.", Run: (*Model).playlistAdd, Complete: (*Model).playlistNames},
+		{Name: "playlist-add", Args: anyArgs, Label: "add to playlist", Desc: "Add the selection or the row under the cursor to the end of a playlist: alone, pick it from a list; or playlist-add Rock.", Run: (*Model).playlistAdd, Complete: (*Model).playlistNames},
 		{Name: "playlist-new", Args: someArgs, Label: "new playlist", Desc: "Make a playlist of the selection or the row under the cursor: playlist-new Rock.", Run: (*Model).playlistNew},
 		{Name: "playlist-rename", Args: someArgs, Label: "rename playlist", Desc: "Rename the playlist under the cursor, or the one open: playlist-rename Rock.", Run: (*Model).playlistRename},
 		{Name: "playlist-delete", Label: "delete playlist", Desc: "Delete the playlist under the cursor, after asking.", Run: (*Model).deletePlaylist},
@@ -112,6 +112,7 @@ func commands() *command.Registry[*Model] {
 			return nil
 		}},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
+		{Name: "popup-filter", Label: "filter", Desc: "Filter the playlist popup's rows as you type.", Run: func(m *Model, _ command.Call) error { return m.startPickFilter() }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
 		{Name: "sort", Args: anyArgs, Label: "sort", Desc: "Sort this list by a field, such as sort year desc; alone, put the order back.", Run: (*Model).sortList, Complete: (*Model).sortWords},
 		{Name: "filter", Args: anyArgs, Label: "filter", Desc: "Show only rows of a genre or years: filter genre rock, filter year 1990-1999; alone, show all.", Run: (*Model).filterList, Complete: (*Model).filterWords},

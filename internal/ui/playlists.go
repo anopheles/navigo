@@ -155,10 +155,16 @@ func (m *Model) playlistUndo(command.Call) error {
 // row under the cursor. It ends Visual mode; artists counts artist rows
 // left out.
 func (m *Model) chosenTracks() (tracks []library.Track, artists int, err error) {
+	tracks, artists, err = m.peekTracks()
+	m.endVisual()
+	return tracks, artists, err
+}
+
+// peekTracks is chosenTracks without ending Visual mode.
+func (m *Model) peekTracks() (tracks []library.Track, artists int, err error) {
 	switch {
 	case m.visual != nil:
 		tracks, artists = m.rangeTracks(m.selection())
-		m.endVisual()
 	case m.focus == queueWindow:
 		if m.queueCur < len(m.state.Queue) {
 			tracks = []library.Track{m.state.Queue[m.queueCur].Track}
@@ -181,13 +187,11 @@ func (m *Model) chosenTracks() (tracks []library.Track, artists int, err error) 
 }
 
 // playlistAdd is :playlist-add <name>: the selection or row goes to the
-// end of a playlist.
+// end of a playlist. Alone (gl), it opens a popup to pick the playlist.
 func (m *Model) playlistAdd(c command.Call) error {
 	name := strings.Join(c.Args, " ")
 	if name == "" {
-		return errors.New(
-			"playlist-add: give the playlist's name, such as playlist-add Morning Mix",
-		)
+		return m.openPlaylistPick()
 	}
 	var p library.Playlist
 	found := false
@@ -206,11 +210,7 @@ func (m *Model) playlistAdd(c command.Call) error {
 	if err != nil {
 		return err
 	}
-	if m.state.Offline {
-		return errOffline
-	}
-	m.event(app.PlaylistInsert{ID: p.ID, At: -1, Tracks: tracks})
-	return nil
+	return m.addToPlaylist(p, tracks)
 }
 
 // playlistNew is :playlist-new <name>: a playlist of the selection or

@@ -51,6 +51,7 @@ var menuGroups = []struct {
 			"move-up",
 			"undo",
 			"redo",
+			"playlist-add",
 			"playlist-undo",
 			"playlist-delete",
 		},

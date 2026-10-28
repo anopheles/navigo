@@ -241,7 +241,7 @@ keys:
 - **Narrow terminals:** below 100 columns only one window is shown at a time, and `<C-w>w`/`<Tab>` swaps them.
 - Window widths are fixed.
 
-**Popups** (a Confirmation, track info, the key menu, `:messages`) appear over both windows. They take the `popup` scope, and `q`/`<Esc>` close them.
+**Popups** (a Confirmation, track info, the key menu, `:messages`, the playlist popup) appear over both windows. They take the `popup` scope, and `q`/`<Esc>` close them.
 
 **Sections:** Home, Artists, Albums, Playlists, Search, Help. There is no Tracks section. Each section remembers its drill-down path and cursor.
 - **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random albums, Starred albums; then Starred tracks; then, while [Recommendations](#listenbrainz-recommendations) are on, Recommended.
@@ -250,6 +250,7 @@ keys:
 - **An artist's page:** their own albums, then a `── Appears on ──` heading (skipped by the cursor) and the albums where they only have tracks. `{`/`}` jump between the two groups. Opening an Appears on album puts the cursor on that artist's first track.
 - **Marks in library lists** ([#93](https://github.com/anopheles/navigo/issues/93)): a track already in the queue shows `•` in its row's gutter (after the cursor's `▎`), and an album with any queued track shows it before its name. A starred row keeps its `★`, and a rated track shows `★3` after its title. Artists and the queue window carry no marks, and rows under 40 cells keep the `•` and drop the rating. Every mark is a glyph, so none needs colour.
 - **Empty lists** ([#103](https://github.com/anopheles/navigo/issues/103)): a list with no rows says why in one line and what to do: no playlists (`:playlist-new`), an empty playlist (`:playlist-add`), nothing starred (the star key), nothing played, an empty library (`:sync`), a `:filter` that matches nothing (`:filter` alone shows all), and a search with no hits. Offline, the line says what waits for the server instead.
+- **Adding to a playlist** ([#94](https://github.com/anopheles/navigo/issues/94)): `gl` (or `:playlist-add` alone) opens a popup titled with what goes in (`add Blue Hour to…`, `add 12 tracks to…`): the selection, or the track, album or playlist under the cursor, or the queue row. It is refused before it opens, with the usual message, offline, before the first sync, on an artist row or with nothing under the cursor. Its rows are `new playlist…`, then the playlists added to this session (by any means, including a playlist made with tracks), the most recent first, then the rest as the Playlists section has them, each with `N tracks`; the cursor starts on the first playlist, so `gl<CR>` adds to the one used last. `<CR>` adds to the end of it. `/` filters the rows as the `:` line matches commands (name prefix, word starts, then scattered letters); `<CR>` keeps the filter and `<Esc>` puts it back. While filtering, the top row reads `new playlist "morning"`. Picking it asks for a name on the bottom line (`new playlist: `, filled with the filter), refuses a name another playlist has, and makes the playlist as `:playlist-new` does. `q`/`<Esc>` close the popup and keep a selection; adding or making the playlist ends it. The session's order is kept in memory only.
 - **Help:** generated from the bindings in effect, and searchable with `/`. It describes `gm`'s chain (row, what plays, whole library) once.
 
 **Marks** jump to a section: `'h` Home, `'q` the queue window, `'a` Artists, `'b` Albums, `'p` Playlists, `'s` Search, `'?` Help. They are ordinary bindings to `:home`, `:artists`, ….
@@ -294,7 +295,7 @@ keys:
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
 | Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix around the row under the cursor (`[count]gm` for that many tracks) · `R` repeat off → all → one · `X` stop |
-| Add and play | `<CR>` play now · `a` play next · `A` add to end · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
+| Add and play | `<CR>` play now · `a` play next · `A` add to end · `gl` add to a playlist · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |
@@ -304,7 +305,7 @@ keys:
 `s` and `r` are deliberately unbound, `\` is the leader and has no default bindings, and `<C-Space>` is never a default (because of a Windows console bug).
 
 **`:`-only commands:**
-- library and playlists: `:sort <field> [desc]` and `:filter genre <text>|year <year>[-<year>]` (each alone undoes it) on Albums, Artists, Home's lists and an album's tracks, `:playlist-add <name>`, `:playlist-new`, `:playlist-rename <name>` (the playlist under the cursor or the one open; a name another playlist has is refused, [#63](https://github.com/anopheles/navigo/issues/63)), `:sync`;
+- library and playlists: `:sort <field> [desc]` and `:filter genre <text>|year <year>[-<year>]` (each alone undoes it) on Albums, Artists, Home's lists and an album's tracks, `:playlist-add [<name>]` (alone, or `gl`, it opens the playlist popup), `:playlist-new`, `:playlist-rename <name>` (the playlist under the cursor or the one open; a name another playlist has is refused, [#63](https://github.com/anopheles/navigo/issues/63)), `:sync`;
 - session: `:login`, `:logout`, `:reconnect`, `:hints on|off`;
 - playback: `:mix library` mixes from the whole library whatever is under the cursor (Tab completes `library`; Home's Mix row runs it, and binding `gm` to it gives the old `gm`); `:replaygain [off|track|album]` changes the ReplayGain mode for the session (no argument cycles through them) and has no default key;
 - rating ([#64](https://github.com/anopheles/navigo/issues/64)): `:rate 1`–`5` rates the track under the cursor, the selection's tracks, or with nothing under the cursor what plays; `:rate 0` clears it. Albums and artists can't be rated, a rating is refused offline like a star, and the cache takes it once the server agrees, so Mix sees it at once. The `i` popup shows a track's rating as `★★★★☆` or `not rated`;

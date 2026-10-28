@@ -165,7 +165,11 @@ func (m *Model) viewKey(f *frame) string {
 		l := m.state.Home[f.homeKind].Albums
 		key += fmt.Sprintf("|%p|%d", l, len(l))
 	}
-	if f.kind == homeTracks && f.homeKind != starredTracks {
+	if f.kind == homeTracks && f.homeKind == playedTracks {
+		l := m.state.Played
+		key += fmt.Sprintf("|%p|%d", l, len(l))
+	}
+	if f.kind == homeTracks && f.homeKind != starredTracks && f.homeKind != playedTracks {
 		l := m.state.Recs().Tracks
 		key += fmt.Sprintf("|%p|%d", l, len(l))
 	}

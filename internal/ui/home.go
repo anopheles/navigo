@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
 	"github.com/anopheles/navigo/internal/keymap"
@@ -16,21 +18,25 @@ type homeRow struct{ title, kind, empty string }
 
 // homeLists are Home's rows, in the spec's order, with the server's
 // album list type for each. The first, Mix, is not a list: it runs mix.
-// Starred tracks and the last, Recommended, are track lists from the
-// cache.
+// Played this session, Starred tracks and the last, Recommended, are
+// track lists from the app, not the server.
 var homeLists = []homeRow{
 	{"Mix", "mix", ""},
 	{"Recently added", "newest", "nothing here yet · add music to the server, then :sync"},
 	{"Most played", "frequent", "nothing played yet · play an album and it shows up here"},
 	{"Recently played", "recent", "nothing played yet · play an album and it shows up here"},
+	{"Played this session", playedTracks, ""},
 	{"Random albums", "random", "nothing here yet · add music to the server, then :sync"},
 	{"Starred albums", "starred", "nothing starred yet"},
 	{"Starred tracks", starredTracks, ""},
 	{"Recommended", "recommended", ""},
 }
 
-// starredTracks is the kind of Home's Starred tracks row.
-const starredTracks = "starred-tracks"
+// The kinds of Home's track lists other than Recommended.
+const (
+	starredTracks = "starred-tracks"
+	playedTracks  = "played"
+)
 
 // homeRows are the rows Home shows: Recommended only while
 // Recommendations are on.
@@ -49,7 +55,7 @@ func (m *Model) openHomeList(i int, c command.Call) {
 	case "mix":
 		m.mixAround(c, nil) // Home's Mix row is always the whole library
 		return
-	case starredTracks, "recommended":
+	case starredTracks, playedTracks, "recommended":
 		m.lib = append(m.lib, frame{kind: homeTracks, homeKind: l.kind, title: l.title})
 		return
 	}
@@ -239,7 +245,11 @@ func (m *Model) homeTracksOf(f *frame) []library.Track {
 // tracks keeps the tracks starred when it opened, so one unstarred there
 // stays (without its ★) until the list opens again.
 func (m *Model) homeTracksBase(f *frame) []library.Track {
-	if f.homeKind != starredTracks {
+	switch f.homeKind {
+	case playedTracks:
+		return m.playedTracks()
+	case starredTracks:
+	default:
 		return m.state.Recs().Tracks
 	}
 	lib := m.state.Library
@@ -278,9 +288,60 @@ func (m *Model) homeTrackFacts(f *frame) func(library.Track) facts {
 	}
 }
 
+// playedTracks is the tracks played this session, as the library has
+// them now, so stars and ratings are current.
+func (m *Model) playedTracks() []library.Track {
+	lib := m.state.Library
+	if lib == nil {
+		return m.state.Played
+	}
+	out := make([]library.Track, len(m.state.Played))
+	for i, t := range m.state.Played {
+		if known, ok := lib.Track(t.ID); ok {
+			t = known
+		}
+		out[i] = t
+	}
+	return out
+}
+
+// keepPlayedCursor runs change, a track starting, keeping the cursor of
+// an open Played this session list on its track as the list grows above
+// it.
+func (m *Model) keepPlayedCursor(change func() tea.Cmd) tea.Cmd {
+	f := m.top()
+	if f.kind != homeTracks || f.homeKind != playedTracks || f.cur >= m.rows(f) {
+		return change()
+	}
+	id := m.rowID(f, f.cur)
+	cmd := change()
+	for i := range m.rows(f) {
+		if m.rowID(f, i) == id {
+			f.cur = i
+			break
+		}
+	}
+	return cmd
+}
+
+// showPlayed is :played: Home's Played this session list.
+func (m *Model) showPlayed(c command.Call) error {
+	m.showSection(homeList)
+	m.lib = m.lib[:2]
+	for i, r := range m.homeRows() {
+		if r.kind == playedTracks {
+			m.top().cur = i
+			m.openHomeList(i, c)
+		}
+	}
+	return nil
+}
+
 // emptyHomeTracks says why one of Home's track lists has no rows.
 func (m *Model) emptyHomeTracks(f *frame) string {
 	switch {
+	case f.homeKind == playedTracks:
+		return " nothing played yet this session · <CR> on a track plays it"
 	case f.homeKind != starredTracks:
 		return m.emptyRecs()
 	case m.state.Library == nil:

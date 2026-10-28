@@ -204,6 +204,8 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	var out []string
 	switch {
 	case n > 0:
+	case m.state.Library != nil && f.view.filtered():
+		out = append(out, dimStyle.Render(fit(m.emptyRows(f), w)))
 	case f.kind == homeAlbums:
 		out = append(out, dimStyle.Render(fit(m.emptyHome(f.homeKind), w)))
 	case f.kind == recommendedTracks:
@@ -215,7 +217,7 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 			out = append(out, dimStyle.Render(fit(l, w)))
 		}
 	default:
-		out = append(out, dimStyle.Render(fit(m.emptyList(), w)))
+		out = append(out, dimStyle.Render(fit(m.emptyRows(f), w)))
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
 		m.dress = i != f.cur && !m.inSelection(libraryWindow, i) && (!focused || !m.highlighting())
@@ -232,7 +234,33 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	return pad(out, w, h)
 }
 
-// emptyList says why a list has no rows.
+// emptyRows says why a list has no rows and what to do about it.
+func (m *Model) emptyRows(f *frame) string {
+	if m.state.Library == nil {
+		return m.emptyList()
+	}
+	switch {
+	case f.view.filtered():
+		return " no row matches the filter · :filter alone shows all"
+	case f.kind == playlistList && m.state.Offline:
+		return " no playlists in the cache · they can be made once the server is back"
+	case f.kind == playlistList:
+		return " no playlists yet · in a track list, :playlist-new <name> makes one"
+	case f.kind == playlistTracks && m.state.Offline:
+		return " empty playlist · tracks can be added once the server is back"
+	case f.kind == playlistTracks:
+		return " empty playlist · :playlist-add <name> adds tracks"
+	case f.kind == albumTracks:
+		return " this album has no tracks"
+	case f.kind == artistList:
+		return " no artists in the library · add music to the server, then :sync"
+	case f.kind == albumList:
+		return " no albums in the library · add music to the server, then :sync"
+	}
+	return " nothing here"
+}
+
+// emptyList says why a list has no rows while there is no library.
 func (m *Model) emptyList() string {
 	switch sy := m.state.Sync; {
 	case m.state.Library != nil:

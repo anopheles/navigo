@@ -29,6 +29,9 @@ type listView struct {
 
 func (v listView) active() bool { return v.sortBy != "" || v.genre != "" || v.yearFrom != 0 }
 
+// filtered is whether a :filter is set, which can leave a list empty.
+func (v listView) filtered() bool { return v.genre != "" || v.yearFrom != 0 }
+
 // describe is the view for the title, such as "year ↓ · genre rock".
 func (v listView) describe() string {
 	var parts []string

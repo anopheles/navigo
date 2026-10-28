@@ -320,8 +320,16 @@ func (m *Model) emptySearch(v *searchView) []string {
 		return []string{" type to search the library"}
 	}
 	lines := []string{fmt.Sprintf(" nothing in the library matches %q", v.query)}
-	if m.state.Sync.Running && m.state.Library == nil {
+	switch {
+	case m.state.Sync.Running && m.state.Library == nil:
 		lines = append(lines, " still syncing, results may be incomplete")
+	case m.state.Offline:
+		lines = append(
+			lines,
+			" offline · this searches the cache; :sync updates it once the server is back",
+		)
+	default:
+		lines = append(lines, " try fewer letters: a word's start is enough")
 	}
 	return lines
 }

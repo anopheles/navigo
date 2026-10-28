@@ -98,6 +98,9 @@ type State struct {
 	stale []player.EntryID
 
 	Queue []QueueEntry
+	// Played is the tracks that started this session, the most recent
+	// first, each once, at most maxPlayed. It is never saved.
+	Played []library.Track
 	// Current is the queue row that is playing, or last played; -1 if none.
 	Current int
 	Player  PlayerState
@@ -590,6 +593,7 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 		s.Current = i
 		s.playingTrack = s.Queue[i].Track
 		s.Player.Duration = s.Queue[i].Track.Duration
+		s.Played = played(s.Played, s.Queue[i].Track)
 		out := s.neighbours()
 		if !s.Offline { // scrobbles are dropped while offline
 			out = append(out, Scrobble{Track: s.Queue[i].Track.ID})
@@ -795,3 +799,19 @@ func (SeekTo) isEffect()        {}
 func (Stop) isEffect()          {}
 func (Scrobble) isEffect()      {}
 func (Notice) isEffect()        {}
+
+// maxPlayed caps the session's Played list.
+const maxPlayed = 500
+
+// played puts t first in a Played list, dropping its earlier play. The
+// list is new, so a view of the old one sees a change.
+func played(list []library.Track, t library.Track) []library.Track {
+	out := make([]library.Track, 0, min(len(list)+1, maxPlayed))
+	out = append(out, t)
+	for _, o := range list {
+		if o.ID != t.ID && len(out) < maxPlayed {
+			out = append(out, o)
+		}
+	}
+	return out
+}

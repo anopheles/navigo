@@ -15,6 +15,7 @@ func TestStartsOnHome(t *testing.T) {
 		"Recently added",
 		"Most played",
 		"Recently played",
+		"Played this session",
 		"Random albums",
 		"Starred albums",
 		"Starred tracks",
@@ -25,13 +26,14 @@ func TestStartsOnHome(t *testing.T) {
 		"Recently added",
 		"Most played",
 		"Recently played",
+		"Played this session",
 		"Random albums",
 		"Starred albums",
 		"Starred tracks",
 	); strings.Join(
 		got,
 		",",
-	) != "Mix,Recently added,Most played,Recently played,Random albums,Starred albums,Starred tracks" {
+	) != "Mix,Recently added,Most played,Recently played,Played this session,Random albums,Starred albums,Starred tracks" {
 		t.Errorf("Home's lists in order %q", got)
 	}
 	golden.RequireEqual(t, h.screen())
@@ -46,8 +48,8 @@ func TestHomeLists(t *testing.T) {
 		{"j<CR>", "Recently added", "newest", []string{"Night Drive Vol. 1", "The Long Haul", "夜明け"}},
 		{"2j<CR>", "Most played", "frequent", []string{"Blue Hour", "Static Bloom"}},
 		{"3j<CR>", "Recently played", "recent", []string{"Static Bloom", "Blue Hour"}},
-		{"4j<CR>", "Random albums", "random", []string{"Static Bloom", "Blue Hour", "The Long Haul"}},
-		{"5j<CR>", "Starred albums", "starred", []string{"★ Blue Hour"}},
+		{"5j<CR>", "Random albums", "random", []string{"Static Bloom", "Blue Hour", "The Long Haul"}},
+		{"6j<CR>", "Starred albums", "starred", []string{"★ Blue Hour"}},
 	} {
 		h.keys("'h'hgg" + c.keys)
 		h.contains("Home › " + c.title)

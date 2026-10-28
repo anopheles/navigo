@@ -370,6 +370,11 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.armStall()
 			}
 		}
+		if fp, ok := msg.Event.(app.FromPlayer); ok {
+			if _, ok := fp.Event.(player.TrackStarted); ok {
+				return m, m.keepPlayedCursor(func() tea.Cmd { return m.dispatch(msg.Event) })
+			}
+		}
 		switch msg.Event.(type) {
 		case app.Synced, app.CacheLoaded, app.RecsLoaded, app.RecsFetched:
 			keep := m.cursorIDs()

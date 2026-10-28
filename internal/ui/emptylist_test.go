@@ -59,7 +59,7 @@ func TestEmptyPlaylistsOffline(t *testing.T) {
 
 func TestEmptyStarredNamesTheKey(t *testing.T) {
 	h := homeHarness(t, 120, 40, nil)
-	h.keys("5j<CR>")
+	h.keys("6j<CR>")
 	h.send(eventMsg{app.AlbumListLoaded{Kind: "starred"}})
 	h.contains("nothing starred yet · * stars an album")
 

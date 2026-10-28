@@ -117,6 +117,9 @@ func (s State) waiting(e Mix) *mixWait {
 // lookup that couldn't reach the server takes navigo offline, but the
 // Mix is still made, from the cache.
 func (s State) applySimilar(e SimilarLoaded) (State, []Effect) {
+	if s, out, ok := s.radioSimilar(e); ok {
+		return s, out
+	}
 	w := s.mixLookup
 	if w == nil || w.seq != e.Seq {
 		return s, nil

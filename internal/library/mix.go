@@ -31,18 +31,20 @@ const recommendedWeight = 3
 // rated one star. Artists whose names differ only by case count as one.
 // It returns fewer than n when the rules run out of tracks.
 func (s *Snapshot) Mix(n int, now time.Time, r *rand.Rand, recommended map[TrackID]bool) []Track {
-	return s.pick(s.mixOrder(now, r, recommended, nil), n, mixRules{})
+	return s.pick(s.mixOrder(now, r, recommended, nil, nil), n, mixRules{})
 }
 
 // mixOrder is the library's tracks in a weighted random order
 // (Efraimidis–Spirakis): each track's key is -ln(u)/weight, and the
 // smallest keys come first. A track's weight is its Mix weight, times
-// closeness² when closeness is given; tracks of weight 0 are left out.
+// closeness² when closeness is given, times adjust when that is given;
+// tracks of weight 0 are left out.
 func (s *Snapshot) mixOrder(
 	now time.Time,
 	r *rand.Rand,
 	recommended map[TrackID]bool,
 	close func(Track) float64,
+	adjust func(Track) float64,
 ) []Track {
 	type keyed struct {
 		key float64
@@ -57,6 +59,9 @@ func (s *Snapshot) mixOrder(
 		if close != nil && w > 0 {
 			c := close(t)
 			w *= c * c
+		}
+		if adjust != nil && w > 0 {
+			w *= adjust(t)
 		}
 		if w > 0 {
 			order = append(order, keyed{-math.Log(1-r.Float64()) / w, i})
@@ -78,6 +83,9 @@ type mixRules struct {
 	fromSeed   func(Track) bool
 	seedCap    int
 	seedAlbums bool
+	// prev is the track the Mix follows, for never one artist twice in a
+	// row across it.
+	prev *Track
 }
 
 // pick takes up to n tracks from order, in order, keeping the variety
@@ -107,7 +115,15 @@ func (s *Snapshot) pick(order []Track, n int, rules mixRules) []Track {
 		}
 		byAlbum[t.AlbumID]++
 	}
-	afterLast := func(t Track) bool { return len(out) == 0 || s.mixArtist(out[len(out)-1]) != s.mixArtist(t) }
+	afterLast := func(t Track) bool {
+		switch {
+		case len(out) > 0:
+			return s.mixArtist(out[len(out)-1]) != s.mixArtist(t)
+		case rules.prev != nil:
+			return s.mixArtist(*rules.prev) != s.mixArtist(t)
+		}
+		return true
+	}
 	if rules.opener != nil && n > 0 {
 		take(*rules.opener)
 	}

@@ -19,6 +19,8 @@ import (
 type QueueEntry struct {
 	ID    player.EntryID
 	Track library.Track
+	// Radio marks a track the radio added.
+	Radio bool
 }
 
 // PlayerState is what the player last reported.
@@ -98,6 +100,9 @@ type State struct {
 	stale []player.EntryID
 
 	Queue []QueueEntry
+	// Radio keeps the queue going when it runs low (see radio.go).
+	Radio bool
+	radio radioState
 	// Played is the tracks that started this session, the most recent
 	// first, each once, at most maxPlayed. It is never saved.
 	Played []library.Track
@@ -518,11 +523,14 @@ func apply(s State, e Event) (State, []Effect) {
 		)
 
 	case ChangeVolume, Shuffle, CycleRepeat:
-		return s.applyPlayback(e)
+		s, out := s.applyPlayback(e)
+		return s.repeatEndsRadio(out)
 	case SetReplayGainMode, ConfigureReplayGain:
 		return s.applyReplayGain(e)
 	case Mix:
 		return s.applyMix(e)
+	case SetRadio, RadioTopUp, SteerRadio:
+		return s.applyRadio(e)
 	case SimilarLoaded:
 		return s.applySimilar(e)
 	case LoadAlbumList, AlbumListLoaded:
@@ -549,7 +557,8 @@ func apply(s State, e Event) (State, []Effect) {
 	case PlayerDied:
 		return s.died(e.Err, e.At)
 	case SeekAt, SetRepeat:
-		return s.applyMedia(e)
+		s, out := s.applyMedia(e)
+		return s.repeatEndsRadio(out)
 	case PlayerChecked, Uncap:
 		return s.applyMPV(e)
 	case StartedOffline:
@@ -598,7 +607,8 @@ func (s State) fromPlayer(e player.Event) (State, []Effect) {
 		if !s.Offline { // scrobbles are dropped while offline
 			out = append(out, Scrobble{Track: s.Queue[i].Track.ID})
 		}
-		return s, out
+		s, more := s.topUp()
+		return s, append(out, more...)
 	case player.TrackEnded:
 		// Stopped means Play or Stop replaced it on purpose.
 		if e.Entry != s.playing || e.Reason == player.Stopped {

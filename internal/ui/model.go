@@ -670,6 +670,9 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 				app.RatingWritten{Write: e, Err: err, Unreachable: subsonic.IsUnreachable(err)},
 			}
 		}
+	case app.RadioDue:
+		seed, at := m.seed(), m.clock.Now()
+		return func() tea.Msg { return eventMsg{app.RadioTopUp{Seq: e.Seq, Seed: seed, At: at}} }
 	case app.WriteStar:
 		return func() tea.Msg {
 			if c == nil {

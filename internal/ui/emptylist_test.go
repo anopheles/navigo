@@ -62,6 +62,12 @@ func TestEmptyStarredNamesTheKey(t *testing.T) {
 	h.keys("5j<CR>")
 	h.send(eventMsg{app.AlbumListLoaded{Kind: "starred"}})
 	h.contains("nothing starred yet · * stars an album")
+
+	// Only Starred albums names the key.
+	h.keys("'hgg2j<CR>")
+	h.send(eventMsg{app.AlbumListLoaded{Kind: "frequent"}})
+	h.contains("nothing played yet · play an album and it shows up here")
+	h.lacks("· * stars")
 }
 
 func TestEmptyFilterSaysHowToClearIt(t *testing.T) {

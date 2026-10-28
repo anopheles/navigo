@@ -3,6 +3,9 @@ package app
 import (
 	"fmt"
 	"slices"
+	"time"
+
+	"github.com/anopheles/navigo/internal/library"
 )
 
 // Starring: the UI says what to star or unstar; the server call is a
@@ -15,10 +18,13 @@ type (
 		Artists, Albums, Tracks []string
 		Name                    string
 	}
+	// StarsWritten: the server took the write (or not) at At, which a
+	// new star keeps as when it was starred.
 	StarsWritten struct {
 		Write       WriteStar
 		Err         error
 		Unreachable bool
+		At          time.Time
 	}
 )
 
@@ -79,10 +85,14 @@ func (s State) applyStars(e Event) (State, []Effect) {
 		ids := slices.Concat(w.Artists, w.Albums, w.Tracks)
 		starred := slices.DeleteFunc(
 			slices.Clone(s.Library.Starred),
-			func(id string) bool { return slices.Contains(ids, id) },
+			func(st library.Star) bool { return slices.Contains(ids, st.ID) },
 		)
 		if w.On {
-			starred = append(starred, ids...)
+			fresh := make([]library.Star, len(ids))
+			for i, id := range ids {
+				fresh[i] = library.Star{ID: id, At: e.At}
+			}
+			starred = append(fresh, starred...)
 		}
 		s.Library = s.Library.WithExtras(s.Library.Playlists, starred)
 		return s, []Effect{SaveCache{Library: s.Library}, w.Done}

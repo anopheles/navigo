@@ -183,6 +183,11 @@ func TestPlaylistsAndStars(t *testing.T) {
 	if len(s.Starred) != 4 {
 		t.Errorf("%d starred, want 4", len(s.Starred))
 	}
+	for _, st := range s.Starred {
+		if st.At.IsZero() {
+			t.Errorf("%s has no star time", st.ID)
+		}
+	}
 }
 
 func TestDueAndRefresh(t *testing.T) {
@@ -232,7 +237,8 @@ func TestCache(t *testing.T) {
 	}
 	if len(got.Tracks) != 547 || !got.LastScan.Equal(s.LastScan) ||
 		len(got.AlbumTracks(s.Albums[0].ID)) == 0 ||
-		!got.IsStarred(s.Starred[0]) {
+		!got.IsStarred(s.Starred[0].ID) ||
+		!got.StarredAt(s.Starred[0].ID).Equal(s.Starred[0].At) {
 		t.Error("the loaded snapshot differs or has no indexes")
 	}
 	if _, err := Load(dir, url, "someone-else"); !errors.Is(err, ErrNoCache) {
@@ -289,5 +295,36 @@ func TestPlayedAndRating(t *testing.T) {
 	}
 	if s.WithPlay("not-a-track", at) != s {
 		t.Error("an unknown track made a new snapshot")
+	}
+}
+
+func TestStarredTracksNewestFirst(t *testing.T) {
+	day := func(d int) time.Time { return time.Date(2026, 10, d, 0, 0, 0, 0, time.UTC) }
+	s := Build(
+		"s",
+		"u",
+		time.Time{},
+		nil,
+		nil,
+		[]Track{{ID: "t1", AlbumID: "a"}, {ID: "t2", AlbumID: "a"}, {ID: "t3", AlbumID: "a"}},
+		nil,
+		[]Star{
+			{"t1", day(2)},
+			{"al", day(9)},
+			{"gone", day(8)},
+			{"t3", day(5)},
+			{"t2", time.Time{}},
+		},
+	)
+	var got []TrackID
+	for _, tr := range s.StarredTracks() {
+		got = append(got, tr.ID)
+	}
+	// Albums and tracks the library lacks are left out; no time sorts last.
+	if want := []TrackID{"t3", "t1", "t2"}; !slices.Equal(got, want) {
+		t.Errorf("starred tracks %v, want %v", got, want)
+	}
+	if !s.StarredAt("t3").Equal(day(5)) || !s.StarredAt("t4").IsZero() {
+		t.Error("StarredAt")
 	}
 }

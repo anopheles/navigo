@@ -132,8 +132,8 @@ func (m *Model) rowTracks(f *frame, i int) (tracks []library.Track, artist bool)
 		return lib.PlaylistTracks(lib.Playlists[i].ID), false
 	case playlistTracks:
 		return lib.PlaylistTracks(f.playlist)[i : i+1], false
-	case recommendedTracks:
-		return m.recommendedOf(f)[i : i+1], false
+	case homeTracks:
+		return m.homeTracksOf(f)[i : i+1], false
 	case searchList:
 		v := f.search
 		if _, ok := v.artist(i); ok {

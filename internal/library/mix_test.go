@@ -26,7 +26,7 @@ func mixLibrary(artists, albums, tracks int) []Track {
 	return out
 }
 
-func mix(tracks []Track, starred []string, n int, seed uint64) []Track {
+func mix(tracks []Track, starred []Star, n int, seed uint64) []Track {
 	s := Build("s", "u", time.Time{}, nil, nil, tracks, nil, starred)
 	return s.Mix(n, mixNow, rand.New(rand.NewPCG(seed, seed)), nil)
 }
@@ -145,9 +145,9 @@ func TestMixWeights(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			tracks := mixLibrary(2, 1, 1)
 			c.change(&tracks[0])
-			var starred []string
+			var starred []Star
 			if c.starred {
-				starred = []string{string(tracks[0].ID)}
+				starred = stars(string(tracks[0].ID))
 			}
 			first := 0
 			for seed := range uint64(runs) {
@@ -207,9 +207,9 @@ func TestMixFavoursRecommendations(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			tracks := mixLibrary(2, 1, 1)
 			c.change(&tracks[0])
-			var starred []string
+			var starred []Star
 			if c.starred {
-				starred = []string{string(tracks[0].ID)}
+				starred = stars(string(tracks[0].ID))
 			}
 			s := Build("s", "u", time.Time{}, nil, nil, tracks, nil, starred)
 			recs := map[TrackID]bool{tracks[0].ID: true}
@@ -225,4 +225,13 @@ func TestMixFavoursRecommendations(t *testing.T) {
 			}
 		})
 	}
+}
+
+// stars stars ids, with no star time.
+func stars(ids ...string) []Star {
+	out := make([]Star, len(ids))
+	for i, id := range ids {
+		out[i] = Star{ID: id}
+	}
+	return out
 }

@@ -150,6 +150,8 @@ type Album struct {
 	SortName      string `json:"sortName"`
 	PlayCount     int    `json:"playCount"`
 	Songs         []Song `json:"song"`
+	// Starred is when the user starred the album; zero if not starred.
+	Starred time.Time `json:"starred"`
 }
 
 // ArtistRef names one artist credited on a song (OpenSubsonic).
@@ -164,6 +166,8 @@ type Artist struct {
 	Name       string `json:"name"`
 	SortName   string `json:"sortName"`
 	AlbumCount int    `json:"albumCount"`
+	// Starred is when the user starred the artist; zero if not starred.
+	Starred time.Time `json:"starred"`
 }
 
 // Song is one track as the server returns it. Durations are in seconds.
@@ -185,6 +189,8 @@ type Song struct {
 	// Played is when the user last played the song; zero if never.
 	Played     time.Time `json:"played"`
 	UserRating int       `json:"userRating"` // 1–5 stars, 0 if unrated
+	// Starred is when the user starred the song; zero if not starred.
+	Starred time.Time `json:"starred"`
 	// Artists is every artist credited on the song, as the server splits
 	// them (OpenSubsonic); empty on plain Subsonic servers.
 	Artists []ArtistRef `json:"artists"`

@@ -244,7 +244,8 @@ keys:
 **Popups** (a Confirmation, track info, the key menu, `:messages`) appear over both windows. They take the `popup` scope, and `q`/`<Esc>` close them.
 
 **Sections:** Home, Artists, Albums, Playlists, Search, Help. There is no Tracks section. Each section remembers its drill-down path and cursor.
-- **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random albums, Starred; then, while [Recommendations](#listenbrainz-recommendations) are on, Recommended.
+- **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random albums, Starred albums; then Starred tracks; then, while [Recommendations](#listenbrainz-recommendations) are on, Recommended.
+- **Starred tracks** ([#95](https://github.com/anopheles/navigo/issues/95)): the starred tracks the library has, from the cache (so offline too), most recently starred first, titled `Starred tracks (42)`. The cache keeps when each artist, album and track was starred (`getStarred2`'s `starred`; a star made in navigo takes the time the server accepted it; cache version 4). A starred track the library lacks is left out until a sync. The list is the tracks starred when it opened: one unstarred there keeps its row, without its `★`, until the list opens again, and one starred elsewhere shows up then. Rows, keys, `:sort` and `:filter` are as on Recommended, and `:sort` takes `starred` too (`:sort starred` is oldest first; `:sort` alone puts newest first back). Empty: `nothing starred yet · * stars the track under the cursor`.
 - **Artists:** every artist with at least one track, sorted by the server's sort name. Each row shows the artist's own album count, or "appears on N" for artists with no albums of their own.
 - **An artist's page:** their own albums, then a `── Appears on ──` heading (skipped by the cursor) and the albums where they only have tracks. `{`/`}` jump between the two groups. Opening an Appears on album puts the cursor on that artist's first track.
 - **Marks in library lists** ([#93](https://github.com/anopheles/navigo/issues/93)): a track already in the queue shows `•` in its row's gutter (after the cursor's `▎`), and an album with any queued track shows it before its name. A starred row keeps its `★`, and a rated track shows `★3` after its title. Artists and the queue window carry no marks, and rows under 40 cells keep the `•` and drop the rating. Every mark is a glyph, so none needs colour.
@@ -436,7 +437,7 @@ The `:` line has Tab completion for command names and arguments.
 - A Mix never waits for a fetch. It uses the stored list however old, offline too; during the first fetch it has none.
 - A Mix's messages and rows don't change. The `i` popup shows `recommended by ListenBrainz` on a track that matches.
 
-**On Home:** a **Recommended** row after Starred, only while Recommendations are on, opens a list of tracks from the cache, titled `Recommended (534)`:
+**On Home:** a **Recommended** row after Starred tracks, only while Recommendations are on, opens a list of tracks from the cache, titled `Recommended (534)`:
 - One row per Recommendation in the library, played or not, in ListenBrainz's order; of several copies of a song, the first in the library. `:sort` and `:filter` work as on Home's other lists.
 - Rows look like a playlist's tracks. `<CR>` plays the list from that row, as with a playlist; `a`/`A`, `gm`, `i`, `*`, `ga`/`gr` work as on any track.
 - A new list or a sync updates it in place, the cursor staying on its track. Offline it works from the stored list.

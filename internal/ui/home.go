@@ -7,6 +7,7 @@ import (
 
 	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
+	"github.com/anopheles/navigo/internal/keymap"
 	"github.com/anopheles/navigo/internal/library"
 )
 
@@ -18,11 +19,11 @@ type homeRow struct{ title, kind, empty string }
 // The last, Recommended, is the user's Recommendations, from the cache.
 var homeLists = []homeRow{
 	{"Mix", "mix", ""},
-	{"Recently added", "newest", "nothing here yet"},
-	{"Most played", "frequent", "nothing played yet"},
-	{"Recently played", "recent", "nothing played yet"},
-	{"Random albums", "random", "nothing here yet"},
-	{"Starred", "starred", "nothing starred yet · * stars an album"},
+	{"Recently added", "newest", "nothing here yet · add music to the server, then :sync"},
+	{"Most played", "frequent", "nothing played yet · play an album and it shows up here"},
+	{"Recently played", "recent", "nothing played yet · play an album and it shows up here"},
+	{"Random albums", "random", "nothing here yet · add music to the server, then :sync"},
+	{"Starred", "starred", "nothing starred yet"},
 	{"Recommended", "recommended", ""},
 }
 
@@ -76,13 +77,26 @@ func (m *Model) emptyHome(kind string) string {
 	case l.Loaded && !l.Loading:
 		for _, h := range homeLists {
 			if h.kind == kind {
-				return " " + h.empty
+				return " " + h.empty + m.starHint(kind)
 			}
 		}
 	case m.state.Offline:
 		return " can't reach the server · Home's lists need it; the library works from the cache"
 	}
 	return " loading…"
+}
+
+// starHint is the key that stars, for Starred's empty list, as " · * stars an album".
+func (m *Model) starHint(kind string) string {
+	if kind != "starred" {
+		return ""
+	}
+	scopes := []string{"albums", "containers", "global"}
+	ks := m.engine.Table().Keys(keymap.Normal, scopes, "star")
+	if len(ks) == 0 {
+		return " · :star stars an album"
+	}
+	return " · " + ks[0] + " stars an album"
 }
 
 // mix is gm and :mix: a Mix of the count's size, or MixSize, around the

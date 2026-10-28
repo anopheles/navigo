@@ -175,6 +175,7 @@ func TestParseReplayGainProblems(t *testing.T) {
 		{"player:\n  replaygain_preamp: lots\n", "player.replaygain_preamp: give a number of dB", 2, 22},
 		{"player:\n  replaygain_preamp: 40\n", "player.replaygain_preamp: give dB from -15 to 15", 2, 22},
 		{"player:\n  replaygain_preamp: -16\n", "player.replaygain_preamp: give dB from -15 to 15", 2, 22},
+		{"player:\n  radio: sometimes\n", "player.radio: give true or false", 2, 10},
 	} {
 		c, err := Parse([]byte(tc.yaml))
 		if err != nil {
@@ -192,6 +193,26 @@ func TestParseReplayGainProblems(t *testing.T) {
 		// The bad value leaves the defaults.
 		if c.Player.GainMode() != "track" || c.Player.ReplayGainPreamp != 0 {
 			t.Errorf("%q: kept %q, %v", tc.yaml, c.Player.GainMode(), c.Player.ReplayGainPreamp)
+		}
+	}
+}
+
+func TestParseRadio(t *testing.T) {
+	for yaml, want := range map[string]bool{
+		"":                          false,
+		"player:\n  radio: true\n":  true,
+		"player:\n  radio: false\n": false,
+	} {
+		c, err := Parse([]byte(yaml))
+		if err != nil || c.Player.Radio != want || len(c.Player.Problems) != 0 {
+			t.Errorf(
+				"%q: radio %v, %v, %v; want %v",
+				yaml,
+				c.Player.Radio,
+				c.Player.Problems,
+				err,
+				want,
+			)
 		}
 	}
 }

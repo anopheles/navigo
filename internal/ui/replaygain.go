@@ -74,10 +74,11 @@ func (m *Model) gainText() string {
 }
 
 // newState is the core's state at the start of a session, with what the
-// config sets: ReplayGain and Resume.
+// config sets: ReplayGain, Resume and the radio.
 func newState(cfg config.Config) app.State {
 	s := app.New()
 	s.ReplayGain = gainOf(cfg.Player)
 	s.ResumeOn, s.SyncOn = cfg.ResumeOn(), cfg.SyncQueue.On
+	s.Radio = cfg.Player.Radio
 	return s.WithListenBrainz(lbOf(cfg.ListenBrainz))
 }

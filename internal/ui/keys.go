@@ -387,6 +387,10 @@ func (m *Model) reloadConfig(command.Call) error {
 	m.covers.accentFor = "" // the cover colour is put on again if it applies
 	m.setTable(t)
 	m.event(app.ConfigureReplayGain{ReplayGain: gainOf(cfg.Player)})
+	if cfg.Player.Radio != m.deps.Config.Player.Radio { // a change in the file wins
+		m.event(app.SetRadio{On: cfg.Player.Radio})
+	}
+	m.deps.Config.Player.Radio = cfg.Player.Radio
 	m.event(app.ConfigureResume{On: cfg.ResumeOn(), Sync: cfg.SyncQueue.On})
 	user, api := lbOf(cfg.ListenBrainz)
 	m.event(app.ConfigureListenBrainz{User: user, API: api})

@@ -16,14 +16,17 @@ const (
 	SeedAlbum
 	SeedPlaylist
 	SeedTrack
+	// SeedTracks is a set of tracks, Tracks: the radio's last plays.
+	SeedTracks
 )
 
 // Seed is the artist, album, playlist or track a Mix is built around.
 // Name is what its row shows, for messages.
 type Seed struct {
-	Kind SeedKind
-	ID   string
-	Name string
+	Kind   SeedKind
+	ID     string
+	Name   string
+	Tracks []TrackID // for SeedTracks
 }
 
 // MixAround picks up to n tracks close to a seed, from the cache. A
@@ -48,7 +51,7 @@ func (s *Snapshot) MixAround(
 	}
 	// A Recommendation weighs more only if it is close already: closeness 0
 	// still leaves it out.
-	order := s.mixOrder(now, r, recommended, c.of)
+	order := s.mixOrder(now, r, recommended, c.of, nil)
 	rules := mixRules{
 		fromSeed:   c.fromSeed,
 		seedCap:    max(1, n/3),
@@ -227,6 +230,14 @@ func (s *Snapshot) seedTracks(seed Seed) []Track {
 		if t, ok := s.Track(TrackID(seed.ID)); ok {
 			return []Track{t}
 		}
+	case SeedTracks:
+		var out []Track
+		for _, id := range seed.Tracks {
+			if t, ok := s.Track(id); ok {
+				out = append(out, t)
+			}
+		}
+		return out
 	case SeedAlbum:
 		return s.AlbumTracks(AlbumID(seed.ID))
 	case SeedPlaylist:

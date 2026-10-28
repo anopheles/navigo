@@ -122,7 +122,10 @@ type Player struct {
 	// bad values are Problems and leave the defaults.
 	ReplayGain       string  `yaml:"-"`
 	ReplayGainPreamp float64 `yaml:"-"`
-	// Problems are what was wrong with the block's ReplayGain values.
+	// Radio starts the session with the radio on.
+	Radio bool `yaml:"-"`
+	// Problems are what was wrong with the block's ReplayGain and radio
+	// values.
 	Problems []Problem `yaml:"-"`
 }
 
@@ -157,6 +160,13 @@ func (p *Player) UnmarshalYAML(n *yaml.Node) error {
 			default:
 				bad("player.replaygain: give off, track or album")
 			}
+		case "radio":
+			var on bool
+			if val.Kind != yaml.ScalarNode || val.Decode(&on) != nil {
+				bad("player.radio: give true or false")
+				continue
+			}
+			p.Radio = on
 		case "replaygain_preamp":
 			v, err := strconv.ParseFloat(val.Value, 64)
 			switch {

@@ -34,6 +34,7 @@ var menuGroups = []struct {
 			"volume",
 			"shuffle",
 			"mix",
+			"radio",
 			"repeat",
 		},
 	},

@@ -405,6 +405,9 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 	var out []string
 	for i := m.queueOff; i < len(q) && len(out) < h; i++ {
 		mark := "  "
+		if q[i].Radio {
+			mark = "~ " // the radio added it
+		}
 		_, row, ok := m.state.NowPlaying()
 		current := ok && i == row
 		if current {
@@ -814,12 +817,15 @@ func (m *Model) nowPlaying() string {
 	return left + fit(" "+track, mid-lipgloss.Width(flags)) + flags + right
 }
 
-// flags are the now-playing bar's modes: repeat, and the volume when it
-// isn't full.
+// flags are the now-playing bar's modes: repeat, the radio, and the
+// volume when it isn't full.
 func (m *Model) flags() []string {
 	var out []string
 	if r := m.state.Repeat; r != app.RepeatOff {
 		out = append(out, "repeat "+r.String())
+	}
+	if m.state.Radio {
+		out = append(out, "radio")
 	}
 	if v := m.state.Player.Volume; v != 100 {
 		out = append(out, fmt.Sprintf("vol %d%%", v))

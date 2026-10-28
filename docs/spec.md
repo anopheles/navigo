@@ -167,6 +167,7 @@ player:
   mpv_args: [--audio-device=pulse/hdmi]    # extra mpv options; must start with --
   replaygain: track                        # off | track | album
   replaygain_preamp: 0                     # dB, -15 to 15
+  radio: false                             # start with the radio on
 
 hints: true          # the hint line; :hints on|off for the session
 powerline: false     # Nerd Font arrows between the now-playing bar's blocks
@@ -213,6 +214,7 @@ keys:
 
 **The new keys** ([#53](https://github.com/anopheles/navigo/issues/53)):
 - `player.replaygain` is `off`, `track` (the default) or `album`; `player.replaygain_preamp` is in dB, from -15 to 15, default 0. [Queue and playback](#queue-and-playback).
+- `player.radio` (`true` or `false`, the default) starts each session with the [Radio](#queue-and-playback) on; `:reload-config` applies a change in the file.
 - `resume` is on unless set to `false`. [Resume](#resume).
 - `theme` names a palette for the roles; `colors` then recolours single roles on top of it. [Colours](#colours).
 - `colors` takes the roles `playing`, `key`, `error` and `selection`. [Colours](#colours).
@@ -295,7 +297,7 @@ keys:
 | Motions | `j` `k` `<Down>` `<Up>` · `gg` `G` `[count]G` · `<C-d>` `<C-u>` `<C-f>` `<C-b>` · `<C-e>` `<C-y>` · `H` `M` `L` · `zz` `zt` `zb` · `{` `}` (groups) · `[count]%` · scroll wheel |
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
-| Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix around the row under the cursor (`[count]gm` for that many tracks) · `R` repeat off → all → one · `X` stop |
+| Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix around the row under the cursor (`[count]gm` for that many tracks) · `R` repeat off → all → one · `gR` radio on/off · `g+` `g-` more/less like this on the radio · `X` stop |
 | Add and play | `<CR>` play now · `a` play next · `A` add to end · `gl` add to a playlist · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
@@ -384,6 +386,15 @@ The `:` line has Tab completion for command names and arguments.
 - **Similar artists:** on every Mix, `getArtistInfo2` for the top 3 seed artists by share (one for an artist seed), in parallel, matched by ID and by name without case. navigo stores none of them. While they load, the status line says `mixing from <name>…`, the queue stays as it is and keys keep working; if the queue or what plays changes first, the Mix is dropped, and a second `gm` replaces the pending one.
 - **Without them:** offline, the lookup is skipped and the Mix is instant. Past the 2 s limit, on a Subsonic error or with an empty list, the Mix is picked from the cache alone with no extra message; the time limit doesn't count as going offline (Navidrome is slow the first time it looks an artist up), but a connection failure does, as for any request.
 - **Messages:** `<name>` is what the row shows (artist, album title, playlist name or track title): `mixed 50 tracks from <name>`, `mixed 4 of 50 tracks from <name>`, or `nothing to mix from <name>` with the queue left alone. A whole-library Mix says `mixed 50 tracks`.
+
+**Radio** (`gR`, `:radio [on|off]`, `player.radio`; [ADR 0010](adr/0010-the-radio-tops-up-the-queue-and-steering-is-session-only.md)): keeps the queue going with tracks like what played, instead of stopping at its end.
+- **Topping up:** while it is on, a track starting within the last 3 rows of the queue has the radio add 10 tracks to the end, so what comes is in view and can be edited. They are picked as a Mix around a seed is (closeness, weights and variety, similar artists for the seed's top 3 artists online, the cache alone offline), around the last 5 tracks played and the tracks asked more of, without an opening track. Never one artist twice in a row holds across the end of the queue too, unless only that artist is close.
+- **Never again:** a track played this session (see Played this session), one in the queue, or one turned down is never added.
+- **Marked:** a radio track shows `~` in the queue's gutter. Its additions (and the removals below) are not undo steps; undoing an edit made before them brings back the queue as it was then, and the radio tops it up again.
+- **Steering** for the session, on the queue row under the cursor in the queue window, else what plays: `g+` (`:radio-more`) leans toward its artists (their tracks ×2) and keeps the track in the seed (the last 5 asked); `g-` (`:radio-less`) leaves its artists off the radio, drops their upcoming radio tracks, and skips the track if it plays. Messages: `more like <artist> on the radio`, `no more <artist> on the radio`. With the radio off they say `the radio is off · :radio turns it on`. These are the one exception to the Mix's fixed weights, and last only for the session.
+- **Repeat:** repeat all and the radio exclude each other (the queue never runs out under repeat all): turning one on turns the other off. Repeat one is left alone.
+- **Messages:** `radio on · it keeps the queue going from what plays`, `radio off`; a top-up is logged quietly in `:messages` (`the radio added 10 tracks`); with nothing close left to add it says `the radio has nothing close left to add`, and playback ends with the queue as before.
+- The now-playing bar shows `radio` while it is on.
 
 **Undo:** `u`/`<C-r>` walk one queue history from either window. Playlist edits on the server can't be undone.
 

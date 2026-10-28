@@ -822,9 +822,10 @@ func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
 }
 
 // keyMode is the mode keys are read in: a popup takes Normal mode's keys
-// even over a selection, which it leaves as it is.
+// even over a selection, which it leaves as it is. The key menu is the
+// exception: its keys run as they would where it was opened.
 func (m *Model) keyMode() keymap.Mode {
-	if m.popup != nil && m.mode == keymap.Visual {
+	if m.popup != nil && m.popup.keyMenu == nil && m.mode == keymap.Visual {
 		return keymap.Normal
 	}
 	return m.mode

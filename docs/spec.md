@@ -247,6 +247,7 @@ keys:
 - **Home:** Mix, which runs a whole-library Mix (`:mix library`) rather than opening a list, then the album lists in this order: Recently added, Most played, Recently played, Random albums, Starred; then, while [Recommendations](#listenbrainz-recommendations) are on, Recommended.
 - **Artists:** every artist with at least one track, sorted by the server's sort name. Each row shows the artist's own album count, or "appears on N" for artists with no albums of their own.
 - **An artist's page:** their own albums, then a `── Appears on ──` heading (skipped by the cursor) and the albums where they only have tracks. `{`/`}` jump between the two groups. Opening an Appears on album puts the cursor on that artist's first track.
+- **Marks in library lists** ([#93](https://github.com/anopheles/navigo/issues/93)): a track already in the queue shows `•` in its row's gutter (after the cursor's `▎`), and an album with any queued track shows it before its name. A starred row keeps its `★`, and a rated track shows `★3` after its title. Artists and the queue window carry no marks, and rows under 40 cells keep the `•` and drop the rating. Every mark is a glyph, so none needs colour.
 - **Help:** generated from the bindings in effect, and searchable with `/`. It describes `gm`'s chain (row, what plays, whole library) once.
 
 **Marks** jump to a section: `'h` Home, `'q` the queue window, `'a` Artists, `'b` Albums, `'p` Playlists, `'s` Search, `'?` Help. They are ordinary bindings to `:home`, `:artists`, ….

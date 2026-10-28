@@ -201,6 +201,7 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	f := m.top()
 	n := m.rows(f)
 	f.offset = scroll(f.cur, f.offset, h, n)
+	m.markQueued()
 	var out []string
 	switch {
 	case n > 0:
@@ -219,7 +220,9 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 	}
 	for i := f.offset; i < n && len(out) < h; i++ {
 		m.dress = i != f.cur && !m.inSelection(libraryWindow, i) && (!focused || !m.highlighting())
+		m.marks.on = true
 		row := m.libraryRow(f, i, w)
+		m.marks.on = false
 		m.dress = false
 		if focused {
 			row = m.highlight(row)
@@ -312,7 +315,7 @@ func (m *Model) albumLine(a library.Album, w int) string {
 	}
 	rest := w - 1 - 6
 	nw := rest * 3 / 5
-	return " " + fit(
+	return m.albumLead(a) + fit(
 		m.starred(string(a.ID), a.Name),
 		nw,
 	) + fit(
@@ -336,6 +339,7 @@ func trackNumber(ts []library.Track, i int) string {
 }
 
 func (m *Model) trackLine(mark, num string, t library.Track, w int) string {
+	mark = m.trackMark(mark, t)
 	title := m.starred(string(t.ID), t.Title)
 	if w < 40 {
 		return fit(mark+title, w)
@@ -346,14 +350,15 @@ func (m *Model) trackLine(mark, num string, t library.Track, w int) string {
 	numW := max(len(num)+1, 3)
 	rest := w - lipgloss.Width(mark) - numW - 6
 	tw := rest * 5 / 9
+	tag := m.ratingTag(t, tw)
 	return mark + fmt.Sprintf(
 		"%*s ",
 		numW-1,
 		num,
 	) + fit(
 		title,
-		tw,
-	) + fit(
+		tw-lipgloss.Width(tag),
+	) + tag + fit(
 		"  "+t.Artist,
 		rest-tw,
 	) + fmt.Sprintf(

@@ -135,6 +135,9 @@ type Model struct {
 	covers covers
 	// dress says the row being drawn may carry styles of its own (rowstyle.go).
 	dress bool
+	// marks are what the library row being drawn shows beyond its text: the
+	// queue's tracks and albums, set while a library row is drawn (marks.go).
+	marks rowMarks
 	state app.State
 	// pendingSave is the saved queue waiting to be written; saveArmed,
 	// that the timer for it is running.

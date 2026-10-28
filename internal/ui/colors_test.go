@@ -104,7 +104,7 @@ func TestColoursOff(t *testing.T) {
 		t.Errorf("the queue's cursor row isn't reverse: %q", find("Dusk Signal"))
 	}
 	lib := strings.Split(find("4 Blue Hour"), "│")[1]
-	if !strings.Contains(lib, "▎  4 Blue Hour") || has(lib, 4) {
+	if !strings.Contains(lib, "▎• 4 Blue Hour") || has(lib, 4) {
 		t.Errorf("the library's cursor row isn't marked: %q", lib)
 	}
 	// What plays is bold, with ▶.

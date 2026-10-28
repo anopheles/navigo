@@ -42,8 +42,9 @@ func (m *Model) trackLineDressed(mark, num string, t library.Track, w int) strin
 	numW := max(len(num)+1, 3)
 	rest := w - lipgloss.Width(mark) - numW - 6
 	tw := rest * 5 / 9
+	tag := m.ratingTag(t, tw)
 	return dimStyle.Render(mark+fmt.Sprintf("%*s ", numW-1, num)) +
-		m.name(string(t.ID), t.Title, tw) +
+		m.name(string(t.ID), t.Title, tw-lipgloss.Width(tag)) + dimStyle.Render(tag) +
 		dimStyle.Render(fit("  "+t.Artist, rest-tw)+fmt.Sprintf("%6s", clock(t.Duration)))
 }
 
@@ -54,7 +55,7 @@ func (m *Model) albumLineDressed(a library.Album, w int) string {
 	}
 	rest := w - 1 - 6
 	nw := rest * 3 / 5
-	return " " + m.name(string(a.ID), a.Name, nw) +
+	return m.albumLead(a) + m.name(string(a.ID), a.Name, nw) +
 		dimStyle.Render(fit("  "+a.Artist, rest-nw)+fmt.Sprintf("%6s", year))
 }
 

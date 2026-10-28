@@ -16,16 +16,21 @@ type homeRow struct{ title, kind, empty string }
 
 // homeLists are Home's rows, in the spec's order, with the server's
 // album list type for each. The first, Mix, is not a list: it runs mix.
-// The last, Recommended, is the user's Recommendations, from the cache.
+// Starred tracks and the last, Recommended, are track lists from the
+// cache.
 var homeLists = []homeRow{
 	{"Mix", "mix", ""},
 	{"Recently added", "newest", "nothing here yet · add music to the server, then :sync"},
 	{"Most played", "frequent", "nothing played yet · play an album and it shows up here"},
 	{"Recently played", "recent", "nothing played yet · play an album and it shows up here"},
 	{"Random albums", "random", "nothing here yet · add music to the server, then :sync"},
-	{"Starred", "starred", "nothing starred yet"},
+	{"Starred albums", "starred", "nothing starred yet"},
+	{"Starred tracks", starredTracks, ""},
 	{"Recommended", "recommended", ""},
 }
+
+// starredTracks is the kind of Home's Starred tracks row.
+const starredTracks = "starred-tracks"
 
 // homeRows are the rows Home shows: Recommended only while
 // Recommendations are on.
@@ -44,8 +49,8 @@ func (m *Model) openHomeList(i int, c command.Call) {
 	case "mix":
 		m.mixAround(c, nil) // Home's Mix row is always the whole library
 		return
-	case "recommended":
-		m.lib = append(m.lib, frame{kind: recommendedTracks, title: l.title})
+	case starredTracks, "recommended":
+		m.lib = append(m.lib, frame{kind: homeTracks, homeKind: l.kind, title: l.title})
 		return
 	}
 	m.lib = append(m.lib, frame{kind: homeAlbums, homeKind: l.kind, title: l.title})
@@ -76,8 +81,14 @@ func (m *Model) emptyHome(kind string) string {
 	switch {
 	case l.Loaded && !l.Loading:
 		for _, h := range homeLists {
+			if h.kind == kind && kind == "starred" {
+				return " " + h.empty + m.starHint(
+					[]string{"albums", "containers", "global"},
+					"an album",
+				)
+			}
 			if h.kind == kind {
-				return " " + h.empty + m.starHint(kind)
+				return " " + h.empty
 			}
 		}
 	case m.state.Offline:
@@ -86,17 +97,14 @@ func (m *Model) emptyHome(kind string) string {
 	return " loading…"
 }
 
-// starHint is the key that stars, for Starred's empty list, as " · * stars an album".
-func (m *Model) starHint(kind string) string {
-	if kind != "starred" {
-		return ""
-	}
-	scopes := []string{"albums", "containers", "global"}
+// starHint is the key that stars what, in scopes, for an empty starred
+// list, as " · * stars an album".
+func (m *Model) starHint(scopes []string, what string) string {
 	ks := m.engine.Table().Keys(keymap.Normal, scopes, "star")
 	if len(ks) == 0 {
-		return " · :star stars an album"
+		return " · :star stars " + what
 	}
-	return " · " + ks[0] + " stars an album"
+	return " · " + ks[0] + " stars " + what
 }
 
 // mix is gm and :mix: a Mix of the count's size, or MixSize, around the
@@ -214,17 +222,74 @@ func (m *Model) onMixRow() bool {
 	return f.kind == homeList && f.cur < len(m.homeRows()) && m.homeRows()[f.cur].kind == "mix"
 }
 
-// recommendedOf is the tracks Home's Recommended list shows, sorted and
+// homeTracksOf is the tracks one of Home's track lists shows, sorted and
 // filtered.
-func (m *Model) recommendedOf(f *frame) []library.Track {
-	base := m.state.Recs().Tracks
+func (m *Model) homeTracksOf(f *frame) []library.Track {
+	base := m.homeTracksBase(f)
 	if !f.view.active() {
 		return base
 	}
 	if k := m.viewKey(f); f.view.key != k || f.view.tracks == nil {
-		f.view.key, f.view.tracks = k, apply(f.view, base, trackFacts)
+		f.view.key, f.view.tracks = k, apply(f.view, base, m.homeTrackFacts(f))
 	}
 	return f.view.tracks
+}
+
+// homeTracksBase is a Home track list's tracks in its own order. Starred
+// tracks keeps the tracks starred when it opened, so one unstarred there
+// stays (without its ★) until the list opens again.
+func (m *Model) homeTracksBase(f *frame) []library.Track {
+	if f.homeKind != starredTracks {
+		return m.state.Recs().Tracks
+	}
+	lib := m.state.Library
+	if lib == nil {
+		return nil
+	}
+	s := &f.starred
+	if s.ids == nil {
+		s.ids = []library.TrackID{}
+		for _, t := range lib.StarredTracks() {
+			s.ids = append(s.ids, t.ID)
+		}
+	}
+	if s.lib != lib {
+		s.lib, s.tracks = lib, make([]library.Track, 0, len(s.ids))
+		for _, id := range s.ids {
+			if t, ok := lib.Track(id); ok {
+				s.tracks = append(s.tracks, t)
+			}
+		}
+	}
+	return s.tracks
+}
+
+// homeTrackFacts is what :sort and :filter look at in a Home track list;
+// Starred tracks adds when each was starred.
+func (m *Model) homeTrackFacts(f *frame) func(library.Track) facts {
+	lib := m.state.Library
+	if f.homeKind != starredTracks || lib == nil {
+		return trackFacts
+	}
+	return func(t library.Track) facts {
+		x := trackFacts(t)
+		x.starred = lib.StarredAt(string(t.ID))
+		return x
+	}
+}
+
+// emptyHomeTracks says why one of Home's track lists has no rows.
+func (m *Model) emptyHomeTracks(f *frame) string {
+	switch {
+	case f.homeKind != starredTracks:
+		return m.emptyRecs()
+	case m.state.Library == nil:
+		return m.emptyList()
+	}
+	return " nothing starred yet" + m.starHint(
+		[]string{"tracks", "global"},
+		"the track under the cursor",
+	)
 }
 
 // emptyRecs says why the Recommended list has no rows.

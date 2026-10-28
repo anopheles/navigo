@@ -263,7 +263,7 @@ func (m *Model) trackRow() ([]library.Track, int, error) {
 		return []library.Track{t}, 0, nil
 	}
 	if m.focus != libraryWindow ||
-		f.kind != albumTracks && f.kind != playlistTracks && f.kind != recommendedTracks {
+		f.kind != albumTracks && f.kind != playlistTracks && f.kind != homeTracks {
 		return nil, 0, errNotOnTrack
 	}
 	var ts []library.Track
@@ -271,8 +271,8 @@ func (m *Model) trackRow() ([]library.Track, int, error) {
 	case lib == nil:
 	case f.kind == albumTracks:
 		ts = m.tracksOf(f)
-	case f.kind == recommendedTracks:
-		ts = m.recommendedOf(f)
+	case f.kind == homeTracks:
+		ts = m.homeTracksOf(f)
 	default:
 		ts = lib.PlaylistTracks(f.playlist)
 	}

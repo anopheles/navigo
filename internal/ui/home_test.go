@@ -16,7 +16,8 @@ func TestStartsOnHome(t *testing.T) {
 		"Most played",
 		"Recently played",
 		"Random albums",
-		"Starred",
+		"Starred albums",
+		"Starred tracks",
 		"<CR> open",
 	)
 	if got := h.order(
@@ -25,11 +26,12 @@ func TestStartsOnHome(t *testing.T) {
 		"Most played",
 		"Recently played",
 		"Random albums",
-		"Starred",
+		"Starred albums",
+		"Starred tracks",
 	); strings.Join(
 		got,
 		",",
-	) != "Mix,Recently added,Most played,Recently played,Random albums,Starred" {
+	) != "Mix,Recently added,Most played,Recently played,Random albums,Starred albums,Starred tracks" {
 		t.Errorf("Home's lists in order %q", got)
 	}
 	golden.RequireEqual(t, h.screen())
@@ -45,7 +47,7 @@ func TestHomeLists(t *testing.T) {
 		{"2j<CR>", "Most played", "frequent", []string{"Blue Hour", "Static Bloom"}},
 		{"3j<CR>", "Recently played", "recent", []string{"Static Bloom", "Blue Hour"}},
 		{"4j<CR>", "Random albums", "random", []string{"Static Bloom", "Blue Hour", "The Long Haul"}},
-		{"5j<CR>", "Starred", "starred", []string{"★ Blue Hour"}},
+		{"5j<CR>", "Starred albums", "starred", []string{"★ Blue Hour"}},
 	} {
 		h.keys("'h'hgg" + c.keys)
 		h.contains("Home › " + c.title)

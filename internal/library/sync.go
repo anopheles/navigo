@@ -165,7 +165,7 @@ func albumByAlbum(
 	return artists, albums, tracks, nil
 }
 
-func extras(ctx context.Context, c *subsonic.Client) ([]Playlist, []string, error) {
+func extras(ctx context.Context, c *subsonic.Client) ([]Playlist, []Star, error) {
 	list, err := c.Playlists(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -186,15 +186,15 @@ func extras(ctx context.Context, c *subsonic.Client) ([]Playlist, []string, erro
 	if err != nil {
 		return nil, nil, err
 	}
-	var starred []string
+	var starred []Star
 	for _, a := range st.Artists {
-		starred = append(starred, a.ID)
+		starred = append(starred, Star{a.ID, a.Starred})
 	}
 	for _, a := range st.Albums {
-		starred = append(starred, a.ID)
+		starred = append(starred, Star{a.ID, a.Starred})
 	}
 	for _, s := range st.Songs {
-		starred = append(starred, s.ID)
+		starred = append(starred, Star{s.ID, s.Starred})
 	}
 	return playlists, starred, nil
 }

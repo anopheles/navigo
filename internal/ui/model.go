@@ -110,10 +110,18 @@ const (
 	albumTracks
 	playlistList
 	playlistTracks
-	recommendedTracks // Home's Recommended list
+	homeTracks // one of Home's track lists: Starred tracks, Recommended
 	searchList
 	helpList
 )
+
+// starredView is the Starred tracks list: the tracks starred when it
+// opened (nil until the library is in), and their rows for one snapshot.
+type starredView struct {
+	ids    []library.TrackID
+	lib    *library.Snapshot
+	tracks []library.Track
+}
 
 // frame is one level of the library window's drill-down.
 type frame struct {
@@ -121,8 +129,9 @@ type frame struct {
 	album       library.AlbumID
 	artist      library.ArtistID
 	playlist    library.PlaylistID
-	homeKind    string   // the server's list type, for homeAlbums
-	view        listView // :sort and :filter
+	homeKind    string      // the server's list type, for homeAlbums; for homeTracks, which list
+	starred     starredView // for Starred tracks
+	view        listView    // :sort and :filter
 	search      *searchView
 	help        *helpView
 	title       string
@@ -653,7 +662,9 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 			}
 			err := c.Star(ctx, e.On, e.Artists, e.Albums, e.Tracks)
 			return eventMsg{
-				app.StarsWritten{Write: e, Err: err, Unreachable: subsonic.IsUnreachable(err)},
+				app.StarsWritten{
+					Write: e, Err: err, Unreachable: subsonic.IsUnreachable(err), At: time.Now(),
+				},
 			}
 		}
 	case app.OpenLogin:
@@ -954,7 +965,7 @@ func (m *Model) scopes() []string {
 		return []string{"playlists", "containers", "global"}
 	case playlistTracks:
 		return []string{"playlist-tracks", "tracks", "global"}
-	case recommendedTracks:
+	case homeTracks:
 		return []string{"tracks", "global"}
 	case helpList:
 		return []string{"help", "global"}
@@ -990,8 +1001,8 @@ func (m *Model) rows(f *frame) int {
 		return len(f.help.rows)
 	case f.kind == homeList:
 		return len(m.homeRows())
-	case f.kind == recommendedTracks:
-		return len(m.recommendedOf(f))
+	case f.kind == homeTracks:
+		return len(m.homeTracksOf(f))
 	case f.kind == homeAlbums:
 		return len(m.albumsOf(f))
 	case lib == nil:
@@ -1036,8 +1047,8 @@ func (m *Model) rowID(f *frame, i int) string {
 	switch f.kind {
 	case homeList:
 		return m.homeRows()[i].kind
-	case recommendedTracks:
-		return string(m.recommendedOf(f)[i].ID)
+	case homeTracks:
+		return string(m.homeTracksOf(f)[i].ID)
 	case homeAlbums:
 		return string(m.albumsOf(f)[i].ID)
 	case artistList:

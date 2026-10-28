@@ -137,16 +137,34 @@ func TestVolume(t *testing.T) {
 
 func TestStars(t *testing.T) {
 	s := New()
-	s.Library = library.Build("u", "ann", time.Time{}, nil, nil, tracks(2), nil, []string{"t2"})
+	s.Library = library.Build(
+		"u",
+		"ann",
+		time.Time{},
+		nil,
+		nil,
+		tracks(2),
+		nil,
+		[]library.Star{{ID: "t2"}},
+	)
 	s, out := run(s, SetStars{On: true, Tracks: []string{"t1"}, Name: "Track 1"})
 	w := only[WriteStar](out)
 	if len(w) != 1 || !w[0].On || s.Library.IsStarred("t1") {
 		t.Fatalf("write = %#v; starred before the server agreed: %v", w, s.Library.IsStarred("t1"))
 	}
-	s, out = run(s, StarsWritten{Write: w[0]})
+	at := time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
+	s, out = run(s, StarsWritten{Write: w[0], At: at})
 	if !s.Library.IsStarred("t1") || !s.Library.IsStarred("t2") ||
 		only[Notice](out)[0].Text != "starred Track 1" {
 		t.Errorf("after: %v %v %#v", s.Library.IsStarred("t1"), s.Library.IsStarred("t2"), out)
+	}
+	// A new star is kept as starred when the server took it, newest first.
+	if !s.Library.StarredAt("t1").Equal(at) || s.Library.StarredTracks()[0].ID != "t1" {
+		t.Errorf(
+			"t1 starred at %v, starred tracks %v",
+			s.Library.StarredAt("t1"),
+			s.Library.StarredTracks(),
+		)
 	}
 	s, out = run(s, SetStars{Tracks: []string{"t2"}, Name: "Track 2"})
 	s, _ = run(s, StarsWritten{Write: only[WriteStar](out)[0]})

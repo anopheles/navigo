@@ -59,6 +59,7 @@ type facts struct {
 	name, artist, genre    string
 	year, plays, n, number int
 	length                 time.Duration
+	starred                time.Time
 }
 
 func albumFacts(a library.Album) facts {
@@ -88,19 +89,22 @@ func trackFacts(t library.Track) facts {
 }
 
 // sortFields are the fields :sort takes on each kind of list, the first
-// being what the field is called.
+// being what the field is called. Starred tracks adds starred first.
 var sortFields = map[listKind][]string{
-	albumList:         {"name", "artist", "year", "plays", "tracks", "length", "genre"},
-	artistList:        {"name", "albums"},
-	albumTracks:       {"number", "title", "artist", "year", "plays", "length", "genre"},
-	recommendedTracks: {"title", "artist", "year", "plays", "length", "genre"},
+	albumList:   {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	artistList:  {"name", "albums"},
+	albumTracks: {"number", "title", "artist", "year", "plays", "length", "genre"},
+	homeTracks:  {"title", "artist", "year", "plays", "length", "genre"},
 }
 
-func fieldsFor(k listKind) []string {
-	if k == homeAlbums {
-		k = albumList
+func fieldsFor(f *frame) []string {
+	switch {
+	case f.kind == homeAlbums:
+		return sortFields[albumList]
+	case f.kind == homeTracks && f.homeKind == starredTracks:
+		return append([]string{"starred"}, sortFields[homeTracks]...)
 	}
-	return sortFields[k]
+	return sortFields[f.kind]
 }
 
 func compareBy(field string, a, b facts) int {
@@ -121,6 +125,8 @@ func compareBy(field string, a, b facts) int {
 		return cmp.Compare(a.number, b.number)
 	case "length":
 		return cmp.Compare(a.length, b.length)
+	case "starred":
+		return a.starred.Compare(b.starred)
 	}
 	return 0
 }
@@ -159,7 +165,7 @@ func (m *Model) viewKey(f *frame) string {
 		l := m.state.Home[f.homeKind].Albums
 		key += fmt.Sprintf("|%p|%d", l, len(l))
 	}
-	if f.kind == recommendedTracks {
+	if f.kind == homeTracks && f.homeKind != starredTracks {
 		l := m.state.Recs().Tracks
 		key += fmt.Sprintf("|%p|%d", l, len(l))
 	}
@@ -221,7 +227,7 @@ var errNotSortable = errors.New(
 // viewFrame is the list :sort and :filter work on.
 func (m *Model) viewFrame() (*frame, error) {
 	f := m.top()
-	if m.focus != libraryWindow || fieldsFor(f.kind) == nil {
+	if m.focus != libraryWindow || fieldsFor(f) == nil {
 		return nil, errNotSortable
 	}
 	return f, nil
@@ -258,7 +264,7 @@ func (m *Model) sortList(c command.Call) error {
 		return nil
 	}
 	field := strings.ToLower(c.Args[0])
-	fields := fieldsFor(f.kind)
+	fields := fieldsFor(f)
 	if !slices.Contains(fields, field) {
 		return fmt.Errorf(
 			"sort: %q isn't a field here; try %s",
@@ -323,6 +329,6 @@ func years(s string) (int, int, error) {
 }
 
 // viewWords are what :sort and :filter complete.
-func (m *Model) sortWords() []string { return fieldsFor(m.top().kind) }
+func (m *Model) sortWords() []string { return fieldsFor(m.top()) }
 
 func (m *Model) filterWords() []string { return []string{"genre ", "year "} }

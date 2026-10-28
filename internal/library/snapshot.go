@@ -25,7 +25,7 @@ type Snapshot struct {
 	Albums    []Album  // by sort name
 	Tracks    []Track  // by album, disc, number
 	Playlists []Playlist
-	Starred   []string // IDs of starred artists, albums and tracks
+	Starred   []Star // starred artists, albums and tracks
 
 	artistByID map[ArtistID]int
 	albumByID  map[AlbumID]int
@@ -33,7 +33,7 @@ type Snapshot struct {
 	albumSpan  map[AlbumID][2]int // the album's range in Tracks
 	own        map[ArtistID][]int // indexes in Albums, as album artist
 	appearsOn  map[ArtistID][]int // indexes in Albums, credited on tracks only
-	starred    map[string]bool
+	starred    map[string]time.Time
 	search     *searchIndex
 }
 
@@ -48,7 +48,7 @@ func Build(
 	albums []Album,
 	tracks []Track,
 	playlists []Playlist,
-	starred []string,
+	starred []Star,
 ) *Snapshot {
 	s := &Snapshot{
 		Server: server, User: user, LastScan: lastScan, SyncedAt: time.Now(),
@@ -158,9 +158,9 @@ func (s *Snapshot) index() {
 }
 
 func (s *Snapshot) indexStars() {
-	s.starred = make(map[string]bool, len(s.Starred))
-	for _, id := range s.Starred {
-		s.starred[id] = true
+	s.starred = make(map[string]time.Time, len(s.Starred))
+	for _, st := range s.Starred {
+		s.starred[st.ID] = st.At
 	}
 }
 
@@ -271,12 +271,40 @@ func (s *Snapshot) WithoutPlaylist(id PlaylistID) *Snapshot {
 	return &n
 }
 
+// Star is one starred artist, album or track, and when it was starred
+// (zero if the server didn't say).
+type Star struct {
+	ID string
+	At time.Time
+}
+
 // IsStarred reports whether an artist, album or track ID is starred.
-func (s *Snapshot) IsStarred(id string) bool { return s.starred[id] }
+func (s *Snapshot) IsStarred(id string) bool {
+	_, ok := s.starred[id]
+	return ok
+}
+
+// StarredAt is when an artist, album or track was starred, or zero.
+func (s *Snapshot) StarredAt(id string) time.Time { return s.starred[id] }
+
+// StarredTracks is the starred tracks the library has, most recently
+// starred first. A starred track the library doesn't have is left out.
+func (s *Snapshot) StarredTracks() []Track {
+	var out []Track
+	for _, st := range s.Starred {
+		if t, ok := s.Track(TrackID(st.ID)); ok {
+			out = append(out, t)
+		}
+	}
+	slices.SortStableFunc(out, func(a, b Track) int {
+		return s.starred[string(b.ID)].Compare(s.starred[string(a.ID)])
+	})
+	return out
+}
 
 // WithExtras returns a copy with new playlists and stars, as a refresh
 // without a full sync produces. It shares the unchanged indexes.
-func (s *Snapshot) WithExtras(playlists []Playlist, starred []string) *Snapshot {
+func (s *Snapshot) WithExtras(playlists []Playlist, starred []Star) *Snapshot {
 	n := *s
 	n.Playlists, n.Starred = slices.Clone(playlists), slices.Clone(starred)
 	n.SyncedAt = time.Now()

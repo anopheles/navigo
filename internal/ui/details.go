@@ -70,8 +70,8 @@ func (m *Model) rowItem(f *frame, i int) (item, bool) {
 		return track(m.tracksOf(f)[i])
 	case playlistTracks:
 		return track(lib.PlaylistTracks(f.playlist)[i])
-	case recommendedTracks:
-		return track(m.recommendedOf(f)[i])
+	case homeTracks:
+		return track(m.homeTracksOf(f)[i])
 	case searchList:
 		v := f.search
 		if a, ok := v.artist(i); ok {

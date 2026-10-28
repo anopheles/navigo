@@ -1,7 +1,8 @@
 # navigo's config for the demo recording (tools/demo/demo.sh): the throwaway
 # fixture Navidrome with generated covers, no sound, and the block cover
 # renderer, as the recording's terminal has no kitty graphics, and the
-# powerline arrows, as its font is a Nerd Font.
+# powerline arrows, as its font is a Nerd Font. The light theme (Solarized
+# Light here and in the tape) keeps the recording readable.
 server:
   url: http://127.0.0.1:14534
   user: admin
@@ -10,3 +11,4 @@ player:
   mpv_args: ["--ao=null"]
 cover_art: blocks
 powerline: true
+theme: solarized-light

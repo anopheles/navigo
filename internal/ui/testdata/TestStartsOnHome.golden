@@ -5,10 +5,10 @@
 │ Recently played                                                      ││ Find something to play:                      │
 │ Played this session                                                  ││   'b albums   j/k move                       │
 │ Random albums                                                        ││   <CR> open   h back                         │
-│ Starred albums                                                       ││                                              │
-│ Starred tracks                                                       ││ On a track:                                  │
-│                                                                      ││   <CR> play it   A add to queue              │
-│                                                                      ││                                              │
+│ Forgotten favourites                                                 ││                                              │
+│ Never played                                                         ││ On a track:                                  │
+│ Starred albums                                                       ││   <CR> play it   A add to queue              │
+│ Starred tracks                                                       ││                                              │
 │                                                                      ││ Or let navigo pick:                          │
 │                                                                      ││   gm mix from the whole library              │
 │                                                                      ││                                              │

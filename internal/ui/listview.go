@@ -180,6 +180,8 @@ func (m *Model) viewKey(f *frame) string {
 func (m *Model) albumsOf(f *frame) []library.Album {
 	var base []library.Album
 	switch {
+	case f.kind == homeAlbums && f.homeKind == neverPlayed:
+		base = m.neverPlayedAlbums(f)
 	case f.kind == homeAlbums:
 		base = m.homeAlbums(f.homeKind)
 	case m.state.Library != nil:

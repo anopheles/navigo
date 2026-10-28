@@ -17,6 +17,8 @@ func TestStartsOnHome(t *testing.T) {
 		"Recently played",
 		"Played this session",
 		"Random albums",
+		"Forgotten favourites",
+		"Never played",
 		"Starred albums",
 		"Starred tracks",
 		"<CR> open",
@@ -28,12 +30,14 @@ func TestStartsOnHome(t *testing.T) {
 		"Recently played",
 		"Played this session",
 		"Random albums",
+		"Forgotten favourites",
+		"Never played",
 		"Starred albums",
 		"Starred tracks",
 	); strings.Join(
 		got,
 		",",
-	) != "Mix,Recently added,Most played,Recently played,Played this session,Random albums,Starred albums,Starred tracks" {
+	) != "Mix,Recently added,Most played,Recently played,Played this session,Random albums,Forgotten favourites,Never played,Starred albums,Starred tracks" {
 		t.Errorf("Home's lists in order %q", got)
 	}
 	golden.RequireEqual(t, h.screen())
@@ -42,16 +46,17 @@ func TestStartsOnHome(t *testing.T) {
 func TestHomeLists(t *testing.T) {
 	h := homeHarness(t, 120, 40, nil)
 	for _, c := range []struct {
-		keys, title, kind string
-		want              []string
+		title, kind string
+		want        []string
 	}{
-		{"j<CR>", "Recently added", "newest", []string{"Night Drive Vol. 1", "The Long Haul", "夜明け"}},
-		{"2j<CR>", "Most played", "frequent", []string{"Blue Hour", "Static Bloom"}},
-		{"3j<CR>", "Recently played", "recent", []string{"Static Bloom", "Blue Hour"}},
-		{"5j<CR>", "Random albums", "random", []string{"Static Bloom", "Blue Hour", "The Long Haul"}},
-		{"6j<CR>", "Starred albums", "starred", []string{"★ Blue Hour"}},
+		{"Recently added", "newest", []string{"Night Drive Vol. 1", "The Long Haul", "夜明け"}},
+		{"Most played", "frequent", []string{"Blue Hour", "Static Bloom"}},
+		{"Recently played", "recent", []string{"Static Bloom", "Blue Hour"}},
+		{"Random albums", "random", []string{"Static Bloom", "Blue Hour", "The Long Haul"}},
+		{"Starred albums", "starred", []string{"★ Blue Hour"}},
 	} {
-		h.keys("'h'hgg" + c.keys)
+		h.homeRow(c.title)
+		h.keys("<CR>")
 		h.contains("Home › " + c.title)
 		if got := h.order(c.want...); strings.Join(got, ",") != strings.Join(c.want, ",") {
 			t.Errorf("%s shows %q, want %q in that order", c.title, got, c.want)

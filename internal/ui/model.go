@@ -115,12 +115,16 @@ const (
 	helpList
 )
 
-// starredView is the Starred tracks list: the tracks starred when it
-// opened (nil until the library is in), and their rows for one snapshot.
-type starredView struct {
-	ids    []library.TrackID
-	lib    *library.Snapshot
-	tracks []library.Track
+// frozenView is a Home list chosen once, when it opens (nil until the
+// library is in): Starred tracks, Forgotten favourites, Never played. The
+// rows are looked up again for each snapshot, so stars and ratings stay
+// current.
+type frozenView struct {
+	tracks    []library.TrackID
+	albums    []library.AlbumID
+	lib       *library.Snapshot
+	rows      []library.Track
+	albumRows []library.Album
 }
 
 // frame is one level of the library window's drill-down.
@@ -129,9 +133,9 @@ type frame struct {
 	album       library.AlbumID
 	artist      library.ArtistID
 	playlist    library.PlaylistID
-	homeKind    string      // the server's list type, for homeAlbums; for homeTracks, which list
-	starred     starredView // for Starred tracks
-	view        listView    // :sort and :filter
+	homeKind    string     // the server's list type, for homeAlbums; for homeTracks, which list
+	frozen      frozenView // for Home lists chosen when they open
+	view        listView   // :sort and :filter
 	search      *searchView
 	help        *helpView
 	title       string

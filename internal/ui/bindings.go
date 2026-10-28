@@ -50,6 +50,7 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "R", "repeat"},
 	{"global", "i", "info"},
 	{"global", "gc", "cover"},
+	{"global", "gl", "playlist-add"},
 	{"global", "*", "star"},
 	{"global", "u", "undo"},
 	{"global", "<C-r>", "redo"},
@@ -97,6 +98,7 @@ var defaults = []struct{ scope, keys, command string }{
 	{"search", "a", "add-next"},
 	{"search", "A", "add-end"},
 	{"popup", "<CR>", "choose"},
+	{"popup", "/", "popup-filter"},
 	{"popup", "q", "close"},
 	{"popup", "<Esc>", "close"},
 }
@@ -106,6 +108,7 @@ var defaults = []struct{ scope, keys, command string }{
 var visualDefaults = []struct{ scope, keys, command string }{
 	{"global", "A", "add-end"},
 	{"global", "a", "add-next"},
+	{"global", "gl", "playlist-add"},
 	{"global", "y", "yank"},
 	{"global", "d", "delete"},
 	{"global", "x", "delete"},

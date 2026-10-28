@@ -46,7 +46,7 @@ func (s State) applyStars(e Event) (State, []Effect) {
 			return s, nil
 		}
 		if s.Library == nil {
-			return s, []Effect{s.unsynced("can't star yet")}
+			return s, []Effect{s.Unsynced("can't star yet")}
 		}
 		if s.Offline {
 			return s, []Effect{

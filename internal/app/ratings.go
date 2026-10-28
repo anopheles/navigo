@@ -42,7 +42,7 @@ func (s State) applyRating(e Event) (State, []Effect) {
 			return s, nil
 		}
 		if s.Library == nil {
-			return s, []Effect{s.unsynced("can't rate yet")}
+			return s, []Effect{s.Unsynced("can't rate yet")}
 		}
 		if s.Offline {
 			return s, []Effect{

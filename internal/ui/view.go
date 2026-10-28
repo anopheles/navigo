@@ -540,8 +540,11 @@ func (m *Model) hintLine() string {
 			"  a capital letter matches case",
 		)
 	}
-	if m.promptHelp {
+	if m.promptHelp || m.promptPick {
 		return " " + hint("<CR>", "keep the filter") + "  " + hint("<Esc>", "put it back")
+	}
+	if m.naming != nil {
+		return " " + hint("<CR>", "make it") + "  " + hint("<Esc>", "cancel")
 	}
 	if m.mode == keymap.Search {
 		return " " + hint(
@@ -571,6 +574,10 @@ func (m *Model) hintLine() string {
 			"q",
 			"close",
 		)
+	}
+	if m.popup != nil && m.popup.pick != nil && m.pick != nil {
+		return " " + hint("j/k", "move") + "  " + hint("<CR>", "add") + "  " +
+			hint("/", "filter") + "  " + hint("q", "close")
 	}
 	if m.popup != nil && m.popup.pick != nil {
 		return " " + hint("j/k", "move") + "  " + hint("<CR>", "choose") + "  " + hint("q", "close")

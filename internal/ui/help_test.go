@@ -112,3 +112,22 @@ func TestPrefixMenu(t *testing.T) {
 		t.Error("'b didn't run")
 	}
 }
+
+// Unlike other popups, the key menu runs a key as the selection would:
+// d there removes the selected rows rather than waiting for a motion.
+// ? has no Visual binding by default, so the test makes one.
+func TestKeyMenuInVisualRunsVisualKeys(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys(":vmap ? key-menu<CR>")
+	h.keys("3j<CR>VjjjjjA<Tab>") // six tracks in the queue, focus on it
+	h.queueIs("Dusk Signal, Low Tide, Streetlamp, Blue Hour, Wintering, Afterglow")
+	h.keys("Vj?")
+	if h.m.popup == nil || h.m.popup.keyMenu == nil {
+		t.Fatal("? didn't open the key menu")
+	}
+	h.keys("d")
+	h.queueIs("Streetlamp, Blue Hour, Wintering, Afterglow")
+	if h.m.engine.Pending() != "" {
+		t.Errorf("keys pending: %q", h.m.engine.Pending())
+	}
+}

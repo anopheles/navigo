@@ -90,7 +90,7 @@ func (s State) applyMix(e Mix) (State, []Effect) {
 			}
 			return s, []Effect{n}
 		}
-		return s, []Effect{s.unsynced("nothing to mix" + e.from())}
+		return s, []Effect{s.Unsynced("nothing to mix" + e.from())}
 	}
 	s.mixLookup = nil // a newer Mix replaces one waiting on the server
 	if e.Around != nil && !s.Offline {
@@ -174,9 +174,9 @@ func (s State) mix(e Mix, similar [][]library.ArtistRef) (State, []Effect) {
 	return s, out
 }
 
-// unsynced says why there is no library yet, for a command that needs
+// Unsynced says why there is no library yet, for a command that needs
 // one: what is what the command couldn't do, such as "nothing to mix".
-func (s State) unsynced(what string) Notice {
+func (s State) Unsynced(what string) Notice {
 	n := Notice{Err: true}
 	switch {
 	case s.Offline:

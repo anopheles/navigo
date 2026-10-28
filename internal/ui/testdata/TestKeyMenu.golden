@@ -1,7 +1,7 @@
 ╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
 │   1 Dusk Signal                       Aurora Lane                2:22││                                              │
 │   2 Low ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮         │
-│   3 Stre│ Keys here 1–24 of 44                                                                             │         │
+│   3 Stre│ Keys here 1–24 of 45                                                                             │         │
 │   4 Blue│ Play                                                                                             │         │
 │   5 Wint│   <CR>     play               Replace the queue with this list and play from the track under th… │         │
 │   6 Afte│   <Space>  play/pause         Pause or resume playback, or start the queue.                      │         │
@@ -22,10 +22,10 @@
 │         │   y        yank               Yank the rows a motion covers (yy: this row) into the register.    │         │
 │         │   u        undo               Undo the last change to the queue.                                 │         │
 │         │   <C-r>    redo               Redo the last undone change to the queue.                          │         │
+│         │   gl       add to playlist    Add the selection or the row under the cursor to the end of a pla… │         │
 │         │ Select                                                                                           │         │
 │         │   V        select             Select rows: start Visual mode, or end it.                         │         │
 │         │   v        select             Select rows: start Visual mode, or end it.                         │         │
-│         │   *        star               Star the track, album or artist under the cursor, or the selectio… │         │
 │         ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯         │
 │                                                                      ││                                              │
 │                                                                      ││                                              │

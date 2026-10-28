@@ -123,6 +123,7 @@ type popup struct {
 
 func (m *Model) openPopup(title string, lines []string) {
 	m.popup = &popup{title: title, lines: lines}
+	m.pick = nil
 	m.engine.Reset()
 }
 

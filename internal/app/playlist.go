@@ -96,7 +96,7 @@ func (s State) applyPlaylist(e Event) (State, []Effect) {
 		return s, []Effect{offlineEdit}
 	}
 	if s.Library == nil {
-		return s, []Effect{s.unsynced("can't change playlists yet")}
+		return s, []Effect{s.Unsynced("can't change playlists yet")}
 	}
 	if c, ok := e.(PlaylistCreate); ok {
 		ids := trackIDs(c.Tracks)

@@ -160,3 +160,34 @@ func TestClearQueue(t *testing.T) {
 		t.Errorf("after undo: %v current %d", ids(s), s.Current)
 	}
 }
+
+// Rows takes out rows that needn't be next to each other, as from a
+// filtered queue.
+func TestRemoveRows(t *testing.T) {
+	s, out := run(playing4(t), Remove{Rows: []int{0, 2}})
+	if !sameIDs(ids(s), 2, 4) || s.Current != 0 {
+		t.Fatalf("queue %v current %d", ids(s), s.Current)
+	}
+	if len(s.Register) != 2 || s.Register[0].ID != "t1" || s.Register[1].ID != "t3" {
+		t.Errorf("register = %v", s.Register)
+	}
+	if n := only[Notice](out); n[0].Text != "2 tracks removed (2 in queue)" {
+		t.Errorf("notice = %q", n[0].Text)
+	}
+
+	// The playing entry plays on, then the queue goes on with the first
+	// row after it that stayed.
+	s, out = run(playing4(t), Remove{Rows: []int{1, 2}})
+	if !sameIDs(ids(s), 1, 4) || s.Current != 0 {
+		t.Fatalf("queue %v current %d", ids(s), s.Current)
+	}
+	if sn := only[SetNeighbours](
+		out,
+	); sn[0] != (SetNeighbours{Prev: entry(1, "t1"), Next: entry(4, "t4")}) {
+		t.Errorf("neighbours = %#v", sn)
+	}
+	s, _ = run(s, Undo{})
+	if !sameIDs(ids(s), 1, 2, 3, 4) || s.Current != 1 {
+		t.Errorf("after undo: %v current %d", ids(s), s.Current)
+	}
+}

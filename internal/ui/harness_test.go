@@ -373,7 +373,8 @@ func (h *harness) lacks(unwanted ...string) {
 func (h *harness) cursorRow() string {
 	f := h.m.top()
 	if h.m.focus == queueWindow {
-		return h.m.state.Queue[h.m.queueCur].Track.Title
+		e, _ := h.m.queueEntry(h.m.queueCur)
+		return e.Track.Title
 	}
 	return ansi.Strip(h.m.libraryRow(f, f.cur, 200))
 }

@@ -21,7 +21,23 @@ func (m *Model) shownPlaylist() (library.Playlist, bool) {
 	return m.state.Library.Playlist(m.top().playlist)
 }
 
+// editable refuses an edit by position while the playlist's rows are
+// sorted or filtered, since they aren't in the playlist's order.
+func (m *Model) editable() error {
+	switch v := m.top().view; {
+	case v.sortBy != "":
+		return errors.New("sorted view · :sort alone to edit the playlist")
+	case v.filtered():
+		return errors.New("filtered view · :filter alone to edit the playlist")
+	}
+	return nil
+}
+
 func (m *Model) removeFromPlaylist(c command.Call) error {
+	if err := m.editable(); err != nil {
+		m.endVisual()
+		return err
+	}
 	from, to := m.opRange(c)
 	m.endVisual()
 	p, ok := m.shownPlaylist()
@@ -39,6 +55,9 @@ func (m *Model) removeFromPlaylist(c command.Call) error {
 }
 
 func (m *Model) pasteInPlaylist(c command.Call, after bool) error {
+	if err := m.editable(); err != nil {
+		return err
+	}
 	p, ok := m.shownPlaylist()
 	if !ok {
 		return nil
@@ -61,6 +80,9 @@ func (m *Model) pasteInPlaylist(c command.Call, after bool) error {
 }
 
 func (m *Model) moveInPlaylist(c command.Call, down bool) error {
+	if err := m.editable(); err != nil {
+		return err
+	}
 	p, ok := m.shownPlaylist()
 	if !ok {
 		return nil
@@ -91,13 +113,13 @@ func (m *Model) deletePlaylist(command.Call) error {
 	f := m.top()
 	lib := m.state.Library
 	if m.focus != libraryWindow || f.kind != playlistList || lib == nil ||
-		f.cur >= len(lib.Playlists) {
+		f.cur >= len(m.playlistsOf(f)) {
 		return errors.New("not on a playlist")
 	}
 	if m.state.Offline {
 		return errOffline
 	}
-	p := lib.Playlists[f.cur]
+	p := m.playlistsOf(f)[f.cur]
 	m.confirm(
 		fmt.Sprintf("Delete the playlist %s?", p.Name),
 		func() { m.event(app.PlaylistDelete{ID: p.ID}) },
@@ -118,8 +140,8 @@ func (m *Model) playlistRename(c command.Call) error {
 	switch {
 	case lib == nil || m.focus != libraryWindow:
 		return errors.New("not on a playlist")
-	case f.kind == playlistList && f.cur < len(lib.Playlists):
-		p = lib.Playlists[f.cur]
+	case f.kind == playlistList && f.cur < len(m.playlistsOf(f)):
+		p = m.playlistsOf(f)[f.cur]
 	case f.kind == playlistTracks:
 		var ok bool
 		if p, ok = m.shownPlaylist(); !ok {
@@ -166,8 +188,8 @@ func (m *Model) peekTracks() (tracks []library.Track, artists int, err error) {
 	case m.visual != nil:
 		tracks, artists = m.rangeTracks(m.selection())
 	case m.focus == queueWindow:
-		if m.queueCur < len(m.state.Queue) {
-			tracks = []library.Track{m.state.Queue[m.queueCur].Track}
+		if e, ok := m.queueEntry(m.queueCur); ok {
+			tracks = []library.Track{e.Track}
 		}
 	default:
 		f := m.top()

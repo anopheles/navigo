@@ -522,7 +522,7 @@ func apply(s State, e Event) (State, []Effect) {
 			},
 		)
 
-	case ChangeVolume, Shuffle, CycleRepeat:
+	case ChangeVolume, Shuffle, SortQueue, CycleRepeat:
 		s, out := s.applyPlayback(e)
 		return s.repeatEndsRadio(out)
 	case SetReplayGainMode, ConfigureReplayGain:

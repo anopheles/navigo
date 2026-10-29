@@ -59,7 +59,7 @@ func (m *Model) rowItem(f *frame, i int) (item, bool) {
 		a := m.artistsOf(f)[i]
 		return item{library.ArtistGroup, string(a.ID), a.Name}, true
 	case artistPage:
-		if a, ok := m.artistRows(f.artist).album(i); ok {
+		if a, ok := m.artistRows(f).album(i); ok {
 			return album(a)
 		}
 	case albumList:
@@ -69,7 +69,7 @@ func (m *Model) rowItem(f *frame, i int) (item, bool) {
 	case albumTracks:
 		return track(m.tracksOf(f)[i])
 	case playlistTracks:
-		return track(lib.PlaylistTracks(f.playlist)[i])
+		return track(m.playlistTracksOf(f)[i])
 	case homeTracks:
 		return track(m.homeTracksOf(f)[i])
 	case searchList:
@@ -95,7 +95,7 @@ func (m *Model) chosenItems() []item {
 			from, to = m.selection()
 		}
 		var out []item
-		for _, q := range m.state.Queue[from:min(to, len(m.state.Queue))] {
+		for _, q := range m.queueEntries(from, to) {
 			out = append(out, item{library.TrackGroup, string(q.Track.ID), q.Track.Title})
 		}
 		return out

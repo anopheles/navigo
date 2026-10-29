@@ -182,3 +182,43 @@ func TestSectionsRemember(t *testing.T) {
 	h.contains(" Artists ")
 	h.lacks("Artists ›")
 }
+
+// An artist page sorts and filters each group on its own, under its
+// heading.
+func TestSortAndFilterArtistPage(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'a<CR>") // Aurora Lane: Blue, Blue Hour; appears on Night Drive
+	h.keys(":sort year desc<CR>")
+	h.contains("Artists › Aurora Lane (year ↓)", "sorted by year")
+	if got := strings.Join(
+		h.order("Blue Hour", "Blue  ", "Appears on", "Night Drive"),
+		",",
+	); got != "Blue Hour,Blue  ,Appears on,Night Drive" {
+		t.Errorf("page order %q", got)
+	}
+	h.cursorOn("Blue  ") // the cursor stays on its album
+	h.keys(":sort<CR>")
+	h.contains("back in the usual order")
+
+	// Appears on filtered empty: no heading.
+	h.keys(":filter genre dream<CR>")
+	h.contains("Artists › Aurora Lane (genre dream)", "2 shown", "Blue Hour")
+	h.lacks("Appears on", "Night Drive")
+
+	// Their own albums filtered empty: the heading comes first.
+	h.keys(":filter genre synth<CR>")
+	h.contains("1 shown", "── Appears on ──", "Night Drive Vol. 1")
+	h.lacks("Blue Hour")
+	h.cursorOn("Night Drive Vol. 1")
+	h.keys("<CR>")
+	h.contains("Artists › Aurora Lane (genre synth) › Night Drive Vol. 1")
+	h.keys("h")
+	h.contains("Artists › Aurora Lane (genre synth)")
+
+	// Nothing left.
+	h.keys(":filter year 1990<CR>")
+	h.contains("0 shown")
+	h.lacks("Appears on", "Blue Hour", "Night Drive")
+	h.keys(":filter<CR>")
+	h.contains("filter cleared", "Blue Hour", "── Appears on ──", "Night Drive Vol. 1")
+}

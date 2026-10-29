@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/anopheles/navigo/internal/app"
@@ -58,7 +59,7 @@ func (m *Model) cursor() int {
 
 func (m *Model) setCursor(i int) {
 	if m.focus == queueWindow {
-		m.queueCur = min(max(i, 0), max(len(m.state.Queue)-1, 0))
+		m.queueCur = min(max(i, 0), max(m.queueLen()-1, 0))
 		return
 	}
 	f := m.top()
@@ -69,7 +70,7 @@ func (m *Model) setCursor(i int) {
 // listLen is the number of rows in the focused list.
 func (m *Model) listLen() int {
 	if m.focus == queueWindow {
-		return len(m.state.Queue)
+		return m.queueLen()
 	}
 	return m.rows(m.top())
 }
@@ -123,15 +124,15 @@ func (m *Model) rowTracks(f *frame, i int) (tracks []library.Track, artist bool)
 	case homeAlbums:
 		return lib.AlbumTracks(m.albumsOf(f)[i].ID), false
 	case artistPage:
-		if a, ok := m.artistRows(f.artist).album(i); ok {
+		if a, ok := m.artistRows(f).album(i); ok {
 			return lib.AlbumTracks(a.ID), false
 		}
 	case albumTracks:
 		return m.tracksOf(f)[i : i+1], false
 	case playlistList:
-		return lib.PlaylistTracks(lib.Playlists[i].ID), false
+		return lib.PlaylistTracks(m.playlistsOf(f)[i].ID), false
 	case playlistTracks:
-		return lib.PlaylistTracks(f.playlist)[i : i+1], false
+		return m.playlistTracksOf(f)[i : i+1], false
 	case homeTracks:
 		return m.homeTracksOf(f)[i : i+1], false
 	case searchList:
@@ -156,7 +157,7 @@ func (m *Model) rowTracks(f *frame, i int) (tracks []library.Track, artist bool)
 // how many artist rows were left out.
 func (m *Model) rangeTracks(from, to int) (tracks []library.Track, artists int) {
 	if m.focus == queueWindow {
-		for _, q := range m.state.Queue[from:min(to, len(m.state.Queue))] {
+		for _, q := range m.queueEntries(from, to) {
 			tracks = append(tracks, q.Track)
 		}
 		return tracks, 0
@@ -219,7 +220,11 @@ func (m *Model) remove(c command.Call) error {
 	}
 	from, to := m.opRange(c)
 	m.endVisual()
-	m.event(app.Remove{From: from, To: to})
+	if rows := m.shownQueue(); rows != nil { // filtered: the rows shown
+		m.event(app.Remove{Rows: slices.Clone(rows[from:min(to, len(rows))])})
+	} else {
+		m.event(app.Remove{From: from, To: to})
+	}
 	m.setCursor(from)
 	return nil
 }
@@ -230,14 +235,14 @@ func (m *Model) paste(c command.Call, after bool) error {
 	if m.onPlaylist() {
 		return m.pasteInPlaylist(c, after)
 	}
-	at := m.queueCur
+	at := min(m.queueIndex(m.queueCur), len(m.state.Queue))
 	if after && len(m.state.Queue) > 0 {
 		at++
 	}
 	before := len(m.state.Queue)
 	m.event(app.Paste{At: at, Times: c.N()})
 	if len(m.state.Queue) > before && m.focus == queueWindow {
-		m.queueCur = at
+		m.queueCur = m.shownRow(at)
 	}
 	return nil
 }
@@ -249,6 +254,9 @@ func (m *Model) moveRows(c command.Call, down bool) error {
 	}
 	if m.focus != queueWindow {
 		return errQueueOnly
+	}
+	if m.queueView.filtered() {
+		return errors.New("filtered view · :filter alone to move tracks")
 	}
 	from, to := m.queueCur, min(m.queueCur+1, len(m.state.Queue))
 	if m.visual != nil {

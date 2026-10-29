@@ -186,8 +186,8 @@ func (m *Model) rowSeed() (library.Seed, bool) {
 		return library.Seed{Kind: library.SeedTrack, ID: string(t.ID), Name: t.Title}, true
 	}
 	if m.focus == queueWindow {
-		if m.queueCur < len(m.state.Queue) {
-			return track(m.state.Queue[m.queueCur].Track)
+		if e, ok := m.queueEntry(m.queueCur); ok {
+			return track(e.Track)
 		}
 		return library.Seed{}, false
 	}
@@ -199,8 +199,8 @@ func (m *Model) rowSeed() (library.Seed, bool) {
 		return library.Seed{Kind: library.SeedPlaylist, ID: string(p.ID), Name: p.Name}, true
 	}
 	switch {
-	case f.kind == playlistList && f.cur < len(lib.Playlists):
-		return playlist(lib.Playlists[f.cur])
+	case f.kind == playlistList && f.cur < len(m.playlistsOf(f)):
+		return playlist(m.playlistsOf(f)[f.cur])
 	case f.kind == searchList:
 		if p, ok := f.search.playlist(f.cur); ok {
 			return playlist(p)

@@ -71,15 +71,24 @@ func (m *Model) goTo(path ...frame) {
 }
 
 // artistRows is an artist page: their own albums, then, when there are
-// any, the Appears on heading and the albums they appear on.
+// any, the Appears on heading and the albums they appear on. A sort or
+// filter works on each group on its own.
 type artistRows struct{ own, appearsOn []library.Album }
 
-func (m *Model) artistRows(id library.ArtistID) artistRows {
+func (m *Model) artistRows(f *frame) artistRows {
 	if m.state.Library == nil {
 		return artistRows{}
 	}
-	own, appears := m.state.Library.ArtistAlbums(id)
-	return artistRows{own, appears}
+	own, appears := m.state.Library.ArtistAlbums(f.artist)
+	if !f.view.active() {
+		return artistRows{own, appears}
+	}
+	if k := m.viewKey(f); f.view.key != k || f.view.albums == nil {
+		f.view.key = k
+		f.view.albums = apply(f.view, own, albumFacts)
+		f.view.appearsOn = apply(f.view, appears, albumFacts)
+	}
+	return artistRows{f.view.albums, f.view.appearsOn}
 }
 
 func (r artistRows) len() int {
@@ -122,7 +131,7 @@ func (r artistRows) index(id library.AlbumID) int {
 func (m *Model) skipped(f *frame, i int) bool {
 	switch f.kind {
 	case artistPage:
-		return i == m.artistRows(f.artist).heading()
+		return i == m.artistRows(f).heading()
 	case searchList:
 		return f.search != nil && f.search.row(i).heading
 	case helpList:
@@ -166,7 +175,7 @@ func (m *Model) groups(f *frame) []int {
 		return gs
 	}
 	if f.kind == artistPage {
-		if h := m.artistRows(f.artist).heading(); h > 0 {
+		if h := m.artistRows(f).heading(); h > 0 {
 			return []int{0, h + 1}
 		} else if h == 0 {
 			return []int{1}
@@ -236,10 +245,8 @@ var errNotOnAlbum = errors.New("not on a track or an album")
 // rowTrack is the track under the cursor, in the queue or an album.
 func (m *Model) rowTrack() (library.Track, bool) {
 	if m.focus == queueWindow {
-		if m.queueCur < len(m.state.Queue) {
-			return m.state.Queue[m.queueCur].Track, true
-		}
-		return library.Track{}, false
+		e, ok := m.queueEntry(m.queueCur)
+		return e.Track, ok
 	}
 	ts, i, err := m.trackRow()
 	if err != nil {
@@ -265,7 +272,7 @@ func (m *Model) rowAlbum() (library.Album, bool) {
 			return as[f.cur], true
 		}
 	case artistPage:
-		return m.artistRows(f.artist).album(f.cur)
+		return m.artistRows(f).album(f.cur)
 	case searchList:
 		return f.search.album(f.cur)
 	}
@@ -354,12 +361,8 @@ func (m *Model) showArtist(id library.ArtistID, album library.AlbumID) error {
 	if !ok {
 		return errors.New("that artist isn't in the library")
 	}
-	page := frame{
-		kind:   artistPage,
-		artist: a.ID,
-		title:  a.Name,
-		cur:    max(m.artistRows(a.ID).index(album), 0),
-	}
+	page := frame{kind: artistPage, artist: a.ID, title: a.Name}
+	page.cur = max(m.artistRows(&page).index(album), 0)
 	m.goTo(
 		frame{
 			kind:  artistList,

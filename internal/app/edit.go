@@ -13,8 +13,13 @@ import (
 type (
 	// Yank fills the register.
 	Yank struct{ Tracks []library.Track }
-	// Remove takes queue rows out, into the register.
-	Remove struct{ From, To int }
+	// Remove takes queue rows out, into the register: From to To, or
+	// Rows when set, which needn't be next to each other (a filtered
+	// queue). Rows are in order.
+	Remove struct {
+		From, To int
+		Rows     []int
+	}
 	// Paste inserts the register Times times before row At.
 	Paste struct{ At, Times int }
 	// Move moves rows By places, down when positive. The UI clamps By
@@ -46,22 +51,44 @@ func (s State) applyEdit(e Event) (State, []Effect) {
 		}
 
 	case Remove:
-		from, to := max(e.From, 0), min(e.To, len(s.Queue))
-		if from >= to {
+		out := map[int]bool{}
+		if e.Rows != nil {
+			for _, i := range e.Rows {
+				if i >= 0 && i < len(s.Queue) {
+					out[i] = true
+				}
+			}
+		} else {
+			for i := max(e.From, 0); i < min(e.To, len(s.Queue)); i++ {
+				out[i] = true
+			}
+		}
+		if len(out) == 0 {
 			return s, nil
 		}
-		gone := s.Queue[from:to]
-		s.Register = make([]library.Track, len(gone))
-		for i, q := range gone {
-			s.Register[i] = q.Track
+		var kept []QueueEntry
+		s.Register = nil
+		cur := -1 // the row Current becomes if its entry goes: the kept row before it
+		orphan := false
+		for i, q := range s.Queue {
+			if !out[i] {
+				if orphan {
+					// It plays on, then the queue goes on where it was.
+					s.orphanNext, orphan = q.ID, false
+				}
+				kept = append(kept, q)
+				continue
+			}
+			s.Register = append(s.Register, q.Track)
+			if i == s.Current {
+				cur = len(kept) - 1
+			}
+			if q.ID == s.playing {
+				orphan = true
+			}
 		}
-		if slices.ContainsFunc(gone, func(q QueueEntry) bool { return q.ID == s.playing }) &&
-			to < len(s.Queue) {
-			// It plays on, then the queue goes on where it was.
-			s.orphanNext = s.Queue[to].ID
-		}
-		s = s.editRows(slices.Concat(s.Queue[:from], s.Queue[to:]), from-1)
-		text := fmt.Sprintf("%s removed (%d in queue)", count(len(gone)), len(s.Queue))
+		s = s.editRows(kept, cur)
+		text := fmt.Sprintf("%s removed (%d in queue)", count(len(out)), len(s.Queue))
 		return s, append(s.neighbours(), Notice{Text: text, Command: "undo", Hint: "undoes"})
 
 	case Paste:

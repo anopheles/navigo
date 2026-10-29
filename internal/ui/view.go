@@ -180,6 +180,14 @@ func (m *Model) queueTitle() string {
 	if len(m.state.Queue) == 0 {
 		return t
 	}
+	if m.queueView.filtered() {
+		t = fmt.Sprintf(
+			" Queue (%d of %d) · %s",
+			m.queueLen(),
+			len(m.state.Queue),
+			m.queueView.describe(),
+		)
+	}
 	var total time.Duration
 	for _, e := range m.state.Queue {
 		total += e.Track.Duration
@@ -282,14 +290,13 @@ func (m *Model) emptyList() string {
 }
 
 func (m *Model) libraryRow(f *frame, i, w int) string {
-	lib := m.state.Library
 	switch f.kind {
 	case sectionList:
 		return fit(" "+sections[i].title, w)
 	case artistList:
 		return m.artistLine(m.artistsOf(f)[i], w)
 	case artistPage:
-		rows := m.artistRows(f.artist)
+		rows := m.artistRows(f)
 		if a, ok := rows.album(i); ok {
 			return m.albumLine(a, w)
 		}
@@ -301,11 +308,11 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case homeAlbums:
 		return m.albumLine(m.albumsOf(f)[i], w)
 	case playlistList:
-		p := lib.Playlists[i]
+		p := m.playlistsOf(f)[i]
 		n := count(len(p.Tracks))
 		return " " + fit(p.Name, w-2-len(n)-2) + "  " + n + " "
 	case playlistTracks:
-		ts := lib.PlaylistTracks(f.playlist)
+		ts := m.playlistTracksOf(f)
 		return m.trackLine("  ", fmt.Sprint(i+1), ts[i], w)
 	case homeTracks:
 		return m.trackLine("  ", fmt.Sprint(i+1), m.homeTracksOf(f)[i], w)
@@ -401,24 +408,36 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 	if len(q) == 0 {
 		return pad(m.emptyQueue(w), w, h)
 	}
-	m.queueOff = scroll(m.queueCur, m.queueOff, h, len(q))
+	n := m.queueLen()
+	if n == 0 {
+		return pad(
+			[]string{dimStyle.Render(fit(" nothing matches · :filter alone shows all", w))},
+			w,
+			h,
+		)
+	}
+	m.queueOff = scroll(m.queueCur, m.queueOff, h, n)
 	var out []string
-	for i := m.queueOff; i < len(q) && len(out) < h; i++ {
+	_, row, ok := m.state.NowPlaying()
+	for r := m.queueOff; r < n && len(out) < h; r++ {
+		i := m.queueIndex(r)
 		mark := "  "
 		if q[i].Radio {
 			mark = "~ " // the radio added it
 		}
-		_, row, ok := m.state.NowPlaying()
 		current := ok && i == row
+		// The playing row shows while filtered out, dimmed.
+		unmatched := current && m.queueView.filtered() &&
+			len(apply(m.queueView, []library.Track{q[i].Track}, trackFacts)) == 0
 		if current {
 			mark = "▶ "
 			if m.state.Player.Paused {
 				mark = "⏸ "
 			}
 		}
-		quiet := i != m.queueCur && !current && !m.inSelection(queueWindow, i) &&
+		quiet := r != m.queueCur && !current && !m.inSelection(queueWindow, r) &&
 			(!focused || !m.highlighting())
-		played := quiet && ok && i < row
+		played := quiet && ok && i < row || unmatched
 		m.dress = quiet && !played
 		line := m.trackLine(mark, fmt.Sprint(i+1), q[i].Track, w)
 		m.dress = false
@@ -430,7 +449,7 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 		}
 		out = append(
 			out,
-			m.styleRow(line, i == m.queueCur, focused, current, m.inSelection(queueWindow, i)),
+			m.styleRow(line, r == m.queueCur, focused, current, m.inSelection(queueWindow, r)),
 		)
 	}
 	return pad(out, w, h)

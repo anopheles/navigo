@@ -194,3 +194,35 @@ func TestSearchFindsAPlaylistMadeLater(t *testing.T) {
 	h.keys(":search gym<CR>")
 	h.contains("Playlists · 1", "Gym Rotation")
 }
+
+// Search results sort and filter group by group.
+func TestSortAndFilterSearch(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys(":search blue<CR>:sort year desc<CR>")
+	h.contains("Search “blue” (year ↓)", "sorted by year")
+	want := []string{"2021", "2019", "2015", "Blue Highway"} // albums, then the newest track
+	if got := strings.Join(h.order(want...), ","); got != strings.Join(want, ",") {
+		t.Errorf("rows in order %q", got)
+	}
+	h.keys(":filter genre indie<CR>")
+	h.contains(
+		"Search “blue” (year ↓ · genre indie)",
+		"── Albums · 1 ──",
+		"── Tracks · 5 ──",
+		"6 shown",
+	)
+	h.lacks("Blue Hour", "Blue Highway")
+
+	// Artists have no genre or year: a filter leaves them out.
+	h.keys(":search aurora<CR>")
+	h.contains("Search “aurora” (year ↓ · genre indie)")
+	h.lacks("── Artists")
+	h.keys(":filter<CR>")
+	h.contains("── Artists · 1 ──", "Aurora Lane")
+	h.keys(":sort plays<CR>") // artists have no plays: they keep their order
+	h.contains("── Artists · 1 ──")
+	h.keys(":sort bogus<CR>")
+	h.contains(
+		`sort: "bogus" isn't a field here; try name, artist, album, year, plays, tracks, albums, length, genre`,
+	)
+}

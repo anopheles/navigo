@@ -174,7 +174,11 @@ type Model struct {
 	lib      []frame
 	paths    map[listKind][]frame // where each section was left
 	queueCur int
-	queueOff int
+	// queueView is the queue window's :filter, and queueShown the rows
+	// it shows.
+	queueView  listView
+	queueShown shownRows
+	queueOff   int
 
 	mode     keymap.Mode
 	engine   *keymap.Engine
@@ -1053,15 +1057,15 @@ func (m *Model) rows(f *frame) int {
 	case f.kind == artistList:
 		return len(m.artistsOf(f))
 	case f.kind == artistPage:
-		return m.artistRows(f.artist).len()
+		return m.artistRows(f).len()
 	case f.kind == albumList:
 		return len(m.albumsOf(f))
 	case f.kind == albumTracks:
 		return len(m.tracksOf(f))
 	case f.kind == playlistList:
-		return len(lib.Playlists)
+		return len(m.playlistsOf(f))
 	case f.kind == playlistTracks:
-		return len(lib.PlaylistTracks(f.playlist))
+		return len(m.playlistTracksOf(f))
 	case f.kind == searchList && f.search != nil:
 		return len(f.search.rows)
 	}
@@ -1086,7 +1090,6 @@ func (m *Model) cursorIDs() []string {
 
 // rowID is the ID of what row i of a list shows, or "".
 func (m *Model) rowID(f *frame, i int) string {
-	lib := m.state.Library
 	switch f.kind {
 	case homeList:
 		return m.homeRows()[i].kind
@@ -1097,16 +1100,16 @@ func (m *Model) rowID(f *frame, i int) string {
 	case artistList:
 		return string(m.artistsOf(f)[i].ID)
 	case artistPage:
-		a, _ := m.artistRows(f.artist).album(i)
+		a, _ := m.artistRows(f).album(i)
 		return string(a.ID)
 	case albumList:
 		return string(m.albumsOf(f)[i].ID)
 	case albumTracks:
 		return string(m.tracksOf(f)[i].ID)
 	case playlistList:
-		return string(lib.Playlists[i].ID)
+		return string(m.playlistsOf(f)[i].ID)
 	case playlistTracks:
-		return string(lib.PlaylistTracks(f.playlist)[i].ID)
+		return string(m.playlistTracksOf(f)[i].ID)
 	case searchList:
 		return f.search.rowID(i)
 	case helpList:
@@ -1143,7 +1146,7 @@ func (m *Model) clamp() {
 		f.cur = min(f.cur, max(m.rows(f)-1, 0))
 		m.settle(f, 1)
 	}
-	m.queueCur = min(m.queueCur, max(len(m.state.Queue)-1, 0))
+	m.queueCur = min(m.queueCur, max(m.queueLen()-1, 0))
 }
 
 // bodyHeight is the number of rows inside each window.

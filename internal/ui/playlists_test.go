@@ -221,3 +221,53 @@ func TestPlaylistRename(t *testing.T) {
 	h.keys(":playlist-rename Y<CR>")
 	h.contains("offline · playlists can be changed once the server is back")
 }
+
+func TestSortPlaylists(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'p:sort tracks desc<CR>")
+	h.contains("Playlists (tracks ↓)", "sorted by tracks")
+	if got := strings.Join(h.order("Morning Mix", "Empty"), ","); got != "Morning Mix,Empty" {
+		t.Errorf("playlists in order %q", got)
+	}
+	h.cursorOn("Empty") // the cursor stays on its playlist
+	h.keys("gg:sort length<CR>")
+	h.cursorOn("Morning Mix")
+	h.keys("gg")
+	h.cursorOn("Empty")                   // 0:00 first
+	h.keys(":sort length desc<CR>gg<CR>") // opens what is shown
+	h.contains("Playlists (length ↓) › Morning Mix", "Undertow")
+	h.keys("h:filter genre rock<CR>")
+	h.contains("filter: playlists have no genre or year; open one to filter its tracks")
+	h.keys(":sort title<CR>")
+	h.contains(`sort: "title" isn't a field here; try name, tracks, length`)
+}
+
+// A playlist's tracks sort and filter as a view: the playlist keeps its
+// order, and edits by position wait until the view is undone.
+func TestSortPlaylistTracks(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'pj<CR>:sort title desc<CR>")
+	h.contains("Playlists › Morning Mix (title ↓)")
+	h.keys("gg")
+	h.cursorOn("朝霧")
+	h.keys("dd")
+	h.contains("sorted view · :sort alone to edit the playlist")
+	h.keys("J")
+	h.contains("sorted view · :sort alone to edit the playlist")
+	h.keys("yyp")
+	h.contains("sorted view · :sort alone to edit the playlist")
+	h.keys("Vjd")
+	h.contains("sorted view · :sort alone to edit the playlist")
+	h.wrote()
+	h.playlistIs("Morning Mix", mix)
+
+	h.keys("<CR>") // plays in the order shown
+	h.queueIs("朝霧, Undertow, Café Nocturne, Blue, Blue")
+
+	h.keys(":sort<CR>:filter year 1900<CR>")
+	h.contains("0 shown")
+	h.keys("p")
+	h.contains("filtered view · :filter alone to edit the playlist")
+	h.keys(":filter<CR>J")
+	h.playlistIs("Morning Mix", "Undertow, Blue, Café Nocturne, 朝霧, Blue")
+}

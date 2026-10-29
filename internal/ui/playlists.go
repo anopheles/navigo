@@ -91,13 +91,13 @@ func (m *Model) deletePlaylist(command.Call) error {
 	f := m.top()
 	lib := m.state.Library
 	if m.focus != libraryWindow || f.kind != playlistList || lib == nil ||
-		f.cur >= len(lib.Playlists) {
+		f.cur >= len(m.playlistsOf(f)) {
 		return errors.New("not on a playlist")
 	}
 	if m.state.Offline {
 		return errOffline
 	}
-	p := lib.Playlists[f.cur]
+	p := m.playlistsOf(f)[f.cur]
 	m.confirm(
 		fmt.Sprintf("Delete the playlist %s?", p.Name),
 		func() { m.event(app.PlaylistDelete{ID: p.ID}) },
@@ -118,8 +118,8 @@ func (m *Model) playlistRename(c command.Call) error {
 	switch {
 	case lib == nil || m.focus != libraryWindow:
 		return errors.New("not on a playlist")
-	case f.kind == playlistList && f.cur < len(lib.Playlists):
-		p = lib.Playlists[f.cur]
+	case f.kind == playlistList && f.cur < len(m.playlistsOf(f)):
+		p = m.playlistsOf(f)[f.cur]
 	case f.kind == playlistTracks:
 		var ok bool
 		if p, ok = m.shownPlaylist(); !ok {

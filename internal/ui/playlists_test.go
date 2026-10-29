@@ -221,3 +221,23 @@ func TestPlaylistRename(t *testing.T) {
 	h.keys(":playlist-rename Y<CR>")
 	h.contains("offline · playlists can be changed once the server is back")
 }
+
+func TestSortPlaylists(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'p:sort tracks desc<CR>")
+	h.contains("Playlists (tracks ↓)", "sorted by tracks")
+	if got := strings.Join(h.order("Morning Mix", "Empty"), ","); got != "Morning Mix,Empty" {
+		t.Errorf("playlists in order %q", got)
+	}
+	h.cursorOn("Empty") // the cursor stays on its playlist
+	h.keys("gg:sort length<CR>")
+	h.cursorOn("Morning Mix")
+	h.keys("gg")
+	h.cursorOn("Empty")                   // 0:00 first
+	h.keys(":sort length desc<CR>gg<CR>") // opens what is shown
+	h.contains("Playlists (length ↓) › Morning Mix", "Undertow")
+	h.keys("h:filter genre rock<CR>")
+	h.contains("filter: playlists have no genre or year; open one to filter its tracks")
+	h.keys(":sort title<CR>")
+	h.contains(`sort: "title" isn't a field here; try name, tracks, length`)
+}

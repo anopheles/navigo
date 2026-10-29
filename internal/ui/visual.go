@@ -129,7 +129,7 @@ func (m *Model) rowTracks(f *frame, i int) (tracks []library.Track, artist bool)
 	case albumTracks:
 		return m.tracksOf(f)[i : i+1], false
 	case playlistList:
-		return lib.PlaylistTracks(lib.Playlists[i].ID), false
+		return lib.PlaylistTracks(m.playlistsOf(f)[i].ID), false
 	case playlistTracks:
 		return lib.PlaylistTracks(f.playlist)[i : i+1], false
 	case homeTracks:

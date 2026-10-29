@@ -224,8 +224,8 @@ func (m *Model) open(c command.Call) error {
 			m.openAlbum(a, f.artist)
 		}
 	case playlistList:
-		if lib := m.state.Library; lib != nil && f.cur < len(lib.Playlists) {
-			p := lib.Playlists[f.cur]
+		if ps := m.playlistsOf(f); f.cur < len(ps) {
+			p := ps[f.cur]
 			m.lib = append(m.lib, frame{kind: playlistTracks, playlist: p.ID, title: p.Name})
 		}
 	case searchList:

@@ -1059,7 +1059,7 @@ func (m *Model) rows(f *frame) int {
 	case f.kind == albumTracks:
 		return len(m.tracksOf(f))
 	case f.kind == playlistList:
-		return len(lib.Playlists)
+		return len(m.playlistsOf(f))
 	case f.kind == playlistTracks:
 		return len(lib.PlaylistTracks(f.playlist))
 	case f.kind == searchList && f.search != nil:
@@ -1104,7 +1104,7 @@ func (m *Model) rowID(f *frame, i int) string {
 	case albumTracks:
 		return string(m.tracksOf(f)[i].ID)
 	case playlistList:
-		return string(lib.Playlists[i].ID)
+		return string(m.playlistsOf(f)[i].ID)
 	case playlistTracks:
 		return string(lib.PlaylistTracks(f.playlist)[i].ID)
 	case searchList:

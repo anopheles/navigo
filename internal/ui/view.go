@@ -301,7 +301,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case homeAlbums:
 		return m.albumLine(m.albumsOf(f)[i], w)
 	case playlistList:
-		p := lib.Playlists[i]
+		p := m.playlistsOf(f)[i]
 		n := count(len(p.Tracks))
 		return " " + fit(p.Name, w-2-len(n)-2) + "  " + n + " "
 	case playlistTracks:

@@ -72,8 +72,8 @@ func (m *Model) rowPlaylist(f *frame, i int) (library.Playlist, bool) {
 	lib := m.state.Library
 	switch {
 	case lib == nil:
-	case f.kind == playlistList && i < len(lib.Playlists):
-		return lib.Playlists[i], true
+	case f.kind == playlistList && i < len(m.playlistsOf(f)):
+		return m.playlistsOf(f)[i], true
 	case f.kind == searchList && f.search != nil:
 		return f.search.playlist(i)
 	}

@@ -25,6 +25,7 @@ type listView struct {
 	albums    []library.Album // on an artist page, their own
 	appearsOn []library.Album
 	artists   []library.Artist
+	playlists []library.Playlist
 	tracks    []library.Track
 }
 
@@ -77,6 +78,19 @@ func albumFacts(a library.Album) facts {
 
 func artistFacts(a library.Artist) facts { return facts{name: a.SortName, n: a.AlbumCount} }
 
+// playlistFacts looks up the tracks in lib for a playlist's length.
+func playlistFacts(lib *library.Snapshot) func(library.Playlist) facts {
+	return func(p library.Playlist) facts {
+		var length time.Duration
+		for _, id := range p.Tracks {
+			if t, ok := lib.Track(id); ok {
+				length += t.Duration
+			}
+		}
+		return facts{name: p.Name, n: len(p.Tracks), length: length}
+	}
+}
+
 func trackFacts(t library.Track) facts {
 	return facts{
 		name:   t.Title,
@@ -92,11 +106,12 @@ func trackFacts(t library.Track) facts {
 // sortFields are the fields :sort takes on each kind of list, the first
 // being what the field is called. Starred tracks adds starred first.
 var sortFields = map[listKind][]string{
-	albumList:   {"name", "artist", "year", "plays", "tracks", "length", "genre"},
-	artistPage:  {"name", "artist", "year", "plays", "tracks", "length", "genre"},
-	artistList:  {"name", "albums"},
-	albumTracks: {"number", "title", "artist", "year", "plays", "length", "genre"},
-	homeTracks:  {"title", "artist", "year", "plays", "length", "genre"},
+	albumList:    {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	artistPage:   {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	artistList:   {"name", "albums"},
+	playlistList: {"name", "tracks", "length"},
+	albumTracks:  {"number", "title", "artist", "year", "plays", "length", "genre"},
+	homeTracks:   {"title", "artist", "year", "plays", "length", "genre"},
 }
 
 func fieldsFor(f *frame) []string {
@@ -213,6 +228,21 @@ func (m *Model) artistsOf(f *frame) []library.Artist {
 	return f.view.artists
 }
 
+// playlistsOf is the playlists the Playlists list shows, sorted.
+func (m *Model) playlistsOf(f *frame) []library.Playlist {
+	lib := m.state.Library
+	if lib == nil {
+		return nil
+	}
+	if !f.view.active() {
+		return lib.Playlists
+	}
+	if k := m.viewKey(f); f.view.key != k || f.view.playlists == nil {
+		f.view.key, f.view.playlists = k, apply(f.view, lib.Playlists, playlistFacts(lib))
+	}
+	return f.view.playlists
+}
+
 // tracksOf is the tracks an album shows, sorted and filtered.
 func (m *Model) tracksOf(f *frame) []library.Track {
 	if m.state.Library == nil {
@@ -229,7 +259,7 @@ func (m *Model) tracksOf(f *frame) []library.Track {
 }
 
 var errNotSortable = errors.New(
-	"only Albums, Artists, an artist's albums, Home's lists and an album's tracks can be sorted and filtered",
+	"only Albums, Artists, an artist's albums, Playlists, Home's lists and an album's tracks can be sorted and filtered",
 )
 
 // viewFrame is the list :sort and :filter work on.
@@ -249,7 +279,7 @@ func (m *Model) changeView(f *frame, change func(*listView)) {
 	}
 	v := f.view
 	change(&v)
-	v.key, v.albums, v.appearsOn, v.artists, v.tracks = "", nil, nil, nil, nil
+	v.key, v.albums, v.appearsOn, v.artists, v.playlists, v.tracks = "", nil, nil, nil, nil, nil
 	f.view = v
 	f.cur, f.offset = 0, 0
 	for i := range m.rows(f) {
@@ -311,6 +341,9 @@ func (m *Model) filterList(c command.Call) error {
 	}
 	if f.kind == artistList {
 		return errors.New("filter: artists have no genre or year; filter Albums instead")
+	}
+	if f.kind == playlistList {
+		return errors.New("filter: playlists have no genre or year; open one to filter its tracks")
 	}
 	if len(c.Args) < 2 {
 		return errors.New("filter: give genre <text> or year <year>, such as filter year 1990-1999")

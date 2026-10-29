@@ -36,7 +36,9 @@ func has(s string, a int) bool {
 // in the library, on the first row of the focused queue.
 func playingScreen(t *testing.T) *harness {
 	h := newHarness(t, 120, 40, nil)
-	h.keys("3j<CR>j<CR>jj<Tab>")
+	// Low Tide plays; the album opens again from Search, which shows the
+	// queue beside it, with the cursor on Blue Hour.
+	h.keys("3j<CR>j<CR>:search blue hour<CR><CR>3j<Tab>")
 	return h
 }
 

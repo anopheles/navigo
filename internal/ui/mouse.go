@@ -20,9 +20,10 @@ type paneHit struct{ x, w int }
 
 // click is the last click on a list row.
 type click struct {
-	win window
-	row int
-	at  time.Time
+	win   window
+	row   int
+	depth int // the column's, in columns
+	at    time.Time
 }
 
 // wheelVolume is how many points one wheel notch moves the volume.
@@ -47,6 +48,9 @@ func (m *Model) mouse(msg tea.MouseMsg) tea.Cmd {
 			return nil
 		}
 		if _, ok := msg.(tea.MouseClickMsg); ok {
+			if win, ok := m.windowAt(ms.X, ms.Y); ok && win == libraryWindow && m.inColumns() {
+				return m.clickColumn(ms.X, ms.Y)
+			}
 			if win, row, ok := m.rowAt(ms.X, ms.Y); ok {
 				return m.clickRow(win, row)
 			}
@@ -62,6 +66,9 @@ func (m *Model) mouse(msg tea.MouseMsg) tea.Cmd {
 		return m.dispatch(app.SeekAt{Pos: pos})
 	case tea.MouseWheelMsg:
 		if win, ok := m.windowAt(ms.X, ms.Y); ok {
+			if c, ok := m.columnAt(ms.X); ok && win == libraryWindow && m.inColumns() {
+				m.focusColumn(c.depth) // the wheel scrolls the column under it
+			}
 			switch ms.Button {
 			case tea.MouseWheelUp:
 				m.wheelList(win, -wheelRows)
@@ -123,10 +130,42 @@ func (m *Model) clickRow(win window, row int) tea.Cmd {
 		m.checkVisual()
 	}
 	m.setCursor(row)
+	return m.clicked(win, row, 0)
+}
+
+// clickColumn is a click on a column's row: the column takes the focus and
+// its cursor goes to the row. A second click at once does its <CR>.
+func (m *Model) clickColumn(x, y int) tea.Cmd {
+	c, ok := m.columnAt(x)
+	if !ok || y < m.listTop(libraryWindow) {
+		return nil
+	}
+	var f *frame
+	for _, col := range m.columns() {
+		if col.depth == c.depth {
+			f = col.f
+		}
+	}
+	if f == nil {
+		return nil
+	}
+	row := f.offset + y - m.listTop(libraryWindow)
+	if row >= m.rows(f) || m.skipped(f, row) {
+		return nil
+	}
+	m.focusColumn(c.depth)
+	m.setCursor(row)
+	return m.clicked(libraryWindow, row, c.depth)
+}
+
+// clicked notes a click on a row and does its <CR> when it is the second
+// on that row in a short time.
+func (m *Model) clicked(win window, row, depth int) tea.Cmd {
 	now := m.clock.Now()
 	last := m.click
-	m.click = click{win, row, now}
-	if last.win != win || last.row != row || now.Sub(last.at) > doubleClick {
+	m.click = click{win, row, depth, now}
+	if last.win != win || last.row != row || last.depth != depth ||
+		now.Sub(last.at) > doubleClick {
 		return nil
 	}
 	m.click = click{}

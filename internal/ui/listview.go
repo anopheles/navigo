@@ -352,6 +352,7 @@ func (m *Model) sortList(c command.Call) error {
 	}
 	if len(c.Args) == 0 {
 		m.changeView(f, func(v *listView) { v.sortBy, v.desc = "", false })
+		m.keepColumnView()
 		m.setMsg("back in the usual order", false)
 		return nil
 	}
@@ -367,6 +368,7 @@ func (m *Model) sortList(c command.Call) error {
 	desc := len(c.Args) > 1 &&
 		slices.Contains([]string{"desc", "down", "reverse"}, strings.ToLower(c.Args[1]))
 	m.changeView(f, func(v *listView) { v.sortBy, v.desc = field, desc })
+	m.keepColumnView()
 	m.setMsg("sorted by "+field+" · :sort alone puts the order back", false)
 	return nil
 }
@@ -392,6 +394,7 @@ func (m *Model) filterList(c command.Call) error {
 		return err
 	}
 	m.changeView(f, func(w *listView) { *w = v })
+	m.keepColumnView()
 	if !v.filtered() {
 		m.setMsg("filter cleared", false)
 		return nil

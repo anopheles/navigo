@@ -32,10 +32,11 @@ func coverHarness(t *testing.T, w, h int, mode string, kitty bool) *harness {
 	return hs
 }
 
-// play starts the second track of the first album and waits for the cover.
+// play starts the second track of the first album and goes Home, where
+// the queue and its card show beside the library.
 func (h *harness) play() {
 	h.t.Helper()
-	h.keys("3j<CR>j<CR>")
+	h.keys("3j<CR>j<CR>'h")
 }
 
 func TestCardShowsTheCover(t *testing.T) {
@@ -121,7 +122,7 @@ func TestCoverIsFetchedOncePerAlbum(t *testing.T) {
 	if n := h.requests("getCoverArt"); n != 1 {
 		t.Errorf("%d requests for three tracks of one album, want 1", n)
 	}
-	h.keys("hj<CR><CR>") // back to the albums, the next one, its first track
+	h.keys("'bhj<CR><CR>") // back to the albums, the next one, its first track
 	if n := h.requests("getCoverArt"); n != 2 {
 		t.Errorf("%d requests after another album, want 2", n)
 	}

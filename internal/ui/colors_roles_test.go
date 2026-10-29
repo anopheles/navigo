@@ -48,7 +48,9 @@ func TestRolesTakeTheConfiguredColours(t *testing.T) {
 	if l := lineWith(t, screen, "<CR>"); !strings.Contains(l, "32") { // green, a number
 		t.Errorf("hint line keys aren't green: %q", l)
 	}
-	h.keys("V")
+	h.keys(
+		"Vj",
+	) // Low Tide selected, the cursor on the next row
 	if l := lineWith(t, h.m.render(), "Low Tide"); !has(l, 100) { // bright black background
 		t.Errorf("selection isn't gray: %q", l)
 	}
@@ -226,7 +228,9 @@ func accentHarness(t *testing.T, playing string) *harness {
 		hs.m.deps.TrueColor = true
 	})
 	h.toAlbums()
-	h.keys("3j<CR>j<CR>")
+	// Low Tide plays; the album opens again from Search, which shows the
+	// queue beside it, with the cursor on Low Tide.
+	h.keys("3j<CR>j<CR>:search blue hour<CR><CR>j")
 	return h
 }
 

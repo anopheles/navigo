@@ -47,6 +47,8 @@ func TestCursorAndPlayingRowsStayWhole(t *testing.T) {
 		!strings.Contains(cur, "3:05") {
 		t.Errorf("the cursor row is cut by styles of its parts: %q", cur)
 	}
+	h.keys("<Tab>") // the queue, with the playing row
+	screen = h.m.render()
 	if pl := segment(lineWith(t, screen, "▶"), "\x1b[1;35m▶"); !strings.Contains(pl, "3:05") {
 		t.Errorf("the playing row is cut by styles of its parts: %q", pl)
 	}

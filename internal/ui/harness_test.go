@@ -380,3 +380,44 @@ func (h *harness) cursorRow() string {
 }
 
 func appSynced(s *library.Snapshot) app.Event { return app.Synced{Library: s} }
+
+// onPath checks the library window's path, written as the drill-down's
+// title was: "Artists › Aurora Lane (year ↓) › Blue".
+func (h *harness) onPath(want string) {
+	h.t.Helper()
+	if got := strings.TrimSpace(h.m.libTitle()); !strings.Contains(got, want) {
+		h.t.Errorf("path %q, want %q", got, want)
+	}
+}
+
+// column is the text of the column at depth in the path (1 is the
+// section's list), one line per row with its header first.
+func (h *harness) column(depth int) string {
+	h.t.Helper()
+	lines := strings.Split(h.screen(), "\n")
+	for _, c := range h.m.colAt {
+		if c.depth != depth {
+			continue
+		}
+		var out []string
+		for _, l := range lines[1 : 1+h.m.bodyHeight()] {
+			out = append(out, ansi.Cut(l, c.x, c.x+c.w))
+		}
+		return strings.Join(out, "\n")
+	}
+	h.t.Fatalf("no column at depth %d", depth)
+	return ""
+}
+
+// orderIn is the lines of text that contain each of names, in order.
+func orderIn(text string, names ...string) []string {
+	var got []string
+	for _, line := range strings.Split(text, "\n") {
+		for _, n := range names {
+			if strings.Contains(line, n) {
+				got = append(got, n)
+			}
+		}
+	}
+	return got
+}

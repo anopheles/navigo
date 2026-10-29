@@ -29,7 +29,7 @@
 │ {          prev-group         Go to the start of this group, or of t…││                                              │
 │ ga         go-album           Go to the album of the track or album …││                                              │
 │ gr         go-artist          Go to the artist of the track or album…││                                              │
-│ h          back               Go back out to the list you came from. ││                                              │
+│ h          back               Go back out to the list you came from;…││                                              │
 │ <Space>    play-pause         Pause or resume playback, or start the…││                                              │
 │ >          next-track         Play the next track in the queue.      ││                                              │
 │ <          prev-track         Play the previous track, or restart th…││                                              │

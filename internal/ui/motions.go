@@ -180,5 +180,6 @@ func (m *Model) jumpForward(c command.Call) error {
 func (m *Model) goLocation(l location) {
 	m.stash()
 	m.focus, m.lib, m.queueCur = l.focus, slices.Clone(l.lib), l.queueCur
+	m.adoptColumnViews()
 	m.clamp()
 }

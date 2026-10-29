@@ -14,60 +14,61 @@ func (h *harness) onMile(n int) {
 	h.cursorOn(fmt.Sprintf("Mile %03d", n))
 }
 
-// The Long Haul has 510 tracks; 34 rows show at 120×40.
+// The Long Haul has 510 tracks; at 120×40 its column shows 33 rows, from
+// line 2 (line 1 is the columns' headers) to line 34.
 func TestPageAndScreenMotions(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("4j<CR>")
-	if rows := h.m.bodyHeight(); rows != 34 {
+	if rows := h.m.listHeight(libraryWindow); rows != 33 {
 		t.Fatalf("%d rows on screen", rows)
 	}
 	h.keys("<C-f>")
-	h.onMile(35)
-	if l := h.mileLine(35); l != 1 {
-		t.Errorf("after <C-f> Mile 035 is on line %d, want the top", l)
+	h.onMile(34)
+	if l := h.mileLine(34); l != 2 {
+		t.Errorf("after <C-f> Mile 034 is on line %d, want the top", l)
 	}
 	h.keys("2<C-f>")
-	h.onMile(103)
+	h.onMile(100)
 	h.keys("<C-b>")
-	h.onMile(69)
-	if l := h.mileLine(69); l != 34 {
-		t.Errorf("after <C-b> Mile 069 is on line %d, want the bottom", l)
+	h.onMile(67)
+	if l := h.mileLine(67); l != 34 {
+		t.Errorf("after <C-b> Mile 067 is on line %d, want the bottom", l)
 	}
 
 	// <C-e>/<C-y> move the view; the cursor stays while it can.
 	h.keys("<C-e>")
-	h.onMile(69)
-	if l := h.mileLine(69); l != 33 {
-		t.Errorf("after <C-e> Mile 069 is on line %d", l)
+	h.onMile(67)
+	if l := h.mileLine(67); l != 33 {
+		t.Errorf("after <C-e> Mile 067 is on line %d", l)
 	}
 	h.keys("40<C-e>") // the cursor would leave the screen: it goes along
-	h.onMile(77)
+	h.onMile(76)
 	h.keys("3<C-y>")
-	h.onMile(77)
+	h.onMile(76)
 
 	// H, M, L, with counts from the top and the bottom.
 	h.keys("H")
-	h.onMile(74)
+	h.onMile(73)
 	h.keys("3H")
-	h.onMile(76)
+	h.onMile(75)
 	h.keys("L")
-	h.onMile(107)
+	h.onMile(105)
 	h.keys("2L")
-	h.onMile(106)
+	h.onMile(104)
 	h.keys("M")
-	h.onMile(90)
+	h.onMile(89)
 
 	// zt, zz, zb scroll the cursor row to the top, middle, bottom.
 	h.keys("zt")
-	if l := h.mileLine(90); l != 1 {
+	if l := h.mileLine(89); l != 2 {
 		t.Errorf("zt: line %d", l)
 	}
 	h.keys("zb")
-	if l := h.mileLine(90); l != 34 {
+	if l := h.mileLine(89); l != 34 {
 		t.Errorf("zb: line %d", l)
 	}
 	h.keys("zz")
-	if l := h.mileLine(90); l != 18 {
+	if l := h.mileLine(89); l != 18 {
 		t.Errorf("zz: line %d", l)
 	}
 
@@ -153,7 +154,7 @@ func TestFindOfferGoesAway(t *testing.T) {
 	h.typeText("zzz")
 	h.keys("<CR>j<CR>")
 	h.lacks("Search “zzz”")
-	h.contains("Albums › Blue") // j moved, <CR> opened the album
+	h.onPath("Albums › Blue") // j moved, <CR> opened the album
 }
 
 func TestFindInTheQueue(t *testing.T) {
@@ -203,7 +204,7 @@ func TestJumpList(t *testing.T) {
 	}
 	h.contains(" Artists ")
 	h.keys("<C-o>")
-	h.contains("Albums › Blue Hour")
+	h.onPath("Albums › Blue Hour")
 	h.cursorOn("Low Tide")
 }
 

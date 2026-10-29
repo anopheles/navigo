@@ -68,7 +68,18 @@ func (m *Model) render() string {
 	h := m.bodyHeight()
 	var lines []string
 	m.paneAt = [2]paneHit{}
-	if m.w < narrow {
+	m.colAt = m.colAt[:0]
+	switch {
+	case m.inColumns() && m.focus == libraryWindow:
+		m.paneAt[libraryWindow] = paneHit{0, m.w}
+		title := m.columnTitle() + "   " + m.keyHint("window", "queue")
+		lines = m.pane(title, m.columnRows(1, m.w-2, h, true), m.w, true)
+	case m.inColumns():
+		m.paneAt[queueWindow] = paneHit{0, m.w}
+		title := m.queueTitle() + "   " + m.keyHint("window", "library")
+		rows := append(m.queueCard(m.w-2), m.queueRows(m.w-2, m.listHeight(queueWindow), true)...)
+		lines = m.pane(title, rows, m.w, true)
+	case m.w < narrow:
 		m.paneAt[m.focus] = paneHit{0, m.w}
 		if m.focus == libraryWindow {
 			title := m.libTitle() + "   " + m.keyHint("window", "queue")
@@ -77,7 +88,7 @@ func (m *Model) render() string {
 			title := m.queueTitle() + "   " + m.keyHint("window", "library")
 			lines = m.pane(title, m.queueRows(m.w-2, h, true), m.w, true)
 		}
-	} else {
+	default:
 		lw := m.w * 3 / 5
 		rw := m.w - lw
 		m.paneAt = [2]paneHit{{0, lw}, {lw, rw}}

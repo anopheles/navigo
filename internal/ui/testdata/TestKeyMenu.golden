@@ -1,13 +1,13 @@
-╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
-│   1 Dusk Signal                       Aurora Lane                2:22││                                              │
-│   2 Low ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮         │
-│   3 Stre│ Keys here 1–24 of 46                                                                             │         │
-│   4 Blue│ Play                                                                                             │         │
-│   5 Wint│   <CR>     play               Replace the queue with this list and play from the track under th… │         │
-│   6 Afte│   <Space>  play/pause         Pause or resume playback, or start the queue.                      │         │
-│         │   >        next track         Play the next track in the queue.                                  │         │
-│         │   <        previous track     Play the previous track, or restart this one after 3 seconds.      │         │
-│         │   .        seek +10           Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a … │         │
+╭ Albums   <Tab> queue ────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Albums                                             │ Blue Hour                                                       │
+│ Ångström╭──────────────────────────────────────────────────────────────────────────────────────────────────╮     2:22│
+│ Blue    │ Keys here 1–24 of 46                                                                             │     3:05│
+│ Blue    │ Play                                                                                             │     3:58│
+│▎★ Blue H│   <CR>     play               Replace the queue with this list and play from the track under th… │     0:31│
+│ The Long│   <Space>  play/pause         Pause or resume playback, or start the queue.                      │     1:04│
+│ Night Dr│   >        next track         Play the next track in the queue.                                  │     1:37│
+│ Static B│   <        previous track     Play the previous track, or restart this one after 3 seconds.      │         │
+│ 夜明け  │   .        seek +10           Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a … │         │
 │         │   ,        seek -10           Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a … │         │
 │         │   X        stop               Stop playback.                                                     │         │
 │         │   =        volume +5          Change the volume by points, such as volume +5, or set it: volume… │         │
@@ -27,13 +27,13 @@
 │         │ Select                                                                                           │         │
 │         │   V        select             Select rows: start Visual mode, or end it.                         │         │
 │         ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯         │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
  press a key to run it  j/k scroll  <F1> help  q close                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                        RG track  0 in queue 

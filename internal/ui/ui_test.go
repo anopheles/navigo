@@ -21,7 +21,7 @@ func TestBrowseOpenPlay(t *testing.T) {
 	if h.logins != 1 {
 		t.Fatalf("logged in %d times", h.logins)
 	}
-	h.contains("Ångström Days", "The Long Haul", "夜明け", "The queue is empty.", "<CR> open")
+	h.contains("Ångström Days", "The Long Haul", "夜明け", "<Tab> queue", "<CR> open")
 	golden.RequireEqual(t, h.screen())
 
 	h.keys("3j")
@@ -29,7 +29,8 @@ func TestBrowseOpenPlay(t *testing.T) {
 		t.Fatalf("cursor on %q after 3j, want Blue Hour", got)
 	}
 	h.keys("<CR>")
-	h.contains("Albums › Blue Hour", "Dusk Signal", "<CR> play", "A add to queue", "a play next")
+	h.onPath("Albums › Blue Hour")
+	h.contains("Dusk Signal", "<CR> play", "A add to queue", "a play next")
 
 	h.keys("j<CR>")
 	if calls := h.fake.Calls(); len(calls) < 2 || calls[0] != "Play(1 2 3)" ||
@@ -104,14 +105,24 @@ func TestAutoAdvanceAndTransport(t *testing.T) {
 
 func TestAddAndUndo(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
+	queued := func(n int) {
+		t.Helper()
+		if got := len(h.m.state.Queue); got != n {
+			t.Errorf("%d tracks in the queue, want %d", got, n)
+		}
+	}
 	h.keys("<CR>jA")
-	h.contains("Queue (1)", "1 track added to the end of the queue (1 in queue) · u undoes")
+	queued(1)
+	h.contains("1 track added to the end of the queue (1 in queue) · u undoes")
 	h.keys("2a")
-	h.contains("Queue (3)", "2 tracks will play next · u undoes")
+	queued(3)
+	h.contains("2 tracks will play next · u undoes")
 	h.keys("u")
-	h.contains("Queue (1)", "undone · 1 track in the queue · <C-r> redoes")
+	queued(1)
+	h.contains("undone · 1 track in the queue · <C-r> redoes")
 	h.keys("uu")
-	h.contains("The queue is empty.", "nothing to undo")
+	queued(0)
+	h.contains("nothing to undo")
 	if calls := h.fake.Calls(); len(calls) != 0 {
 		t.Errorf("adding without playing called the player: %q", calls)
 	}
@@ -301,8 +312,9 @@ func TestProgressBarMovesInHalfCells(t *testing.T) {
 
 func TestQueueTitleShowsTheTotalTime(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
+	h.keys("<Tab>")
 	h.contains("Queue (0) ")
-	h.keys("3j<CR><CR>")
+	h.keys("<Tab>3j<CR><CR><Tab>")
 	var total time.Duration
 	for _, e := range h.m.state.Queue {
 		total += e.Track.Duration

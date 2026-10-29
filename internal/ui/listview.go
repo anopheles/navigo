@@ -121,6 +121,8 @@ func fieldsFor(f *frame) []string {
 		return sortFields[albumList]
 	case f.kind == homeTracks && f.homeKind == starredTracks:
 		return append([]string{"starred"}, sortFields[homeTracks]...)
+	case f.kind == searchList:
+		return []string{"name", "artist", "year", "plays", "tracks", "albums", "length", "genre"}
 	}
 	return sortFields[f.kind]
 }
@@ -276,7 +278,7 @@ func (m *Model) tracksOf(f *frame) []library.Track {
 }
 
 var errNotSortable = errors.New(
-	"only Albums, Artists, an artist's albums, Playlists, Home's lists and album and playlist tracks can be sorted and filtered",
+	"the queue, Help and the menus can't be sorted or filtered",
 )
 
 // viewFrame is the list :sort and :filter work on.
@@ -298,6 +300,10 @@ func (m *Model) changeView(f *frame, change func(*listView)) {
 	change(&v)
 	v.key, v.albums, v.appearsOn, v.artists, v.playlists, v.tracks = "", nil, nil, nil, nil, nil
 	f.view = v
+	if f.kind == searchList && f.search != nil {
+		f.search.view = v
+		f.search.arrange(m.state.Library)
+	}
 	f.cur, f.offset = 0, 0
 	for i := range m.rows(f) {
 		if m.rowID(f, i) == id {
@@ -313,6 +319,10 @@ func (m *Model) items(f *frame) int {
 	if f.kind == artistPage {
 		r := m.artistRows(f)
 		return len(r.own) + len(r.appearsOn)
+	}
+	if f.kind == searchList && f.search != nil {
+		r := f.search.res
+		return len(r.Artists) + len(r.Albums) + len(r.Playlists) + len(r.Tracks)
 	}
 	return m.rows(f)
 }

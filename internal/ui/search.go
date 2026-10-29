@@ -27,7 +27,9 @@ var groupNames = [4]string{"Artists", "Albums", "Playlists", "Tracks"}
 // it by pointer, so the section's saved path sees the same results.
 type searchView struct {
 	query    string
-	res      library.Results
+	all      library.Results // what the search found
+	res      library.Results // what shows: all, sorted and filtered
+	view     listView        // the frame's :sort and :filter
 	expanded [4]bool
 	rows     []searchRow
 }
@@ -43,11 +45,51 @@ type searchRow struct {
 
 // run searches lib again, as after typing or a sync.
 func (v *searchView) run(lib *library.Snapshot) {
-	v.res = library.Results{Best: -1}
+	v.all = library.Results{Best: -1}
 	if lib != nil {
-		v.res = lib.Search(v.query)
+		v.all = lib.Search(v.query)
 	}
+	v.arrange(lib)
+}
+
+// arrange sorts and filters each group on its own, before the caps, so
+// a sort shows the first of all matches. A group without the sort's
+// field keeps its order; one without a genre or year goes when filtered.
+func (v *searchView) arrange(lib *library.Snapshot) {
+	r, view := v.all, v.view
+	if view.active() {
+		only := func(fields []string) listView {
+			w := view
+			if !slices.Contains(fields, w.sortBy) {
+				w.sortBy = ""
+			}
+			return w
+		}
+		if view.filtered() {
+			r.Artists, r.Playlists = nil, nil
+		}
+		r.Artists = apply(only(searchFields[library.ArtistGroup]), r.Artists, artistFacts)
+		r.Albums = apply(only(searchFields[library.AlbumGroup]), r.Albums, albumFacts)
+		if lib != nil {
+			r.Playlists = apply(
+				only(searchFields[library.PlaylistGroup]),
+				r.Playlists,
+				playlistFacts(lib),
+			)
+		}
+		r.Tracks = apply(only(searchFields[library.TrackGroup]), r.Tracks, trackFacts)
+	}
+	v.res = r
 	v.layout()
+}
+
+// searchFields are the :sort fields of each group of results; name sorts
+// tracks by title.
+var searchFields = [4][]string{
+	library.ArtistGroup:   {"name", "albums"},
+	library.AlbumGroup:    {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	library.PlaylistGroup: {"name", "tracks", "length"},
+	library.TrackGroup:    {"name", "artist", "year", "plays", "length", "genre"},
 }
 
 func (v *searchView) layout() {
@@ -71,15 +113,15 @@ func (v *searchView) layout() {
 	}
 }
 
-// best is the row of the best match, or 0.
+// best is the row of the best match, or 0. A filter can hide its group.
 func (v *searchView) best() int {
 	if v.res.Best < 0 {
 		return 0
 	}
-	return slices.IndexFunc(
+	return max(slices.IndexFunc(
 		v.rows,
 		func(r searchRow) bool { return r.group == v.res.Best && r.i == 0 },
-	)
+	), 0)
 }
 
 func (v *searchView) row(i int) searchRow {
@@ -255,7 +297,7 @@ func (m *Model) cancelSearch() {
 	}
 	m.lib, m.paths, m.focus = b.lib, b.paths, b.focus
 	for _, f := range m.searchFrames() {
-		f.search.query = b.query
+		f.search.query, f.search.view = b.query, f.view
 		f.search.run(m.state.Library)
 		f.title = searchTitle(b.query)
 	}

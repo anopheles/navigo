@@ -51,14 +51,18 @@ func (s *session) openFirstAlbum() {
 	})
 }
 
-// line is one line of the left window, inside its frame.
+// line is row n of the rightmost column, which after openFirstAlbum is
+// the album's tracks; the line above the first row is the columns' headers.
 func (s *session) line(n int) string {
 	lines := strings.Split(s.screen(), "\n")
-	if n >= len(lines) {
+	if n+1 >= len(lines) {
 		return ""
 	}
-	left, _, _ := strings.Cut(strings.TrimPrefix(lines[n], "│"), "│")
-	return strings.TrimRight(left, " ")
+	cols := strings.Split(lines[n+1], "│")
+	if len(cols) < 3 {
+		return ""
+	}
+	return strings.TrimRight(cols[len(cols)-2], " ")
 }
 
 // barTitle is the title the now-playing bar shows. It reads only the lines
@@ -165,7 +169,7 @@ func TestNewUserPath(t *testing.T) {
 	s.waitText("── Tracks", 10*time.Second)
 	s.keys("\r")
 	s.keys("ga")
-	s.waitText("Albums › ", 10*time.Second)
+	s.waitText("Albums   <Tab> queue", 10*time.Second)
 	s.waitFor(
 		"the album's tracks",
 		10*time.Second,

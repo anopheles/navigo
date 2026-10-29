@@ -194,6 +194,10 @@ type Model struct {
 	// hidden) and click is the last click on a row, for a double-click.
 	paneAt [2]paneHit
 	click  click
+	// colAt is where the last render put each column (columns.go), and
+	// colViews the sort and filter each section's columns keep.
+	colAt    []colHit
+	colViews map[colKey]listView
 
 	// The ":" line and the search prompt. A search prompt's text is
 	// selected until a key changes it, and beforeSearch is what <Esc>
@@ -260,6 +264,7 @@ func New(deps Deps) (*Model, error) {
 		ctx:      context.Background(),
 		lib:      startPath(),
 		paths:    map[listKind][]frame{},
+		colViews: map[colKey]listView{},
 		mode:     keymap.Normal,
 		registry: commands(),
 		line:     line,
@@ -468,6 +473,7 @@ func (m *Model) ready(c *subsonic.Client) tea.Cmd {
 		m.state = newState(m.deps.Config)
 		m.push = newQueuePush()
 		m.lib, m.paths = startPath(), map[listKind][]frame{}
+		m.colViews = map[colKey]listView{}
 		m.focus, m.queueCur, m.queueOff = libraryWindow, 0, 0
 		stop = tea.Batch(stop, m.dispatch(app.Start{}))
 	} else if m.screen == screenLogin && !m.state.Sync.Running && m.state.Library == nil {
@@ -1163,6 +1169,9 @@ func (m *Model) bodyHeight() int {
 func (m *Model) listHeight(win window) int {
 	if win == queueWindow {
 		return max(m.bodyHeight()-m.cardHeight(), 1)
+	}
+	if m.inColumns() {
+		return max(m.bodyHeight()-1, 1) // the columns' headers
 	}
 	return m.bodyHeight()
 }

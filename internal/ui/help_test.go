@@ -76,7 +76,7 @@ func TestKeyMenu(t *testing.T) {
 
 	// Two keys, ga, run too; q and <Esc> close; <F1> goes to Help.
 	h.keys("?ga")
-	h.contains("Albums › Blue Hour")
+	h.onPath("Albums › Blue Hour")
 	h.keys("?q")
 	h.lacks("Keys here")
 	h.keys("?<F1>")

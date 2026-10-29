@@ -18,7 +18,7 @@ func TestMPVMissingAtStartup(t *testing.T) {
 	h.contains("mpv not found · install mpv 0.38 or newer to play") // the indicator
 	// Browsing works; play keys fill the queue and repeat the hint.
 	h.keys("3j<CR><CR>")
-	h.contains("Queue (6)", "mpv not found · install mpv 0.38 or newer to play · "+installHint())
+	h.contains("6 in queue", "mpv not found · install mpv 0.38 or newer to play · "+installHint())
 	h.keys("<Space>")
 	h.contains(installHint())
 	if calls := h.fake.Calls(); len(calls) != 0 {

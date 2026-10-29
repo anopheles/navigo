@@ -52,7 +52,7 @@ func TestPlayWhileOfflineWaits(t *testing.T) {
 	h.cmd("sync")
 	h.keys("3j<CR><CR>")
 	h.contains(
-		"Queue (6)",
+		"6 in queue",
 		"offline · the queue is ready · <Space> plays it once the server is back",
 	)
 	if calls := h.fake.Calls(); len(calls) != 0 {

@@ -62,14 +62,14 @@ func TestClickMovesTheCursorAndDoubleClickOpens(t *testing.T) {
 	h.toAlbums()
 	h.screen()
 	depth := len(h.m.lib)
-	h.send(click1(5, 3)) // the third row
+	h.send(click1(5, 4)) // the third row, under the column's header
 	if f := h.m.top(); f.cur != 2 || len(h.m.lib) != depth {
 		t.Fatalf("after one click: cur %d, depth %d", f.cur, len(h.m.lib))
 	}
 	h.advance(time.Second)
-	h.send(click1(5, 2))
+	h.send(click1(5, 3))
 	h.advance(100 * time.Millisecond)
-	h.send(click1(5, 2))
+	h.send(click1(5, 3))
 	if len(h.m.lib) != depth+1 {
 		t.Errorf("a double-click didn't open the album: depth %d", len(h.m.lib))
 	}
@@ -80,9 +80,9 @@ func TestSlowSecondClickIsNotADoubleClick(t *testing.T) {
 	h.toAlbums()
 	h.screen()
 	depth := len(h.m.lib)
-	h.send(click1(5, 2))
+	h.send(click1(5, 3))
 	h.advance(2 * time.Second)
-	h.send(click1(5, 2))
+	h.send(click1(5, 3))
 	if len(h.m.lib) != depth {
 		t.Errorf("two slow clicks opened the album")
 	}
@@ -90,7 +90,7 @@ func TestSlowSecondClickIsNotADoubleClick(t *testing.T) {
 
 func TestClickInTheQueueTakesTheFocus(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
-	h.keys("3j<CR><CR>") // plays an album, filling the queue
+	h.keys("3j<CR><CR>'h") // plays an album, then Home shows the queue beside it
 	h.screen()
 	if h.m.focus != libraryWindow {
 		t.Fatal("test expects the library focused")

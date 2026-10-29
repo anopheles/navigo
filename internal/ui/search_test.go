@@ -109,7 +109,7 @@ func TestSearchRows(t *testing.T) {
 
 	// ga goes to its album, on the track.
 	h.keys("ga")
-	h.contains("Albums › Blue Hour")
+	h.onPath("Albums › Blue Hour")
 	h.cursorOn("Low Tide")
 
 	// a/A add a whole album, or just a track.

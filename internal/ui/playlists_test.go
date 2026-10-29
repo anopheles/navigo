@@ -80,7 +80,8 @@ func TestPlaylistsSection(t *testing.T) {
 	h.keys("'p")
 	h.contains(" Playlists ", "Empty", "0 tracks", "Morning Mix", "5 tracks")
 	h.keys("j<CR>")
-	h.contains("Playlists › Morning Mix", "Undertow", "朝霧")
+	h.onPath("Playlists › Morning Mix")
+	h.contains("Undertow", "朝霧")
 	h.keys("j<CR>")
 	h.contains("playing · 5 tracks in the queue", "▶  Undertow", " 2/5 ")
 }
@@ -206,7 +207,8 @@ func TestPlaylistRename(t *testing.T) {
 
 	// In a playlist, the one shown; the title follows.
 	h.keys("<CR>:playlist-rename Dawn<CR>")
-	h.contains("Playlists › Dawn", "playlist Evening Mix renamed to Dawn")
+	h.onPath("Playlists › Dawn")
+	h.contains("playlist Evening Mix renamed to Dawn")
 
 	h.keys(":playlist-rename empty<CR>")
 	h.contains(`there's a playlist called "Empty" already`)
@@ -226,7 +228,10 @@ func TestSortPlaylists(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("'p:sort tracks desc<CR>")
 	h.contains("Playlists (tracks ↓)", "sorted by tracks")
-	if got := strings.Join(h.order("Morning Mix", "Empty"), ","); got != "Morning Mix,Empty" {
+	if got := strings.Join(
+		orderIn(h.column(1), "Morning Mix", "Empty"),
+		",",
+	); got != "Morning Mix,Empty" {
 		t.Errorf("playlists in order %q", got)
 	}
 	h.cursorOn("Empty") // the cursor stays on its playlist
@@ -235,7 +240,8 @@ func TestSortPlaylists(t *testing.T) {
 	h.keys("gg")
 	h.cursorOn("Empty")                   // 0:00 first
 	h.keys(":sort length desc<CR>gg<CR>") // opens what is shown
-	h.contains("Playlists (length ↓) › Morning Mix", "Undertow")
+	h.onPath("Playlists (length ↓) › Morning Mix")
+	h.contains("Undertow")
 	h.keys("h:filter genre rock<CR>")
 	h.contains("filter: playlists have no genre or year; open one to filter its tracks")
 	h.keys(":sort title<CR>")
@@ -247,7 +253,7 @@ func TestSortPlaylists(t *testing.T) {
 func TestSortPlaylistTracks(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("'pj<CR>:sort title desc<CR>")
-	h.contains("Playlists › Morning Mix (title ↓)")
+	h.onPath("Playlists › Morning Mix (title ↓)")
 	h.keys("gg")
 	h.cursorOn("朝霧")
 	h.keys("dd")

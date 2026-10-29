@@ -31,7 +31,7 @@ func (h *harness) cursorOn(want string) {
 func TestArtistsList(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("'a")
-	h.contains(" Artists ", "Aurora Lane", "2 albums", "appears on 1")
+	h.contains(" Artists ", "Aurora Lane")
 	// By sort name: The Quiet Ones under Q; Various Artists is listed.
 	want := []string{
 		"Aurora Lane",
@@ -42,15 +42,8 @@ func TestArtistsList(t *testing.T) {
 		"Zoë Brandt",
 		"森の音",
 	}
-	if got := h.order(want...); strings.Join(got, ",") != strings.Join(want, ",") {
+	if got := orderIn(h.column(1), want...); strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("artists in order %q, want %q", got, want)
-	}
-	for name, count := range map[string]string{"Pell Mell": "appears on 1", "Long Haul Orchestra": "1 album", "Various Artists": "1 album", "The Quiet Ones": "2 albums"} {
-		for _, line := range strings.Split(h.screen(), "\n") {
-			if strings.Contains(line, name) && !strings.Contains(line, count) {
-				t.Errorf("%s row %q lacks %q", name, strings.TrimSpace(line), count)
-			}
-		}
 	}
 	golden.RequireEqual(t, h.screen())
 
@@ -66,7 +59,8 @@ func TestArtistsList(t *testing.T) {
 func TestArtistPageBothGroups(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("'a<CR>")
-	h.contains("Artists › Aurora Lane", "── Appears on ──", "Night Drive Vol. 1")
+	h.onPath("Artists › Aurora Lane")
+	h.contains("── Appears on ──", "Night Drive Vol. 1")
 	if got := h.order(
 		"Blue Hour",
 		"Appears on",
@@ -93,7 +87,7 @@ func TestArtistPageBothGroups(t *testing.T) {
 	h.keys("G")
 	h.cursorOn("Night Drive Vol. 1")
 	h.keys("<CR>")
-	h.contains("Artists › Aurora Lane › Night Drive Vol. 1")
+	h.onPath("Artists › Aurora Lane › Night Drive Vol. 1")
 	h.cursorOn("Neon Coast")
 }
 
@@ -120,7 +114,8 @@ func TestArtistPageVariousArtists(t *testing.T) {
 	h.keys("'a4j")
 	h.cursorOn("Various Artists")
 	h.keys("<CR>")
-	h.contains("Artists › Various Artists", "Night Drive Vol. 1")
+	h.onPath("Artists › Various Artists")
+	h.contains("Night Drive Vol. 1")
 	h.lacks("Appears on")
 	h.keys("<CR>")
 	h.cursorOn("Neon Coast")
@@ -135,26 +130,27 @@ func TestGoToArtistAndAlbum(t *testing.T) {
 	h.keys("gr")
 	h.contains("Go to which artist?", "<CR> choose")
 	h.keys("j<CR>")
-	h.contains("Artists › Zoë Brandt", "── Appears on ──")
+	h.onPath("Artists › Zoë Brandt")
+	h.contains("── Appears on ──")
 	h.cursorOn("Night Drive Vol. 1")
 
 	// gr on an album row goes to its album artist; ga to the album.
 	h.keys("gr")
-	h.contains("Artists › Various Artists")
+	h.onPath("Artists › Various Artists")
 	h.cursorOn("Night Drive Vol. 1")
 	h.keys("ga")
-	h.contains("Albums › Night Drive Vol. 1")
+	h.onPath("Albums › Night Drive Vol. 1")
 	h.cursorOn("Neon Coast")
 
 	// From the queue, ga lands on the track; gr on a one-artist track
 	// goes straight there.
 	h.keys("jjjA'q")
 	h.keys("ga")
-	h.contains("Albums › Night Drive Vol. 1")
+	h.onPath("Albums › Night Drive Vol. 1")
 	h.cursorOn("Blue Highway")
 	h.keys("kgr")
 	h.lacks("Go to which artist?")
-	h.contains("Artists › Pell Mell")
+	h.onPath("Artists › Pell Mell")
 	h.cursorOn("Night Drive Vol. 1")
 
 	// h from there is the Artists list, cursor on the artist.
@@ -163,17 +159,17 @@ func TestGoToArtistAndAlbum(t *testing.T) {
 
 	// <Esc> closes the chooser without going anywhere.
 	h.keys("'b")
-	h.contains("Albums › Night Drive Vol. 1")
+	h.onPath("Albums › Night Drive Vol. 1")
 	h.keys("jgr<Esc>")
 	h.lacks("Go to which artist?")
-	h.contains("Albums › Night Drive Vol. 1")
+	h.onPath("Albums › Night Drive Vol. 1")
 }
 
 // Each section keeps its path and cursor while another is shown.
 func TestSectionsRemember(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("'a<CR>j'b3j'a")
-	h.contains("Artists › Aurora Lane")
+	h.onPath("Artists › Aurora Lane")
 	h.cursorOn("Blue Hour")
 	h.keys("'b")
 	h.cursorOn("Blue Hour") // the album list's own cursor
@@ -189,9 +185,10 @@ func TestSortAndFilterArtistPage(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("'a<CR>") // Aurora Lane: Blue, Blue Hour; appears on Night Drive
 	h.keys(":sort year desc<CR>")
-	h.contains("Artists › Aurora Lane (year ↓)", "sorted by year")
+	h.onPath("Artists › Aurora Lane (year ↓)")
+	h.contains("sorted by year")
 	if got := strings.Join(
-		h.order("Blue Hour", "Blue  ", "Appears on", "Night Drive"),
+		orderIn(h.column(2), "Blue Hour", "Blue  ", "Appears on", "Night Drive"),
 		",",
 	); got != "Blue Hour,Blue  ,Appears on,Night Drive" {
 		t.Errorf("page order %q", got)
@@ -202,7 +199,8 @@ func TestSortAndFilterArtistPage(t *testing.T) {
 
 	// Appears on filtered empty: no heading.
 	h.keys(":filter genre dream<CR>")
-	h.contains("Artists › Aurora Lane (genre dream)", "2 shown", "Blue Hour")
+	h.onPath("Artists › Aurora Lane (genre dream)")
+	h.contains("2 shown", "Blue Hour")
 	h.lacks("Appears on", "Night Drive")
 
 	// Their own albums filtered empty: the heading comes first.
@@ -211,9 +209,9 @@ func TestSortAndFilterArtistPage(t *testing.T) {
 	h.lacks("Blue Hour")
 	h.cursorOn("Night Drive Vol. 1")
 	h.keys("<CR>")
-	h.contains("Artists › Aurora Lane (genre synth) › Night Drive Vol. 1")
+	h.onPath("Artists › Aurora Lane (genre synth) › Night Drive Vol. 1")
 	h.keys("h")
-	h.contains("Artists › Aurora Lane (genre synth)")
+	h.onPath("Artists › Aurora Lane (genre synth)")
 
 	// Nothing left.
 	h.keys(":filter year 1990<CR>")

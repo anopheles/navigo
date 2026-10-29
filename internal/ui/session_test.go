@@ -23,7 +23,7 @@ func TestSortAlbums(t *testing.T) {
 	h.keys("gg")
 	h.cursorOn("Night Drive Vol. 1")
 	h.keys("<CR>") // opens what is shown
-	h.contains("Albums (year ↓) › Night Drive Vol. 1")
+	h.onPath("Albums (year ↓) › Night Drive Vol. 1")
 	h.keys("h:sort<CR>")
 	h.contains("back in the usual order")
 	h.keys("gg")

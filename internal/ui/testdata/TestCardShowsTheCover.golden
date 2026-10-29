@@ -1,14 +1,14 @@
-╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (6) · 12:37 ───────────────────────────╮
-│ • 1 Dusk Signal                       Aurora Lane                2:22││ ▀▘▛▀▘▘▀▘▘▀▘▛  ▶  Low Tide                    │
-│ • 2 Low Tide                          Aurora Lane                3:05││ ▀▘▛▀▛▘▀▘▘▀▘▛  Aurora Lane                    │
-│ • 3 Streetlamp                        Aurora Lane                3:58││ ▀▘▛▀▀▘▀▛▘▀▘▀  Blue Hour                      │
-│ • 4 Blue Hour                         Aurora Lane                0:31││ ▀▘▘▀▘▛▀▘▘▀▘▛  2021 · Dream Pop               │
-│ • 5 Wintering                         Aurora Lane                1:04││ ▀▘▘▀▘▛▀▛▀▀▘▘                                 │
-│ • 6 Afterglow                         Aurora Lane                1:37││ ▀▛▘▀▘▀▀▀▘▀▛▘  next: Streetlamp — Aurora Lane │
-│                                                                      ││──────────────────────────────────────────────│
-│                                                                      ││▎  1 Dusk Signal          Aurora Lane     2:22│
-│                                                                      ││▶  2 Low Tide             Aurora Lane     3:05│
-│                                                                      ││   3 Streetlamp           Aurora Lane     3:58│
+╭ Home ────────────────────────────────────────────────────────────────╮╭ Queue (6) · 12:37 ───────────────────────────╮
+│ Mix                                                                  ││ ▀▘▛▀▘▘▀▘▘▀▘▛  ▶  Low Tide                    │
+│ Recently added                                                       ││ ▀▘▛▀▛▘▀▘▘▀▘▛  Aurora Lane                    │
+│ Most played                                                          ││ ▀▘▛▀▀▘▀▛▘▀▘▀  Blue Hour                      │
+│ Recently played                                                      ││ ▀▘▘▀▘▛▀▘▘▀▘▛  2021 · Dream Pop               │
+│ Played this session                                                  ││ ▀▘▘▀▘▛▀▛▀▀▘▘                                 │
+│ Random albums                                                        ││ ▀▛▘▀▘▀▀▀▘▀▛▘  next: Streetlamp — Aurora Lane │
+│ Forgotten favourites                                                 ││──────────────────────────────────────────────│
+│ Never played                                                         ││▎  1 Dusk Signal          Aurora Lane     2:22│
+│ Starred albums                                                       ││▶  2 Low Tide             Aurora Lane     3:05│
+│ Starred tracks                                                       ││   3 Streetlamp           Aurora Lane     3:58│
 │                                                                      ││   4 Blue Hour            Aurora Lane     0:31│
 │                                                                      ││   5 Wintering            Aurora Lane     1:04│
 │                                                                      ││   6 Afterglow            Aurora Lane     1:37│
@@ -34,7 +34,7 @@
 │                                                                      ││                                              │
 │                                                                      ││                                              │
 ╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
- <CR> play  A add to queue  a play next  V select  h back  gm mix  <Tab> other window  ? keys                           
+ <CR> mix  h back  <Tab> other window  ? keys                                                                           
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━─────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ▶  Low Tide — Aurora Lane · Blue Hour                                               RG track  2/6  0:42 / 3:05 
  playing · 6 tracks in the queue                                                                                        

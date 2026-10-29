@@ -52,8 +52,8 @@ func commands() *command.Registry[*Model] {
 		{Name: "next-group", Label: "next group", Desc: "Go to the start of the next group, such as an artist's Appears on albums.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(1, c.N()); return nil }},
 		{Name: "prev-group", Label: "previous group", Desc: "Go to the start of this group, or of the one before.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(-1, c.N()); return nil }},
 
-		{Name: "open", Label: "open", Desc: "Go into the row under the cursor.", Run: (*Model).open},
-		{Name: "back", Label: "back", Desc: "Go back out to the list you came from.", Run: func(m *Model, _ command.Call) error { m.back(); return nil }},
+		{Name: "open", Label: "open", Desc: "Go into the row under the cursor; in columns, the focus moves one column right.", Run: (*Model).open},
+		{Name: "back", Label: "back", Desc: "Go back out to the list you came from; in columns, one column left.", Run: func(m *Model, _ command.Call) error { m.back(); return nil }},
 		{Name: "go-album", Jump: true, Label: "album", Desc: "Go to the album of the track or album under the cursor.", Run: (*Model).goAlbum},
 		{Name: "go-artist", Jump: true, Label: "artist", Desc: "Go to the artist of the track or album under the cursor.", Run: (*Model).goArtist},
 		{Name: "home", Jump: true, Label: "home", Desc: "Show Home: Mix, then recently added, most and recently played albums, what played this session, random albums, and starred albums and tracks.", Run: func(m *Model, _ command.Call) error { m.showSection(homeList); return nil }},
@@ -205,6 +205,8 @@ func (m *Model) goRow(count, def int) {
 }
 
 func (m *Model) open(c command.Call) error {
+	depth := len(m.lib)
+	defer m.adoptOpened(depth)
 	f := m.top()
 	switch f.kind {
 	case sectionList:

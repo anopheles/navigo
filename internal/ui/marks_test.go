@@ -13,6 +13,15 @@ import (
 // row is the screen's line holding text, library window only.
 func (h *harness) libraryRowWith(text string) string {
 	h.t.Helper()
+	if h.m.inColumns() { // the focused column's rows, under its header
+		rows := strings.Split(h.column(len(h.m.lib)-1), "\n")[1:]
+		for _, l := range rows {
+			if strings.Contains(l, text) {
+				return l
+			}
+		}
+		h.t.Fatalf("no row with %q in the focused column:\n%s", text, h.screen())
+	}
 	for _, l := range strings.Split(h.screen(), "\n") {
 		lib, _, _ := strings.Cut(l, "││")
 		if strings.Contains(lib, text) {

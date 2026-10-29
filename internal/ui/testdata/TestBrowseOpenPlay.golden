@@ -1,39 +1,39 @@
-╭ Albums ──────────────────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
-│ Ångström Days                          Zoë Brandt                2020││                                              │
-│ Blue                                   Aurora Lane               2019││ The queue is empty.                          │
-│ Blue                                   The Quiet Ones            2015││                                              │
-│ ★ Blue Hour                            Aurora Lane               2021││ Find something to play:                      │
-│ The Long Haul                          Long Haul Orchestra       2022││   'b albums   j/k move                       │
-│ Night Drive Vol. 1                     Various Artists           2023││   <CR> open   h back                         │
-│ Static Bloom                           The Quiet Ones            2018││                                              │
-│ 夜明け                                 森の音                    2017││ On a track:                                  │
-│                                                                      ││   <CR> play it   A add to queue              │
-│                                                                      ││                                              │
-│                                                                      ││ Or let navigo pick:                          │
-│                                                                      ││   gm mix from the whole library              │
-│                                                                      ││                                              │
-│                                                                      ││   :q quit                                    │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-│                                                                      ││                                              │
-╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
+╭ Albums   <Tab> queue ────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Albums                                             │ Ångström Days                                                   │
+│ Ångström Days                Zoë Brandt        2020│   1 Ångström                        Zoë Brandt              2:22│
+│ Blue                         Aurora Lane       2019│   2 Café Nocturne                   Zoë Brandt              3:05│
+│ Blue                         The Quiet Ones    2015│   3 Über Alles Still                Zoë Brandt              3:58│
+│ ★ Blue Hour                  Aurora Lane       2021│   4 Ça Va                           Zoë Brandt              0:31│
+│ The Long Haul                Long Haul Orche…  2022│                                                                 │
+│ Night Drive Vol. 1           Various Artists   2023│                                                                 │
+│ Static Bloom                 The Quiet Ones    2018│                                                                 │
+│ 夜明け                       森の音            2017│                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+│                                                    │                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
  <CR> open  h back  gm mix  <Tab> other window  ? keys                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                        RG track  0 in queue 

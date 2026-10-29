@@ -49,6 +49,7 @@ func (m *Model) showSection(kind listKind) {
 	m.stash()
 	if p, ok := m.paths[kind]; ok {
 		m.lib = slices.Clone(p)
+		m.adoptColumnViews()
 		return
 	}
 	m.lib = sectionPath(kind)
@@ -67,6 +68,7 @@ func (m *Model) goTo(path ...frame) {
 	m.stash()
 	m.focus = libraryWindow
 	m.lib = append([]frame{sectionPath(path[0].kind)[0]}, path...)
+	m.adoptColumnViews()
 	m.clamp()
 }
 

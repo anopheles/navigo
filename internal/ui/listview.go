@@ -106,12 +106,13 @@ func trackFacts(t library.Track) facts {
 // sortFields are the fields :sort takes on each kind of list, the first
 // being what the field is called. Starred tracks adds starred first.
 var sortFields = map[listKind][]string{
-	albumList:    {"name", "artist", "year", "plays", "tracks", "length", "genre"},
-	artistPage:   {"name", "artist", "year", "plays", "tracks", "length", "genre"},
-	artistList:   {"name", "albums"},
-	playlistList: {"name", "tracks", "length"},
-	albumTracks:  {"number", "title", "artist", "year", "plays", "length", "genre"},
-	homeTracks:   {"title", "artist", "year", "plays", "length", "genre"},
+	albumList:      {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	artistPage:     {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	artistList:     {"name", "albums"},
+	playlistList:   {"name", "tracks", "length"},
+	albumTracks:    {"number", "title", "artist", "year", "plays", "length", "genre"},
+	homeTracks:     {"title", "artist", "year", "plays", "length", "genre"},
+	playlistTracks: {"title", "artist", "year", "plays", "length", "genre"},
 }
 
 func fieldsFor(f *frame) []string {
@@ -243,6 +244,22 @@ func (m *Model) playlistsOf(f *frame) []library.Playlist {
 	return f.view.playlists
 }
 
+// playlistTracksOf is the tracks a playlist shows, sorted and filtered.
+// The playlist on the server keeps its order.
+func (m *Model) playlistTracksOf(f *frame) []library.Track {
+	if m.state.Library == nil {
+		return nil
+	}
+	base := m.state.Library.PlaylistTracks(f.playlist)
+	if !f.view.active() {
+		return base
+	}
+	if k := m.viewKey(f); f.view.key != k || f.view.tracks == nil {
+		f.view.key, f.view.tracks = k, apply(f.view, base, trackFacts)
+	}
+	return f.view.tracks
+}
+
 // tracksOf is the tracks an album shows, sorted and filtered.
 func (m *Model) tracksOf(f *frame) []library.Track {
 	if m.state.Library == nil {
@@ -259,7 +276,7 @@ func (m *Model) tracksOf(f *frame) []library.Track {
 }
 
 var errNotSortable = errors.New(
-	"only Albums, Artists, an artist's albums, Playlists, Home's lists and an album's tracks can be sorted and filtered",
+	"only Albums, Artists, an artist's albums, Playlists, Home's lists and album and playlist tracks can be sorted and filtered",
 )
 
 // viewFrame is the list :sort and :filter work on.

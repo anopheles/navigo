@@ -1061,7 +1061,7 @@ func (m *Model) rows(f *frame) int {
 	case f.kind == playlistList:
 		return len(m.playlistsOf(f))
 	case f.kind == playlistTracks:
-		return len(lib.PlaylistTracks(f.playlist))
+		return len(m.playlistTracksOf(f))
 	case f.kind == searchList && f.search != nil:
 		return len(f.search.rows)
 	}
@@ -1086,7 +1086,6 @@ func (m *Model) cursorIDs() []string {
 
 // rowID is the ID of what row i of a list shows, or "".
 func (m *Model) rowID(f *frame, i int) string {
-	lib := m.state.Library
 	switch f.kind {
 	case homeList:
 		return m.homeRows()[i].kind
@@ -1106,7 +1105,7 @@ func (m *Model) rowID(f *frame, i int) string {
 	case playlistList:
 		return string(m.playlistsOf(f)[i].ID)
 	case playlistTracks:
-		return string(lib.PlaylistTracks(f.playlist)[i].ID)
+		return string(m.playlistTracksOf(f)[i].ID)
 	case searchList:
 		return f.search.rowID(i)
 	case helpList:

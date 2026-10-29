@@ -282,7 +282,6 @@ func (m *Model) emptyList() string {
 }
 
 func (m *Model) libraryRow(f *frame, i, w int) string {
-	lib := m.state.Library
 	switch f.kind {
 	case sectionList:
 		return fit(" "+sections[i].title, w)
@@ -305,7 +304,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 		n := count(len(p.Tracks))
 		return " " + fit(p.Name, w-2-len(n)-2) + "  " + n + " "
 	case playlistTracks:
-		ts := lib.PlaylistTracks(f.playlist)
+		ts := m.playlistTracksOf(f)
 		return m.trackLine("  ", fmt.Sprint(i+1), ts[i], w)
 	case homeTracks:
 		return m.trackLine("  ", fmt.Sprint(i+1), m.homeTracksOf(f)[i], w)

@@ -21,7 +21,23 @@ func (m *Model) shownPlaylist() (library.Playlist, bool) {
 	return m.state.Library.Playlist(m.top().playlist)
 }
 
+// editable refuses an edit by position while the playlist's rows are
+// sorted or filtered, since they aren't in the playlist's order.
+func (m *Model) editable() error {
+	switch v := m.top().view; {
+	case v.sortBy != "":
+		return errors.New("sorted view · :sort alone to edit the playlist")
+	case v.filtered():
+		return errors.New("filtered view · :filter alone to edit the playlist")
+	}
+	return nil
+}
+
 func (m *Model) removeFromPlaylist(c command.Call) error {
+	if err := m.editable(); err != nil {
+		m.endVisual()
+		return err
+	}
 	from, to := m.opRange(c)
 	m.endVisual()
 	p, ok := m.shownPlaylist()
@@ -39,6 +55,9 @@ func (m *Model) removeFromPlaylist(c command.Call) error {
 }
 
 func (m *Model) pasteInPlaylist(c command.Call, after bool) error {
+	if err := m.editable(); err != nil {
+		return err
+	}
 	p, ok := m.shownPlaylist()
 	if !ok {
 		return nil
@@ -61,6 +80,9 @@ func (m *Model) pasteInPlaylist(c command.Call, after bool) error {
 }
 
 func (m *Model) moveInPlaylist(c command.Call, down bool) error {
+	if err := m.editable(); err != nil {
+		return err
+	}
 	p, ok := m.shownPlaylist()
 	if !ok {
 		return nil

@@ -279,7 +279,7 @@ func (m *Model) trackRow() ([]library.Track, int, error) {
 	case f.kind == homeTracks:
 		ts = m.homeTracksOf(f)
 	default:
-		ts = lib.PlaylistTracks(f.playlist)
+		ts = m.playlistTracksOf(f)
 	}
 	if f.cur >= len(ts) {
 		return nil, 0, errNoRows

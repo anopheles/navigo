@@ -59,7 +59,7 @@ func (m *Model) rowItem(f *frame, i int) (item, bool) {
 		a := m.artistsOf(f)[i]
 		return item{library.ArtistGroup, string(a.ID), a.Name}, true
 	case artistPage:
-		if a, ok := m.artistRows(f.artist).album(i); ok {
+		if a, ok := m.artistRows(f).album(i); ok {
 			return album(a)
 		}
 	case albumList:

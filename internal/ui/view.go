@@ -289,7 +289,7 @@ func (m *Model) libraryRow(f *frame, i, w int) string {
 	case artistList:
 		return m.artistLine(m.artistsOf(f)[i], w)
 	case artistPage:
-		rows := m.artistRows(f.artist)
+		rows := m.artistRows(f)
 		if a, ok := rows.album(i); ok {
 			return m.albumLine(a, w)
 		}

@@ -21,10 +21,11 @@ type listView struct {
 	genre            string
 	yearFrom, yearTo int // 0, 0: no year filter
 
-	key     string
-	albums  []library.Album
-	artists []library.Artist
-	tracks  []library.Track
+	key       string
+	albums    []library.Album // on an artist page, their own
+	appearsOn []library.Album
+	artists   []library.Artist
+	tracks    []library.Track
 }
 
 func (v listView) active() bool { return v.sortBy != "" || v.genre != "" || v.yearFrom != 0 }
@@ -92,6 +93,7 @@ func trackFacts(t library.Track) facts {
 // being what the field is called. Starred tracks adds starred first.
 var sortFields = map[listKind][]string{
 	albumList:   {"name", "artist", "year", "plays", "tracks", "length", "genre"},
+	artistPage:  {"name", "artist", "year", "plays", "tracks", "length", "genre"},
 	artistList:  {"name", "albums"},
 	albumTracks: {"number", "title", "artist", "year", "plays", "length", "genre"},
 	homeTracks:  {"title", "artist", "year", "plays", "length", "genre"},
@@ -227,7 +229,7 @@ func (m *Model) tracksOf(f *frame) []library.Track {
 }
 
 var errNotSortable = errors.New(
-	"only Albums, Artists, Home's lists and an album's tracks can be sorted and filtered",
+	"only Albums, Artists, an artist's albums, Home's lists and an album's tracks can be sorted and filtered",
 )
 
 // viewFrame is the list :sort and :filter work on.
@@ -247,7 +249,7 @@ func (m *Model) changeView(f *frame, change func(*listView)) {
 	}
 	v := f.view
 	change(&v)
-	v.key, v.albums, v.artists, v.tracks = "", nil, nil, nil
+	v.key, v.albums, v.appearsOn, v.artists, v.tracks = "", nil, nil, nil, nil
 	f.view = v
 	f.cur, f.offset = 0, 0
 	for i := range m.rows(f) {
@@ -256,6 +258,16 @@ func (m *Model) changeView(f *frame, change func(*listView)) {
 			break
 		}
 	}
+	m.settle(f, 1)
+}
+
+// items is the number of items a list shows, not counting headings.
+func (m *Model) items(f *frame) int {
+	if f.kind == artistPage {
+		r := m.artistRows(f)
+		return len(r.own) + len(r.appearsOn)
+	}
+	return m.rows(f)
 }
 
 // sortList is :sort [field [desc]]; alone it puts the order back.
@@ -316,7 +328,7 @@ func (m *Model) filterList(c command.Call) error {
 	default:
 		return fmt.Errorf("filter: %q isn't a filter; use genre or year", c.Args[0])
 	}
-	m.setMsg(fmt.Sprintf("%d shown · :filter alone shows all", m.rows(f)), false)
+	m.setMsg(fmt.Sprintf("%d shown · :filter alone shows all", m.items(f)), false)
 	return nil
 }
 

@@ -1053,7 +1053,7 @@ func (m *Model) rows(f *frame) int {
 	case f.kind == artistList:
 		return len(m.artistsOf(f))
 	case f.kind == artistPage:
-		return m.artistRows(f.artist).len()
+		return m.artistRows(f).len()
 	case f.kind == albumList:
 		return len(m.albumsOf(f))
 	case f.kind == albumTracks:
@@ -1097,7 +1097,7 @@ func (m *Model) rowID(f *frame, i int) string {
 	case artistList:
 		return string(m.artistsOf(f)[i].ID)
 	case artistPage:
-		a, _ := m.artistRows(f.artist).album(i)
+		a, _ := m.artistRows(f).album(i)
 		return string(a.ID)
 	case albumList:
 		return string(m.albumsOf(f)[i].ID)

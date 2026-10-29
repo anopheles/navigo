@@ -69,7 +69,9 @@ func TestSortTracksAndArtists(t *testing.T) {
 
 	// Not every list sorts.
 	h.keys("<Tab>:sort title<CR>")
-	h.contains("only Albums, Artists, Home's lists and an album's tracks can be sorted")
+	h.contains(
+		"only Albums, Artists, an artist's albums, Home's lists and an album's tracks can be sorted",
+	)
 }
 
 func TestHintsCommand(t *testing.T) {

@@ -404,6 +404,10 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.MouseMsg:
 		return m, m.mouse(msg)
 	case tea.KeyPressMsg:
+		if msg.String() == "f2" { // PROTOTYPE
+			protoColNext()
+			return m, nil
+		}
 		m.seq++
 		m.prefixShown = false
 		if m.screen == screenLogin {

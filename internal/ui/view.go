@@ -68,7 +68,9 @@ func (m *Model) render() string {
 	h := m.bodyHeight()
 	var lines []string
 	m.paneAt = [2]paneHit{}
-	if m.w < narrow {
+	if body, ok := m.protoBody(h); ok { // PROTOTYPE
+		lines = body
+	} else if m.w < narrow {
 		m.paneAt[m.focus] = paneHit{0, m.w}
 		if m.focus == libraryWindow {
 			title := m.libTitle() + "   " + m.keyHint("window", "queue")
@@ -101,7 +103,7 @@ func (m *Model) render() string {
 		}
 	}
 	if m.hints {
-		lines = append(lines, fit(m.hintLine(), m.w))
+		lines = append(lines, fit(protoColLabel()+m.hintLine(), m.w)) // PROTOTYPE
 	}
 	m.bar = barHit{}
 	m.npRows[0] = len(lines)

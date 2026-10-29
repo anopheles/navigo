@@ -1,4 +1,4 @@
-.PHONY: help build install run test update-golden vet fmt gate e2e e2e-live \
+.PHONY: prototype-columns help build install run test update-golden vet fmt gate e2e e2e-live \
 	fixtures-up fixtures-record fixtures-down demo
 
 help:
@@ -59,3 +59,6 @@ fixtures-down:
 
 demo:
 	tools/demo/demo.sh
+
+prototype-columns:
+	tools/prototype-columns.sh

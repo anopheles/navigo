@@ -223,6 +223,6 @@ func TestSortAndFilterSearch(t *testing.T) {
 	h.contains("── Artists · 1 ──")
 	h.keys(":sort bogus<CR>")
 	h.contains(
-		`sort: "bogus" isn't a field here; try name, artist, year, plays, tracks, albums, length, genre`,
+		`sort: "bogus" isn't a field here; try name, artist, album, year, plays, tracks, albums, length, genre`,
 	)
 }

@@ -95,7 +95,7 @@ func (m *Model) chosenItems() []item {
 			from, to = m.selection()
 		}
 		var out []item
-		for _, q := range m.state.Queue[from:min(to, len(m.state.Queue))] {
+		for _, q := range m.queueEntries(from, to) {
 			out = append(out, item{library.TrackGroup, string(q.Track.ID), q.Track.Title})
 		}
 		return out

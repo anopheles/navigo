@@ -13,7 +13,7 @@ func (m *Model) view() (cur, off *int, n int) { return m.viewOf(m.focus) }
 // viewOf is view for either window.
 func (m *Model) viewOf(win window) (cur, off *int, n int) {
 	if win == queueWindow {
-		return &m.queueCur, &m.queueOff, len(m.state.Queue)
+		return &m.queueCur, &m.queueOff, m.queueLen()
 	}
 	f := m.top()
 	return &f.cur, &f.offset, m.rows(f)
@@ -123,7 +123,7 @@ func (m *Model) goPlaying(command.Call) error {
 		return errors.New("nothing in the queue plays")
 	}
 	m.focus = queueWindow
-	m.queueCur = row
+	m.queueCur = m.shownRow(row)
 	return nil
 }
 

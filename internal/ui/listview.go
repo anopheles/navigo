@@ -58,7 +58,8 @@ func (v listView) describe() string {
 
 // facts are what sorting and filtering look at in an item.
 type facts struct {
-	name, artist, genre    string
+	name, artist, album    string
+	genre                  string
 	year, plays, n, number int
 	length                 time.Duration
 	starred                time.Time
@@ -95,6 +96,7 @@ func trackFacts(t library.Track) facts {
 	return facts{
 		name:   t.Title,
 		artist: t.Artist,
+		album:  t.Album,
 		genre:  t.Genre,
 		year:   t.Year,
 		plays:  t.PlayCount,
@@ -111,8 +113,8 @@ var sortFields = map[listKind][]string{
 	artistList:     {"name", "albums"},
 	playlistList:   {"name", "tracks", "length"},
 	albumTracks:    {"number", "title", "artist", "year", "plays", "length", "genre"},
-	homeTracks:     {"title", "artist", "year", "plays", "length", "genre"},
-	playlistTracks: {"title", "artist", "year", "plays", "length", "genre"},
+	homeTracks:     {"title", "artist", "album", "year", "plays", "length", "genre"},
+	playlistTracks: {"title", "artist", "album", "year", "plays", "length", "genre"},
 }
 
 func fieldsFor(f *frame) []string {
@@ -122,7 +124,17 @@ func fieldsFor(f *frame) []string {
 	case f.kind == homeTracks && f.homeKind == starredTracks:
 		return append([]string{"starred"}, sortFields[homeTracks]...)
 	case f.kind == searchList:
-		return []string{"name", "artist", "year", "plays", "tracks", "albums", "length", "genre"}
+		return []string{
+			"name",
+			"artist",
+			"album",
+			"year",
+			"plays",
+			"tracks",
+			"albums",
+			"length",
+			"genre",
+		}
 	}
 	return sortFields[f.kind]
 }
@@ -133,6 +145,8 @@ func compareBy(field string, a, b facts) int {
 		return cmp.Compare(strings.ToLower(a.name), strings.ToLower(b.name))
 	case "artist":
 		return cmp.Compare(strings.ToLower(a.artist), strings.ToLower(b.artist))
+	case "album":
+		return cmp.Compare(strings.ToLower(a.album), strings.ToLower(b.album))
 	case "genre":
 		return cmp.Compare(strings.ToLower(a.genre), strings.ToLower(b.genre))
 	case "year":
@@ -278,7 +292,7 @@ func (m *Model) tracksOf(f *frame) []library.Track {
 }
 
 var errNotSortable = errors.New(
-	"the queue, Help and the menus can't be sorted or filtered",
+	"only lists of music can be sorted and filtered, not Help or the menus",
 )
 
 // viewFrame is the list :sort and :filter work on.
@@ -329,6 +343,9 @@ func (m *Model) items(f *frame) int {
 
 // sortList is :sort [field [desc]]; alone it puts the order back.
 func (m *Model) sortList(c command.Call) error {
+	if m.focus == queueWindow {
+		return m.sortQueue(c)
+	}
 	f, err := m.viewFrame()
 	if err != nil {
 		return err
@@ -357,38 +374,53 @@ func (m *Model) sortList(c command.Call) error {
 // filterList is :filter genre <text> or :filter year <year>[-<year>];
 // alone it clears the filter.
 func (m *Model) filterList(c command.Call) error {
+	if m.focus == queueWindow {
+		return m.filterQueue(c)
+	}
 	f, err := m.viewFrame()
 	if err != nil {
 		return err
 	}
-	if len(c.Args) == 0 {
-		m.changeView(f, func(v *listView) { v.genre, v.yearFrom, v.yearTo = "", 0, 0 })
+	if len(c.Args) > 0 && f.kind == artistList {
+		return errors.New("filter: artists have no genre or year; filter Albums instead")
+	}
+	if len(c.Args) > 0 && f.kind == playlistList {
+		return errors.New("filter: playlists have no genre or year; open one to filter its tracks")
+	}
+	v := f.view
+	if err := setFilter(&v, c.Args); err != nil {
+		return err
+	}
+	m.changeView(f, func(w *listView) { *w = v })
+	if !v.filtered() {
 		m.setMsg("filter cleared", false)
 		return nil
 	}
-	if f.kind == artistList {
-		return errors.New("filter: artists have no genre or year; filter Albums instead")
+	m.setMsg(fmt.Sprintf("%d shown · :filter alone shows all", m.items(f)), false)
+	return nil
+}
+
+// setFilter sets v's filter from :filter's words; none clears it.
+func setFilter(v *listView, args []string) error {
+	if len(args) == 0 {
+		v.genre, v.yearFrom, v.yearTo = "", 0, 0
+		return nil
 	}
-	if f.kind == playlistList {
-		return errors.New("filter: playlists have no genre or year; open one to filter its tracks")
-	}
-	if len(c.Args) < 2 {
+	if len(args) < 2 {
 		return errors.New("filter: give genre <text> or year <year>, such as filter year 1990-1999")
 	}
-	switch strings.ToLower(c.Args[0]) {
+	switch strings.ToLower(args[0]) {
 	case "genre":
-		g := strings.Join(c.Args[1:], " ")
-		m.changeView(f, func(v *listView) { v.genre = g })
+		v.genre = strings.Join(args[1:], " ")
 	case "year":
-		from, to, err := years(c.Args[1])
+		from, to, err := years(args[1])
 		if err != nil {
 			return err
 		}
-		m.changeView(f, func(v *listView) { v.yearFrom, v.yearTo = from, to })
+		v.yearFrom, v.yearTo = from, to
 	default:
-		return fmt.Errorf("filter: %q isn't a filter; use genre or year", c.Args[0])
+		return fmt.Errorf("filter: %q isn't a filter; use genre or year", args[0])
 	}
-	m.setMsg(fmt.Sprintf("%d shown · :filter alone shows all", m.items(f)), false)
 	return nil
 }
 
@@ -407,6 +439,11 @@ func years(s string) (int, int, error) {
 }
 
 // viewWords are what :sort and :filter complete.
-func (m *Model) sortWords() []string { return fieldsFor(m.top()) }
+func (m *Model) sortWords() []string {
+	if m.focus == queueWindow {
+		return queueFields
+	}
+	return fieldsFor(m.top())
+}
 
 func (m *Model) filterWords() []string { return []string{"genre ", "year "} }

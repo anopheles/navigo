@@ -89,7 +89,7 @@ var searchFields = [4][]string{
 	library.ArtistGroup:   {"name", "albums"},
 	library.AlbumGroup:    {"name", "artist", "year", "plays", "tracks", "length", "genre"},
 	library.PlaylistGroup: {"name", "tracks", "length"},
-	library.TrackGroup:    {"name", "artist", "year", "plays", "length", "genre"},
+	library.TrackGroup:    {"name", "artist", "album", "year", "plays", "length", "genre"},
 }
 
 func (v *searchView) layout() {

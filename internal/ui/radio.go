@@ -40,8 +40,8 @@ func (m *Model) steerRadio(more bool) error {
 }
 
 func (m *Model) steerTarget() (library.Track, bool) {
-	if m.focus == queueWindow && m.queueCur < len(m.state.Queue) {
-		return m.state.Queue[m.queueCur].Track, true
+	if e, ok := m.queueEntry(m.queueCur); ok && m.focus == queueWindow {
+		return e.Track, true
 	}
 	t, _, ok := m.state.NowPlaying()
 	return t, ok

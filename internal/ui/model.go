@@ -174,7 +174,11 @@ type Model struct {
 	lib      []frame
 	paths    map[listKind][]frame // where each section was left
 	queueCur int
-	queueOff int
+	// queueView is the queue window's :filter, and queueShown the rows
+	// it shows.
+	queueView  listView
+	queueShown shownRows
+	queueOff   int
 
 	mode     keymap.Mode
 	engine   *keymap.Engine
@@ -1142,7 +1146,7 @@ func (m *Model) clamp() {
 		f.cur = min(f.cur, max(m.rows(f)-1, 0))
 		m.settle(f, 1)
 	}
-	m.queueCur = min(m.queueCur, max(len(m.state.Queue)-1, 0))
+	m.queueCur = min(m.queueCur, max(m.queueLen()-1, 0))
 }
 
 // bodyHeight is the number of rows inside each window.

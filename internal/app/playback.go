@@ -30,7 +30,13 @@ type (
 	}
 	// Shuffle reorders the queue at random from Seed (ADR 0004): the
 	// current entry first, the rest after it.
-	Shuffle     struct{ Seed uint64 }
+	Shuffle struct{ Seed uint64 }
+	// SortQueue sorts the queue by Cmp, stably, the current entry first
+	// as Shuffle keeps it. By names the field for the notice.
+	SortQueue struct {
+		By  string
+		Cmp func(a, b library.Track) int
+	}
 	CycleRepeat struct{}
 )
 
@@ -39,6 +45,7 @@ type SetVolume struct{ Percent int }
 
 func (ChangeVolume) isEvent() {}
 func (Shuffle) isEvent()      {}
+func (SortQueue) isEvent()    {}
 func (CycleRepeat) isEvent()  {}
 func (SetVolume) isEffect()   {}
 
@@ -59,13 +66,7 @@ func (s State) applyPlayback(e Event) (State, []Effect) {
 		if len(s.Queue) < 2 {
 			return s, []Effect{Notice{Text: "nothing to shuffle"}}
 		}
-		q := slices.Clone(s.Queue)
-		start := 0
-		if s.Current >= 0 && s.Current < len(q) {
-			cur := q[s.Current]
-			q = append([]QueueEntry{cur}, slices.Delete(q, s.Current, s.Current+1)...)
-			start = 1
-		}
+		q, start := s.currentFirst()
 		r := rand.New(rand.NewPCG(e.Seed, e.Seed^0x9e3779b97f4a7c15))
 		rest := q[start:]
 		r.Shuffle(len(rest), func(i, j int) { rest[i], rest[j] = rest[j], rest[i] })
@@ -75,11 +76,37 @@ func (s State) applyPlayback(e Event) (State, []Effect) {
 			Notice{Text: "queue shuffled", Command: "undo", Hint: "undoes"},
 		)
 
+	case SortQueue:
+		if len(s.Queue) < 2 {
+			return s, []Effect{Notice{Text: "nothing to sort"}}
+		}
+		q, start := s.currentFirst()
+		slices.SortStableFunc(
+			q[start:],
+			func(a, b QueueEntry) int { return e.Cmp(a.Track, b.Track) },
+		)
+		s = s.editRows(q, -1)
+		return s, append(
+			s.neighbours(),
+			Notice{Text: "queue sorted by " + e.By, Command: "undo", Hint: "undoes"},
+		)
+
 	case CycleRepeat:
 		s.Repeat = (s.Repeat + 1) % 3
 		return s, append(s.neighbours(), Notice{Text: "repeat " + s.Repeat.String()})
 	}
 	return s, nil
+}
+
+// currentFirst is a copy of the queue with the current entry moved to
+// the top, and the first row after it.
+func (s State) currentFirst() ([]QueueEntry, int) {
+	q := slices.Clone(s.Queue)
+	if s.Current < 0 || s.Current >= len(q) {
+		return q, 0
+	}
+	cur := q[s.Current]
+	return append([]QueueEntry{cur}, slices.Delete(q, s.Current, s.Current+1)...), 1
 }
 
 // nextRow is the queue row that plays after row i, or -1: the next one,

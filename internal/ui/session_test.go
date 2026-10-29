@@ -68,10 +68,8 @@ func TestSortTracksAndArtists(t *testing.T) {
 	h.contains("artists have no genre or year")
 
 	// Not every list sorts.
-	h.keys("<Tab>:sort title<CR>")
-	h.contains(
-		"the queue, Help and the menus can't be sorted or filtered",
-	)
+	h.keys("'b'bh:sort title<CR>") // the Library menu
+	h.contains("only lists of music can be sorted and filtered, not Help or the menus")
 }
 
 func TestHintsCommand(t *testing.T) {

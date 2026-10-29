@@ -122,7 +122,8 @@ func (m *Model) rowSkipped(i int) bool {
 // rowText is what row i of the focused list shows, without styles.
 func (m *Model) rowText(i int) string {
 	if m.focus == queueWindow {
-		return m.state.Queue[i].Track.Title + " " + m.state.Queue[i].Track.Artist
+		e, _ := m.queueEntry(i)
+		return e.Track.Title + " " + e.Track.Artist
 	}
 	return ansi.Strip(m.libraryRow(m.top(), i, 300))
 }

@@ -245,10 +245,8 @@ var errNotOnAlbum = errors.New("not on a track or an album")
 // rowTrack is the track under the cursor, in the queue or an album.
 func (m *Model) rowTrack() (library.Track, bool) {
 	if m.focus == queueWindow {
-		if m.queueCur < len(m.state.Queue) {
-			return m.state.Queue[m.queueCur].Track, true
-		}
-		return library.Track{}, false
+		e, ok := m.queueEntry(m.queueCur)
+		return e.Track, ok
 	}
 	ts, i, err := m.trackRow()
 	if err != nil {

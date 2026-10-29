@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -304,5 +305,31 @@ func TestUpNext(t *testing.T) {
 	s, _ = run(s, CycleRepeat{})
 	if _, ok := s.UpNext(); ok {
 		t.Error("something is up next under repeat one")
+	}
+}
+
+func TestSortQueueAndUndo(t *testing.T) {
+	s := playing4(t) // entry 2 plays
+	desc := func(a, b library.Track) int { return strings.Compare(b.Title, a.Title) }
+	s, out := run(s, SortQueue{By: "title", Cmp: desc})
+	if !sameIDs(ids(s), 2, 4, 3, 1) || s.Current != 0 {
+		t.Fatalf(
+			"queue %v current %d: want the playing entry first, then the rest sorted",
+			ids(s),
+			s.Current,
+		)
+	}
+	if n := only[Notice](out); n[0].Text != "queue sorted by title" || n[0].Command != "undo" {
+		t.Errorf("notice = %#v", n)
+	}
+	s, _ = run(s, Undo{})
+	if !sameIDs(ids(s), 1, 2, 3, 4) || s.Current != 1 {
+		t.Errorf("after undo: %v current %d", ids(s), s.Current)
+	}
+	if _, out = run(
+		New(),
+		SortQueue{By: "title", Cmp: desc},
+	); only[Notice](out)[0].Text != "nothing to sort" {
+		t.Error("sorting an empty queue")
 	}
 }

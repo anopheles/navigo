@@ -188,8 +188,8 @@ func (m *Model) peekTracks() (tracks []library.Track, artists int, err error) {
 	case m.visual != nil:
 		tracks, artists = m.rangeTracks(m.selection())
 	case m.focus == queueWindow:
-		if m.queueCur < len(m.state.Queue) {
-			tracks = []library.Track{m.state.Queue[m.queueCur].Track}
+		if e, ok := m.queueEntry(m.queueCur); ok {
+			tracks = []library.Track{e.Track}
 		}
 	default:
 		f := m.top()

@@ -80,7 +80,10 @@ func commands() *command.Registry[*Model] {
 		{Name: "play-now", Label: "play", Desc: "Replace the queue with this list and play from the track under the cursor.", Run: (*Model).playNow},
 		{Name: "add-end", Label: "add to queue", Desc: "Add the track under the cursor to the end of the queue.", Run: func(m *Model, c command.Call) error { return m.add(c, false) }},
 		{Name: "add-next", Label: "play next", Desc: "Add the track under the cursor after the current track.", Run: func(m *Model, c command.Call) error { return m.add(c, true) }},
-		{Name: "play-row", Label: "play", Desc: "Play the queue row under the cursor.", Run: func(m *Model, _ command.Call) error { m.event(app.PlayRow{Index: m.queueCur}); return nil }},
+		{Name: "play-row", Label: "play", Desc: "Play the queue row under the cursor.", Run: func(m *Model, _ command.Call) error {
+			m.event(app.PlayRow{Index: m.queueIndex(m.queueCur)})
+			return nil
+		}},
 		{Name: "play-pause", Label: "play/pause", Desc: "Pause or resume playback, or start the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.PlayPause{}); return nil }},
 		{Name: "next-track", Label: "next track", Desc: "Play the next track in the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.NextTrack{}); return nil }},
 		{Name: "prev-track", Label: "previous track", Desc: "Play the previous track, or restart this one after 3 seconds.", Run: func(m *Model, _ command.Call) error { m.event(app.PrevTrack{}); return nil }},
@@ -118,8 +121,8 @@ func commands() *command.Registry[*Model] {
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
 		{Name: "popup-filter", Label: "filter", Desc: "Filter the playlist popup's rows as you type.", Run: func(m *Model, _ command.Call) error { return m.startPickFilter() }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
-		{Name: "sort", Args: anyArgs, Label: "sort", Desc: "Sort this list by a field, such as sort year desc; alone, put the order back.", Run: (*Model).sortList, Complete: (*Model).sortWords},
-		{Name: "filter", Args: anyArgs, Label: "filter", Desc: "Show only rows of a genre or years: filter genre rock, filter year 1990-1999; alone, show all.", Run: (*Model).filterList, Complete: (*Model).filterWords},
+		{Name: "sort", Args: anyArgs, Label: "sort", Desc: "Sort this list by a field, such as sort year desc; alone, put the order back. In the queue it reorders the queue (u undoes it).", Run: (*Model).sortList, Complete: (*Model).sortWords},
+		{Name: "filter", Args: anyArgs, Label: "filter", Desc: "Show only rows of a genre or years: filter genre rock, filter year 1990-1999; alone, show all. In the queue it only hides rows.", Run: (*Model).filterList, Complete: (*Model).filterWords},
 		{Name: "hints", Args: onOff, Label: "hint line", Desc: "Turn the hint line on or off for this session: hints off.", Run: (*Model).setHints},
 		{Name: "logout", Label: "log out", Desc: "Forget the saved password and go back to the login form.", Run: (*Model).logout},
 		{Name: "nop", Label: "nothing", Desc: "Do nothing: bind it to make a dead key.", Run: func(*Model, command.Call) error { return nil }},
@@ -160,7 +163,7 @@ func (m *Model) move(d int) {
 		return
 	}
 	if m.focus == queueWindow {
-		m.queueCur = min(max(m.queueCur+d, 0), max(len(m.state.Queue)-1, 0))
+		m.queueCur = min(max(m.queueCur+d, 0), max(m.queueLen()-1, 0))
 		return
 	}
 	f := m.top()
@@ -180,7 +183,7 @@ func (m *Model) goRow(count, def int) {
 	}
 	n := m.rows(m.top())
 	if m.focus == queueWindow {
-		n = len(m.state.Queue)
+		n = m.queueLen()
 	}
 	row := def
 	if count > 0 {

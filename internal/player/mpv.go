@@ -37,6 +37,9 @@ type MPVOptions struct {
 	// StreamURL signs a stream URL for a track, with a fresh salt each
 	// call. It is called whenever an entry is loaded into mpv.
 	StreamURL func(library.TrackID) string
+	// CoverPath finds the image file of a cover, or "" if there is none yet.
+	// It is called whenever an entry is loaded into mpv; nil means no covers.
+	CoverPath func(coverID string) string
 	// ReplayGain is the mode and preamp mpv starts with; the zero value
 	// leaves mpv's own.
 	ReplayGain ReplayGain
@@ -365,8 +368,18 @@ func (m *MPV) load(
 	return m.loadAt(ctx, p, e, flags, index, 0)
 }
 
+// coverPath is the image file of a cover, or "" for none.
+func (m *MPV) coverPath(id string) string {
+	if id == "" || m.opts.CoverPath == nil {
+		return ""
+	}
+	return m.opts.CoverPath(id)
+}
+
 // loadAt is load starting at a position. Each file also gets its title
-// (force-media-title) for mpv's Now Playing on macOS and SMTC on Windows.
+// (force-media-title) and cover (cover-art-files) for mpv's Now Playing on
+// macOS and SMTC on Windows; only an external image reaches those, not art
+// embedded in the stream.
 func (m *MPV) loadAt(
 	ctx context.Context,
 	p *mpv.Process,
@@ -386,6 +399,9 @@ func (m *MPV) loadAt(
 	if e.Title != "" {
 		// %N% gives the value's length in bytes, so commas in it are safe.
 		opts = append(opts, fmt.Sprintf("force-media-title=%%%d%%%s", len(e.Title), e.Title))
+	}
+	if path := m.coverPath(e.CoverID); path != "" {
+		opts = append(opts, fmt.Sprintf("cover-art-files=%%%d%%%s", len(path), path))
 	}
 	if len(opts) > 0 {
 		if index == nil {

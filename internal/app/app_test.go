@@ -53,6 +53,8 @@ func entry(id player.EntryID, track string) player.Entry {
 		ID:    id,
 		Track: library.TrackID(track),
 		Title: "Track " + strings.TrimPrefix(track, "t"),
+		// The fixture tracks have no album, so the track's own ID.
+		CoverID: track,
 	}
 }
 

@@ -2,6 +2,8 @@ package ui
 
 import (
 	"image/color"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
@@ -70,8 +72,9 @@ func TestNoCardOnASmallTerminal(t *testing.T) {
 	for _, size := range [][2]int{{120, 27}, {99, 40}} {
 		h := coverHarness(t, size[0], size[1], config.CoverAuto, false)
 		h.play()
-		if n := h.requests("getCoverArt"); n != 0 {
-			t.Errorf("%dx%d asked for %d covers; nothing shows them", size[0], size[1], n)
+		// The card is hidden, but the OS's media controls still show the cover.
+		if n := h.requests("getCoverArt"); n != 1 {
+			t.Errorf("%dx%d asked for %d covers, want 1", size[0], size[1], n)
 		}
 		if got, want := h.m.listHeight(queueWindow), size[1]-5-1; got != want {
 			t.Errorf("%dx%d: %d body rows, want %d (no card)", size[0], size[1], got, want)
@@ -137,6 +140,38 @@ func TestCoverIsFetchedOncePerAlbum(t *testing.T) {
 	}
 	if _, ok := h.m.deps.CoverCache.Get(ids[0]); !ok {
 		t.Error("the cover was not kept on disk")
+	}
+}
+
+func TestPrefetchKeepsWhatDecodes(t *testing.T) {
+	h := coverHarness(t, 120, 40, config.CoverAuto, false)
+	cmd := h.m.prefetchCovers("a", "a", "", subsonictest.NotFoundID)
+	if cmd == nil {
+		t.Fatal("nothing to fetch")
+	}
+	cmd()
+	if n := h.requests("getCoverArt"); n != 2 {
+		t.Errorf("%d requests, want 2: the same id once, and none for no id", n)
+	}
+	if h.m.deps.CoverCache.Path("a") == "" {
+		t.Error("the cover was not kept")
+	}
+	if h.m.deps.CoverCache.Path(subsonictest.NotFoundID) != "" {
+		t.Error("a cover the server doesn't have was kept")
+	}
+	if h.m.prefetchCovers("a") != nil {
+		t.Error("a cached cover was fetched again")
+	}
+
+	junk := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("not an image"))
+	}))
+	defer junk.Close()
+	h.m.client = subsonic.New(subsonic.Credentials{URL: junk.URL, Username: "u", Password: "p"})
+	h.m.prefetchCovers("junk")()
+	if h.m.deps.CoverCache.Path("junk") != "" {
+		t.Error("bytes that don't decode were kept")
 	}
 }
 

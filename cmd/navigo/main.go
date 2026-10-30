@@ -75,6 +75,12 @@ func run() error {
 
 	// The player signs stream URLs with whichever client logged in last.
 	var client atomic.Pointer[subsonic.Client]
+	cacheDir := ""
+	if dir, err := os.UserCacheDir(); err == nil {
+		cacheDir = filepath.Join(dir, "navigo")
+	}
+	// The screen and the player's cover art in the OS's media controls share it.
+	covers := cover.OpenCache(coverDir(cacheDir), 100<<20)
 	mpv := player.NewMPV(player.MPVOptions{
 		Path: cfg.Player.MPVPath,
 		Args: cfg.Player.MPVArgs,
@@ -88,13 +94,10 @@ func run() error {
 			}
 			return ""
 		},
+		CoverPath: covers.Path,
 	})
 	defer mpv.Close()
 
-	cacheDir := ""
-	if dir, err := os.UserCacheDir(); err == nil {
-		cacheDir = filepath.Join(dir, "navigo")
-	}
 	stateDir, _ := config.StateDir() // none: history isn't kept
 	media, err := mediactl.New()
 	if err != nil {
@@ -113,7 +116,7 @@ func run() error {
 		CoverArtOK: coverColours(),
 		CoverKitty: cover.Supported(os.Getenv, tmuxPassthrough),
 		InTmux:     os.Getenv("TMUX") != "",
-		CoverCache: cover.OpenCache(coverDir(cacheDir), 100<<20),
+		CoverCache: covers,
 		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
 	})

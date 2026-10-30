@@ -26,6 +26,9 @@ type Entry struct {
 	// Title is what the OS's media controls show for it, such as
 	// "Low Tide — Aurora Lane"; mpv's own Now Playing and SMTC read it.
 	Title string
+	// CoverID names the cover art the OS's media controls show for it, for
+	// the Player to resolve to a file; empty for none.
+	CoverID string
 }
 
 // Span is the part of the queue the Player holds. A zero Prev or Next

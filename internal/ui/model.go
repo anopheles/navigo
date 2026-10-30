@@ -706,11 +706,18 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 	}
 
 	var call func() error
+	var prefetch tea.Cmd
 	switch e := e.(type) {
 	case app.Play:
 		call = func() error { return p.Play(ctx, e.Span) }
+		prefetch = m.prefetchCovers(
+			e.Span.Prev.CoverID,
+			e.Span.Current.CoverID,
+			e.Span.Next.CoverID,
+		)
 	case app.SetNeighbours:
 		call = func() error { return p.SetNeighbours(ctx, e.Prev, e.Next) }
+		prefetch = m.prefetchCovers(e.Prev.CoverID, e.Next.CoverID)
 	case app.Pause:
 		call = func() error { return p.Pause(ctx) }
 	case app.Resume:
@@ -751,7 +758,7 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		}
 		return nil
 	}
-	return tea.Batch(run, watch)
+	return tea.Batch(run, watch, prefetch)
 }
 
 // batchOf is msgs as one message: nil, the one, or a batch of them.

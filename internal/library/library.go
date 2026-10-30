@@ -72,6 +72,15 @@ func (t Track) Credits(id ArtistID) bool {
 	return slices.ContainsFunc(t.Artists, func(a ArtistRef) bool { return a.ID == id })
 }
 
+// CoverID is what the server is asked for the track's cover by: its album,
+// so one fetch serves all the album's tracks, or the track without one.
+func (t Track) CoverID() string {
+	if t.AlbumID != "" {
+		return string(t.AlbumID)
+	}
+	return string(t.ID)
+}
+
 // Playlist is a server playlist; one track can appear in it several times.
 type Playlist struct {
 	ID     PlaylistID

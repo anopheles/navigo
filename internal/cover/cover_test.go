@@ -263,9 +263,24 @@ func TestCacheKeepsAndEvicts(t *testing.T) {
 	}
 }
 
+func TestCachePath(t *testing.T) {
+	c := OpenCache(t.TempDir(), 1<<20)
+	if got := c.Path("a"); got != "" {
+		t.Errorf("uncached: got %q, want none", got)
+	}
+	c.Put("a", []byte("x"))
+	b, err := os.ReadFile(c.Path("a"))
+	if err != nil || string(b) != "x" {
+		t.Errorf("cached: read %q, %v", b, err)
+	}
+}
+
 func TestNilCacheKeepsNothing(t *testing.T) {
 	var c *Cache
 	c.Put("a", []byte("x"))
+	if got := c.Path("a"); got != "" {
+		t.Errorf("a nil cache returned the path %q", got)
+	}
 	if _, ok := c.Get("a"); ok {
 		t.Error("a nil cache returned something")
 	}

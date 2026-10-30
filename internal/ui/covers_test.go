@@ -145,11 +145,7 @@ func TestCoverIsFetchedOncePerAlbum(t *testing.T) {
 
 func TestPrefetchKeepsWhatDecodes(t *testing.T) {
 	h := coverHarness(t, 120, 40, config.CoverAuto, false)
-	cmd := h.m.prefetchCovers("a", "a", "", subsonictest.NotFoundID)
-	if cmd == nil {
-		t.Fatal("nothing to fetch")
-	}
-	cmd()
+	h.run(h.m.prefetchCovers("a", "a", "", subsonictest.NotFoundID))
 	if n := h.requests("getCoverArt"); n != 2 {
 		t.Errorf("%d requests, want 2: the same id once, and none for no id", n)
 	}
@@ -169,9 +165,37 @@ func TestPrefetchKeepsWhatDecodes(t *testing.T) {
 	}))
 	defer junk.Close()
 	h.m.client = subsonic.New(subsonic.Credentials{URL: junk.URL, Username: "u", Password: "p"})
-	h.m.prefetchCovers("junk")()
+	h.run(h.m.prefetchCovers("junk"))
 	if h.m.deps.CoverCache.Path("junk") != "" {
 		t.Error("bytes that don't decode were kept")
+	}
+}
+
+// SetNeighbours comes after every track start, so an album with no cover
+// mustn't be asked for each time.
+func TestPrefetchRemembersWhatTheServerLacks(t *testing.T) {
+	h := coverHarness(t, 120, 40, config.CoverAuto, false)
+	before := h.requests("getCoverArt")
+	for range 5 {
+		h.run(h.m.prefetchCovers(subsonictest.NotFoundID))
+	}
+	if n := h.requests("getCoverArt") - before; n != 1 {
+		t.Errorf("%d requests after 5 prefetches of an album with no cover, want 1", n)
+	}
+}
+
+func TestPrefetchWaitsBeforeTryingAFailureAgain(t *testing.T) {
+	h := coverHarness(t, 120, 40, config.CoverAuto, false)
+	h.srv.SetDown(true)
+	h.run(h.m.prefetchCovers("a"))
+	h.srv.SetDown(false)
+	if h.m.prefetchCovers("a") != nil {
+		t.Error("asked again at once")
+	}
+	h.clock.now = h.clock.now.Add(coverRetry + time.Second)
+	h.run(h.m.prefetchCovers("a"))
+	if h.m.deps.CoverCache.Path("a") == "" {
+		t.Error("the cover was not fetched after the retry")
 	}
 }
 

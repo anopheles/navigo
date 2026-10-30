@@ -167,17 +167,10 @@ func (m *Model) coverPost() tea.Cmd {
 	if !ok || (!m.cardOn() && m.popup == nil && !m.coverAccentWanted()) {
 		return nil
 	}
-	if m.covers.entries == nil {
-		m.covers.entries = map[string]*coverEntry{}
+	if m.coverDue(id) {
+		return m.startCover(id)
 	}
 	e := m.covers.entries[id]
-	if e != nil && e.state == coverFailed && m.clock.Now().Sub(e.failed) >= coverRetry {
-		e = nil
-	}
-	if e == nil {
-		m.covers.entries[id] = &coverEntry{}
-		return m.fetchCover(id)
-	}
 	if e.state != coverReady || mode != config.CoverKitty {
 		return nil
 	}
@@ -188,6 +181,22 @@ func (m *Model) coverPost() tea.Cmd {
 		}
 	}
 	return tea.Batch(cmds...)
+}
+
+// coverDue reports whether id is to be fetched: nothing is known of it, or
+// the last try failed long enough ago.
+func (m *Model) coverDue(id string) bool {
+	e := m.covers.entries[id]
+	return e == nil || (e.state == coverFailed && m.clock.Now().Sub(e.failed) >= coverRetry)
+}
+
+// startCover marks id as loading and returns the command that fetches it.
+func (m *Model) startCover(id string) tea.Cmd {
+	if m.covers.entries == nil {
+		m.covers.entries = map[string]*coverEntry{}
+	}
+	m.covers.entries[id] = &coverEntry{}
+	return m.fetchCover(id)
 }
 
 type geometry struct{ cols, rows int }
@@ -229,34 +238,21 @@ func (m *Model) fetchCover(id string) tea.Cmd {
 // prefetchCovers puts the covers of the entries going into the player in the
 // cache, so that the player has a file to hand the OS's media controls. It
 // runs whatever the terminal can draw, as those don't depend on it; only
-// cover_art: false stops it. What failed is left for the next time it is
-// wanted, and what doesn't decode isn't kept: fetchCover trusts the cache.
+// cover_art: false stops it. It goes through the same entries as the screen,
+// so a cover the server lacks is asked for once, and a failed one after
+// coverRetry.
 func (m *Model) prefetchCovers(ids ...string) tea.Cmd {
-	c, cache, ctx := m.client, m.deps.CoverCache, m.ctx
-	if c == nil || cache == nil || m.deps.Config.CoverArt.Mode == config.CoverOff {
+	if m.client == nil || m.deps.CoverCache == nil ||
+		m.deps.Config.CoverArt.Mode == config.CoverOff {
 		return nil
 	}
-	var missing []string
+	var cmds []tea.Cmd
 	for _, id := range ids {
-		if id != "" && !slices.Contains(missing, id) && cache.Path(id) == "" {
-			missing = append(missing, id)
+		if id != "" && m.coverDue(id) && m.deps.CoverCache.Path(id) == "" {
+			cmds = append(cmds, m.startCover(id))
 		}
 	}
-	if len(missing) == 0 {
-		return nil
-	}
-	return func() tea.Msg {
-		for _, id := range missing {
-			b, err := c.CoverArt(ctx, id)
-			if err != nil {
-				continue
-			}
-			if _, err := cover.Decode(b); err == nil {
-				cache.Put(id, b)
-			}
-		}
-		return nil
-	}
+	return tea.Batch(cmds...)
 }
 
 // coverArrived keeps a fetched cover.

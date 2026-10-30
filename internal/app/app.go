@@ -754,7 +754,7 @@ func (q QueueEntry) entry() player.Entry {
 	if q.Track.Artist != "" {
 		title += " — " + q.Track.Artist
 	}
-	return player.Entry{ID: q.ID, Track: q.Track.ID, Title: title}
+	return player.Entry{ID: q.ID, Track: q.Track.ID, Title: title, CoverID: q.Track.CoverID()}
 }
 
 // entries makes new queue entries for tracks, numbering on from last.

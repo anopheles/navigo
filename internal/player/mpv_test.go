@@ -6,6 +6,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"image"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -401,6 +403,79 @@ func TestMPVMediaTitle(t *testing.T) {
 }
 
 // Where mpv provides the media controls, 0.38 plays but gets a warning.
+// imageFile writes a small PNG with no extension, as the cover cache names
+// its files.
+func imageFile(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "cover")
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := png.Encode(f, image.NewRGBA(image.Rect(0, 0, 4, 4))); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+// imageTracks waits for mpv to list want external image tracks and returns
+// their files. The track list fills after TrackStarted, and the previous
+// entry's track has to go first, so it polls.
+func (h *harness) imageTracks(want int) []string {
+	h.t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		var tracks []struct {
+			Image bool   `json:"image"`
+			File  string `json:"external-filename"`
+		}
+		if err := h.m.process().Get(context.Background(), "track-list", &tracks); err != nil {
+			h.t.Fatal(err)
+		}
+		files := []string{}
+		for _, tr := range tracks {
+			if tr.Image && tr.File != "" {
+				files = append(files, tr.File)
+			}
+		}
+		if len(files) == want {
+			return files
+		}
+		if time.Now().After(deadline) {
+			h.t.Fatalf("image tracks %q, want %d", files, want)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+func TestMPVCoverArt(t *testing.T) {
+	path := imageFile(t)
+	h := newMPV(t)
+	h.m.opts.CoverPath = func(id string) string {
+		if id == "album1" {
+			return path
+		}
+		return ""
+	}
+	ctx := context.Background()
+	first, second := entry(1, "10s"), entry(2, "10s")
+	first.CoverID, second.CoverID = "album1", "album2"
+	if err := h.m.Play(ctx, Span{Current: first}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("start", started(1))
+	if got := h.imageTracks(1); got[0] != path {
+		t.Errorf("image track %q, want %q", got[0], path)
+	}
+	// A cover with no file leaves no artwork, and playback goes on.
+	if err := h.m.Play(ctx, Span{Current: second}); err != nil {
+		t.Fatal(err)
+	}
+	h.await("start", started(2))
+	h.imageTracks(0)
+}
+
 func TestMPVCheckMediaControls(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the fake mpv is a shell script")

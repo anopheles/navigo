@@ -14,7 +14,6 @@ import (
 
 	"github.com/anopheles/navigo/internal/config"
 	"github.com/anopheles/navigo/internal/cover"
-	"github.com/anopheles/navigo/internal/library"
 	"github.com/anopheles/navigo/internal/subsonic"
 )
 
@@ -148,22 +147,13 @@ func (m *Model) syncAccent() {
 	accentStops = accentFrom(col)
 }
 
-// coverID is what the server is asked for: the album of the playing track,
-// so one fetch serves all its tracks.
-func coverID(t library.Track) string {
-	if t.AlbumID != "" {
-		return string(t.AlbumID)
-	}
-	return string(t.ID)
-}
-
 // playingCover is the id of the playing track's cover, if a track plays.
 func (m *Model) playingCover() (string, bool) {
 	t, _, ok := m.state.NowPlaying()
 	if !ok {
 		return "", false
 	}
-	return coverID(t), true
+	return t.CoverID(), true
 }
 
 // coverPost runs after every update: it asks for the cover the screen
@@ -233,6 +223,39 @@ func (m *Model) fetchCover(id string) tea.Cmd {
 			cache.Put(id, b) // only what decoded is kept
 		}
 		return coverMsg{id: id, art: art}
+	}
+}
+
+// prefetchCovers puts the covers of the entries going into the player in the
+// cache, so that the player has a file to hand the OS's media controls. It
+// runs whatever the terminal can draw, as those don't depend on it; only
+// cover_art: false stops it. What failed is left for the next time it is
+// wanted, and what doesn't decode isn't kept: fetchCover trusts the cache.
+func (m *Model) prefetchCovers(ids ...string) tea.Cmd {
+	c, cache, ctx := m.client, m.deps.CoverCache, m.ctx
+	if c == nil || cache == nil || m.deps.Config.CoverArt.Mode == config.CoverOff {
+		return nil
+	}
+	var missing []string
+	for _, id := range ids {
+		if id != "" && !slices.Contains(missing, id) && cache.Path(id) == "" {
+			missing = append(missing, id)
+		}
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+	return func() tea.Msg {
+		for _, id := range missing {
+			b, err := c.CoverArt(ctx, id)
+			if err != nil {
+				continue
+			}
+			if _, err := cover.Decode(b); err == nil {
+				cache.Put(id, b)
+			}
+		}
+		return nil
 	}
 }
 

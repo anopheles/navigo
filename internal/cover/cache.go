@@ -51,6 +51,21 @@ func (c *Cache) Get(id string) ([]byte, bool) {
 	return b, true
 }
 
+// Path returns the file kept for id, and counts it as used, or "" if there
+// is none: a caller can hand it to something that objects to a missing file.
+func (c *Cache) Path(id string) string {
+	if c == nil {
+		return ""
+	}
+	path := c.path(id)
+	if _, err := os.Stat(path); err != nil {
+		return ""
+	}
+	now := time.Now()
+	_ = os.Chtimes(path, now, now)
+	return path
+}
+
 // Put keeps the image for id. A failure only means it is fetched again.
 func (c *Cache) Put(id string, b []byte) {
 	if c == nil {

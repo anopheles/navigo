@@ -145,10 +145,34 @@ var lineDefaults = []struct{ scope, keys, command string }{
 	{"global", "<C-k>", "kill-to-end"},
 }
 
+// searchDefaults act on the results from the library search prompt. They
+// come before lineDefaults there, and no other prompt reads them.
+var searchDefaults = []struct{ scope, keys, command string }{
+	{"global", "<Tab>", "add-end"},
+	{"global", "<S-Tab>", "add-next"},
+	{"global", "<C-g>", "play-this"},
+	{"global", "<C-j>", "down"},
+	{"global", "<C-k>", "up"},
+	{"global", "<C-z>", "undo"},
+	{"global", "<C-r>", "redo"},
+}
+
+// searchCommands are what a key in the library search prompt can run.
+var searchCommands = []string{
+	"add-end",
+	"add-next",
+	"down",
+	"nop",
+	"play-this",
+	"redo",
+	"undo",
+	"up",
+}
+
 // defaultTable returns the default bindings.
 func defaultTable() *keymap.Table {
 	t := keymap.NewTable()
-	for mode, list := range map[keymap.Mode][]struct{ scope, keys, command string }{keymap.Normal: defaults, keymap.Visual: visualDefaults, keymap.Cmdline: lineDefaults} {
+	for mode, list := range map[keymap.Mode][]struct{ scope, keys, command string }{keymap.Normal: defaults, keymap.Search: searchDefaults, keymap.Visual: visualDefaults, keymap.Cmdline: lineDefaults} {
 		for _, b := range list {
 			if err := t.Bind(mode, b.scope, b.keys, b.command); err != nil {
 				panic("ui: default binding " + b.keys + ": " + err.Error())

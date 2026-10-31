@@ -306,3 +306,111 @@ func TestPlayThisKeepsTheQueue(t *testing.T) {
 		t.Errorf("queue has %d entries after yy P, want %d", got, had+2)
 	}
 }
+
+func TestSearchPromptActions(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'s")
+	h.typeText("blue")
+	h.contains("<Tab> add", "<C-g> play now")
+
+	// <Tab> adds the best match and stays in the prompt, query selected.
+	h.keys("<Tab>")
+	if h.m.mode != keymap.Search || !h.m.selected || len(h.m.state.Queue) == 0 {
+		t.Fatalf("mode %s selected %v queue %d", h.m.mode, h.m.selected, len(h.m.state.Queue))
+	}
+	h.contains("added to the end of the queue", "<C-z> undoes")
+	if hist := h.m.searchHist.items; len(hist) == 0 || hist[len(hist)-1] != "blue" {
+		t.Errorf("history = %v, want the query saved", hist)
+	}
+
+	// <C-j> moves through results without touching the query.
+	cur := h.m.searchFrame().cur
+	h.keys("<C-j>")
+	if h.m.searchFrame().cur == cur || h.m.line.Value() != "blue" {
+		t.Errorf("cursor %d query %q after <C-j>", h.m.searchFrame().cur, h.m.line.Value())
+	}
+	h.keys("<C-k>")
+	if h.m.searchFrame().cur != cur || h.m.line.Value() != "blue" {
+		t.Errorf("cursor %d query %q after <C-k>", h.m.searchFrame().cur, h.m.line.Value())
+	}
+
+	// <C-z> undoes, and typing then replaces the query.
+	h.keys("<C-z>")
+	if len(h.m.state.Queue) != 0 {
+		t.Errorf("queue %d after <C-z>", len(h.m.state.Queue))
+	}
+	h.typeText("tide")
+	if h.m.line.Value() != "tide" {
+		t.Errorf("query = %q, want the old one replaced", h.m.line.Value())
+	}
+}
+
+func TestSearchPromptOrderAndPlay(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'s")
+	h.typeText("blue")
+	h.keys("<S-Tab>")
+	if len(h.m.state.Queue) == 0 || h.m.mode != keymap.Search {
+		t.Fatalf("<S-Tab>: queue %d mode %s", len(h.m.state.Queue), h.m.mode)
+	}
+	had := len(h.m.state.Queue)
+	h.keys("<C-g>")
+	if len(h.m.state.Queue) <= had || h.m.mode != keymap.Search {
+		t.Errorf("<C-g>: queue %d, had %d, mode %s", len(h.m.state.Queue), had, h.m.mode)
+	}
+	h.contains("playing · ")
+}
+
+func TestSearchPromptKeysStayInThatPrompt(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("/")
+	h.keys("<Tab>")
+	h.typeText("b")
+	h.keys("<C-k>")
+	if len(h.m.state.Queue) != 0 {
+		t.Errorf("<Tab> in the / prompt added %d", len(h.m.state.Queue))
+	}
+	if !strings.HasPrefix(h.m.line.Prompt, "/") {
+		t.Errorf("prompt = %q", h.m.line.Prompt)
+	}
+}
+
+func TestSearchPromptMessageFitsANarrowWindow(t *testing.T) {
+	h := newHarness(t, 50, 24, nil)
+	h.keys("'s")
+	h.typeText("blue")
+	h.keys("<Tab>")
+	if !strings.Contains(h.m.status(), "blue") {
+		t.Errorf("status %q lost the query", h.m.status())
+	}
+	wide := strings.Repeat("x", 45)
+	h.typeText(wide)
+	h.m.setMsg("something happened", false)
+	if !strings.Contains(h.m.status(), wide[:20]) {
+		t.Errorf("status %q lost a long query", h.m.status())
+	}
+}
+
+func TestSearchOnFocusSelectsAnOpenPrompt(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.m.deps.SearchOnFocus = true
+	h.keys("'s")
+	h.typeText("blue")
+	if h.m.selected {
+		t.Fatal("selected while typing")
+	}
+	cur := h.m.searchFrame().cur
+	h.send(tea.FocusMsg{})
+	if !h.m.selected || h.m.searchFrame().cur != cur {
+		t.Errorf(
+			"selected %v cursor %d, want selected at %d",
+			h.m.selected,
+			h.m.searchFrame().cur,
+			cur,
+		)
+	}
+	h.typeText("t")
+	if h.m.line.Value() != "t" {
+		t.Errorf("query = %q, want it replaced", h.m.line.Value())
+	}
+}

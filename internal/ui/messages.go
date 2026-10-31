@@ -12,8 +12,9 @@ import (
 // newer message or <Esc>, and the newest always wins. The last
 // historySize messages are kept for :messages.
 const (
-	infoFor     = 8 * time.Second
-	historySize = 100
+	infoFor       = 8 * time.Second
+	promptInfoFor = 3 * time.Second // beside the search prompt
+	historySize   = 100
 )
 
 type message struct {

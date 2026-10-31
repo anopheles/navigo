@@ -590,16 +590,19 @@ func (m *Model) hintLine() string {
 		return " " + hint("<CR>", "make it") + "  " + hint("<Esc>", "cancel")
 	}
 	if m.mode == keymap.Search {
-		return " " + hint(
-			"<CR>",
-			"go to the results",
-		) + "  " + hint(
-			"<Esc>",
-			"cancel",
-		) + "  " + hint(
-			"<Up>/<Down>",
-			"history",
-		)
+		acts := ""
+		for _, a := range []struct{ name, label string }{
+			{"add-end", "add"}, {"add-next", "play next"}, {"play-this", "play now"},
+		} {
+			if ks := m.searchKeys(a.name); len(ks) > 0 {
+				acts += hint(ks[0], a.label) + "  "
+			}
+		}
+		down, up := m.searchKeys("down"), m.searchKeys("up")
+		if len(down) > 0 && len(up) > 0 {
+			acts += hint(down[0]+"/"+up[0], "move") + "  "
+		}
+		return " " + acts + hint("<CR>", "go to the results") + "  " + hint("<Esc>", "cancel")
 	}
 	if m.popup != nil && m.popup.yes != nil {
 		return " " + hint("y", "yes") + "  " + hint("n", "no")
@@ -875,6 +878,9 @@ func (m *Model) flags() []string {
 
 // status is the bottom line: the ":" line, or a message, and pending keys.
 func (m *Model) status() string {
+	if s, ok := m.promptWithMsg(); ok {
+		return s
+	}
 	if m.mode == keymap.Search && m.selected {
 		return fit(m.line.Prompt+cursorStyle.Render(m.line.Value()), m.w)
 	}
@@ -890,6 +896,40 @@ func (m *Model) status() string {
 		left = " " + errStyle.Render(m.shown.text)
 	}
 	return fit(left, m.w-lipgloss.Width(right)) + right
+}
+
+// promptWithMsg is the library search prompt with a message from since it
+// opened at the right end, cut short so the query stays readable. It does not
+// apply when there is no message or no room for one.
+func (m *Model) promptWithMsg() (string, bool) {
+	if !m.libraryPrompt() || m.shown.text == "" || m.shown.id <= m.promptFloor {
+		return "", false
+	}
+	const minRoom, gap = 12, 2
+	room := m.w - lipgloss.Width(m.line.Prompt) - lipgloss.Width(m.line.Value()) - gap - 1
+	if room < minRoom {
+		return "", false
+	}
+	n := min(lipgloss.Width(m.shown.text), room)
+	style := dimStyle
+	if m.shown.err {
+		style = errStyle
+	}
+	left := m.line.Prompt + cursorStyle.Render(m.line.Value())
+	if !m.selected {
+		l := m.line
+		l.SetWidth(m.w - lipgloss.Width(m.line.Prompt) - n - gap - 1)
+		left = l.View()
+	}
+	return fit(
+		left,
+		m.w-n-gap,
+	) + strings.Repeat(
+		" ",
+		gap,
+	) + style.Render(
+		fit(m.shown.text, n),
+	), true
 }
 
 func (m *Model) loginView() string {

@@ -202,6 +202,9 @@ keys:
     global: {}
   cmdline:             # Command-line, Search and Prompt share it
     '<C-k>': kill-to-end
+  search:              # the library search prompt, before cmdline; single keys
+    '<Tab>': add-next
+    '<C-k>': ~         # back to cmdline's <C-k>
 ```
 
 **The `keys:` block** ([How is rebinding expressed in the YAML config?](https://github.com/anopheles/navigo/issues/7)):
@@ -360,7 +363,8 @@ The `:` line has Tab completion for command names and arguments.
 **Typing:**
 - Results update **live** from the first character. `<CR>` moves into them; `<Esc>` restores the previous view.
 - `'s` reopens the prompt with the last query filled in and selected. Search history is saved.
-- **`--search-on-focus`:** for a navigo shown and hidden with a key, search opens the same way whenever the terminal window gains focus (focus reporting, mode 1004), but only from Normal mode with no popup or pending key, so nothing half done is lost.
+- **Acting from the prompt** ([#127](https://github.com/anopheles/navigo/issues/127)): `<Tab>` adds the row under the cursor to the end of the queue, `<S-Tab>` plays it next, `<C-g>` plays it now (`play-this`), `<C-j>`/`<C-k>` move the cursor and `<C-z>`/`<C-r>` undo and redo. They act as `A`, `a`, `P`, `j`, `k`, `u` and `<C-r>` do, so an artist row gets a note. After an add, the prompt stays open with the query selected, so typing starts the next search, and the query goes in the history once. The result shows at the right end of the prompt line for 3 seconds. Only this prompt has these keys: `/`, Help's filter and the playlist picker don't. Rebind them under `keys: search:`.
+- **`--search-on-focus`:** for a navigo shown and hidden with a key, search opens the same way whenever the terminal window gains focus (focus reporting, mode 1004), but only from Normal mode with no popup or pending key, so nothing half done is lost. If this prompt is already open, its query is selected again.
 
 **Rows** behave as they do elsewhere:
 - **Tracks:** `<CR>` plays the track within its album, `a`/`A` add just the track, and `ga`/`gr` go to its album or artist.

@@ -5,5 +5,8 @@
 /navigo
 /dist/
 
+# make run's saved queue and history
+/.state/
+
 # Claude Code agent worktrees
 /.claude/worktrees/

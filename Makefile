@@ -4,7 +4,7 @@
 help:
 	@echo "build            build ./navigo"
 	@echo "install          go install navigo into GOBIN (default: GOPATH/bin)"
-	@echo "run              go run ./cmd/navigo (ARGS=... passes arguments)"
+	@echo "run              go run ./cmd/navigo with its own state in .state/ (ARGS=... passes arguments)"
 	@echo "test             go test ./..."
 	@echo "update-golden    rewrite the golden frames in internal/ui"
 	@echo "vet              go vet ./..."
@@ -23,8 +23,10 @@ build:
 install:
 	go install ./cmd/navigo
 
+# A dev run keeps its saved queue and history in .state/, so it doesn't
+# overwrite the queue of the navigo you listen with.
 run:
-	go run ./cmd/navigo $(ARGS)
+	XDG_STATE_HOME=$(CURDIR)/.state go run ./cmd/navigo $(ARGS)
 
 test:
 	go test ./...

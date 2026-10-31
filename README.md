@@ -179,11 +179,13 @@ before navigo has drawn anything.
 
 Windows Terminal's `globalSummon` shows and hides a named window, and
 komorebi only needs to leave it alone. In Windows Terminal's
-`settings.json`, add a profile and a key:
+`settings.json`, turn on window titles, then add a profile and a key:
 
 ```jsonc
+"showTerminalTitleInTitlebar": true,
 "profiles": { "list": [
-    { "name": "navigo", "commandline": "navigo.exe --search-on-focus" }
+    { "name": "navigo", "tabTitle": "navigo", "suppressApplicationTitle": true,
+      "commandline": "powershell.exe -NoProfile -Command \"while ($true) { navigo.exe --search-on-focus; Start-Sleep 1 }\"" }
 ] },
 "actions": [
     { "id": "User.Navigo",
@@ -192,11 +194,14 @@ komorebi only needs to leave it alone. In Windows Terminal's
 "keybindings": [ { "id": "User.Navigo", "keys": "ctrl+alt+n" } ]
 ```
 
-`globalSummon` only works while Windows Terminal runs, and it opens a
-missing window with the default profile, so start navigo's window once at
-login, such as with a shortcut in `shell:startup` to
-`wt -w music -p navigo`. Then tell komorebi not to tile it, in
-`komorebi.json`:
+With `showTerminalTitleInTitlebar` off, every Terminal window is titled
+`Terminal` and komorebi's rule below never matches. The loop starts navigo
+again after `:q`, because `globalSummon` only finds a window that exists:
+a missing one opens with the default profile. So start navigo's window
+once at login too, with a shortcut in `shell:startup` to
+`wt -w music --pos 576,200 --size 224,44 -p navigo` (choose your own
+position and size) set to run minimized. Then tell komorebi not to tile
+it, in `komorebi.json`:
 
 ```json
 "ignore_rules": [
@@ -204,8 +209,24 @@ login, such as with a shortcut in `shell:startup` to
 ]
 ```
 
-The macOS and Windows recipes haven't been tried on those systems yet;
-corrections are welcome.
+To skip tracks without showing navigo,
+[`packaging/windows/navigo-media.ps1`](packaging/windows/navigo-media.ps1)
+sends next, previous or play/pause to mpv's media session only, so a
+browser tab that is also playing is left alone. In `whkdrc`:
+
+```
+ctrl + alt + l : $null | powershell -NoProfile -ExecutionPolicy Bypass -File C:\path\to\navigo-media.ps1 next
+ctrl + alt + h : $null | powershell -NoProfile -ExecutionPolicy Bypass -File C:\path\to\navigo-media.ps1 previous
+ctrl + alt + p : $null | powershell -NoProfile -ExecutionPolicy Bypass -File C:\path\to\navigo-media.ps1 toggle
+```
+
+Use `navigo.exe` here, not navigo inside WSL: audio through WSLg's bridge
+drops out audibly. In a loopback capture of a 1 kHz tone, WSLg had 80 to
+120 level dips a minute at every mpv buffer setting tried, and Windows mpv
+had none.
+
+The macOS recipe hasn't been tried on that system yet; corrections are
+welcome.
 
 ## Contributing
 

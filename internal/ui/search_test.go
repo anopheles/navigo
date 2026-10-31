@@ -278,3 +278,31 @@ func TestSearchOnFocusLeavesHalfDoneAlone(t *testing.T) {
 		})
 	}
 }
+
+func TestPlayThisKeepsTheQueue(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'s")
+	h.typeText("blue")
+	h.keys("<CR>A") // the best match, the album Blue, goes in first
+	had := len(h.m.state.Queue)
+	if had == 0 {
+		t.Fatal("A added nothing")
+	}
+	h.keys("}P") // the track called Blue
+	if got := len(h.m.state.Queue); got != had+1 {
+		t.Fatalf("queue has %d entries after P, want %d", got, had+1)
+	}
+	if h.m.state.Current != 0 {
+		t.Errorf(
+			"current = %d, want the new entry first with nothing playing before",
+			h.m.state.Current,
+		)
+	}
+	h.contains("playing · 1 track added")
+
+	// In the queue, P still pastes: yank the first row and put it above.
+	h.keys("<Tab>yyP")
+	if got := len(h.m.state.Queue); got != had+2 {
+		t.Errorf("queue has %d entries after yy P, want %d", got, had+2)
+	}
+}

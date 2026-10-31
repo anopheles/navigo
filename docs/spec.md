@@ -310,7 +310,7 @@ keys:
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
 | Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix around the row under the cursor (`[count]gm` for that many tracks) · `R` repeat off → all → one · `gR` radio on/off · `g+` `g-` more/less like this on the radio · `X` stop |
-| Add and play | `<CR>` play now · `a` play next · `A` add to end · `gl` add to a playlist · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
+| Add and play | `<CR>` play now · `a` play next · `A` add to end · `P` play this now · `gl` add to a playlist · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |
@@ -376,6 +376,7 @@ The `:` line has Tab completion for command names and arguments.
 **Building the queue:**
 - **`<CR>` on a track** replaces the queue with its context (the whole album or playlist) and plays from that track. `u` brings the old queue back, with no confirmation, since the queue is the client's.
 - **`a`** adds after the current track ("play next"); **`A`** adds to the end. Neither starts playback.
+- **`P`** (`play-this`) adds after the current track and plays the first added, keeping the rest of the queue, where `<CR>` replaces it. On a queue or playlist's tracks, `P` still pastes.
 - **`<CR>` in the queue** plays that row.
 
 **Playing:**

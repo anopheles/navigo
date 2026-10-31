@@ -80,6 +80,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "play-now", Label: "play", Desc: "Replace the queue with this list and play from the track under the cursor.", Run: (*Model).playNow},
 		{Name: "add-end", Label: "add to queue", Desc: "Add the track under the cursor to the end of the queue.", Run: func(m *Model, c command.Call) error { return m.add(c, false) }},
 		{Name: "add-next", Label: "play next", Desc: "Add the track under the cursor after the current track.", Run: func(m *Model, c command.Call) error { return m.add(c, true) }},
+		{Name: "play-this", Label: "play this now", Desc: "Add the track under the cursor after the current track and play it, keeping the rest of the queue.", Run: (*Model).playThis},
 		{Name: "play-row", Label: "play", Desc: "Play the queue row under the cursor.", Run: func(m *Model, _ command.Call) error {
 			m.event(app.PlayRow{Index: m.queueIndex(m.queueCur)})
 			return nil
@@ -330,6 +331,25 @@ func (m *Model) add(c command.Call, next bool) error {
 	} else {
 		m.event(app.AddEnd{Tracks: add})
 	}
+	return nil
+}
+
+// playThis adds the selection, or the track or album under the cursor,
+// after the current track and plays it. Artist rows are left out with a note.
+func (m *Model) playThis(command.Call) error {
+	if m.focus == queueWindow {
+		m.endVisual()
+		return errors.New("those are in the queue already · <CR> plays the row")
+	}
+	if _, _, err := m.trackRow(); errors.Is(err, errNoRows) {
+		return nil
+	}
+	tracks, artists, err := m.chosenTracks()
+	if err != nil {
+		return err
+	}
+	defer m.skippedArtists(artists)
+	m.event(app.PlayThis{Tracks: tracks})
 	return nil
 }
 

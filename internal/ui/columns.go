@@ -11,14 +11,22 @@ import (
 
 // Columns (#111): Artists, Albums and Playlists show their path side by
 // side, as Artists | Albums | Tracks, Albums | Tracks and Playlists |
-// Tracks, across the whole width; the queue is a <Tab> away. The path is
-// the same frames the drill-down had, so the keys are too: the focus is the
-// deepest list opened, l goes right and h left. The columns right of the
-// focus are previews of what is under its cursor, with no cursor of their
-// own.
+// Tracks. With two windows they share the library window beside the queue,
+// as many as fit, sliding along the path; with one they take the whole
+// width and the queue is a <Tab> away. The path is the same frames the
+// drill-down had, so the keys are too: the focus is the deepest list opened,
+// l goes right and h left. The columns right of the focus are previews of
+// what is under its cursor, with no cursor of their own.
 
 // columnsMin is the width below which those sections drill down instead.
 const columnsMin = 60
+
+// fullTrackRow is the width from which a track row shows its artist and
+// rating: the tracks column beside the queue at 120 cells has this many.
+const fullTrackRow = 39
+
+// columnShared is the least width of a column beside the queue.
+const columnShared = 28
 
 // column is a list drawn as a column: a frame of the path, or a preview.
 type column struct {
@@ -169,6 +177,23 @@ func sameView(a, b listView) bool {
 		a.yearFrom == b.yearFrom && a.yearTo == b.yearTo
 }
 
+// shownColumns are the columns that fit in w. Beside the queue, those around
+// the focus, keeping one preview right of it while there is one.
+func (m *Model) shownColumns(cols []column, w int) []column {
+	n := max((w+1)/(columnShared+1), 2)
+	if m.w < narrow || len(cols) <= n {
+		return cols
+	}
+	focus := 0
+	for i, c := range cols {
+		if c.focused {
+			focus = i
+		}
+	}
+	start := min(max(focus-(n-2), 0), len(cols)-n)
+	return cols[start : start+n]
+}
+
 // colWeight is a column's share of the width: 3 : 4 : 5 for artists,
 // albums and tracks, 4 : 5 for albums or playlists and tracks.
 func colWeight(k listKind) int {
@@ -194,7 +219,7 @@ func (m *Model) columnTitle() string {
 // columnRows draws the columns side by side, w wide and h tall, and notes
 // where each one sits from x.
 func (m *Model) columnRows(x, w, h int, focused bool) []string {
-	cols := m.columns()
+	cols := m.shownColumns(m.columns(), w)
 	total := 0
 	for _, c := range cols {
 		total += colWeight(c.f.kind)
@@ -274,7 +299,7 @@ func (m *Model) columnBlock(c column, w, h int, windowFocused bool) []string {
 // columnRow is row i of a column, cut down to its width: artists by name,
 // an artist's albums by name and year, the Albums section's by name and
 // artist, playlists with their track count, and tracks as number, title
-// and length below 40 cells.
+// and length below fullTrackRow.
 func (m *Model) columnRow(f *frame, i, w int) string {
 	switch f.kind {
 	case artistList:
@@ -343,10 +368,10 @@ func (m *Model) colAlbum(a library.Album, withArtist bool, w int) string {
 		m.faint(fit("  "+a.Artist, rest-nw)+fmt.Sprintf("%*s", yw, year))
 }
 
-// colTrack is a track row; below 40 cells it drops the artist and keeps
+// colTrack is a track row; below fullTrackRow it drops the artist and keeps
 // the number and length.
 func (m *Model) colTrack(t library.Track, num string, w int) string {
-	if w >= 40 {
+	if w >= fullTrackRow {
 		return m.trackLine("  ", num, t, w)
 	}
 	mark := m.trackMark("  ", t)

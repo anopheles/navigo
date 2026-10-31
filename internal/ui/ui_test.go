@@ -21,7 +21,7 @@ func TestBrowseOpenPlay(t *testing.T) {
 	if h.logins != 1 {
 		t.Fatalf("logged in %d times", h.logins)
 	}
-	h.contains("Ångström Days", "The Long Haul", "夜明け", "<Tab> queue", "<CR> open")
+	h.contains("Ångström Days", "The Long Haul", "夜明け", "Queue (0)", "<CR> open")
 	golden.RequireEqual(t, h.screen())
 
 	h.keys("3j")

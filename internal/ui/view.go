@@ -70,11 +70,11 @@ func (m *Model) render() string {
 	m.paneAt = [2]paneHit{}
 	m.colAt = m.colAt[:0]
 	switch {
-	case m.inColumns() && m.focus == libraryWindow:
+	case m.inColumns() && m.w < narrow && m.focus == libraryWindow:
 		m.paneAt[libraryWindow] = paneHit{0, m.w}
 		title := m.columnTitle() + "   " + m.keyHint("window", "queue")
 		lines = m.pane(title, m.columnRows(1, m.w-2, h, true), m.w, true)
-	case m.inColumns():
+	case m.inColumns() && m.w < narrow:
 		m.paneAt[queueWindow] = paneHit{0, m.w}
 		title := m.queueTitle() + "   " + m.keyHint("window", "library")
 		rows := append(m.queueCard(m.w-2), m.queueRows(m.w-2, m.listHeight(queueWindow), true)...)
@@ -92,9 +92,15 @@ func (m *Model) render() string {
 		lw := m.w * 3 / 5
 		rw := m.w - lw
 		m.paneAt = [2]paneHit{{0, lw}, {lw, rw}}
+		var rows []string
+		if m.inColumns() {
+			rows = m.columnRows(1, lw-2, h, m.focus == libraryWindow)
+		} else {
+			rows = m.libraryRows(lw-2, h, m.focus == libraryWindow)
+		}
 		left := m.pane(
 			m.libTitle(),
-			m.libraryRows(lw-2, h, m.focus == libraryWindow),
+			rows,
 			lw,
 			m.focus == libraryWindow,
 		)
@@ -388,7 +394,7 @@ func trackNumber(ts []library.Track, i int) string {
 func (m *Model) trackLine(mark, num string, t library.Track, w int) string {
 	mark = m.trackMark(mark, t)
 	title := m.starred(string(t.ID), t.Title)
-	if w < 40 {
+	if w < fullTrackRow {
 		return fit(mark+title, w)
 	}
 	if m.dress {

@@ -54,6 +54,9 @@ func (m *Model) View() tea.View {
 	v := tea.NewView(m.render())
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
+	// A fixed title lets window managers find navigo's window where every
+	// terminal window has the same app or class (macOS, Windows).
+	v.WindowTitle = "navigo"
 	return v
 }
 

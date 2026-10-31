@@ -275,6 +275,8 @@ keys:
 
 **Startup:** opens on Home, focus in the library window, with the queue empty or, when [Resume](#resume) has one saved, restored and paused. The mouse is limited to four things: a click or drag on the progress rule seeks there; the wheel over the rule or the now-playing bar changes the volume by 5 points a notch; a click on a list row moves the cursor there (and the focus to its window), and a second click on it within 400 ms does what `<CR>` does; and the wheel over a list scrolls it 3 rows a notch. In columns, a click or the wheel acts on the column under it (see Columns under Sections).
 
+**Window title:** always `navigo`, so a window manager can find navigo's window by title where every terminal window shares one app or class (macOS, Windows). Under tmux it reaches the terminal only with tmux's `set-titles on`.
+
 ## Keys
 
 [What is navigo's vim keymap grammar and default key table?](https://github.com/anopheles/navigo/issues/6), amended by [#13](https://github.com/anopheles/navigo/issues/13).

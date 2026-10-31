@@ -186,6 +186,9 @@ type (
 	AddEnd struct{ Tracks []library.Track }
 	// AddNext adds tracks after the current one.
 	AddNext struct{ Tracks []library.Track }
+	// PlayThis adds tracks after the current one and plays the first,
+	// keeping the rest of the queue.
+	PlayThis struct{ Tracks []library.Track }
 	// PlayRow plays a row of the queue.
 	PlayRow      struct{ Index int }
 	PlayPause    struct{}
@@ -429,6 +432,23 @@ func apply(s State, e Event) (State, []Effect) {
 			s.neighbours(),
 			Notice{Text: count(len(added)) + " " + verb, Command: "undo", Hint: "undoes"},
 		)
+	case PlayThis:
+		if len(e.Tracks) == 0 {
+			return s, nil
+		}
+		var added []QueueEntry
+		added, s.nextID = entries(s.nextID, e.Tracks)
+		at := s.Current + 1
+		s = s.edit(func(q []QueueEntry) ([]QueueEntry, int) {
+			return slices.Insert(slices.Clone(q), at, added...), at
+		})
+		s.skips = 0
+		if s.Offline || s.cantPlay() != nil {
+			return s.play(s.Current) // explains why nothing plays
+		}
+		text := fmt.Sprintf("playing · %s added (%d in queue)", count(len(added)), len(s.Queue))
+		s, out := s.play(s.Current)
+		return s, append(out, Notice{Text: text, Command: "undo", Hint: "undoes"})
 	case PlayRow:
 		if e.Index < 0 || e.Index >= len(s.Queue) {
 			return s, nil
@@ -783,6 +803,7 @@ func (Synced) isEvent()             {}
 func (PlayNow) isEvent()            {}
 func (AddEnd) isEvent()             {}
 func (AddNext) isEvent()            {}
+func (PlayThis) isEvent()           {}
 func (PlayRow) isEvent()            {}
 func (PlayPause) isEvent()          {}
 func (NextTrack) isEvent()          {}

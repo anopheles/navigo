@@ -64,7 +64,7 @@ the matching commands with their keys, and next time tells you the key.
 | Open, go back | `l` or `<CR>`, `h`, `<C-o>` back to where you were |
 | Sections | `'h` Home, `'a` Artists, `'b` Albums, `'p` Playlists, `'s` Search, `'q` the queue |
 | Play | `<CR>` plays from here, `<Space>` play/pause, `>` `<` next/previous, `.` `,` seek |
-| Queue | `A` add to the end, `a` play next, `V` select, `dd` remove, `yy` copy, `p` paste, `J` `K` move, `u` undo |
+| Queue | `A` add to the end, `a` play next, `P` play this now, `V` select, `dd` remove, `yy` copy, `p` paste, `J` `K` move, `u` undo |
 | Other | `S` shuffle, `R` repeat, `=` `-` volume, `*` star, `i` info, `ga` `gr` go to album/artist |
 | Quit | `:q` |
 

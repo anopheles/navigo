@@ -238,6 +238,52 @@ func TestScrobbleSubmission(t *testing.T) {
 	}
 }
 
+func TestPlayThis(t *testing.T) {
+	s, _ := run(
+		New(),
+		PlayNow{Tracks: tracks(3), Start: 0},
+		FromPlayer{player.TrackStarted{Entry: 1}},
+	)
+	s, out := run(s, PlayThis{Tracks: tracks(2)})
+	if len(s.Queue) != 5 || s.Current != 1 {
+		t.Fatalf(
+			"queue %d current %d, want 5 with the first new entry current",
+			len(s.Queue),
+			s.Current,
+		)
+	}
+	if s.Queue[0].ID != 1 || s.Queue[1].ID != 4 || s.Queue[2].ID != 5 || s.Queue[3].ID != 2 {
+		t.Errorf("queue = %v, want the new entries after the old current one", s.Queue)
+	}
+	if p := only[Play](out); len(p) != 1 || p[0].Span.Current.ID != 4 {
+		t.Errorf("play = %#v, want the first new entry", p)
+	}
+	if n := only[Notice](
+		out,
+	); len(n) != 1 ||
+		n[0].Text != "playing · 2 tracks added (5 in queue)" ||
+		n[0].Command != "undo" {
+		t.Errorf("notice = %#v", n)
+	}
+	s, _ = run(s, Undo{})
+	if len(s.Queue) != 3 {
+		t.Errorf("after undo the queue has %d entries, want 3", len(s.Queue))
+	}
+}
+
+func TestPlayThisOnAnEmptyQueue(t *testing.T) {
+	s, out := run(New(), PlayThis{Tracks: tracks(1)})
+	if len(s.Queue) != 1 || s.Current != 0 {
+		t.Errorf("queue %d current %d", len(s.Queue), s.Current)
+	}
+	if len(only[Play](out)) != 1 {
+		t.Errorf("effects = %#v, want it played", out)
+	}
+	if s, out := run(New(), PlayThis{}); len(s.Queue) != 0 || len(out) != 0 {
+		t.Errorf("no tracks: queue %d effects %#v", len(s.Queue), out)
+	}
+}
+
 func TestAddEndAndNext(t *testing.T) {
 	s, _ := run(
 		New(),

@@ -43,6 +43,7 @@ var menuGroups = []struct {
 		[]string{
 			"add-end",
 			"add-next",
+			"play-this",
 			"delete",
 			"remove",
 			"yank",

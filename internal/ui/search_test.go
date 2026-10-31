@@ -226,3 +226,55 @@ func TestSortAndFilterSearch(t *testing.T) {
 		`sort: "bogus" isn't a field here; try name, artist, album, year, plays, tracks, albums, length, genre`,
 	)
 }
+
+func TestSearchOnFocus(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.send(tea.FocusMsg{})
+	if h.m.mode != keymap.Normal {
+		t.Fatalf("mode %s on focus without SearchOnFocus", h.m.mode)
+	}
+	if h.m.View().ReportFocus {
+		t.Error("focus reported without SearchOnFocus")
+	}
+
+	h.m.deps.SearchOnFocus = true
+	if !h.m.View().ReportFocus {
+		t.Error("focus not reported with SearchOnFocus")
+	}
+	h.keys("'s")
+	h.typeText("blue")
+	h.keys("<CR>")
+	h.send(tea.FocusMsg{})
+	if h.m.mode != keymap.Search || h.m.line.Value() != "blue" || !h.m.selected {
+		t.Fatalf("mode %s, line %q, selected %v on focus",
+			h.m.mode, h.m.line.Value(), h.m.selected)
+	}
+
+	// Typing replaces the last query; focus again mid-prompt changes nothing.
+	h.typeText("tide")
+	h.send(tea.FocusMsg{})
+	if h.m.line.Value() != "tide" {
+		t.Errorf("line %q after a second focus", h.m.line.Value())
+	}
+	h.keys("<Esc>")
+}
+
+func TestSearchOnFocusLeavesHalfDoneAlone(t *testing.T) {
+	for _, tc := range []struct{ name, keys string }{
+		{"visual", "V"},
+		{"pending key", "g"},
+		{"popup", "?"},
+		{"command line", ":"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			h := newHarness(t, 120, 40, nil)
+			h.m.deps.SearchOnFocus = true
+			h.keys(tc.keys)
+			mode := h.m.mode
+			h.send(tea.FocusMsg{})
+			if h.m.mode != mode || h.m.mode == keymap.Search {
+				t.Errorf("mode %s → %s on focus", mode, h.m.mode)
+			}
+		})
+	}
+}

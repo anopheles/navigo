@@ -43,6 +43,11 @@ func run() error {
 		"config file (default: navigo/config.yaml in the user config dir)",
 	)
 	showVersion := flag.Bool("version", false, "print the version and exit")
+	searchOnFocus := flag.Bool(
+		"search-on-focus",
+		false,
+		"open search whenever the terminal window gains focus",
+	)
 	flag.Parse()
 	if *showVersion {
 		fmt.Println(versionString())
@@ -119,6 +124,8 @@ func run() error {
 		CoverCache: covers,
 		LogPath:    logPath,
 		OnLogin:    func(c *subsonic.Client) { client.Store(c) },
+
+		SearchOnFocus: *searchOnFocus,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)

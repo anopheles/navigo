@@ -62,6 +62,9 @@ type Deps struct {
 	CoverKitty bool
 	InTmux     bool
 	CoverCache *cover.Cache
+	// SearchOnFocus opens search when the terminal gains focus, for a
+	// navigo summoned by a key.
+	SearchOnFocus bool
 }
 
 // PlayerMsg wraps a Player event for Program.Send.
@@ -412,6 +415,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.MouseMsg:
 		return m, m.mouse(msg)
+	case tea.FocusMsg:
+		return m, m.focused()
 	case tea.KeyPressMsg:
 		m.seq++
 		m.prefixShown = false

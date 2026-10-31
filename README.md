@@ -122,8 +122,14 @@ add the track with `A` (or `a` to play it next) and hide navigo again.
 A prompt, popup, Visual selection or half-typed key is left alone. Under
 tmux it needs `focus-events on`.
 
-On Hyprland with the Lua config, this keeps navigo in a hidden workspace,
-starts it with the session and toggles it with `SUPER+N`:
+Each recipe below keeps one navigo running, shows and hides it with a
+key, and finds its window by its title or class. navigo always titles its
+window `navigo`.
+
+### Hyprland
+
+With the Lua config, this keeps navigo in a hidden workspace, starts it
+with the session and toggles it with `SUPER+N`:
 
 ```lua
 local cmd = "kitty --class navigo -e navigo --search-on-focus"
@@ -147,6 +153,59 @@ end)
 
 To keep the music going when the window is closed, run navigo in a tmux
 session instead: `tmux new-session -A -s music navigo --search-on-focus`.
+
+### macOS with yabai
+
+yabai's scratchpads do the hiding; [skhd](https://github.com/koekeishiya/skhd)
+gives the key. Scratchpads need System Integrity Protection partly
+disabled, as yabai's other window tricks do. In `~/.yabairc`:
+
+```sh
+yabai -m rule --add app='^kitty$' title='^navigo$' scratchpad=music grid=8:8:1:1:6:6
+```
+
+In `~/.skhdrc`, `cmd + ctrl - n` toggles it, and starts it when it isn't
+running:
+
+```sh
+cmd + ctrl - n : yabai -m window --toggle music || \
+    open -na kitty --args --title navigo navigo --search-on-focus
+```
+
+kitty's `--title` names the window as it opens, so the rule matches it
+before navigo has drawn anything.
+
+### Windows with komorebi
+
+Windows Terminal's `globalSummon` shows and hides a named window, and
+komorebi only needs to leave it alone. In Windows Terminal's
+`settings.json`, add a profile and a key:
+
+```jsonc
+"profiles": { "list": [
+    { "name": "navigo", "commandline": "navigo.exe --search-on-focus" }
+] },
+"actions": [
+    { "id": "User.Navigo",
+      "command": { "action": "globalSummon", "name": "music", "dropdownDuration": 150 } }
+],
+"keybindings": [ { "id": "User.Navigo", "keys": "ctrl+alt+n" } ]
+```
+
+`globalSummon` only works while Windows Terminal runs, and it opens a
+missing window with the default profile, so start navigo's window once at
+login, such as with a shortcut in `shell:startup` to
+`wt -w music -p navigo`. Then tell komorebi not to tile it, in
+`komorebi.json`:
+
+```json
+"ignore_rules": [
+    { "kind": "Title", "id": "navigo", "matching_strategy": "Equals" }
+]
+```
+
+The macOS and Windows recipes haven't been tried on those systems yet;
+corrections are welcome.
 
 ## Contributing
 

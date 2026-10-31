@@ -73,6 +73,22 @@ from `.env.e2e` (`NAVIGO_E2E_URL`, `NAVIGO_E2E_USER`,
 `NAVIGO_E2E_PASSWORD`). It plays tracks there, so they count as played
 for that account, and it replaces that account's saved play queue.
 
+## Trying a build on Windows from WSL
+
+`make windows-dev` builds your checkout as `navigo-dev.exe` next to
+`navigo.exe` in `%LOCALAPPDATA%\Programs\navigo`, without a release. Run it
+however you like. A start-up loop like this one picks it up after `:q`, and
+falls back to `navigo.exe` once you delete it:
+
+```powershell
+while ($true) {
+    $dir = "$env:LOCALAPPDATA\Programs\navigo"
+    $exe = if (Test-Path "$dir\navigo-dev.exe") { "$dir\navigo-dev.exe" } else { "$dir\navigo.exe" }
+    & $exe --search-on-focus
+    Start-Sleep 1
+}
+```
+
 ## Recording the README demo
 
 `make demo` records `docs/media/demo.gif`: a throwaway Navidrome serves the

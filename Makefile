@@ -1,10 +1,11 @@
 .PHONY: help build install run test update-golden vet fmt gate e2e e2e-live \
-	fixtures-up fixtures-record fixtures-down demo
+	fixtures-up fixtures-record fixtures-down demo windows-dev
 
 help:
 	@echo "build            build ./navigo"
 	@echo "install          go install navigo into GOBIN (default: GOPATH/bin)"
 	@echo "run              go run ./cmd/navigo with its own state in .state/ (ARGS=... passes arguments)"
+	@echo "windows-dev      from WSL, build this checkout as navigo-dev.exe on the Windows side"
 	@echo "test             go test ./..."
 	@echo "update-golden    rewrite the golden frames in internal/ui"
 	@echo "vet              go vet ./..."
@@ -27,6 +28,9 @@ install:
 # overwrite the queue of the navigo you listen with.
 run:
 	XDG_STATE_HOME=$(CURDIR)/.state go run ./cmd/navigo $(ARGS)
+
+windows-dev:
+	tools/windows-dev.sh
 
 test:
 	go test ./...

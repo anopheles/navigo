@@ -360,6 +360,7 @@ The `:` line has Tab completion for command names and arguments.
 **Typing:**
 - Results update **live** from the first character. `<CR>` moves into them; `<Esc>` restores the previous view.
 - `'s` reopens the prompt with the last query filled in and selected. Search history is saved.
+- **`--search-on-focus`:** for a navigo shown and hidden with a key, search opens the same way whenever the terminal window gains focus (focus reporting, mode 1004), but only from Normal mode with no popup or pending key, so nothing half done is lost.
 
 **Rows** behave as they do elsewhere:
 - **Tracks:** `<CR>` plays the track within its album, `a`/`A` add just the track, and `ga`/`gr` go to its album or artist.

@@ -114,6 +114,40 @@ On Linux, navigo appears on the session bus as an MPRIS player, so media
 keys, desktop widgets and `playerctl` work. On macOS and Windows, mpv's
 own media integration does this (mpv 0.39 or newer).
 
+## Summon it with a key
+
+`navigo --search-on-focus` opens search whenever its terminal window
+gains focus, with the last query selected. Show navigo with a key, type,
+add the track with `A` (or `a` to play it next) and hide navigo again.
+A prompt, popup, Visual selection or half-typed key is left alone. Under
+tmux it needs `focus-events on`.
+
+On Hyprland with the Lua config, this keeps navigo in a hidden workspace,
+starts it with the session and toggles it with `SUPER+N`:
+
+```lua
+local cmd = "kitty --class navigo -e navigo --search-on-focus"
+
+hl.window_rule({ name = "navigo", match = { class = "^(navigo)$" },
+    float = true, size = "monitor_w*0.7 monitor_h*0.75", center = true })
+
+hl.bind("SUPER + N", function()
+    for _, w in ipairs(hl.get_windows()) do
+        if w.class == "navigo" then
+            return hl.dispatch(hl.dsp.workspace.toggle_special("music"))
+        end
+    end
+    hl.exec_cmd(cmd, { workspace = "special:music" })
+end)
+
+hl.on("hyprland.start", function()
+    hl.exec_cmd(cmd, { workspace = "special:music silent" })
+end)
+```
+
+To keep the music going when the window is closed, run navigo in a tmux
+session instead: `tmux new-session -A -s music navigo --search-on-focus`.
+
 ## Contributing
 
 Contributions are welcome, from people and coding agents alike. Every

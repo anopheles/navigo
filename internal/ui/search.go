@@ -216,6 +216,17 @@ func (m *Model) search(c command.Call) error {
 	return nil
 }
 
+// focused opens search when the terminal gains focus, with
+// SearchOnFocus. It does so only in Normal mode with nothing half done: a
+// prompt, a popup, a Visual selection or a pending key are left alone.
+func (m *Model) focused() tea.Cmd {
+	if !m.deps.SearchOnFocus || m.screen != screenMain || m.mode != keymap.Normal ||
+		m.popup != nil || m.engine.Pending() != "" {
+		return nil
+	}
+	return m.execCall("search", command.Call{})
+}
+
 // startSearch opens the search prompt with the last query selected, so
 // typing replaces it.
 func (m *Model) startSearch() {

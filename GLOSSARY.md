@@ -118,7 +118,7 @@ One of the two side-by-side panes of the main screen: the library window, which 
 _Avoid_: pane, panel, split, tab
 
 **Column**:
-One list of the library window's path, drawn beside the others in Artists, Albums and Playlists (Artists | Albums | Tracks). The focused column is the deepest one opened; the columns right of it are **previews** of what is under its cursor.
+One list of the library window's path, drawn beside the others in Artists, Albums and Playlists (Artists | Albums | Tracks), as many as fit. The focused column is the deepest one opened; the columns right of it are **previews** of what is under its cursor.
 _Avoid_: pane, Miller column, panel
 
 **Section**:

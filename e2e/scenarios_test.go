@@ -51,14 +51,16 @@ func (s *session) openFirstAlbum() {
 	})
 }
 
-// line is row n of the rightmost column, which after openFirstAlbum is
-// the album's tracks; the line above the first row is the columns' headers.
+// line is row n of the library window's rightmost column, which after
+// openFirstAlbum is the album's tracks; the line above the first row is the
+// columns' headers.
 func (s *session) line(n int) string {
 	lines := strings.Split(s.screen(), "\n")
 	if n+1 >= len(lines) {
 		return ""
 	}
-	cols := strings.Split(lines[n+1], "│")
+	library, _, _ := strings.Cut(lines[n+1], "││") // the queue window is right of it
+	cols := strings.Split(library+"│", "│")
 	if len(cols) < 3 {
 		return ""
 	}
@@ -169,7 +171,7 @@ func TestNewUserPath(t *testing.T) {
 	s.waitText("── Tracks", 10*time.Second)
 	s.keys("\r")
 	s.keys("ga")
-	s.waitText("Albums   <Tab> queue", 10*time.Second)
+	s.waitText(" Albums ›", 10*time.Second)
 	s.waitFor(
 		"the album's tracks",
 		10*time.Second,

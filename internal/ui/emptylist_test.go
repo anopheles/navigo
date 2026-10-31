@@ -33,7 +33,7 @@ func TestEmptyListsSayWhatToDo(t *testing.T) {
 }
 
 func TestEmptyPlaylistSaysHowToFillIt(t *testing.T) {
-	h := newHarness(t, 120, 40, nil)
+	h := newHarness(t, 200, 40, nil)
 	old := h.m.state.Library
 	p := old.Playlists[0]
 	p.Tracks = nil

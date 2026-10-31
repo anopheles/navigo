@@ -9,7 +9,7 @@ import (
 )
 
 func TestSortAlbums(t *testing.T) {
-	h := newHarness(t, 120, 40, nil)
+	h := newHarness(t, 160, 40, nil)
 	h.keys("3j") // on Blue Hour
 	h.keys(":sort year<CR>")
 	h.contains("Albums (year ↑)", "sorted by year")

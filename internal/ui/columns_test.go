@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -15,18 +16,22 @@ func (h *harness) header(depth int) string {
 	return strings.TrimSpace(strings.SplitN(h.column(depth), "\n", 2)[0])
 }
 
-// Artists | Albums | Tracks: the columns right of the focus follow its
-// cursor, and the queue is a <Tab> away.
+// Artists | Albums | Tracks across the whole width: the columns right of
+// the focus follow its cursor, and the queue is a <Tab> away.
 func TestArtistColumnsFollowTheCursor(t *testing.T) {
-	for _, w := range []int{80, 120} {
+	for _, w := range []int{80, 160} {
 		h := newHarness(t, w, 30, nil)
 		h.keys("'a")
 		h.screen()
 		if !h.m.inColumns() || len(h.m.colAt) != 3 {
 			t.Fatalf("%d cols: %d columns, want 3", w, len(h.m.colAt))
 		}
-		h.contains("Artists   <Tab> queue")
-		h.lacks("Queue (0)", "Artists ›")
+		if w < narrow {
+			h.contains("Artists   <Tab> queue")
+			h.lacks("Queue (0)", "Artists ›")
+		} else {
+			h.contains("Queue (0)")
+		}
 		if h.header(2) != "Aurora Lane" || h.header(3) != "Blue" {
 			t.Errorf("%d cols: previews %q, %q", w, h.header(2), h.header(3))
 		}
@@ -37,12 +42,75 @@ func TestArtistColumnsFollowTheCursor(t *testing.T) {
 		if len(h.m.lib) != 2 {
 			t.Errorf("%d cols: moving opened a list: depth %d", w, len(h.m.lib))
 		}
-		t.Run(map[int]string{80: "80", 120: "120"}[w], func(t *testing.T) {
+		t.Run(map[int]string{80: "80", 160: "160"}[w], func(t *testing.T) {
 			golden.RequireEqual(t, h.screen())
 		})
+		if w >= narrow {
+			continue
+		}
 		h.keys("<Tab>")
 		h.contains("Queue (0)   <Tab> library", "The queue is empty.")
 		h.lacks("Long Haul Orchestra")
+	}
+}
+
+// depths are the columns on screen, by their depth in the path.
+func (h *harness) depths() []int {
+	h.t.Helper()
+	h.screen()
+	var ds []int
+	for _, c := range h.m.colAt {
+		ds = append(ds, c.depth)
+	}
+	return ds
+}
+
+// Beside the queue two columns fit at 120 cells: they slide along the path
+// to the track, with the queue on screen and the title naming the whole path.
+func TestColumnsSlideBesideTheQueue(t *testing.T) {
+	h := newHarness(t, 120, 30, nil)
+	h.keys("'a")
+	if got := h.depths(); !slices.Equal(got, []int{1, 2}) {
+		t.Errorf("on the artists: columns %v", got)
+	}
+	h.contains("Queue (0)", "The queue is empty.")
+	golden.RequireEqual(t, h.screen())
+
+	h.keys("l")
+	if got := h.depths(); !slices.Equal(got, []int{2, 3}) {
+		t.Errorf("on the albums: columns %v", got)
+	}
+	h.keys("l")
+	if got := h.depths(); !slices.Equal(got, []int{2, 3}) {
+		t.Errorf("on the tracks: columns %v", got)
+	}
+	h.contains("Artists › Aurora Lane › Blue", "Queue (0)", "1 Tidewater")
+	h.keys("hh")
+	if got := h.depths(); !slices.Equal(got, []int{1, 2}) {
+		t.Errorf("back on the artists: columns %v", got)
+	}
+
+	// The queue takes the focus; the columns stay, and the keys go to it.
+	h.keys("<Tab>")
+	h.contains("Queue (0)", "Aurora Lane")
+	if got := h.depths(); !slices.Equal(got, []int{1, 2}) {
+		t.Errorf("queue focused: columns %v", got)
+	}
+}
+
+// How many columns share the library window follows the width.
+func TestColumnsThatFit(t *testing.T) {
+	for w, want := range map[int][]int{
+		80:  {1, 2, 3}, // the whole width
+		100: {1, 2},
+		146: {1, 2},
+		147: {1, 2, 3},
+	} {
+		h := newHarness(t, w, 30, nil)
+		h.keys("'a")
+		if got := h.depths(); !slices.Equal(got, want) {
+			t.Errorf("%d cells: columns %v, want %v", w, got, want)
+		}
 	}
 }
 
@@ -91,7 +159,7 @@ func TestNarrowColumnRows(t *testing.T) {
 // A sort or filter belongs to its column: the next artist's albums open
 // sorted too, and their preview shows them so.
 func TestColumnSortStays(t *testing.T) {
-	h := newHarness(t, 120, 30, nil)
+	h := newHarness(t, 80, 30, nil)
 	h.keys("'al:sort year desc<CR>")
 	if got := h.header(2); got != "Aurora Lane (year ↓)" {
 		t.Errorf("header %q", got)
@@ -137,7 +205,7 @@ func TestPlaylistColumns(t *testing.T) {
 // A click focuses a column and moves its cursor; in a preview it opens it.
 // The wheel scrolls the column under it.
 func TestClickAColumn(t *testing.T) {
-	h := newHarness(t, 120, 30, nil)
+	h := newHarness(t, 160, 30, nil)
 	h.keys("'a")
 	h.screen()
 	albums := h.m.colAt[1].x + 2

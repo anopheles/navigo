@@ -38,7 +38,7 @@ func TestCursorAndPlayingRowsStayWhole(t *testing.T) {
 	h.keys("3j<CR>j<CR>") // Low Tide plays and the library cursor is on it
 	screen := h.m.render()
 	if cur := segment(
-		lineWith(t, screen, "2 Low Tide"),
+		lineWith(t, screen, "• 2 Low Tide"),
 		"\x1b[7m",
 	); !strings.Contains(
 		cur,

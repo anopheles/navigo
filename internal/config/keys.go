@@ -23,7 +23,7 @@ type Keys struct {
 
 // Binding is one key sequence → command line in the keys: block.
 type Binding struct {
-	Mode    string // normal, visual or cmdline
+	Mode    string // normal, visual, cmdline or search
 	Scope   string // empty for cmdline, which has none
 	Keys    string
 	Command string
@@ -94,13 +94,13 @@ func (k *Keys) UnmarshalYAML(n *yaml.Node) error {
 				scope, bindings := val.Content[j], val.Content[j+1]
 				k.bindings(key.Value, scope.Value, bindings)
 			}
-		case "cmdline":
-			k.bindings("cmdline", "", val)
+		case "cmdline", "search":
+			k.bindings(key.Value, "", val)
 		default:
 			k.problem(
 				key,
 				fmt.Sprintf(
-					"unknown option or mode %q; modes are normal, visual and cmdline",
+					"unknown option or mode %q; modes are normal, visual, cmdline and search",
 					key.Value,
 				),
 			)

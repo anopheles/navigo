@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -220,6 +221,13 @@ func (m *Model) search(c command.Call) error {
 // SearchOnFocus. It does so only in Normal mode with nothing half done: a
 // prompt, a popup, a Visual selection or a pending key are left alone.
 func (m *Model) focused() tea.Cmd {
+	if m.deps.SearchOnFocus && m.screen == screenMain && m.popup == nil && m.libraryPrompt() {
+		if m.line.Value() != "" {
+			m.selected = true
+			m.line.CursorEnd()
+		}
+		return nil
+	}
 	if !m.deps.SearchOnFocus || m.screen != screenMain || m.mode != keymap.Normal ||
 		m.popup != nil || m.engine.Pending() != "" {
 		return nil
@@ -246,6 +254,7 @@ func (m *Model) startSearch() {
 	m.line.SetValue(last)
 	m.line.CursorEnd()
 	m.selected = last != ""
+	m.promptFloor, m.savedQuery = m.msgSeq, ""
 	m.searchHist.begin(last != "")
 	m.then(m.line.Focus())
 	m.liveSearch(last)
@@ -260,6 +269,77 @@ func (m *Model) liveSearch(q string) {
 	f.title = searchTitle(q)
 	f.cur, f.offset = v.best(), 0
 	m.settle(f, 1)
+}
+
+// libraryPrompt reports whether the library search prompt is open, and not
+// one of the other prompts that share its mode.
+func (m *Model) libraryPrompt() bool {
+	return m.mode == keymap.Search && !m.finding.prompting && !m.promptHelp &&
+		!m.promptPick && m.naming == nil
+}
+
+// searchBound finds the command bound to k in the library search prompt.
+func (m *Model) searchBound(k tea.KeyPressMsg) (string, bool) {
+	if !m.libraryPrompt() {
+		return "", false
+	}
+	tok := keymap.FromTerminal(k.String(), k.Text)
+	for _, b := range m.engine.Table().Effective(keymap.Search, []string{"global"}) {
+		if len(b.Keys) == 1 && b.Keys[0] == tok {
+			return b.Command, true
+		}
+	}
+	return "", false
+}
+
+// searchKeys are the keys for a command in the library search prompt, or
+// none when the prompt isn't open.
+func (m *Model) searchKeys(command string) []string {
+	if !m.libraryPrompt() {
+		return nil
+	}
+	return m.engine.Table().Keys(keymap.Search, []string{"global"}, command)
+}
+
+// searchAction runs a command on the results without leaving the prompt.
+// After an add, the query is selected so typing starts the next search, and
+// the query goes in the history, since <CR> never will.
+func (m *Model) searchAction(name string) tea.Cmd {
+	m.focus = libraryWindow
+	switch name {
+	case "nop":
+		return nil
+	case "down":
+		m.move(1)
+		return nil
+	case "up":
+		m.move(-1)
+		return nil
+	}
+	before, query := len(m.state.Queue), m.line.Value()
+	cmd := m.execCall(name, command.Call{})
+	m.shortenMsg()
+	if name == "undo" || name == "redo" || len(m.state.Queue) == before {
+		return cmd
+	}
+	m.selected = true
+	m.line.CursorEnd()
+	if query != m.savedQuery {
+		m.savedQuery = query
+		return tea.Batch(cmd, m.remember(&m.searchHist, query))
+	}
+	return cmd
+}
+
+// shortenMsg clears a message from an action in the prompt after
+// promptInfoFor, errors too: nothing else would clear one while typing.
+func (m *Model) shortenMsg() {
+	if id := m.shown.id; id > m.promptFloor {
+		m.timers = append(
+			m.timers,
+			m.clock.After(promptInfoFor, func(time.Time) tea.Msg { return expireMsg{id} }),
+		)
+	}
 }
 
 // searchKey handles the keys of the search prompt that differ from the

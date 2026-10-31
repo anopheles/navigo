@@ -85,7 +85,7 @@ func TestKeysProblems(t *testing.T) {
 	want := []string{
 		"config.yaml:2:12: timeout: give a number of milliseconds",
 		"config.yaml:3:10: hints: give true or false",
-		`config.yaml:4:3: unknown option or mode "nromal"; modes are normal, visual and cmdline`,
+		`config.yaml:4:3: unknown option or mode "nromal"; modes are normal, visual, cmdline and search`,
 		"config.yaml:8:12: x: empty command; use nop for a dead key or ~ to delete the binding",
 		"config.yaml:9:12: y: give a command line, nop for a dead key, or ~ to delete the binding",
 		"config.yaml:10:11: visual: must map scopes, such as global, to bindings",

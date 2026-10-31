@@ -205,9 +205,13 @@ type Model struct {
 	// The ":" line and the search prompt. A search prompt's text is
 	// selected until a key changes it, and beforeSearch is what <Esc>
 	// restores. compl is the <Tab> completion being cycled through.
-	cmdHist      lineHistory
-	searchHist   lineHistory
-	selected     bool
+	cmdHist    lineHistory
+	searchHist lineHistory
+	selected   bool
+	// promptFloor is the last message from before the prompt opened, and
+	// savedQuery the last query an add from the prompt put in the history.
+	promptFloor  int
+	savedQuery   string
 	beforeSearch *savedView
 	compl        *completion
 	// The Help filter prompt shares the search prompt's mode; helpBefore
@@ -814,8 +818,11 @@ func (m *Model) notice(n app.Notice) {
 	}
 	if n.Command != "" {
 		key := ":" + n.Command
+		searchKeys := m.searchKeys(n.Command)
 		// A command for the queue, such as paste, may not be bound here.
-		if ks := m.engine.Table().Keys(keymap.Normal, m.scopes(), n.Command); len(ks) > 0 {
+		if len(searchKeys) > 0 {
+			key = searchKeys[0]
+		} else if ks := m.engine.Table().Keys(keymap.Normal, m.scopes(), n.Command); len(ks) > 0 {
 			key = ks[0]
 		} else if ks := m.engine.Table().Keys(keymap.Normal, []string{"queue", "global"}, n.Command); len(ks) > 0 {
 			key = ks[0] + " in the queue"
@@ -919,6 +926,9 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 // lineKey handles a key on the ":" line or a prompt. Keys bound in the
 // cmdline table run their line command and never type; others edit.
 func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
+	if a, ok := m.searchBound(k); ok {
+		return m.searchAction(a)
+	}
 	key := "" // what the prompt's handler is told: enter, esc, up, …
 	if a, ok := m.lineBound(k); ok {
 		switch a {

@@ -99,7 +99,7 @@ func buildKeys(
 	seen := map[place]config.Pos{}
 	for _, b := range k.Bindings {
 		scope := b.Scope
-		if b.Mode == "cmdline" {
+		if b.Mode == "cmdline" || b.Mode == "search" {
 			scope = "global"
 		}
 		if tokens, err := keymap.Parse(expandLeader(b.Keys, set.leader)); err == nil {
@@ -177,8 +177,10 @@ func bindOne(
 		m = keymap.Visual
 	case "cmdline":
 		m, scope = keymap.Cmdline, "global"
+	case "search":
+		m, scope = keymap.Search, "global"
 	default:
-		return fmt.Errorf("unknown mode %q; modes are normal, visual and cmdline", mode)
+		return fmt.Errorf("unknown mode %q; modes are normal, visual, cmdline and search", mode)
 	}
 	if !slices.Contains(scopeNames, scope) {
 		return fmt.Errorf("unknown scope %q; scopes are %s", scope, strings.Join(scopeNames, ", "))
@@ -199,9 +201,11 @@ func bindOne(
 		)
 	case m == keymap.Cmdline && len(tokens) > 1:
 		return fmt.Errorf("%s: command-line bindings are single keys", keys)
+	case m == keymap.Search && len(tokens) > 1:
+		return fmt.Errorf("%s: search bindings are single keys", keys)
 	}
 	where := mode + "." + scope
-	if m == keymap.Cmdline {
+	if m == keymap.Cmdline || m == keymap.Search {
 		where = mode
 	}
 	if del {
@@ -221,6 +225,19 @@ func bindOne(
 				"%q isn't a command-line command; they are %s",
 				call.Name,
 				strings.Join(slices.Sorted(mapKeys(lineCommands)), ", "),
+			)
+		}
+		if len(call.Args) > 0 {
+			return fmt.Errorf("%s takes no arguments", call.Name)
+		}
+		return t.Bind(m, scope, seq, call.Name)
+	}
+	if m == keymap.Search {
+		if !slices.Contains(searchCommands, call.Name) {
+			return fmt.Errorf(
+				"%q doesn't work in the search prompt; these do: %s",
+				call.Name,
+				strings.Join(searchCommands, ", "),
 			)
 		}
 		if len(call.Args) > 0 {

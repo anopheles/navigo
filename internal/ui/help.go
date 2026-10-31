@@ -92,6 +92,16 @@ func (m *Model) buildHelp() *helpView {
 			)
 		}
 	}
+	if bs := t.Bindings(keymap.Search, "global"); len(bs) > 0 {
+		rows = append(rows, helpRow{heading: "In the library search prompt"})
+		for _, b := range bs {
+			desc := ""
+			if c, ok := m.registry.Get(b.Command); ok {
+				desc = c.Desc
+			}
+			rows = append(rows, helpRow{key: keyLabel(b.Seq()), line: b.Command, desc: desc})
+		}
+	}
 	var unbound []helpRow
 	for _, c := range m.registry.All() {
 		if !bound[c.Name] {

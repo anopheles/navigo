@@ -14,12 +14,34 @@ import (
 // (library.Snapshot.Mix), or around a seed when Around is set
 // (library.Snapshot.MixAround), and plays the first. Seed makes the pick
 // and At is the time "played lately" counts back from, so Apply stays
-// pure.
+// pure. With Place set it is a mix-add: the tracks join the queue instead
+// of replacing it, and nothing starts playing.
 type Mix struct {
 	N      int
 	Seed   uint64
 	At     time.Time
 	Around *library.Seed
+	Place  MixPlace
+}
+
+// MixPlace is where a Mix's tracks go.
+type MixPlace int
+
+const (
+	// MixReplace replaces the queue.
+	MixReplace MixPlace = iota
+	// MixAddEnd adds to the end of the queue, as AddEnd does.
+	MixAddEnd
+	// MixAddNext adds after the current track, as AddNext does.
+	MixAddNext
+)
+
+// nothing is what to say when e has nothing to pick from.
+func (e Mix) nothing() string {
+	if e.Place != MixReplace {
+		return "nothing to add"
+	}
+	return "nothing to mix"
 }
 
 // from is " from <name>" for a Mix around a seed, for its messages.
@@ -65,7 +87,8 @@ func (SimilarLoaded) isEvent() {}
 
 // mixWait is a Mix asked for before the first sync was done, with what
 // the queue was then. It runs when the sync is done, unless the queue or
-// what plays changed since: then the listener has moved on.
+// what plays changed since: then the listener has moved on. A mix-add runs
+// anyway, since adding to a queue that changed takes nothing away.
 type mixWait struct {
 	mix             Mix
 	seq             int // the lookup's, for a Mix waiting on similar artists
@@ -74,7 +97,8 @@ type mixWait struct {
 }
 
 func (w *mixWait) still(s State) bool {
-	return w.nextID == s.nextID && w.playing == s.playing && w.queueLen == len(s.Queue)
+	return w.mix.Place != MixReplace ||
+		w.nextID == s.nextID && w.playing == s.playing && w.queueLen == len(s.Queue)
 }
 
 // MixWaiting reports whether a Mix waits for the first sync.
@@ -90,7 +114,7 @@ func (s State) applyMix(e Mix) (State, []Effect) {
 			}
 			return s, []Effect{n}
 		}
-		return s, []Effect{s.Unsynced("nothing to mix" + e.from())}
+		return s, []Effect{s.Unsynced(e.nothing() + e.from())}
 	}
 	s.mixLookup = nil // a newer Mix replaces one waiting on the server
 	if e.Around != nil && !s.Offline {
@@ -140,6 +164,9 @@ func (s State) applySimilar(e SimilarLoaded) (State, []Effect) {
 
 // mix makes Mix e, around its seed with the given similar artists.
 func (s State) mix(e Mix, similar [][]library.ArtistRef) (State, []Effect) {
+	if e.Place != MixReplace {
+		return s.mixAdd(e, similar)
+	}
 	r := rand.New(rand.NewPCG(e.Seed, e.Seed^0x9e3779b97f4a7c15))
 	var picked []library.Track
 	if e.Around != nil {
@@ -171,6 +198,67 @@ func (s State) mix(e Mix, similar [][]library.ArtistRef) (State, []Effect) {
 	out := []Effect{n}
 	for _, f := range played {
 		if p, ok := f.(Notice); !ok || p.Err {
+			out = append(out, f)
+		}
+	}
+	return s, out
+}
+
+// mixAdd adds a batch to the queue as one undoable edit, leaving out what
+// is queued, what played this session and a seed track itself.
+func (s State) mixAdd(e Mix, similar [][]library.ArtistRef) (State, []Effect) {
+	exclude := map[library.TrackID]bool{}
+	for _, t := range s.Played {
+		exclude[t.ID] = true
+	}
+	for _, q := range s.Queue {
+		exclude[q.Track.ID] = true
+	}
+	if e.Around != nil && e.Around.Kind == library.SeedTrack {
+		exclude[library.TrackID(e.Around.ID)] = true
+	}
+	var after, before *library.Track
+	if e.Place == MixAddNext {
+		if s.Current >= 0 && s.Current < len(s.Queue) {
+			after = &s.Queue[s.Current].Track
+		}
+		if s.Current+1 < len(s.Queue) {
+			before = &s.Queue[s.Current+1].Track
+		}
+	} else if len(s.Queue) > 0 {
+		after = &s.Queue[len(s.Queue)-1].Track
+	}
+	r := rand.New(rand.NewPCG(e.Seed, e.Seed^0x9e3779b97f4a7c15))
+	picked := s.Library.MixAdd(
+		e.Around,
+		similar,
+		e.N,
+		e.At,
+		r,
+		s.recs.matched,
+		exclude,
+		after,
+		before,
+	)
+	if len(picked) == 0 {
+		text := e.nothing() + e.from()
+		if e.Around == nil {
+			text += " · no track left to pick"
+		}
+		return s, []Effect{Notice{Text: text, Err: true}}
+	}
+	var add Event = AddEnd{Tracks: picked}
+	if e.Place == MixAddNext {
+		add = AddNext{Tracks: picked}
+	}
+	s, added := apply(s, add)
+	n := Notice{Text: "added " + count(len(picked)) + e.from(), Command: "undo", Hint: "undoes"}
+	if len(picked) < e.N {
+		n.Text = fmt.Sprintf("added %d of %d tracks%s", len(picked), e.N, e.from())
+	}
+	out := []Effect{n}
+	for _, f := range added {
+		if _, ok := f.(Notice); !ok {
 			out = append(out, f)
 		}
 	}

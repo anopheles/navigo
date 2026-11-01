@@ -149,6 +149,31 @@ func (m *Model) mixAround(c command.Call, seed *library.Seed) {
 	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now(), Around: seed})
 }
 
+// mixAdd is gM, gN and their commands: tracks picked as gm would pick them,
+// joining the queue at place. A count says how many, else MixAddSize.
+func (m *Model) mixAdd(c command.Call, place app.MixPlace) error {
+	if err := mixAddArgs(c.Args); err != nil {
+		return err
+	}
+	var seed *library.Seed
+	if len(c.Args) == 0 {
+		seed = m.mixSeed()
+	}
+	n := library.MixAddSize
+	if c.Count > 0 {
+		n = c.Count
+	}
+	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now(), Around: seed, Place: place})
+	return nil
+}
+
+func mixAddArgs(a []string) error {
+	if len(a) > 1 || len(a) == 1 && a[0] != "library" {
+		return errors.New("mix-add: give library, or nothing to mix around the row")
+	}
+	return nil
+}
+
 func mixArgs(a []string) error {
 	if len(a) > 1 || len(a) == 1 && a[0] != "library" {
 		return errors.New("mix: give library, or nothing to mix around the row")

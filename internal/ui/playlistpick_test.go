@@ -185,7 +185,7 @@ func TestPlaylistPickRefusesBeforeOpening(t *testing.T) {
 
 func TestPlaylistPickInHelpAndKeyMenu(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
-	h.keys("'b<CR>?")
+	h.keys("'b<CR>?jjjj")
 	h.contains("add to playlist")
 	h.keys("q'?/")
 	h.typeText("add to playlist")

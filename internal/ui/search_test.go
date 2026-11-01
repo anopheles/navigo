@@ -428,3 +428,11 @@ func TestSearchPromptJumpsToTheQueue(t *testing.T) {
 		t.Errorf("results for %q kept, want the view from before the prompt", f.search.query)
 	}
 }
+
+func TestSOpensSearch(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("s")
+	if h.m.mode != keymap.Search {
+		t.Fatalf("s: mode %s, want the search prompt", h.m.mode)
+	}
+}

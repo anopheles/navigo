@@ -4,4 +4,6 @@ A Mix replaces the queue with tracks picked from the whole library, leaning towa
 
 A Mix around a seed also counts the server's similar artists when it can be reached: see [ADR 0007](0007-a-mix-around-a-seed-asks-the-server-for-similar-artists.md).
 
+A Mix can also join the queue instead of replacing it: see [ADR 0011](0011-a-mix-add-joins-the-queue.md).
+
 A Mix also leans toward ListenBrainz Recommendations when they are set up: see [ADR 0008](0008-listenbrainz-is-a-second-optional-service.md).

@@ -56,13 +56,13 @@ func TestHelp(t *testing.T) {
 func TestKeyMenu(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("3j<CR>j?")
-	h.contains("Keys here", "Play", "Queue", "Select", "press a key to run it")
+	h.contains("Keys here", "Play", "Queue", "press a key to run it")
 	h.contains("A        add to queue")
 	golden.RequireEqual(t, h.screen())
 
 	// j scrolls rather than moving the cursor; a listed key runs.
 	h.keys("G")
-	h.contains("Go", "Help", "? ")
+	h.contains("Select", "Go", "Help", "? ")
 	h.cursorOn("Low Tide")
 	if h.m.popup == nil {
 		t.Fatal("G closed the menu")

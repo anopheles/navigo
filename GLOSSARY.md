@@ -73,8 +73,12 @@ A one-shot command that reorders the queue at random; it can be undone like any 
 _Avoid_: shuffle mode, random play
 
 **Mix**:
-A one-shot command that replaces the queue with tracks picked at random from the whole library, or around a seed, leaning toward starred, well-rated tracks not played lately; it can be undone like any other queue edit, and nothing keeps refilling the queue.
+A one-shot command that replaces the queue with tracks picked at random from the whole library, or around a seed, leaning toward starred, well-rated tracks not played lately; it can be undone like any other queue edit, and nothing keeps refilling the queue. A **Mix-add** adds such tracks instead of replacing the queue.
 _Avoid_: radio, autoplay, instant mix, song mix, track mix
+
+**Mix-add**:
+A Mix whose tracks join the queue, at its end or after the current track, instead of replacing it; what plays doesn't change.
+_Avoid_: more like this, top up (both belong to the radio)
 
 **Seed**:
 The artist, album, playlist or track a Mix is built around; a Mix with no seed draws on the whole library.

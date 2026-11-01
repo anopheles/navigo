@@ -34,6 +34,8 @@ var menuGroups = []struct {
 			"volume",
 			"shuffle",
 			"mix",
+			"mix-add-end",
+			"mix-add-next",
 			"radio",
 			"repeat",
 		},
@@ -102,6 +104,8 @@ func (m *Model) openKeyMenu() {
 					label += " " + args
 				} else if name == "mix" {
 					label = "mix from " + m.mixFrom()
+				} else if name == "mix-add-end" || name == "mix-add-next" {
+					label += " from " + m.mixFrom()
 				}
 				width = max(width, min(lipgloss.Width(label), 32))
 				rows = append(rows, row{keyLabel(b.Seq()), label, c.Desc})

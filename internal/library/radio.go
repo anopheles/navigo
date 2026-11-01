@@ -57,10 +57,15 @@ func (s *Snapshot) RadioMix(
 	}
 	order := s.mixOrder(now, r, recommended, c.of, adjust)
 	rules := mixRules{fromSeed: c.fromSeed, seedCap: max(1, n/3), prev: after}
+	return s.pickAfter(order, n, rules)
+}
+
+// pickAfter is pick, except that when only the artist of the track it
+// follows is left, that artist plays twice in a row rather than nothing
+// being picked.
+func (s *Snapshot) pickAfter(order []Track, n int, rules mixRules) []Track {
 	out := s.pick(order, n, rules)
-	if len(out) == 0 && after != nil {
-		// Only the last track's artist is close: better them twice in a
-		// row than a radio that stops.
+	if len(out) == 0 && rules.prev != nil {
 		rules.prev = nil
 		out = s.pick(order, n, rules)
 	}

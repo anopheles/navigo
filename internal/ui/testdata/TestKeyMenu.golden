@@ -1,31 +1,31 @@
 ╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
 │ Albums                       │ Blue Hour                             ││                                              │
 │ Ångström╭──────────────────────────────────────────────────────────────────────────────────────────────────╮         │
-│ Blue    │ Keys here 1–24 of 48                                                                             │         │
+│ Blue    │ Keys here 1–24 of 50                                                                             │         │
 │ Blue    │ Play                                                                                             │         │
-│▎★ Blue H│   <CR>     play               Replace the queue with this list and play from the track under th… │         │
-│ The Long│   <Space>  play/pause         Pause or resume playback, or start the queue.                      │         │
-│ Night Dr│   >        next track         Play the next track in the queue.                                  │         │
-│ Static B│   <        previous track     Play the previous track, or restart this one after 3 seconds.      │         │
-│ 夜明け  │   .        seek +10           Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a … │         │
-│         │   ,        seek -10           Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a … │         │
-│         │   X        stop               Stop playback.                                                     │         │
-│         │   =        volume +5          Change the volume by points, such as volume +5, or set it: volume… │         │
-│         │   +        volume +5          Change the volume by points, such as volume +5, or set it: volume… │         │
-│         │   -        volume -5          Change the volume by points, such as volume +5, or set it: volume… │         │
-│         │   S        shuffle            Shuffle the queue once, keeping the current track first; u undoes… │         │
-│         │   gm       mix from Low Tide  Mix around the row, else what plays, else the whole library (mix … │         │
-│         │   gR       radio              Turn the radio on or off: it keeps the queue going with tracks li… │         │
-│         │   R        repeat             Cycle repeat: off, all (the queue again), one (the same track aga… │         │
+│▎★ Blue H│   <CR>     play                       Replace the queue with this list and play from the track … │         │
+│ The Long│   <Space>  play/pause                 Pause or resume playback, or start the queue.              │         │
+│ Night Dr│   >        next track                 Play the next track in the queue.                          │         │
+│ Static B│   <        previous track             Play the previous track, or restart this one after 3 seco… │         │
+│ 夜明け  │   .        seek +10                   Seek by seconds (seek +10) or to a time (seek 1:30, seek … │         │
+│         │   ,        seek -10                   Seek by seconds (seek +10) or to a time (seek 1:30, seek … │         │
+│         │   X        stop                       Stop playback.                                             │         │
+│         │   =        volume +5                  Change the volume by points, such as volume +5, or set it… │         │
+│         │   +        volume +5                  Change the volume by points, such as volume +5, or set it… │         │
+│         │   -        volume -5                  Change the volume by points, such as volume +5, or set it… │         │
+│         │   S        shuffle                    Shuffle the queue once, keeping the current track first; … │         │
+│         │   gm       mix from Low Tide          Mix around the row, else what plays, else the whole libra… │         │
+│         │   gM       add mix from Low Tide      Add tracks picked as a Mix picks them to the end of the q… │         │
+│         │   gN       add mix next from Low Tide Add tracks picked as a Mix picks them after the current t… │         │
+│         │   gR       radio                      Turn the radio on or off: it keeps the queue going with t… │         │
+│         │   R        repeat                     Cycle repeat: off, all (the queue again), one (the same t… │         │
 │         │ Queue                                                                                            │         │
-│         │   A        add to queue       Add the track under the cursor to the end of the queue.            │         │
-│         │   a        play next          Add the track under the cursor after the current track.            │         │
-│         │   P        play this now      Add the track under the cursor after the current track and play i… │         │
-│         │   y        yank               Yank the rows a motion covers (yy: this row) into the register.    │         │
-│         │   u        undo               Undo the last change to the queue.                                 │         │
-│         │   <C-r>    redo               Redo the last undone change to the queue.                          │         │
-│         │   gl       add to playlist    Add the selection or the row under the cursor to the end of a pla… │         │
-│         │ Select                                                                                           │         │
+│         │   A        add to queue               Add the track under the cursor to the end of the queue.    │         │
+│         │   a        play next                  Add the track under the cursor after the current track.    │         │
+│         │   P        play this now              Add the track under the cursor after the current track an… │         │
+│         │   y        yank                       Yank the rows a motion covers (yy: this row) into the reg… │         │
+│         │   u        undo                       Undo the last change to the queue.                         │         │
+│         │   <C-r>    redo                       Redo the last undone change to the queue.                  │         │
 │         ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯         │
 │                              │                                       ││                                              │
 │                              │                                       ││                                              │

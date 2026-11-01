@@ -119,6 +119,7 @@ own media integration does this (mpv 0.39 or newer).
 `navigo --search-on-focus` opens search whenever its terminal window
 gains focus, with the last query selected. Show navigo with a key, type,
 add the track with `<Tab>` (`<S-Tab>` to play it next, `<C-g>` to play it now, `<C-j>`/`<C-k>` to pick another result) and hide navigo again.
+`<C-q>` skips the search and goes to the queue.
 A prompt, popup, Visual selection or half-typed key is left alone. Under
 tmux it needs `focus-events on`.
 

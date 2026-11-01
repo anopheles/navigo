@@ -602,6 +602,9 @@ func (m *Model) hintLine() string {
 		if len(down) > 0 && len(up) > 0 {
 			acts += hint(down[0]+"/"+up[0], "move") + "  "
 		}
+		if ks := m.searchKeys("queue"); len(ks) > 0 {
+			acts += hint(ks[0], "queue") + "  "
+		}
 		return " " + acts + hint("<CR>", "go to the results") + "  " + hint("<Esc>", "cancel")
 	}
 	if m.popup != nil && m.popup.yes != nil {

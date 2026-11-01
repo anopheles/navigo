@@ -301,7 +301,8 @@ func (m *Model) searchKeys(command string) []string {
 	return m.engine.Table().Keys(keymap.Search, []string{"global"}, command)
 }
 
-// searchAction runs a command on the results without leaving the prompt.
+// searchAction runs a command on the results without leaving the prompt;
+// queue is the one that leaves it.
 // After an add, the query is selected so typing starts the next search, and
 // the query goes in the history, since <CR> never will.
 func (m *Model) searchAction(name string) tea.Cmd {
@@ -315,6 +316,9 @@ func (m *Model) searchAction(name string) tea.Cmd {
 	case "up":
 		m.move(-1)
 		return nil
+	case "queue": // leaves the prompt as <Esc> does, then jumps
+		m.cancelSearch()
+		return m.execCall(name, command.Call{})
 	}
 	before, query := len(m.state.Queue), m.line.Value()
 	cmd := m.execCall(name, command.Call{})

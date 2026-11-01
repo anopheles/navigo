@@ -34,7 +34,7 @@
 │                                                                      ││                                              │
 │                                                                      ││                                              │
 ╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
- <Tab> add  <S-Tab> play next  <C-g> play now  <C-j>/<C-k> move  <CR> go to the results  <Esc> cancel                   
+ <Tab> add  <S-Tab> play next  <C-g> play now  <C-j>/<C-k> move  <C-q> queue  <CR> go to the results  <Esc> cancel      
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  SEARCH  ■  nothing playing                                                                        RG track  0 in queue 
 search: blue                                                                                                            

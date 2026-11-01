@@ -155,6 +155,7 @@ var searchDefaults = []struct{ scope, keys, command string }{
 	{"global", "<C-k>", "up"},
 	{"global", "<C-z>", "undo"},
 	{"global", "<C-r>", "redo"},
+	{"global", "<C-q>", "queue"},
 }
 
 // searchCommands are what a key in the library search prompt can run.
@@ -164,6 +165,7 @@ var searchCommands = []string{
 	"down",
 	"nop",
 	"play-this",
+	"queue",
 	"redo",
 	"undo",
 	"up",

@@ -414,3 +414,17 @@ func TestSearchOnFocusSelectsAnOpenPrompt(t *testing.T) {
 		t.Errorf("query = %q, want it replaced", h.m.line.Value())
 	}
 }
+
+func TestSearchPromptJumpsToTheQueue(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("'s")
+	h.typeText("blue")
+	h.keys("<C-q>")
+	if h.m.mode != keymap.Normal || h.m.focus != queueWindow {
+		t.Fatalf("<C-q>: mode %s focus %v, want Normal on the queue", h.m.mode, h.m.focus)
+	}
+	// It closes the prompt as <Esc> does: the view from before comes back.
+	if f := h.m.searchFrame(); f != nil && f.search != nil && f.search.query == "blue" {
+		t.Errorf("results for %q kept, want the view from before the prompt", f.search.query)
+	}
+}

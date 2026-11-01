@@ -63,6 +63,7 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "'a", "artists"},
 	{"global", "'b", "albums"},
 	{"global", "'p", "playlists"},
+	{"global", "s", "search"},
 	{"global", "'s", "search"},
 	{"global", "'?", "help"},
 	{"global", "<F1>", "help"},

@@ -269,7 +269,7 @@ keys:
 - **Adding to a playlist** ([#94](https://github.com/anopheles/navigo/issues/94)): `gl` (or `:playlist-add` alone) opens a popup titled with what goes in (`add Blue Hour to…`, `add 12 tracks to…`): the selection, or the track, album or playlist under the cursor, or the queue row. It is refused before it opens, with the usual message, offline, before the first sync, on an artist row or with nothing under the cursor. Its rows are `new playlist…`, then the playlists added to this session (by any means, including a playlist made with tracks), the most recent first, then the rest as the Playlists section has them, each with `N tracks`; the cursor starts on the first playlist, so `gl<CR>` adds to the one used last. `<CR>` adds to the end of it. `/` filters the rows as the `:` line matches commands (name prefix, word starts, then scattered letters); `<CR>` keeps the filter and `<Esc>` puts it back. While filtering, the top row reads `new playlist "morning"`. Picking it asks for a name on the bottom line (`new playlist: `, filled with the filter), refuses a name another playlist has, and makes the playlist as `:playlist-new` does. `q`/`<Esc>` close the popup and keep a selection; adding or making the playlist ends it. The session's order is kept in memory only.
 - **Help:** generated from the bindings in effect, and searchable with `/`. It describes `gm`'s chain (row, what plays, whole library) once.
 
-**Marks** jump to a section: `'h` Home, `'q` the queue window, `'a` Artists, `'b` Albums, `'p` Playlists, `'s` Search, `'?` Help. They are ordinary bindings to `:home`, `:artists`, ….
+**Marks** jump to a section: `'h` Home, `'q` the queue window, `'a` Artists, `'b` Albums, `'p` Playlists, `'s` Search, `'?` Help. They are ordinary bindings to `:home`, `:artists`, …. Search also has `s`, one key, since it is the most used.
 
 **Jump list** (`<C-o>`/`<C-i>`):
 - **Recorded:** marks, section commands, `ga`/`gr`/`gp`, `gg`/`G`, and `/` with `n`/`N`.
@@ -362,7 +362,7 @@ The `:` line has Tab completion for command names and arguments.
 
 **Typing:**
 - Results update **live** from the first character. `<CR>` moves into them; `<Esc>` restores the previous view.
-- `'s` reopens the prompt with the last query filled in and selected. Search history is saved.
+- `s` (or `'s`) reopens the prompt with the last query filled in and selected. Search history is saved.
 - **Acting from the prompt** ([#127](https://github.com/anopheles/navigo/issues/127)): `<Tab>` adds the row under the cursor to the end of the queue, `<S-Tab>` plays it next, `<C-g>` plays it now (`play-this`), `<C-j>`/`<C-k>` move the cursor, `<C-z>`/`<C-r>` undo and redo, and `<C-q>` closes the prompt as `<Esc>` does and moves to the queue window (`queue`). They act as `A`, `a`, `P`, `j`, `k`, `u` and `<C-r>` do, so an artist row gets a note. After an add, the prompt stays open with the query selected, so typing starts the next search, and the query goes in the history once. The result shows at the right end of the prompt line for 3 seconds. Only this prompt has these keys: `/`, Help's filter and the playlist picker don't. Rebind them under `keys: search:`.
 - **`--search-on-focus`:** for a navigo shown and hidden with a key, search opens the same way whenever the terminal window gains focus (focus reporting, mode 1004), but only from Normal mode with no popup or pending key, so nothing half done is lost. If this prompt is already open, its query is selected again.
 

@@ -9,7 +9,7 @@ Set FontSize 15
 Set Width 1360
 Set Height 780
 Set Padding 8
-Set Theme "Builtin Solarized Light"
+Set Theme "GruvboxDark"
 Set TypingSpeed 140ms
 Set Framerate 15
 

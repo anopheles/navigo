@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"errors"
 	"fmt"
 	"math/rand/v2"
+	"strconv"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -59,7 +59,8 @@ func (m *Model) openHomeList(i int, c command.Call) {
 	l := m.homeRows()[i]
 	switch l.kind {
 	case "mix":
-		m.mixAround(c, nil) // Home's Mix row is always the whole library
+		// Home's Mix row is always the whole library. These arguments are valid.
+		_ = m.mix(command.Call{Name: "mix", Args: []string{"library"}, Count: c.Count})
 		return
 	case starredTracks, playedTracks, forgottenTracks, "recommended":
 		m.lib = append(m.lib, frame{kind: homeTracks, homeKind: l.kind, title: l.title})
@@ -127,58 +128,80 @@ func (m *Model) starHint(scopes []string, what string) string {
 }
 
 // mix is gm and :mix: a Mix of the count's size, or MixSize, around the
-// row under the cursor, else what plays, else the whole library. With
-// the argument library (:mix library) it always mixes the whole library.
+// row under the cursor, else what plays, else the whole library. See
+// parseMixArgs for its arguments.
 func (m *Model) mix(c command.Call) error {
-	if err := mixArgs(c.Args); err != nil {
-		return err
-	}
-	var seed *library.Seed
-	if len(c.Args) == 0 {
-		seed = m.mixSeed()
-	}
-	m.mixAround(c, seed)
-	return nil
-}
-
-func (m *Model) mixAround(c command.Call, seed *library.Seed) {
-	n := library.MixSize
-	if c.Count > 0 {
-		n = c.Count
-	}
-	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now(), Around: seed})
+	return m.runMix(c, library.MixSize, app.MixReplace)
 }
 
 // mixAdd is gM, gN and their commands: tracks picked as gm would pick them,
-// joining the queue at place. A count says how many, else MixAddSize.
+// joining the queue at place, MixAddSize unless a count says otherwise.
 func (m *Model) mixAdd(c command.Call, place app.MixPlace) error {
-	if err := mixAddArgs(c.Args); err != nil {
+	return m.runMix(c, library.MixAddSize, place)
+}
+
+func (m *Model) runMix(c command.Call, size int, place app.MixPlace) error {
+	wholeLibrary, n, err := parseMixArgs(c.Name, c.Args)
+	if err != nil {
 		return err
 	}
-	var seed *library.Seed
-	if len(c.Args) == 0 {
-		seed = m.mixSeed()
-	}
-	n := library.MixAddSize
-	if c.Count > 0 {
+	switch {
+	case c.Count > 0: // the count just pressed beats a binding's number
 		n = c.Count
+	case n == 0:
+		n = size
+	}
+	var seed *library.Seed
+	if !wholeLibrary {
+		seed = m.mixSeed()
 	}
 	m.event(app.Mix{N: n, Seed: m.seed(), At: time.Now(), Around: seed, Place: place})
 	return nil
 }
 
-func mixAddArgs(a []string) error {
-	if len(a) > 1 || len(a) == 1 && a[0] != "library" {
-		return errors.New("mix-add: give library, or nothing to mix around the row")
+// parseMixArgs reads a Mix command's arguments: library, a track count of
+// at least 1, both in either order, or neither (n is then 0).
+func parseMixArgs(name string, args []string) (wholeLibrary bool, n int, err error) {
+	bad := fmt.Errorf("%s: give a track count, library or both", name)
+	if len(args) > 2 {
+		return false, 0, bad
 	}
-	return nil
+	for _, a := range args {
+		if a == "library" && !wholeLibrary {
+			wholeLibrary = true
+			continue
+		}
+		v, err := strconv.Atoi(a)
+		if err != nil || v < 1 || n > 0 || a[0] == '+' {
+			return false, 0, bad
+		}
+		n = v
+	}
+	return wholeLibrary, n, nil
 }
 
-func mixArgs(a []string) error {
-	if len(a) > 1 || len(a) == 1 && a[0] != "library" {
-		return errors.New("mix: give library, or nothing to mix around the row")
+// mixArgs checks the arguments of the Mix command called name.
+func mixArgs(name string) func([]string) error {
+	return func(a []string) error {
+		_, _, err := parseMixArgs(name, a)
+		return err
 	}
-	return nil
+}
+
+// mixLabel is a Mix command's row in the key menu, naming what it would
+// mix from: "add mix next 5 from <name>".
+func (m *Model) mixLabel(label, name string, args []string) string {
+	wholeLibrary, n, err := parseMixArgs(name, args)
+	if err != nil {
+		return label
+	}
+	if n > 0 {
+		label += " " + strconv.Itoa(n)
+	}
+	if wholeLibrary {
+		return label + " from the whole library"
+	}
+	return label + " from " + m.mixFrom()
 }
 
 func mixWords(*Model) []string { return []string{"library"} }

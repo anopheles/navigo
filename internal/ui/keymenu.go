@@ -100,12 +100,12 @@ func (m *Model) openKeyMenu() {
 					continue
 				}
 				label := c.Label
-				if _, args, ok := strings.Cut(b.Command, " "); ok {
+				_, args, hasArgs := strings.Cut(b.Command, " ")
+				switch {
+				case name == "mix" || name == "mix-add-end" || name == "mix-add-next":
+					label = m.mixLabel(label, name, strings.Fields(args))
+				case hasArgs:
 					label += " " + args
-				} else if name == "mix" {
-					label = "mix from " + m.mixFrom()
-				} else if name == "mix-add-end" || name == "mix-add-next" {
-					label += " from " + m.mixFrom()
 				}
 				width = max(width, min(lipgloss.Width(label), 32))
 				rows = append(rows, row{keyLabel(b.Seq()), label, c.Desc})

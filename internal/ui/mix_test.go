@@ -59,7 +59,7 @@ func TestMixLibraryCompletes(t *testing.T) {
 		t.Errorf("completed to %q", got)
 	}
 	h.keys("<Esc>:mix everything<CR>")
-	h.contains("mix: give library, or nothing to mix around the row")
+	h.contains("mix: give a track count, library or both")
 }
 
 // Online, a Mix around a seed asks the server for its artists' similar

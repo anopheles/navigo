@@ -234,7 +234,7 @@ keys:
 [What screens, layout and navigation model does navigo have?](https://github.com/anopheles/navigo/issues/8), [#13](https://github.com/anopheles/navigo/issues/13), [#21](https://github.com/anopheles/navigo/issues/21).
 
 **Layout** (top to bottom):
-- **Two windows** side by side. The **library window** (3/5 of the width) shows one list at a time, drilled into with `l`/`<CR>` and out with `h`; in Artists, Albums and Playlists it shows columns (see Sections) instead. The **queue window** (2/5) always shows the queue; its title gives the count and total length, `Queue (12) · 48:10` ([#61](https://github.com/anopheles/navigo/issues/61)).
+- **Two windows** side by side. The **library window** (3/5 of the width) shows one list at a time, drilled into with `l`/`<CR>` and out with `h`; in Artists, Albums and Playlists it shows columns (see Sections) instead. The **queue window** (2/5) always shows the queue; its title gives the count and total length, `Queue (12) · 48:10` ([#61](https://github.com/anopheles/navigo/issues/61)). While rows are off screen, its bottom edge counts them, `↑ 4 · ↓ 10 more`, so that tracks added below the view still show.
 - **The hint line.**
 - **The progress rule**: a faint rule under the windows that fills as the track plays.
 - **The now-playing bar** (1 line, never focused), laid out like a Neovim status line: the mode (`NORMAL`, `VISUAL`, `COMMAND`, `SEARCH`) on a block of colour, ■/▶/⏸, then title — artist · album; on the right the indicators and the repeat and volume flags, the position in the queue (`2/6`, or `6 in queue` with nothing playing) and elapsed/total time. `powerline: true` joins its blocks with a Nerd Font's arrows.

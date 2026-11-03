@@ -1,6 +1,10 @@
 package ui
 
-import "testing"
+import (
+	"testing"
+
+	"charm.land/lipgloss/v2"
+)
 
 const twoAlbums = "Dusk Signal, Low Tide, Streetlamp, Blue Hour, Wintering, Afterglow, " +
 	"Undertow, Quiet Room, Blue Static, Radio Silence, Homeward"
@@ -67,4 +71,50 @@ func TestFilterQueue(t *testing.T) {
 	h.keys(":filter<CR>")
 	h.contains("filter cleared", "Queue (10)", "Low Tide")
 	h.cursorOn("Undertow") // the cursor stays on its entry
+}
+
+// Rows added below the view leave the rows on screen as they were, so the
+// bottom edge has to say they are there.
+func TestQueueEdgeCountsRowsOffScreen(t *testing.T) {
+	h := homeHarness(t, 120, 16, nil)
+	h.keys(":mix-add-end library 3<CR>")
+	h.lacks("↑", "more ─")
+
+	h.keys(":mix-add-end library 11<CR><Tab>G")
+	h.contains("╰─ ↑ 4 ─")
+	h.lacks("more ─")
+
+	h.keys(":mix-add-end library 10<CR>")
+	h.contains("╰─ ↑ 4 · ↓ 10 more ─")
+
+	h.keys("gg")
+	h.contains("╰─ ↓ 14 more ─")
+}
+
+func TestQueueFoot(t *testing.T) {
+	for _, c := range []struct {
+		off, h, n int
+		want      string
+	}{
+		{0, 10, 5, ""},
+		{0, 10, 10, ""},
+		{0, 10, 11, " ↓ 1 more "},
+		{1, 10, 11, " ↑ 1 "},
+		{4, 10, 24, " ↑ 4 · ↓ 10 more "},
+	} {
+		if got := queueFoot(c.off, c.h, c.n); got != c.want {
+			t.Errorf("queueFoot(%d, %d, %d) = %q, want %q", c.off, c.h, c.n, got, c.want)
+		}
+	}
+}
+
+// A window too narrow for the count keeps its width.
+func TestQueueEdgeFitsANarrowWindow(t *testing.T) {
+	m := &Model{}
+	for _, w := range []int{2, 3, 6, 10, 40} {
+		lines := m.paneFooted("", " ↑ 4 · ↓ 10 more ", nil, w, false)
+		if got := lipgloss.Width(lines[len(lines)-1]); got != w {
+			t.Errorf("width %d: the edge is %d wide", w, got)
+		}
+	}
 }

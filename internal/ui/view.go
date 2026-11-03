@@ -82,7 +82,7 @@ func (m *Model) render() string {
 		m.paneAt[queueWindow] = paneHit{0, m.w}
 		title := m.queueTitle() + "   " + m.keyHint("window", "library")
 		rows := append(m.queueCard(m.w-2), m.queueRows(m.w-2, m.listHeight(queueWindow), true)...)
-		lines = m.pane(title, rows, m.w, true)
+		lines = m.queuePane(title, rows, m.listHeight(queueWindow), m.w, true)
 	case m.w < narrow:
 		m.paneAt[m.focus] = paneHit{0, m.w}
 		if m.focus == libraryWindow {
@@ -90,7 +90,7 @@ func (m *Model) render() string {
 			lines = m.pane(title, m.libraryRows(m.w-2, h, true), m.w, true)
 		} else {
 			title := m.queueTitle() + "   " + m.keyHint("window", "library")
-			lines = m.pane(title, m.queueRows(m.w-2, h, true), m.w, true)
+			lines = m.queuePane(title, m.queueRows(m.w-2, h, true), h, m.w, true)
 		}
 	default:
 		lw := m.w * 3 / 5
@@ -108,12 +108,13 @@ func (m *Model) render() string {
 			lw,
 			m.focus == libraryWindow,
 		)
-		right := m.pane(
+		right := m.queuePane(
 			m.queueTitle(),
 			append(
 				m.queueCard(rw-2),
 				m.queueRows(rw-2, m.listHeight(queueWindow), m.focus == queueWindow)...,
 			),
+			m.listHeight(queueWindow),
 			rw,
 			m.focus == queueWindow,
 		)
@@ -149,6 +150,11 @@ func (m *Model) render() string {
 // other's is faint. With the accent on, the focused border is the accent's
 // middle colour and its title fades across.
 func (m *Model) pane(title string, rows []string, w int, focused bool) []string {
+	return m.paneFooted(title, "", rows, w, focused)
+}
+
+// paneFooted is a pane with foot in its bottom edge, if there is any.
+func (m *Model) paneFooted(title, foot string, rows []string, w int, focused bool) []string {
 	name := func(s string) string { return titleOff.Render(s) }
 	edge := dimStyle
 	if focused {
@@ -168,7 +174,34 @@ func (m *Model) pane(title string, rows []string, w int, focused bool) []string 
 	for _, r := range rows {
 		out = append(out, edge.Render("│")+r+edge.Render("│"))
 	}
+	if foot = ansi.Truncate(foot, max(inner-1, 0), "…"); foot != "" {
+		rest := strings.Repeat("─", max(inner-1-lipgloss.Width(foot), 0))
+		return append(out, edge.Render("╰─")+accentStyle.Render(foot)+edge.Render(rest+"╯"))
+	}
 	return append(out, edge.Render("╰"+strings.Repeat("─", inner)+"╯"))
+}
+
+// queuePane frames the queue window, whose last h rows are its list. The
+// bottom edge counts the rows off screen, so that rows added below the view
+// can't look like nothing happened. queueRows has set the offset by now.
+func (m *Model) queuePane(title string, rows []string, h, w int, focused bool) []string {
+	return m.paneFooted(title, queueFoot(m.queueOff, h, m.queueLen()), rows, w, focused)
+}
+
+// queueFoot is " ↑ 4 · ↓ 10 more " for a list of n rows showing h from off,
+// or "" when all of them show.
+func queueFoot(off, h, n int) string {
+	var parts []string
+	if off > 0 {
+		parts = append(parts, fmt.Sprintf("↑ %d", off))
+	}
+	if below := n - off - h; below > 0 {
+		parts = append(parts, fmt.Sprintf("↓ %d more", below))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " " + strings.Join(parts, " · ") + " "
 }
 
 func (m *Model) libTitle() string {

@@ -78,9 +78,9 @@ func commands() *command.Registry[*Model] {
 		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error { m.focus = 1 - m.focus; return nil }},
 
 		{Name: "play-now", Label: "play", Desc: "Replace the queue with this list and play from the track under the cursor.", Run: (*Model).playNow},
-		{Name: "add-end", Label: "add to queue", Desc: "Add the track under the cursor to the end of the queue.", Run: func(m *Model, c command.Call) error { return m.add(c, false) }},
-		{Name: "add-next", Label: "play next", Desc: "Add the track under the cursor after the current track.", Run: func(m *Model, c command.Call) error { return m.add(c, true) }},
-		{Name: "play-this", Label: "play this now", Desc: "Add the track under the cursor after the current track and play it, keeping the rest of the queue.", Run: (*Model).playThis},
+		{Name: "add-end", Label: "add to queue", Desc: "Add the row under the cursor to the end of the queue: a track, or all of its tracks.", Run: func(m *Model, c command.Call) error { return m.add(c, false) }},
+		{Name: "add-next", Label: "play next", Desc: "Add the row under the cursor after the current track: a track, or all of its tracks.", Run: func(m *Model, c command.Call) error { return m.add(c, true) }},
+		{Name: "play-this", Label: "play this now", Desc: "Play the row under the cursor now, keeping the rest of the queue after it.", Run: (*Model).playThis},
 		{Name: "play-row", Label: "play", Desc: "Play the queue row under the cursor.", Run: func(m *Model, _ command.Call) error {
 			m.event(app.PlayRow{Index: m.queueIndex(m.queueCur)})
 			return nil
@@ -415,6 +415,17 @@ func (m *Model) fitLine() { m.line.SetWidth(max(m.w-lipgloss.Width(m.line.Prompt
 func (m *Model) onTrack() bool {
 	_, _, err := m.trackRow()
 	return err == nil || errors.Is(err, errNoRows)
+}
+
+// onAddable reports whether the library cursor is on an album or a
+// playlist, whose tracks A, a and P add.
+func (m *Model) onAddable() bool {
+	if m.focus != libraryWindow {
+		return false
+	}
+	f := m.top()
+	ts, _ := m.rowTracks(f, f.cur)
+	return len(ts) > 0
 }
 
 // Argument checks for binding commands to keys.

@@ -313,7 +313,7 @@ keys:
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
 | Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix around the row under the cursor (`[count]gm` for that many tracks) · `gM` `gN` add a mix to the end or after the current track (`[count]` for that many) · `R` repeat off → all → one · `gR` radio on/off · `g+` `g-` more/less like this on the radio · `X` stop |
-| Add and play | `<CR>` play now · `a` play next · `A` add to end · `P` play this now · `gl` add to a playlist · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
+| Add and play | `<CR>` play now · `a` play next · `A` add to end · `P` play this now (on a track, or on an album or playlist row for all its tracks; an artist row says to open it, [#141](https://github.com/anopheles/navigo/issues/141)) · `gl` add to a playlist · `i` info · `*` star/unstar · `gc` the playing cover, large · `yy` `y{motion}` yank |
 | Queue | `dd` `x` `d{motion}` remove · `yy` · `p` `P` paste after/before · `J` `K` move · `u` `<C-r>` undo/redo (from either window) |
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |

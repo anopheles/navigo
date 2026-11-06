@@ -681,6 +681,8 @@ func (m *Model) hintLine() string {
 		names = []string{"play-row", "visual", "play-pause", "undo", "window", "key-menu"}
 	case m.onTrack():
 		names = []string{"play-now", "add-end", "add-next", "visual", "back", "window", "key-menu"}
+	case m.onAddable():
+		names = []string{"open", "add-end", "back", "window", "key-menu"}
 	default:
 		names = []string{"open", "back", "window", "key-menu"}
 	}

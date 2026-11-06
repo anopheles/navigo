@@ -180,11 +180,41 @@ func TestCommandLine(t *testing.T) {
 	}
 }
 
-func TestCtrlCQuits(t *testing.T) {
+// <C-c> cancels, as in vim; only a second one in a row quits (#139).
+func TestCtrlCCancelsThenQuits(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
+	h.keys("3<C-c>")
+	if h.quit {
+		t.Fatal("<C-c> after a count quit")
+	}
+	h.contains("<C-c> again or :q quits")
+	h.keys("j") // the count is gone: one row down, not three
+	if got := h.m.top().cur; got != 1 {
+		t.Errorf("cursor on row %d after 3<C-c>j, want 1", got)
+	}
+	h.keys("<C-c>")
+	if h.quit {
+		t.Fatal("<C-c> after another key quit")
+	}
 	h.keys("<C-c>")
 	if !h.quit {
-		t.Error("<C-c> didn't quit")
+		t.Error("<C-c><C-c> didn't quit")
+	}
+}
+
+func TestCtrlCClosesPopupAndEndsVisual(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("?")
+	h.keys("<C-c>")
+	if h.m.popup != nil {
+		t.Error("<C-c> left the key menu open")
+	}
+	h.keys("Vj<C-c>")
+	if h.m.visual != nil {
+		t.Error("<C-c> left Visual mode on")
+	}
+	if h.quit {
+		t.Error("<C-c> quit")
 	}
 }
 

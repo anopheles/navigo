@@ -194,6 +194,9 @@ type Model struct {
 	registry *command.Registry[*Model]
 	line     textinput.Model
 	seq      int // bumps on every key, to drop stale timeouts
+	// interruptSeq is the key that last ran interrupt: <C-c> on the next
+	// key quits.
+	interruptSeq int
 	// bar and npRows are where the last render put the progress rule and the
 	// now-playing rows, for the mouse; bar.w is 0 with no bar drawn.
 	bar    barHit

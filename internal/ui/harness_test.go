@@ -43,6 +43,7 @@ type harness struct {
 	midSync func(*harness)
 	clock   *fakeClock
 	raw     []string // what was written straight to the terminal
+	queries []string // the palette queries among it (OSC 4), kept apart
 }
 
 // fakeClock records timers instead of sleeping; advance fires them.
@@ -277,7 +278,11 @@ func (h *harness) run(cmd tea.Cmd) {
 	case tea.QuitMsg:
 		h.quit = true
 	case tea.RawMsg: // what the program would write to the terminal as it is
-		h.raw = append(h.raw, fmt.Sprint(msg.Msg))
+		if s := fmt.Sprint(msg.Msg); strings.HasPrefix(s, "\x1b]4;") {
+			h.queries = append(h.queries, s)
+		} else {
+			h.raw = append(h.raw, s)
+		}
 	default:
 		h.send(msg)
 	}

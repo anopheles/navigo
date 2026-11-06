@@ -785,10 +785,15 @@ type barSegment struct {
 	text   string
 	fg, bg color.Color
 	bold   bool
+	rev    bool        // PROTOTYPE bar-contrast: the role in reverse video
+	role   color.Color // PROTOTYPE bar-contrast: the role, whatever the ink
 }
 
 func (g barSegment) render() string {
 	st := lipgloss.NewStyle().Bold(g.bold)
+	if g.rev {
+		return st.Foreground(g.role).Reverse(true).Render(g.text)
+	}
 	if g.fg != nil {
 		st = st.Foreground(g.fg)
 	}
@@ -841,7 +846,8 @@ func (m *Model) modeSegment() barSegment {
 	case m.visual != nil:
 		name, bg = "VISUAL", selectionColor
 	}
-	return barSegment{text: " " + name + " ", fg: ansi.Black, bg: bg, bold: true}
+	ink := m.inkFor(bg) // PROTOTYPE bar-contrast
+	return barSegment{text: " " + name + " ", fg: ink.modeFg, bg: ink.modeBg, bold: true, rev: ink.rev, role: bg}
 }
 
 // nowPlaying is the bar under the rule: the mode and ▶/⏸, the track, then
@@ -854,8 +860,9 @@ func (m *Model) nowPlaying() string {
 	if s.Player.Buffering {
 		state += "buffering "
 	}
+	ink := m.inkFor(mode.role) // PROTOTYPE bar-contrast
 	left := m.joinSegments(
-		[]barSegment{mode, {text: state, fg: mode.bg, bg: ansi.BrightBlack}},
+		[]barSegment{mode, {text: state, fg: ink.midFg, bg: ink.midBg}},
 		true,
 	)
 
@@ -866,18 +873,20 @@ func (m *Model) nowPlaying() string {
 	case playing:
 		pos = " not in the queue "
 	}
-	segs := []barSegment{{text: pos, fg: mode.bg, bg: ansi.BrightBlack}}
+	segs := []barSegment{{text: pos, fg: ink.midFg, bg: ink.midBg}}
 	if playing {
 		times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(s.Player.Duration))
-		segs = append(segs, barSegment{text: times, fg: ansi.Black, bg: mode.bg, bold: true})
+		segs = append(segs, barSegment{text: times, fg: ink.modeFg, bg: ink.modeBg, bold: true, rev: ink.rev, role: mode.role})
 	}
 	right := m.joinSegments(segs, false)
 
 	track := dimStyle.Render("nothing playing")
 	if playing {
-		track = m.accent(
-			t.Title,
-		) + dimStyle.Render(
+		title := m.accent(t.Title)
+		if protoBar != 0 { // PROTOTYPE bar-contrast
+			title = lipgloss.NewStyle().Foreground(ink.title).Bold(true).Render(t.Title)
+		}
+		track = title + dimStyle.Render(
 			" — ",
 		) + t.Artist + dimStyle.Render(
 			" · "+t.Album,

@@ -1,5 +1,5 @@
 .PHONY: help build install run test update-golden vet fmt gate e2e e2e-live \
-	fixtures-up fixtures-record fixtures-down demo windows-dev
+	fixtures-up fixtures-record fixtures-down demo windows-dev prototype-bar
 
 help:
 	@echo "build            build ./navigo"
@@ -65,3 +65,7 @@ fixtures-down:
 
 demo:
 	tools/demo/demo.sh
+
+# PROTOTYPE bar-contrast (throwaway branch): the status-line contrast matrix.
+prototype-bar:
+	go run ./cmd/prototype-barcontrast

@@ -25,7 +25,7 @@
 │ <C-o>      jump-back          Go back to where you were before the l…││                                              │
 │ <C-i>      forward            Go forward again in the jump list, aft…││                                              │
 │ gp         go-playing         Go to the entry that plays, in the que…││                                              │
-│ }          next-group         Go to the start of the next group, suc…││                                              │
+│ }          next-group         Go to the start of the next group: the…││                                              │
 │ {          prev-group         Go to the start of this group, or of t…││                                              │
 │ ga         go-album           Go to the album of the track or album …││                                              │
 │ gr         go-artist          Go to the artist of the track or album…││                                              │

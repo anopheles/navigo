@@ -49,7 +49,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "jump-back", Label: "go back", Desc: "Go back to where you were before the last jump.", Run: (*Model).jumpBack},
 		{Name: "forward", Label: "go forward", Desc: "Go forward again in the jump list, after going back.", Run: (*Model).jumpForward},
 		{Name: "go-playing", Jump: true, Label: "playing", Desc: "Go to the entry that plays, in the queue.", Run: (*Model).goPlaying},
-		{Name: "next-group", Label: "next group", Desc: "Go to the start of the next group, such as an artist's Appears on albums.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(1, c.N()); return nil }},
+		{Name: "next-group", Label: "next group", Desc: "Go to the start of the next group: the next album in the queue or a track list, the next disc of an album, an artist's Appears on albums.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(1, c.N()); return nil }},
 		{Name: "prev-group", Label: "previous group", Desc: "Go to the start of this group, or of the one before.", Motion: true, Run: func(m *Model, c command.Call) error { m.group(-1, c.N()); return nil }},
 
 		{Name: "open", Label: "open", Desc: "Go into the row under the cursor; in columns, the focus moves one column right.", Run: (*Model).open},

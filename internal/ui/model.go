@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/color"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
+	uv "github.com/charmbracelet/ultraviolet"
 
 	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
@@ -149,6 +151,9 @@ type frame struct {
 type Model struct {
 	deps   Deps
 	covers covers
+	// palette is the terminal's 16 colours, those it has reported (OSC 4);
+	// the now-playing bar measures them (barink.go).
+	palette [16]color.Color
 	// dress says the row being drawn may carry styles of its own (rowstyle.go).
 	dress bool
 	// marks are what the library row being drawn shows beyond its text: the
@@ -309,9 +314,12 @@ func (m *Model) Init() tea.Cmd {
 	s := m.deps.Config.Server
 	p, ctx := m.deps.Player, m.ctx
 	check := func() tea.Msg { return eventMsg{app.PlayerChecked{Err: p.Check(ctx), Hint: installHint()}} }
-	var background tea.Cmd
-	if m.coverMode() != "" || m.accentOn() {
-		background = tea.RequestBackgroundColor // a half-clear cover and the cursor tint blend against it
+	// The now-playing bar measures its colours against the terminal's 16
+	// and, with exact colours, its background, which a half-clear cover
+	// and the cursor tint blend against too.
+	background := requestPalette()
+	if m.deps.TrueColor || m.coverMode() != "" || m.accentOn() {
+		background = tea.Batch(background, tea.RequestBackgroundColor)
 	}
 	if s.URL == "" {
 		m.openLogin(s.URL, s.User, "")
@@ -346,6 +354,11 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.BackgroundColorMsg:
 		m.covers.bg, m.covers.rendered = msg.Color, nil
+		return m, nil
+	case uv.UnknownOscEvent:
+		if n, c, ok := paletteReply(string(msg)); ok {
+			m.palette[n] = c
+		}
 		return m, nil
 	case mediaMsg:
 		return m, m.mediaCommand(msg.Command)

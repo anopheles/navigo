@@ -841,7 +841,7 @@ func (m *Model) modeSegment() barSegment {
 	case m.visual != nil:
 		name, bg = "VISUAL", selectionColor
 	}
-	return barSegment{text: " " + name + " ", fg: ansi.Black, bg: bg, bold: true}
+	return barSegment{text: " " + name + " ", fg: m.barInkFor(bg).ink, bg: bg, bold: true}
 }
 
 // nowPlaying is the bar under the rule: the mode and ▶/⏸, the track, then
@@ -850,12 +850,13 @@ func (m *Model) nowPlaying() string {
 	s := m.state
 	t, row, playing := s.NowPlaying()
 	mode := m.modeSegment()
+	ink := m.barInkFor(mode.bg)
 	state := " " + m.playIcon() + " "
 	if s.Player.Buffering {
 		state += "buffering "
 	}
 	left := m.joinSegments(
-		[]barSegment{mode, {text: state, fg: mode.bg, bg: ansi.BrightBlack}},
+		[]barSegment{mode, {text: state, fg: ink.text, bg: ink.mid}},
 		true,
 	)
 
@@ -866,16 +867,16 @@ func (m *Model) nowPlaying() string {
 	case playing:
 		pos = " not in the queue "
 	}
-	segs := []barSegment{{text: pos, fg: mode.bg, bg: ansi.BrightBlack}}
+	segs := []barSegment{{text: pos, fg: ink.text, bg: ink.mid}}
 	if playing {
 		times := fmt.Sprintf(" %s / %s ", clock(s.Player.Position), clock(s.Player.Duration))
-		segs = append(segs, barSegment{text: times, fg: ansi.Black, bg: mode.bg, bold: true})
+		segs = append(segs, barSegment{text: times, fg: ink.ink, bg: mode.bg, bold: true})
 	}
 	right := m.joinSegments(segs, false)
 
 	track := dimStyle.Render("nothing playing")
 	if playing {
-		track = m.accent(
+		track = m.barTitle(
 			t.Title,
 		) + dimStyle.Render(
 			" — ",

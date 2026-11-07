@@ -98,38 +98,80 @@ func (m *Model) accentOn() bool { return len(accentStops) > 0 && m.deps.TrueColo
 
 // accent renders s in the accent: faded across the text when the fades are
 // on, else in the playing colour.
-func (m *Model) accent(s string) string {
+func (m *Model) accent(s string) string { return m.accentOver(s, nil) }
+
+// accentOver is accent on the background bg, or the terminal's when nil.
+func (m *Model) accentOver(s string, bg color.Color) string {
 	if !m.accentOn() || s == "" || strings.Contains(s, "\x1b") {
-		return accentStyle.Render(s)
+		st := accentStyle
+		if bg != nil {
+			st = st.Background(bg)
+		}
+		return st.Render(s)
 	}
 	cs := lipgloss.Blend1D(lipgloss.Width(s), accentStops...)
 	var b strings.Builder
 	i := 0
 	for _, r := range s {
-		b.WriteString(
-			ansi.NewStyle().ForegroundColor(cs[min(i, len(cs)-1)]).Bold().Styled(string(r)),
-		)
+		st := ansi.NewStyle().ForegroundColor(cs[min(i, len(cs)-1)]).Bold()
+		if bg != nil {
+			st = st.BackgroundColor(bg)
+		}
+		b.WriteString(st.Styled(string(r)))
 		i += lipgloss.Width(string(r))
 	}
 	return b.String()
 }
 
-// tint is the cursor row's background in the focused window: a fifth of
-// the accent over the terminal's own background, which is black until the
-// terminal has said.
-func (m *Model) tint() color.Color { return m.tintOf(5) }
+// Contrast the cursor row's background keeps against the terminal's: the
+// focused window's shows at a glance, the other window's still shows.
+const (
+	tintContrast     = 1.6
+	restTintContrast = 1.25
+)
 
-// restTint is the cursor row's background in the other window: a tenth
-// of the accent, the same cursor at rest.
-func (m *Model) restTint() color.Color { return m.tintOf(10) }
+// tint is the cursor row's background in the focused window: the accent
+// over the terminal's own background, which is black until the terminal
+// has said, as little as reaches tintContrast and at least a fifth.
+func (m *Model) tint() color.Color { return m.tintTo(5, tintContrast) }
+
+// restTint is the cursor row's background in the other window: the same
+// cursor at rest, at least a tenth of the accent.
+func (m *Model) restTint() color.Color { return m.tintTo(10, restTintContrast) }
+
+// tintTo is 1/part of the accent over the background, or more of it until
+// the mix has want contrast against the background.
+func (m *Model) tintTo(part uint32, want float64) color.Color {
+	bg := colorful.Color{}
+	if m.covers.bg != nil {
+		bg, _ = colorful.MakeColor(m.covers.bg)
+	}
+	acc, _ := colorful.MakeColor(accentStops[0])
+	mix := drawn(bg.BlendRgb(acc, 1/float64(part)))
+	for f := 1 / float64(part); f <= 1 && contrast(mix, bg) < want; f += 0.02 {
+		mix = drawn(bg.BlendRgb(acc, f))
+	}
+	r, g, b := mix.RGB255()
+	return color.RGBA{r, g, b, 255}
+}
+
+// cursorInk is the colour of the ▎ that marks the cursor row: the accent,
+// moved until it reads on the background, so the cursor shows by its mark
+// and not by its background alone.
+func (m *Model) cursorInk() color.Color {
+	bg := colorful.Color{}
+	if m.covers.bg != nil {
+		bg, _ = colorful.MakeColor(m.covers.bg)
+	}
+	acc, _ := colorful.MakeColor(accentStops[0])
+	r, g, b := readable(acc, bg).RGB255()
+	return color.RGBA{r, g, b, 255}
+}
 
 // selectionTint is the Visual selection's background when it follows the
 // accent: a third of the accent's last hue, turned 75° from the cursor's,
 // so a selection and the cursor in it stay apart.
 func (m *Model) selectionTint() color.Color { return m.mixOver(accentStops[len(accentStops)-1], 3) }
-
-// tintOf is 1/part of the accent over the terminal's background.
-func (m *Model) tintOf(part uint32) color.Color { return m.mixOver(accentStops[0], part) }
 
 // mixOver is 1/part of c over the terminal's background, which is black
 // until the terminal has said.

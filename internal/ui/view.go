@@ -633,7 +633,11 @@ func (m *Model) hintLine() string {
 		}
 		down, up := m.searchKeys("down"), m.searchKeys("up")
 		if len(down) > 0 && len(up) > 0 {
-			acts += hint(down[0]+"/"+up[0], "move") + "  "
+			keys := down[0] + "/" + up[0]
+			if keys == "<Down>/<Up>" {
+				keys = "↓/↑"
+			}
+			acts += hint(keys, "move") + "  "
 		}
 		if ks := m.searchKeys("queue"); len(ks) > 0 {
 			acts += hint(ks[0], "queue") + "  "

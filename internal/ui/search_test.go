@@ -66,14 +66,14 @@ func TestSearchLastQueryAndHistory(t *testing.T) {
 	h.contains("search: quiet", "The Quiet Ones")
 	h.keys("<CR>")
 
-	h.keys("'s<Up>")
+	h.keys("'s<C-p>")
 	h.contains("search: blue")
 	h.keys("<Esc>'s")
 	h.send(tea.PasteMsg{Content: "angst"})
 	h.contains("search: angst", "Ångström Days")
-	h.keys("<Up>")
+	h.keys("<C-p>")
 	h.contains("search: blue")
-	h.keys("<Down>")
+	h.keys("<C-n>")
 	h.contains("search: quiet")
 	h.keys("<Esc>")
 
@@ -81,8 +81,29 @@ func TestSearchLastQueryAndHistory(t *testing.T) {
 	n := h.restart()
 	n.keys("'s")
 	n.contains("search: quiet")
-	n.keys("<Up><Up>")
+	n.keys("<C-p><C-p>")
 	n.contains("search: blue")
+}
+
+// In the search prompt the arrows move through the results and leave the
+// query alone; the history is on <C-p>/<C-n> (#143).
+func TestSearchArrowsMoveResults(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("s")
+	h.typeText("blue")
+	h.contains("↓/↑ move")
+	before := h.cursorRow()
+	h.keys("<Down>")
+	if h.m.line.Value() != "blue" {
+		t.Errorf("<Down> changed the query to %q", h.m.line.Value())
+	}
+	if h.cursorRow() == before {
+		t.Errorf("<Down> didn't move the result cursor from %q", before)
+	}
+	h.keys("<Up>")
+	if h.cursorRow() != before {
+		t.Errorf("<Up> went to %q, want %q", h.cursorRow(), before)
+	}
 }
 
 func TestSearchCapsAndMore(t *testing.T) {

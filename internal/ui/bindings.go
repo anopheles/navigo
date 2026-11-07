@@ -76,7 +76,7 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "v", "visual"},
 	{"global", "y", "yank"},
 	{"global", "<Esc>", "cancel"},
-	{"global", "<C-c>", "quit"},
+	{"global", "<C-c>", "interrupt"},
 	{"global", "ZZ", "quit"},
 	{"global", "ZQ", "quit"},
 	{"containers", "<CR>", "open"},

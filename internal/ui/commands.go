@@ -121,6 +121,7 @@ func commands() *command.Registry[*Model] {
 			m.finding.highlight = false
 			return nil
 		}},
+		{Name: "interrupt", Label: "cancel", Desc: "Cancel pending keys, the selection or a popup; pressed twice in a row, quit.", Run: (*Model).interrupt},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
 		{Name: "popup-filter", Label: "filter", Desc: "Filter the playlist popup's rows as you type.", Run: func(m *Model, _ command.Call) error { return m.startPickFilter() }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
@@ -152,6 +153,21 @@ func commands() *command.Registry[*Model] {
 		r.Add(c)
 	}
 	return r
+}
+
+// interrupt is <C-c>: cancel as <Esc> does, and quit when it was also
+// the key before, so a reflex <C-c> to abort a count never ends the
+// session.
+func (m *Model) interrupt(c command.Call) error {
+	if m.interruptSeq != 0 && m.interruptSeq == m.seq-1 {
+		return m.registry.RunCall(m, "quit", command.Call{})
+	}
+	m.interruptSeq = m.seq
+	m.closePopup()
+	m.endVisual()
+	m.finding.highlight = false
+	m.setMsg("<C-c> again or :q quits", false)
+	return nil
 }
 
 // then queues a tea.Cmd to run after the current command.

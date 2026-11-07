@@ -106,6 +106,19 @@ func (m *Model) opRange(c command.Call) (from, to int) {
 	_ = m.registry.Run(m, c.Motion, c.Count)
 	target := m.cursor()
 	f.cur, f.offset, m.queueCur, m.queueOff = saved, savedOff, savedQueue, savedQueueOff
+	// { and } are exclusive, as in vim: d} stops before the next group's
+	// first row, and d{ leaves the cursor row; past the last group, d}
+	// takes the rest of the list.
+	switch (keymap.Binding{Command: c.Motion}).Name() {
+	case "next-group":
+		if target > cur && slices.Contains(m.groupStarts(), target) {
+			return cur, target
+		}
+	case "prev-group":
+		if target < cur {
+			return target, cur
+		}
+	}
 	return min(cur, target), max(cur, target) + 1
 }
 

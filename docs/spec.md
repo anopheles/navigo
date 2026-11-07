@@ -309,7 +309,7 @@ keys:
 
 | Area | Keys |
 |---|---|
-| Motions | `j` `k` `<Down>` `<Up>` · `gg` `G` `[count]G` · `<C-d>` `<C-u>` `<C-f>` `<C-b>` · `<C-e>` `<C-y>` · `H` `M` `L` · `zz` `zt` `zb` · `{` `}` (groups) · `[count]%` · scroll wheel |
+| Motions | `j` `k` `<Down>` `<Up>` · `gg` `G` `[count]G` · `<C-d>` `<C-u>` `<C-f>` `<C-b>` · `<C-e>` `<C-y>` · `H` `M` `L` · `zz` `zt` `zb` · `{` `}` (groups: a run of one album in the queue and in track lists, a disc on an album of several, an artist's Appears on, a search group; exclusive with an operator, so `d}` removes the rest of this album, [#140](https://github.com/anopheles/navigo/issues/140)) · `[count]%` · scroll wheel |
 | Navigation | `l` `<CR>` into · `h` out · `ga` album · `gr` artist · `gp` playing entry in the queue · `<C-o>` `<C-i>` jump list · marks `'h` `'q` `'a` `'b` `'p` `'s` `'?` |
 | Find | `/` forward (backward: `:find-back`, no key) · `n` `N` · `:noh` / `<Esc>` clear highlights |
 | Playback | `<Space>` play/pause · `>` `<` next/previous · `.` `,` seek ±10 s · `=` `+` `-` volume ±5 · `S` shuffle · `gm` mix around the row under the cursor (`[count]gm` for that many tracks) · `gM` `gN` add a mix to the end or after the current track (`[count]` for that many) · `R` repeat off → all → one · `gR` radio on/off · `g+` `g-` more/less like this on the radio · `X` stop |

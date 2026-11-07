@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"charm.land/lipgloss/v2"
@@ -116,5 +117,45 @@ func TestQueueEdgeFitsANarrowWindow(t *testing.T) {
 		if got := lipgloss.Width(lines[len(lines)-1]); got != w {
 			t.Errorf("width %d: the edge is %d wide", w, got)
 		}
+	}
+}
+
+// In the queue a group is a run of one album's tracks: } goes to the next
+// album, and d} takes the rest of this one, not the whole queue (#140).
+func TestQueueGroupsAreAlbums(t *testing.T) {
+	h := queueOfTwoAlbums(t)
+	h.keys("gg}")
+	h.cursorOn("Undertow")
+	h.keys("}")
+	h.cursorOn("Homeward") // past the last group: the end
+	h.keys("{")
+	h.cursorOn("Undertow")
+	h.keys("{")
+	h.cursorOn("Dusk Signal")
+	h.keys("2}")
+	h.cursorOn("Homeward")
+
+	h.keys("ggjd}")
+	h.queueIs("Dusk Signal, Undertow, Quiet Room, Blue Static, Radio Silence, Homeward")
+	h.keys("u")
+	h.queueIs(twoAlbums)
+	h.keys("gg7jd{") // from Quiet Room back to Undertow; Quiet Room stays
+	h.queueIs("Dusk Signal, Low Tide, Streetlamp, Blue Hour, Wintering, Afterglow, " +
+		"Quiet Room, Blue Static, Radio Silence, Homeward")
+	h.keys("ggd}d}") // the last group: to the end
+	h.queueIs("")
+}
+
+// On an album of several discs, } goes to the next disc.
+func TestAlbumGroupsAreDiscs(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("4j<CR>") // The Long Haul: two discs
+	h.keys("}")
+	if row := h.cursorRow(); !strings.Contains(row, "2-01") {
+		t.Errorf("} on a two-disc album went to %q, want disc 2's first track", row)
+	}
+	h.keys("{")
+	if row := h.cursorRow(); !strings.Contains(row, "1-01") {
+		t.Errorf("{ went to %q, want disc 1's first track", row)
 	}
 }

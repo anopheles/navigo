@@ -183,13 +183,53 @@ func (m *Model) groups(f *frame) []int {
 			return []int{1}
 		}
 	}
+	if f.kind == playlistTracks || f.kind == homeTracks { // runs of one album
+		return runs(m.rows(f), func(i int) bool {
+			a, _ := m.rowTracks(f, i-1)
+			b, _ := m.rowTracks(f, i)
+			return len(a) == 0 || len(b) == 0 || a[0].AlbumID != b[0].AlbumID
+		})
+	}
+	if f.kind == albumTracks { // an album's discs
+		ts := m.tracksOf(f)
+		return runs(len(ts), func(i int) bool { return ts[i].Disc != ts[i-1].Disc })
+	}
 	return []int{0}
+}
+
+// groupStarts are the first rows of the groups in the focused window.
+func (m *Model) groupStarts() []int {
+	if m.focus == queueWindow {
+		return m.queueGroups()
+	}
+	return m.groups(m.top())
+}
+
+// queueGroups are the first rows of the queue's runs of one album.
+func (m *Model) queueGroups() []int {
+	return runs(m.queueLen(), func(i int) bool {
+		a, _ := m.queueEntry(i - 1)
+		b, _ := m.queueEntry(i)
+		return a.Track.AlbumID != b.Track.AlbumID
+	})
+}
+
+// runs is row 0 and each row i of n where starts(i) says a new run
+// begins; starts is never asked about row 0.
+func runs(n int, starts func(i int) bool) []int {
+	gs := []int{0}
+	for i := 1; i < n; i++ {
+		if starts(i) {
+			gs = append(gs, i)
+		}
+	}
+	return gs
 }
 
 // group moves to the start of the next group (dir 1), or of this or the
 // previous group (dir -1); past the last group it goes to the end.
 func (m *Model) group(dir, count int) {
-	if m.popup != nil || m.focus == queueWindow { // one group: its ends
+	if m.popup != nil { // one group: its ends
 		if dir > 0 {
 			m.goRow(0, -1)
 		} else {
@@ -197,27 +237,39 @@ func (m *Model) group(dir, count int) {
 		}
 		return
 	}
+	if m.focus == queueWindow {
+		m.queueCur = nextGroup(m.queueGroups(), m.queueCur, m.queueLen(), dir, count)
+		return
+	}
 	f := m.top()
 	gs := m.groups(f)
 	for range count {
-		var next int
+		f.cur = nextGroup(gs, f.cur, m.rows(f), dir, 1)
+		m.settle(f, dir)
+	}
+}
+
+// nextGroup is the row count groups on from cur, in a list of n rows
+// whose groups start at gs: forward, the next start or the last row;
+// back, the start of this group or of the one before.
+func nextGroup(gs []int, cur, n, dir, count int) int {
+	for range count {
+		next := 0
 		if dir > 0 {
-			if i := slices.IndexFunc(gs, func(g int) bool { return g > f.cur }); i >= 0 {
+			next = n - 1
+			if i := slices.IndexFunc(gs, func(g int) bool { return g > cur }); i >= 0 {
 				next = gs[i]
-			} else {
-				next = m.rows(f) - 1
 			}
 		} else {
-			next = 0
 			for _, g := range gs {
-				if g < f.cur {
+				if g < cur {
 					next = g
 				}
 			}
 		}
-		f.cur = max(next, 0)
-		m.settle(f, dir)
+		cur = max(next, 0)
 	}
+	return cur
 }
 
 // openArtist opens an artist's page from the Artists list.

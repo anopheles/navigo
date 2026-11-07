@@ -977,9 +977,13 @@ func (m *Model) promptWithMsg() (string, bool) {
 
 func (m *Model) loginView() string {
 	f := &m.login
+	// The box's text is at most 60 wide and never wider than the screen
+	// (two borders, two of padding on each side); every line wraps to it.
+	inner := min(60, max(m.w-6, 10))
+	wrap := func(s string) string { return lipgloss.NewStyle().Width(inner).Render(s) }
 	labels := []string{"Server URL", "Username", "Password"}
 	var rows []string
-	rows = append(rows, accentStyle.Render("Log in to your Navidrome or Subsonic server"), "")
+	rows = append(rows, accentStyle.Render(wrap("Log in to your Navidrome or Subsonic server")), "")
 	for i, l := range labels {
 		label := fmt.Sprintf("%-11s", l)
 		if i == f.focus {
@@ -987,34 +991,34 @@ func (m *Model) loginView() string {
 		} else {
 			label = dimStyle.Render(label)
 		}
-		rows = append(rows, label+" "+f.fields[i].View())
+		rows = append(rows, label+" "+ansi.Truncate(f.fields[i].View(), max(inner-12, 4), "…"))
 	}
 	rows = append(rows, "")
+	keys := hint("<Tab>", "next field") + "  " + hint("<CR>", "log in") + "  "
+	if m.client != nil {
+		keys += hint("<Esc>", "back")
+	} else {
+		keys += hint("<Esc>", "quit")
+	}
 	switch {
 	case f.askPlain:
 		rows = append(
 			rows,
-			errStyle.Render(f.err),
-			"Save the password in "+m.deps.ConfigPath+" instead? "+hint(
-				"y",
-				"yes",
-			)+" "+hint(
-				"n",
-				"only for this session",
-			),
+			errStyle.Render(wrap(f.err)),
+			wrap("Save the password in "+shortPath(m.deps.ConfigPath)+" instead?"),
 		)
+		keys = hint("y", "save it there") + "  " + hint("n", "only for this session")
 	case f.busy:
-		rows = append(rows, dimStyle.Render("checking with the server…"))
+		rows = append(rows, dimStyle.Render(wrap("checking with the server…")))
 	case f.err != "":
-		rows = append(rows, errStyle.Render(f.err))
+		rows = append(rows, errStyle.Render(wrap(f.err)))
 	default:
-		rows = append(rows, "")
+		rows = append(
+			rows,
+			dimStyle.Render(wrap("The password is kept in your system's keyring, not in a file.")),
+		)
 	}
-	rows = append(
-		rows,
-		"",
-		hint("<Tab>", "next field")+"  "+hint("<CR>", "log in")+"  "+hint("<Esc>", "quit"),
-	)
+	rows = append(rows, "", wrap(keys))
 	box := boxStyle.Render(strings.Join(rows, "\n"))
 	return lipgloss.Place(m.w, m.h, lipgloss.Center, lipgloss.Center, box)
 }

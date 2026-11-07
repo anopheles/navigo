@@ -126,7 +126,7 @@ func TestRejectedCredentialsFoundOnReconnect(t *testing.T) {
 	h.contains("offline · next try in 2s")
 	h.srv.SetDown(false)
 	h.advance(2 * time.Second)
-	h.contains("the server rejected the saved username or password", "Password")
+	h.contains("the server rejected the username or password in", "Password")
 }
 
 func TestBufferingStall(t *testing.T) {

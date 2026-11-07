@@ -41,6 +41,10 @@ const Timeout = 10 * time.Second
 // A Subsonic error from the server (*Error) is not one: the server is there.
 var ErrUnreachable = errors.New("can't reach the server")
 
+// ErrNotSubsonic is a reply that isn't a Subsonic response, such as a web
+// page at a URL with the wrong path.
+var ErrNotSubsonic = errors.New("not a Subsonic response")
+
 // IsUnreachable reports whether err means the server couldn't be reached.
 func IsUnreachable(err error) bool { return errors.Is(err, ErrUnreachable) }
 
@@ -669,10 +673,10 @@ func decode(body []byte, v any) error {
 		Response *json.RawMessage `json:"subsonic-response"`
 	}
 	if err := json.Unmarshal(body, &env); err != nil {
-		return fmt.Errorf("not a Subsonic response: %w", err)
+		return fmt.Errorf("%w: %w", ErrNotSubsonic, err)
 	}
 	if env.Response == nil {
-		return errors.New("not a Subsonic response")
+		return ErrNotSubsonic
 	}
 	var status struct {
 		Status string `json:"status"`

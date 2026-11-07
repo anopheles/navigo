@@ -50,7 +50,10 @@ func TestMix(t *testing.T) {
 
 func TestMixShortAndEmpty(t *testing.T) {
 	s, out := run(New(), CacheLoaded{Library: mixable(5)}, Mix{N: 50, Seed: 1})
-	if n := only[Notice](out); len(s.Queue) != 5 || n[0].Text != "mixed 5 of 50 tracks" {
+	if n := only[Notice](
+		out,
+	); len(s.Queue) != 5 ||
+		n[0].Text != "mixed 5 tracks · all that fit, of 50 asked for" {
 		t.Errorf("queue %d, notices %#v", len(s.Queue), n)
 	}
 
@@ -187,7 +190,7 @@ func TestMixAroundASeed(t *testing.T) {
 		run(New(), CacheLoaded{Library: genreLib(3)}, Mix{N: 50, Seed: 7, Around: small}),
 	)
 	if n := only[Notice](out); len(n) != 1 || !strings.HasPrefix(n[0].Text, "mixed ") ||
-		!strings.HasSuffix(n[0].Text, " of 50 tracks from Song 1-0-0") {
+		!strings.HasSuffix(n[0].Text, " tracks from Song 1-0-0 · all that fit, of 50 asked for") {
 		t.Errorf("too few: notices = %#v", n)
 	}
 
@@ -270,7 +273,7 @@ func TestMixAroundASeedAsksForSimilarArtists(t *testing.T) {
 		s,
 		SimilarLoaded{Seq: f[0].Seq, Lists: [][]library.ArtistRef{{{ID: "a9", Name: "a9"}}}},
 	)
-	if n := only[Notice](out); len(n) == 0 || !strings.HasSuffix(n[0].Text, "tracks from Album 3") {
+	if n := only[Notice](out); len(n) == 0 || !strings.Contains(n[0].Text, "tracks from Album 3") {
 		t.Errorf("notices = %#v", n)
 	}
 	for _, q := range s.Queue {

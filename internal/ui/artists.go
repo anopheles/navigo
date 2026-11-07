@@ -342,6 +342,8 @@ func (m *Model) goAlbum(command.Call) error {
 		id, track = t.AlbumID, t.ID
 	} else if a, ok := m.rowAlbum(); ok {
 		id = a.ID
+	} else if t, _, ok := m.state.NowPlaying(); ok { // else what plays, as gm
+		id, track = t.AlbumID, t.ID
 	} else {
 		return errNotOnAlbum
 	}
@@ -382,6 +384,11 @@ func (m *Model) goArtist(command.Call) error {
 		}
 	} else if a, ok := m.rowAlbum(); ok {
 		refs, album = []library.ArtistRef{{ID: a.ArtistID, Name: a.Artist}}, a.ID
+	} else if t, _, ok := m.state.NowPlaying(); ok { // else what plays, as gm
+		refs, album = t.Artists, t.AlbumID
+		if len(refs) == 0 && t.ArtistID != "" {
+			refs = []library.ArtistRef{{ID: t.ArtistID, Name: t.Artist}}
+		}
 	} else {
 		return errNotOnAlbum
 	}

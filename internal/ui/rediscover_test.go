@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -60,7 +61,7 @@ func TestNeverPlayedOnHome(t *testing.T) {
 	}
 	// An album opens as anywhere else.
 	h.keys("<CR>")
-	h.contains("Home › Never played › " + names[0])
+	h.contains(fmt.Sprintf("Home › Never played (%d) › %s", len(names), names[0]))
 }
 
 func TestRediscoverWhenEmpty(t *testing.T) {

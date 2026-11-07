@@ -32,7 +32,7 @@ func (s *Snapshot) ForgottenFavourites(n int, now time.Time, r *rand.Rand) []Tra
 func (s *Snapshot) NeverPlayed(n int, r *rand.Rand) []Album {
 	var cands []Album
 	for _, a := range s.Albums {
-		if s.albumUnplayed(a.ID) {
+		if a.PlayCount == 0 && s.albumUnplayed(a.ID) {
 			cands = append(cands, a)
 		}
 	}

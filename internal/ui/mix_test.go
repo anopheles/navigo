@@ -21,14 +21,16 @@ func TestMixAroundTheRow(t *testing.T) {
 	h.keys("'a")
 	artist := h.m.artistsOf(h.m.top())[0]
 	h.keys("5gm")
-	h.contains(" of 5 tracks from " + artist.Name + " · u brings the old queue back")
+	h.contains(
+		" tracks from " + artist.Name + " · all that fit, of 5 asked for · u brings the old queue back",
+	)
 	if got := h.m.state.Queue[0].Track; got.ArtistID != artist.ID && !got.Credits(artist.ID) {
 		t.Errorf("a Mix around %s opens with %s by %s", artist.Name, got.Title, got.Artist)
 	}
 
 	// :mix library ignores the row.
 	h.keys(":mix library<CR>")
-	h.contains("of 50 tracks · u brings")
+	h.contains("of 50 asked for · u brings")
 	h.lacks("tracks from")
 
 	// A queue row is a track seed, and plays first.
@@ -48,7 +50,7 @@ func TestMixAroundTheRow(t *testing.T) {
 
 	// Home's Mix row always mixes the whole library.
 	h.keys("gg<CR>")
-	h.contains("of 50 tracks · u brings")
+	h.contains("of 50 asked for · u brings")
 	h.lacks("tracks from")
 }
 

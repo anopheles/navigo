@@ -190,7 +190,9 @@ func (s State) mix(e Mix, similar [][]library.ArtistRef) (State, []Effect) {
 	// nothing plays comes after it, so it stays on the status line.
 	n := Notice{Text: "mixed " + count(len(picked)) + e.from()}
 	if len(picked) < e.N {
-		n.Text = fmt.Sprintf("mixed %d of %d tracks%s", len(picked), e.N, e.from())
+		n.Text = fmt.Sprintf(
+			"mixed %s%s · all that fit, of %d asked for", count(len(picked)), e.from(), e.N,
+		)
 	}
 	if had {
 		n.Command, n.Hint = "undo", "brings the old queue back"

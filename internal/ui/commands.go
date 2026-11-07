@@ -122,6 +122,7 @@ func commands() *command.Registry[*Model] {
 			return nil
 		}},
 		{Name: "interrupt", Label: "cancel", Desc: "Cancel pending keys, the selection or a popup; pressed twice in a row, quit.", Run: (*Model).interrupt},
+		{Name: "cancel-or-back", Label: "cancel", Desc: "Cancel the selection, a find's highlights or an error; with none of those, go back as h does.", Run: (*Model).cancelOrBack},
 		{Name: "close", Label: "close", Desc: "Close the popup.", Run: func(m *Model, _ command.Call) error { m.closePopup(); return nil }},
 		{Name: "popup-filter", Label: "filter", Desc: "Filter the playlist popup's rows as you type.", Run: func(m *Model, _ command.Call) error { return m.startPickFilter() }},
 		{Name: "choose", Label: "choose", Desc: "Choose the popup row under the cursor.", Run: func(m *Model, _ command.Call) error { return m.choose() }},
@@ -167,6 +168,20 @@ func (m *Model) interrupt(c command.Call) error {
 	m.endVisual()
 	m.finding.highlight = false
 	m.setMsg("<C-c> again or :q quits", false)
+	return nil
+}
+
+// cancelOrBack is <Esc> in Normal mode: cancel what there is to cancel,
+// else go back, as people who don't use vim expect of it.
+func (m *Model) cancelOrBack(command.Call) error {
+	if m.visual != nil || m.finding.highlight || m.shown.err {
+		m.endVisual()
+		m.clearMsg()
+		m.finding.highlight = false
+		return nil
+	}
+	m.clearMsg()
+	m.back()
 	return nil
 }
 

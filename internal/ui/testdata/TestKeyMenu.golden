@@ -1,13 +1,15 @@
 ╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
 │ Albums                       │ Blue Hour                             ││                                              │
 │ Ångström╭──────────────────────────────────────────────────────────────────────────────────────────────────╮         │
-│ Blue    │ Keys here 1–26 of 57                                                                             │         │
-│ Blue    │ Here                                                                                             │         │
-│▎★ Blue H│   <CR>     play from here             Replace the queue with this list and play from the track … │         │
-│ The Long│   A        add to queue               Add the row under the cursor to the end of the queue: a t… │         │
-│ Night Dr│   a        play next                  Add the row under the cursor after the current track: a t… │         │
-│ Static B│   P        play this now              Play the row under the cursor now, keeping the rest of th… │         │
-│ 夜明け  │ Play                                                                                             │         │
+│ Blue    │ Keys here 1–26 of 59                                                                             │         │
+│ Blue    │ <CR> Enter · <C-x> Ctrl+x · <S-Tab> Shift+Tab · 'b ' then b                                      │         │
+│▎★ Blue H│ in lists: • in the queue · ▶ playing · ★ starred                                                 │         │
+│ The Long│ Here                                                                                             │         │
+│ Night Dr│   <CR>     play from here             Replace the queue with this list and play from the track … │         │
+│ Static B│   A        add to queue               Add the row under the cursor to the end of the queue: a t… │         │
+│ 夜明け  │   a        play next                  Add the row under the cursor after the current track: a t… │         │
+│         │   P        play this now              Play the row under the cursor now, keeping the rest of th… │         │
+│         │ Play                                                                                             │         │
 │         │   <Space>  play/pause                 Pause or resume playback, or start the queue.              │         │
 │         │   >        next track                 Play the next track in the queue.                          │         │
 │         │   <        previous track             Play the previous track, or restart this one after 3 seco… │         │
@@ -26,8 +28,6 @@
 │         │   g-       less like this             Leave the artist of what plays, or of the queue row under… │         │
 │         │   R        repeat                     Cycle repeat: off, all (the queue again), one (the same t… │         │
 │         │   gc       cover                      Show the playing track's cover art large.                  │         │
-│         │ Queue                                                                                            │         │
-│         │   y        yank                       Yank the rows a motion covers (yy: this row) into the reg… │         │
 │         ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯         │
 │                              │                                       ││                                              │
 │                              │                                       ││                                              │

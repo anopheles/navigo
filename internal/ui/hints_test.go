@@ -21,7 +21,8 @@ func TestKeyMenuStartsWithWhatWorksHere(t *testing.T) {
 	h := queueOfTwoAlbums(t)
 	h.keys("?")
 	menu := ansi.Strip(strings.Join(h.m.popup.lines, "\n"))
-	if !strings.HasPrefix(menu, "Here\n") || !strings.Contains(menu, "x        remove") {
+	here, play := strings.Index(menu, "\nHere\n"), strings.Index(menu, "\nPlay\n")
+	if here < 0 || here > play || !strings.Contains(menu, "x        remove") {
 		t.Errorf("the queue's key menu doesn't start with its own keys:\n%s", menu)
 	}
 	for _, want := range []string{

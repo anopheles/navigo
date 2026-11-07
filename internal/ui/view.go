@@ -745,28 +745,45 @@ func (m *Model) hintLine() string {
 
 func hint(key, label string) string { return keyStyle.Render(key) + " " + dimStyle.Render(label) }
 
+// indicator is a lasting state in the now-playing bar, with the short
+// form it takes when the bar is narrow.
+type indicator struct {
+	long, short string
+	urgent      bool // a problem with playback: it gives way to nothing
+}
+
+// shortOf is a message's first part, before " · ".
+func shortOf(s string) string {
+	short, _, _ := strings.Cut(s, " · ")
+	return short
+}
+
 // indicators are the lasting states shown in the now-playing bar, most
-// important first: mpv problems, then offline, then syncing, then ReplayGain.
-func (m *Model) indicators() []string {
-	var out []string
+// important first: mpv problems, then offline, then syncing, then the
+// modes, then ReplayGain.
+func (m *Model) indicators() []indicator {
+	var out []indicator
+	problem := ""
 	switch s := m.state; {
 	case s.PlayerProblem != "":
-		out = append(out, s.PlayerProblem)
+		problem = s.PlayerProblem
 	case s.PlayerCapped:
-		out = append(out, "mpv keeps crashing · :reconnect")
+		problem = "mpv keeps crashing · :reconnect"
 	case s.PlayerDown:
+		problem = "mpv stopped"
 		if ks := m.engine.Table().
 			Keys(keymap.Normal, []string{"global"}, "play-pause"); len(
 			ks,
 		) > 0 {
-			out = append(out, "mpv stopped · "+keyLabel(ks[0])+" restarts it")
-		} else {
-			out = append(out, "mpv stopped")
+			problem += " · " + keyLabel(ks[0]) + " restarts it"
 		}
 	case s.PlayerStuck:
-		out = append(out, "mpv isn't responding · no audio output?")
+		problem = "mpv isn't responding · no audio output?"
 	case s.NoAudio:
-		out = append(out, "no audio output")
+		problem = "no audio output"
+	}
+	if problem != "" {
+		out = append(out, indicator{problem, shortOf(problem), true})
 	}
 	if m.state.Offline {
 		next := "offline · trying…"
@@ -774,26 +791,45 @@ func (m *Model) indicators() []string {
 			secs := int(math.Ceil(m.retryAt.Sub(m.clock.Now()).Seconds()))
 			next = fmt.Sprintf("offline · next try in %ds", max(secs, 1))
 		}
-		out = append(out, next)
+		out = append(out, indicator{long: next, short: "offline"})
 	}
 	if m.state.Sync.Running {
-		out = append(out, "⟳ syncing")
+		out = append(out, indicator{long: "⟳ syncing", short: "⟳"})
 	}
+	out = append(out, m.flags()...)
 	if rg := m.gainIndicator(); rg != "" {
-		out = append(out, rg)
+		out = append(out, indicator{long: rg, short: "RG"})
 	}
 	return out
 }
 
-// fitIndicators joins items with " · " within width cells, dropping the
-// least important (last) first.
-func fitIndicators(items []string, width int) string {
-	for n := len(items); n > 0; n-- {
-		if s := strings.Join(items[:n], " · "); lipgloss.Width(s) <= width {
-			return s
+// fitIndicators joins items with " · " within width cells: the least
+// important (last) take their short form first, then go. A first item
+// too long even short is cut, never dropped.
+func fitIndicators(items []indicator, width int) string {
+	texts := make([]string, len(items))
+	for i, it := range items {
+		texts[i] = it.long
+	}
+	fits := func(ts []string) bool { return lipgloss.Width(strings.Join(ts, " · ")) <= width }
+	for i := len(items) - 1; i >= 0 && !fits(texts); i-- {
+		texts[i] = items[i].short
+	}
+	for i := range texts { // the most important get their long form back
+		if texts[i] = items[i].long; !fits(texts) {
+			texts[i] = items[i].short
 		}
 	}
-	return ""
+	for len(texts) > 1 && !fits(texts) {
+		texts = texts[:len(texts)-1]
+	}
+	if len(texts) == 0 || width <= 0 {
+		return ""
+	}
+	if s := strings.Join(texts, " · "); fits(texts) {
+		return s
+	}
+	return ansi.Truncate(texts[0], width, "…")
 }
 
 // progressRule is the rule above the now-playing bar, filled as the
@@ -922,12 +958,15 @@ func (m *Model) nowPlaying() string {
 			" · "+t.Album,
 		)
 	}
-	// Flags get what's left after a readable start of the track.
+	// Flags get what's left after a readable start of the track; a problem
+	// with playback takes the track's room too.
 	room := m.w - lipgloss.Width(left) - lipgloss.Width(right) - 2
-	flags := fitIndicators(
-		append(m.indicators(), m.flags()...),
-		room-min(lipgloss.Width(track), 30)-2,
-	)
+	ind := m.indicators()
+	width := room - min(lipgloss.Width(track), 30) - 2
+	if len(ind) > 0 && ind[0].urgent {
+		width = max(width, min(lipgloss.Width(ind[0].short), room-2))
+	}
+	flags := fitIndicators(ind, width)
 	if flags != "" {
 		flags += " "
 	}
@@ -937,16 +976,19 @@ func (m *Model) nowPlaying() string {
 
 // flags are the now-playing bar's modes: repeat, the radio, and the
 // volume when it isn't full.
-func (m *Model) flags() []string {
-	var out []string
+func (m *Model) flags() []indicator {
+	var out []indicator
 	if r := m.state.Repeat; r != app.RepeatOff {
-		out = append(out, "repeat "+r.String())
+		out = append(out, indicator{long: "repeat " + r.String(), short: "rep " + r.String()})
 	}
 	if m.state.Radio {
-		out = append(out, "radio")
+		out = append(out, indicator{long: "radio", short: "radio"})
 	}
 	if v := m.state.Player.Volume; v != 100 {
-		out = append(out, fmt.Sprintf("vol %d%%", v))
+		out = append(
+			out,
+			indicator{long: fmt.Sprintf("vol %d%%", v), short: fmt.Sprintf("%d%%", v)},
+		)
 	}
 	return out
 }

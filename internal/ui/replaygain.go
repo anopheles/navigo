@@ -39,15 +39,19 @@ func replaygain(m *Model, c command.Call) error {
 
 func gainWords(*Model) []string { return []string{"off", "track", "album"} }
 
-// gainIndicator is the ReplayGain tag of the now-playing bar, empty when off.
+// gainIndicator is the ReplayGain tag of the now-playing bar: the mode
+// when :replaygain changed it from the configured one, else empty.
 func (m *Model) gainIndicator() string {
+	if m.state.ReplayGain.Mode == gainOf(m.deps.Config.Player).Mode {
+		return "" // as configured: nothing to remind of
+	}
 	switch m.state.ReplayGain.Mode {
 	case player.GainTrack:
 		return "RG track"
 	case player.GainAlbum:
 		return "RG album"
 	}
-	return ""
+	return "RG off"
 }
 
 // gainText is what the info popup says about the playing file's tags.

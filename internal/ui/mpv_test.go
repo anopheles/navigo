@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -78,4 +79,22 @@ func TestMPVCrashCap(t *testing.T) {
 	h.lacks("mpv keeps crashing")
 	h.keys("<Space>")
 	h.contains("▶  Dusk Signal")
+}
+
+// On a narrow bar the problem with mpv stays, in its short form, and the
+// modes shorten before they go (#148).
+func TestNarrowBarKeepsTheMPVProblem(t *testing.T) {
+	for _, w := range []int{60, 80} {
+		t.Run(fmt.Sprint(w), func(t *testing.T) {
+			h := setupHarness(t, w, 30, nil, func(h *harness) {
+				h.fake.CheckErr = fmt.Errorf("%w at mpv", player.ErrMPVMissing)
+			})
+			h.toAlbums()
+			h.keys("3j<CR><CR>R")
+			bar := lineWith(t, h.screen(), "in queue")
+			if !strings.Contains(bar, "mpv not found") {
+				t.Errorf("the bar at %d columns lost the mpv problem: %q", w, bar)
+			}
+		})
+	}
 }

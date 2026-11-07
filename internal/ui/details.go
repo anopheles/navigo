@@ -122,6 +122,11 @@ func (m *Model) star(command.Call) error {
 		}
 	}
 	items := m.chosenItems()
+	if len(items) == 0 && m.visual == nil { // what plays, as i does
+		if t, _, ok := m.state.NowPlaying(); ok {
+			items = []item{{library.TrackGroup, string(t.ID), t.Title}}
+		}
+	}
 	m.endVisual()
 	if len(items) == 0 {
 		return errors.New("nothing to star here")

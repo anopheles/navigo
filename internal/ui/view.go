@@ -218,8 +218,11 @@ func (m *Model) libTitle() string {
 	for i := range m.lib[1:] {
 		f := &m.lib[i+1]
 		t := f.title
-		if f.kind == homeTracks {
+		switch f.kind {
+		case homeTracks:
 			t = fmt.Sprintf("%s (%d)", f.title, len(m.homeTracksBase(f)))
+		case homeAlbums: // every Home list gives its count
+			t = fmt.Sprintf("%s (%d)", f.title, len(m.albumsOf(f)))
 		}
 		if f.kind == playlistTracks && m.state.Library != nil {
 			if p, ok := m.state.Library.Playlist(f.playlist); ok {
@@ -968,7 +971,11 @@ func (m *Model) nowPlaying() string {
 
 	track := dimStyle.Render("nothing playing")
 	if playing {
-		track = m.barTitle(
+		star := ""
+		if m.state.Library != nil && m.state.Library.IsStarred(string(t.ID)) {
+			star = "★ "
+		}
+		track = star + m.barTitle(
 			t.Title,
 		) + dimStyle.Render(
 			" — ",

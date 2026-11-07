@@ -77,7 +77,7 @@ func TestHomeLists(t *testing.T) {
 
 	// An album opens as anywhere else; ga and the rest work on its rows.
 	h.keys("'hgg2j<CR><CR>")
-	h.contains("Home › Most played › Blue Hour", "Dusk Signal")
+	h.contains("Home › Most played (2) › Blue Hour", "Dusk Signal")
 }
 
 func TestHomeOffline(t *testing.T) {

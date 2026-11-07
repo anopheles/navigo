@@ -270,8 +270,12 @@ func (m *Model) rowSeed() (library.Seed, bool) {
 // Mix needs the whole library: whether one waits, and how far along it is.
 func (m *Model) mixRowNote(i int) string {
 	sy := m.state.Sync
-	if m.homeRows()[i].kind != "mix" || m.state.Library != nil || !sy.Running {
+	if m.homeRows()[i].kind != "mix" {
 		return ""
+	}
+	if m.state.Library != nil || !sy.Running {
+		// It isn't a list like the rows below it: say what <CR> does.
+		return dimStyle.Render(" · plays tracks picked for you, in place of the queue")
 	}
 	note := " · once the library has synced"
 	if m.state.MixWaiting() {
@@ -361,8 +365,18 @@ func (m *Model) neverPlayedAlbums(f *frame) []library.Album {
 	v := &f.frozen
 	if v.albums == nil {
 		v.albums = []library.AlbumID{}
-		for _, a := range lib.NeverPlayed(homeListSize, m.rand()) {
-			v.albums = append(v.albums, a.ID)
+		// The server's own lists of what played win over the cache's
+		// play counts, which can lag behind them.
+		played := map[library.AlbumID]bool{}
+		for _, kind := range []string{"frequent", "recent"} {
+			for _, a := range m.state.Home[kind].Albums {
+				played[a.ID] = true
+			}
+		}
+		for _, a := range lib.NeverPlayed(homeListSize+len(played), m.rand()) {
+			if !played[a.ID] && len(v.albums) < homeListSize {
+				v.albums = append(v.albums, a.ID)
+			}
 		}
 	}
 	if v.lib != lib || v.albumRows == nil {

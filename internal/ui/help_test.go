@@ -185,3 +185,21 @@ func TestKeyMenuGrows(t *testing.T) {
 		t.Errorf("key menu %d rows on a 60-row screen, want 40", r)
 	}
 }
+
+// Help and the key menu say how keys are written and what the marks mean,
+// and the descriptions say what keys do before naming the vim term (#155).
+func TestHelpExplainsItsNotation(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("<F1>")
+	h.contains("<CR> Enter · <C-x> Ctrl+x", "• in the queue · ▶ playing · ★ starred")
+	h.cursorOn("j") // the legend is skipped
+	h.keys("/")
+	h.typeText("yank")
+	h.keys("<CR>")
+	h.contains("Copy rows (yank): yy copies this row")
+	h.lacks("register", "<C-x> Ctrl+x") // the legend goes while filtered
+	h.keys("q?")
+	h.contains("<CR> Enter · <C-x> Ctrl+x")
+	h.keys("qqn")
+	h.contains("nothing to find again · / finds a row in this list")
+}

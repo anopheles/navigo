@@ -108,7 +108,7 @@ func (m *Model) find(reverse bool, count int) {
 // findAgain is n and N.
 func (m *Model) findAgain(c command.Call, reverse bool) error {
 	if m.finding.pattern == "" {
-		return fmt.Errorf("no find yet · / finds")
+		return fmt.Errorf("nothing to find again · / finds a row in this list")
 	}
 	m.finding.highlight = true
 	m.find(reverse, c.N())

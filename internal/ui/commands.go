@@ -115,18 +115,18 @@ func commands() *command.Registry[*Model] {
 		{Name: "star", Label: "star", Desc: "Star the track, album or artist under the cursor, or the selection; again unstars.", Run: (*Model).star},
 		{Name: "stop", Label: "stop", Desc: "Stop playback.", Run: func(m *Model, _ command.Call) error { m.event(app.StopPlayback{}); return nil }},
 		{Name: "queue-clear", Label: "clear queue", Desc: "Empty the queue; what plays plays on to its end. u brings it back.", Run: func(m *Model, _ command.Call) error { m.event(app.ClearQueue{}); return nil }},
-		{Name: "visual", Label: "select", Desc: "Select rows: start Visual mode, or end it.", Run: func(m *Model, _ command.Call) error {
+		{Name: "visual", Label: "select", Desc: "Select rows (Visual mode): move to grow the selection; again, stop selecting.", Run: func(m *Model, _ command.Call) error {
 			if m.visual == nil && m.listLen() == 0 {
 				return errEmptyList
 			}
 			m.startVisual()
 			return nil
 		}},
-		{Name: "yank", Label: "yank", Desc: "Yank the rows a motion covers (yy: this row) into the register.", Operator: true, Run: (*Model).yank},
-		{Name: "delete", Label: "remove", Desc: "Remove the queue rows a motion covers (dd: this row) into the register.", Operator: true, Run: (*Model).remove},
-		{Name: "remove", Label: "remove", Desc: "Remove the queue row under the cursor, or N rows, into the register.", Run: (*Model).remove},
-		{Name: "paste-after", Label: "paste", Desc: "Paste the register into the queue after the cursor row.", Run: func(m *Model, c command.Call) error { return m.paste(c, true) }},
-		{Name: "paste-before", Label: "paste before", Desc: "Paste the register into the queue before the cursor row.", Run: func(m *Model, c command.Call) error { return m.paste(c, false) }},
+		{Name: "yank", Label: "yank", Desc: "Copy rows (yank): yy copies this row, y and a move copies the rows it covers; p puts them in the queue.", Operator: true, Run: (*Model).yank},
+		{Name: "delete", Label: "remove", Desc: "Remove queue rows: dd removes this row, d and a move removes the rows it covers; p puts them back.", Operator: true, Run: (*Model).remove},
+		{Name: "remove", Label: "remove", Desc: "Remove the queue row under the cursor, or N rows; p puts them back.", Run: (*Model).remove},
+		{Name: "paste-after", Label: "paste", Desc: "Put the rows last copied or removed into the queue after the cursor row.", Run: func(m *Model, c command.Call) error { return m.paste(c, true) }},
+		{Name: "paste-before", Label: "paste before", Desc: "Put the rows last copied or removed into the queue before the cursor row.", Run: func(m *Model, c command.Call) error { return m.paste(c, false) }},
 		{Name: "move-down", Label: "move down", Desc: "Move the queue row or the selection down.", Run: func(m *Model, c command.Call) error { return m.moveRows(c, true) }},
 		{Name: "move-up", Label: "move up", Desc: "Move the queue row or the selection up.", Run: func(m *Model, c command.Call) error { return m.moveRows(c, false) }},
 		{Name: "undo", Label: "undo", Desc: "Undo the last change to the queue, or N changes.", Run: (*Model).undo},

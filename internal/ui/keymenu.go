@@ -150,7 +150,10 @@ func (m *Model) openKeyMenu() {
 	for _, g := range menuGroups {
 		titles = append(titles, g.title)
 	}
-	var lines []string
+	lines := make([]string, 0, len(keyLegend)+1)
+	for _, l := range keyLegend {
+		lines = append(lines, dimStyle.Render(l))
+	}
 	for i, rows := range groups {
 		if len(rows) > 0 {
 			lines = append(lines, accentStyle.Render(titles[i]))

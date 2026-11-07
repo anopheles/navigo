@@ -18,6 +18,7 @@ import (
 type helpRow struct {
 	heading         string
 	key, line, desc string
+	legend          bool // a line of the legend, shown whatever the filter
 }
 
 // helpView is the Help section's rows, built from the bindings in effect
@@ -50,9 +51,19 @@ func keyLabel(seq string) string { return strings.ReplaceAll(seq, "<lt>", "<") }
 
 // buildHelp lists every binding by scope, Visual mode's after them, then
 // the commands no key runs.
+// keyLegend says how keys are written, and what the marks in lists mean,
+// at the top of Help and the key menu.
+var keyLegend = []string{
+	"<CR> Enter · <C-x> Ctrl+x · <S-Tab> Shift+Tab · 'b ' then b",
+	"in lists: • in the queue · ▶ playing · ★ starred",
+}
+
 func (m *Model) buildHelp() *helpView {
 	t := m.engine.Table()
 	var rows []helpRow
+	for _, l := range keyLegend {
+		rows = append(rows, helpRow{heading: l, legend: true})
+	}
 	bound := map[string]bool{}
 	group := func(title string, mode keymap.Mode, scope string) {
 		bs := t.Bindings(mode, scope)
@@ -130,6 +141,12 @@ func (v *helpView) apply(filter string) {
 	var heading *helpRow
 	for i := range v.all {
 		r := &v.all[i]
+		if r.legend {
+			if len(words) == 0 {
+				v.rows = append(v.rows, *r)
+			}
+			continue
+		}
 		if r.heading != "" {
 			heading = r
 			continue
@@ -166,7 +183,15 @@ func (m *Model) showHelp() {
 	f.help = m.buildHelp()
 	f.help.apply(filter)
 	m.clamp()
-	m.settle(f, 1)
+	m.firstKeyRow(f)
+}
+
+// firstKeyRow puts Help's cursor on its first key, past the legend and
+// the heading, if it is above them.
+func (m *Model) firstKeyRow(f *frame) {
+	for f.cur < m.rows(f)-1 && m.skipped(f, f.cur) {
+		f.cur++
+	}
 }
 
 // closeHelp is q, h and <Esc> in Help: a filter goes first, then Help,
@@ -191,6 +216,9 @@ func (m *Model) closeHelp(command.Call) error {
 
 func (m *Model) helpRowText(v *helpView, i, w int) string {
 	r := v.rows[i]
+	if r.legend {
+		return dimStyle.Render(fit(" "+r.heading, w))
+	}
 	if r.heading != "" {
 		return dimStyle.Render(fit(" ── "+r.heading+" ──", w))
 	}
@@ -268,5 +296,5 @@ func (m *Model) filterHelp(filter string) {
 		f.title += " /" + filter
 	}
 	f.cur, f.offset = 0, 0
-	m.settle(f, 1)
+	m.firstKeyRow(f)
 }

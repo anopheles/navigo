@@ -170,7 +170,7 @@ func (m *Model) groups(f *frame) []int {
 	if f.kind == helpList && f.help != nil {
 		var gs []int
 		for i, r := range f.help.rows {
-			if r.heading != "" {
+			if r.heading != "" && !r.legend {
 				gs = append(gs, i+1)
 			}
 		}

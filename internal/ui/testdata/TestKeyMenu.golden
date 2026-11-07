@@ -20,9 +20,9 @@
 │         │   gR       radio                      Turn the radio on or off: it keeps the queue going with t… │         │
 │         │   R        repeat                     Cycle repeat: off, all (the queue again), one (the same t… │         │
 │         │ Queue                                                                                            │         │
-│         │   A        add to queue               Add the track under the cursor to the end of the queue.    │         │
-│         │   a        play next                  Add the track under the cursor after the current track.    │         │
-│         │   P        play this now              Add the track under the cursor after the current track an… │         │
+│         │   A        add to queue               Add the row under the cursor to the end of the queue: a t… │         │
+│         │   a        play next                  Add the row under the cursor after the current track: a t… │         │
+│         │   P        play this now              Play the row under the cursor now, keeping the rest of th… │         │
 │         │   y        yank                       Yank the rows a motion covers (yy: this row) into the reg… │         │
 │         │   u        undo                       Undo the last change to the queue.                         │         │
 │         │   <C-r>    redo                       Redo the last undone change to the queue.                  │         │

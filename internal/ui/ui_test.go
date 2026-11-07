@@ -119,7 +119,7 @@ func TestAddAndUndo(t *testing.T) {
 	h.contains("2 tracks will play next · u undoes")
 	h.keys("u")
 	queued(1)
-	h.contains("undone · 1 track in the queue · <C-r> redoes")
+	h.contains("undone: 2 tracks out · 1 track in the queue · <C-r> redoes")
 	h.keys("uu")
 	queued(0)
 	h.contains("nothing to undo")

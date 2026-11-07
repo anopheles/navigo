@@ -518,22 +518,33 @@ func apply(s State, e Event) (State, []Effect) {
 		if !s.Player.Playing {
 			return s, nil
 		}
+		// <Space> after a stop picks the track up where it stopped.
+		s.resume = &resumePoint{entry: s.playing, pos: s.Player.Position}
 		s.playing = 0
 		s.Player = PlayerState{Volume: s.Player.Volume}
-		return s, []Effect{Stop{}}
+		return s, []Effect{Stop{}, Notice{
+			Text:    "stopped at " + mmss(s.resume.pos),
+			Command: "play-pause",
+			Hint:    "plays on from there",
+		}}
 
 	case Undo:
 		if len(s.undo) == 0 {
 			return s, []Effect{Notice{Text: "nothing to undo"}}
 		}
 		last := s.undo[len(s.undo)-1]
+		before := len(s.Queue)
 		s.redo = append(slices.Clone(s.redo), snapshot{s.Queue, s.Current})
 		s.undo = s.undo[:len(s.undo)-1]
 		s = s.restore(last)
 		return s, append(
 			s.neighbours(),
 			Notice{
-				Text:    "undone · " + count(len(s.Queue)) + " in the queue",
+				Text: "undone: " + changeOf(
+					len(s.Queue)-before,
+				) + " · " + count(
+					len(s.Queue),
+				) + " in the queue",
 				Command: "redo",
 				Hint:    "redoes",
 			},
@@ -543,13 +554,18 @@ func apply(s State, e Event) (State, []Effect) {
 			return s, []Effect{Notice{Text: "nothing to redo"}}
 		}
 		next := s.redo[len(s.redo)-1]
+		before := len(s.Queue)
 		s.undo = append(slices.Clone(s.undo), snapshot{s.Queue, s.Current})
 		s.redo = s.redo[:len(s.redo)-1]
 		s = s.restore(next)
 		return s, append(
 			s.neighbours(),
 			Notice{
-				Text:    "redone · " + count(len(s.Queue)) + " in the queue",
+				Text: "redone: " + changeOf(
+					len(s.Queue)-before,
+				) + " · " + count(
+					len(s.Queue),
+				) + " in the queue",
 				Command: "undo",
 				Hint:    "undoes",
 			},
@@ -798,6 +814,18 @@ func entries(last player.EntryID, tracks []library.Track) ([]QueueEntry, player.
 		out[i] = QueueEntry{ID: last, Track: t}
 	}
 	return out, last
+}
+
+// changeOf names what an undo or redo did to the queue by how many rows
+// it put back (d > 0) or took out.
+func changeOf(d int) string {
+	switch {
+	case d > 0:
+		return count(d) + " back"
+	case d < 0:
+		return count(-d) + " out"
+	}
+	return "the order"
 }
 
 func count(n int) string {

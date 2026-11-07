@@ -226,6 +226,7 @@ type Model struct {
 	// is the filter <Esc> puts back.
 	promptHelp bool
 	helpBefore string
+	helpFrom   *helpReturn // where Help was opened from
 	// The playlist popup (gl): its state while open, its / filter prompt,
 	// the new playlist's name prompt, and the playlists added to this
 	// session, the most recent first.

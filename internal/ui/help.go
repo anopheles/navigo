@@ -1,12 +1,15 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/anopheles/navigo/internal/command"
 	"github.com/anopheles/navigo/internal/keymap"
 )
 
@@ -105,7 +108,7 @@ func (m *Model) buildHelp() *helpView {
 	var unbound []helpRow
 	for _, c := range m.registry.All() {
 		if !bound[c.Name] {
-			unbound = append(unbound, helpRow{key: ":" + c.Name, line: c.Name, desc: c.Desc})
+			unbound = append(unbound, helpRow{key: ":" + c.Name, desc: c.Desc})
 		}
 	}
 	if len(unbound) > 0 {
@@ -142,8 +145,18 @@ func (v *helpView) apply(filter string) {
 	}
 }
 
+// helpReturn is where Help was opened from, for q, h and <Esc> to go
+// back to.
+type helpReturn struct {
+	lib   []frame
+	focus window
+}
+
 // showHelp opens the Help section, rebuilt from the bindings now.
 func (m *Model) showHelp() {
+	if m.focus != libraryWindow || m.top().kind != helpList {
+		m.helpFrom = &helpReturn{slices.Clone(m.lib), m.focus}
+	}
 	m.showSection(helpList)
 	f := &m.lib[1]
 	filter := ""
@@ -156,15 +169,54 @@ func (m *Model) showHelp() {
 	m.settle(f, 1)
 }
 
+// closeHelp is q, h and <Esc> in Help: a filter goes first, then Help,
+// back to where it was opened.
+func (m *Model) closeHelp(command.Call) error {
+	f := m.top()
+	if f.kind == helpList && f.help != nil && f.help.filter != "" {
+		m.filterHelp("")
+		return nil
+	}
+	from := m.helpFrom
+	m.helpFrom = nil
+	if from == nil {
+		m.back()
+		return nil
+	}
+	m.stash()
+	m.lib, m.focus = from.lib, from.focus
+	m.clamp()
+	return nil
+}
+
 func (m *Model) helpRowText(v *helpView, i, w int) string {
 	r := v.rows[i]
 	if r.heading != "" {
 		return dimStyle.Render(fit(" ── "+r.heading+" ──", w))
 	}
+	if r.line == "" { // a command without a key: its name is the key
+		return fit(" "+keyStyle.Render(fit(r.key, 29))+" "+dimStyle.Render(r.desc), w)
+	}
 	return fit(
 		" "+keyStyle.Render(fit(r.key, 10))+" "+fit(r.line, 18)+" "+dimStyle.Render(r.desc),
 		w,
 	)
+}
+
+// helpDetails is i in Help: the row's key, command and whole description.
+func (m *Model) helpDetails(f *frame) error {
+	if f.help == nil || f.cur >= len(f.help.rows) || f.help.rows[f.cur].heading != "" {
+		return errors.New("nothing to show details of here")
+	}
+	r := f.help.rows[f.cur]
+	w := m.popupWidth() - 4
+	wrap := func(s string) []string {
+		return strings.Split(lipgloss.NewStyle().Width(w).Render(s), "\n")
+	}
+	lines := []string{keyStyle.Render(r.key) + "  " + r.line, ""}
+	lines = append(lines, wrap(r.desc)...)
+	m.openPopup("Help", lines)
+	return nil
 }
 
 func (m *Model) emptyHelp(v *helpView) string {
@@ -211,6 +263,10 @@ func (m *Model) filterHelp(filter string) {
 		return
 	}
 	f.help.apply(filter)
+	f.title = "Help"
+	if filter != "" {
+		f.title += " /" + filter
+	}
 	f.cur, f.offset = 0, 0
 	m.settle(f, 1)
 }

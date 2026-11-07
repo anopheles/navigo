@@ -131,3 +131,57 @@ func TestKeyMenuInVisualRunsVisualKeys(t *testing.T) {
 		t.Errorf("keys pending: %q", h.m.engine.Pending())
 	}
 }
+
+// q, h and <Esc> close Help back to where it was opened, a filter going
+// first, and i shows a row's whole description (#146).
+func TestHelpClosesBackToWhereItOpened(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("3j<CR>jj")
+	h.onPath("Albums › Blue Hour")
+	for _, k := range []string{"q", "h", "<Esc>"} {
+		h.keys("<F1>")
+		h.contains(" Help ")
+		h.keys(k)
+		h.onPath("Albums › Blue Hour")
+		h.cursorOn("Streetlamp")
+	}
+
+	h.keys("<F1>/")
+	h.typeText("mix-add-next")
+	h.keys("<CR>")
+	h.contains("Help /mix-add-next")
+	h.keys("<Esc>") // the filter goes first
+	h.contains(" Help ")
+	h.lacks("Help /mix-add-next")
+	h.keys("/")
+	h.typeText("mix-add-next")
+	h.keys("<CR>i")
+	h.contains("(library: always the library); u undoes it.")
+	h.keys("q<Esc><Esc>") // the popup, the filter, then Help
+	h.onPath("Albums › Blue Hour")
+
+	// Help isn't walked back into with <C-o>.
+	h.keys("<F1>'p<C-o>")
+	h.lacks(" Help ")
+}
+
+func TestHelpShowsWholeCommandNames(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("<F1>/")
+	h.typeText("queue-clear")
+	h.keys("<CR>")
+	h.contains(":queue-clear  ")
+	h.lacks("queue-cl…")
+}
+
+// The key menu grows with a large terminal.
+func TestKeyMenuGrows(t *testing.T) {
+	h := newHarness(t, 200, 60, nil)
+	h.keys("3j<CR>j?")
+	if w := h.m.popupWidth(); w != 160 {
+		t.Errorf("popup %d wide on a 200-column screen, want 160", w)
+	}
+	if r := h.m.popupRows(); r != 40 {
+		t.Errorf("key menu %d rows on a 60-row screen, want 40", r)
+	}
+}

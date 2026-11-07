@@ -174,10 +174,14 @@ func (m *Model) closePopup() { m.popup = nil }
 // the hint line: it starts on row 2 and adds a title and two borders.
 func (m *Model) popupRows() int {
 	if m.popup != nil && m.popup.keyMenu != nil {
-		return min(max(m.h-10, 3), keyMenuRows)
+		return min(max(m.h-10, 3), max(keyMenuRows, m.h*2/3))
 	}
 	return max(m.h-10, 3)
 }
+
+// popupWidth is a popup's width: 100 columns, or four fifths of a wider
+// screen, and never past the screen's edges.
+func (m *Model) popupWidth() int { return min(m.w-4, max(100, m.w*4/5)) }
 
 func (m *Model) scrollPopup(d int) {
 	p := m.popup
@@ -192,7 +196,7 @@ func (m *Model) scrollPopup(d int) {
 // renderPopup draws the popup box, to lay over the screen.
 func (m *Model) renderPopup() string {
 	p := m.popup
-	w := min(m.w-4, 100)
+	w := m.popupWidth()
 	rows := m.popupRows()
 	all := p.lines
 	if p.live != nil {

@@ -391,12 +391,15 @@ func TestTransport(t *testing.T) {
 		t.Errorf("prev after 10s restarts the track: %#v", out)
 	}
 	s, out = run(s, StopPlayback{})
-	if !reflect.DeepEqual(out, []Effect{Stop{}}) || s.Player.Playing {
+	if len(only[Stop](out)) != 1 || s.Player.Playing ||
+		only[Notice](out)[0].Text != "stopped at 0:10" {
 		t.Errorf("stop: %#v playing %v", out, s.Player.Playing)
 	}
-	// The stopped track's end changes nothing; play-pause starts again.
+	// The stopped track's end changes nothing; play-pause starts it again
+	// where it stopped (#151).
 	s, _ = run(s, FromPlayer{player.TrackEnded{Entry: 2, Reason: player.Stopped}})
-	if _, out = run(s, PlayPause{}); len(only[Play](out)) != 1 {
+	if _, out = run(s, PlayPause{}); len(only[Play](out)) != 1 ||
+		only[Play](out)[0].Span.Start != 10*time.Second {
 		t.Errorf("play after stop: %#v", out)
 	}
 }

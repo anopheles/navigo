@@ -247,6 +247,7 @@ type Model struct {
 
 	shown   message // in the status line; zero when empty
 	cmdErr  int     // the id of the last error a command returned
+	lastCmd string  // the last command run that wasn't a motion
 	history []message
 	msgSeq  int
 	popup   *popup
@@ -937,6 +938,11 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 	}
 	seq := m.msgSeq
 	err := m.registry.RunCall(m, line, with)
+	if call, perr := command.Parse(line); perr == nil {
+		if c, ok := m.registry.Get(call.Name); ok && !c.Motion {
+			m.lastCmd = c.Name
+		}
+	}
 	m.checkVisual()
 	if err != nil {
 		text := err.Error()

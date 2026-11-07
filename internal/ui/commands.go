@@ -81,13 +81,18 @@ func commands() *command.Registry[*Model] {
 		{Name: "add-end", Label: "add to queue", Desc: "Add the row under the cursor to the end of the queue: a track, or all of its tracks.", Run: func(m *Model, c command.Call) error { return m.add(c, false) }},
 		{Name: "add-next", Label: "play next", Desc: "Add the row under the cursor after the current track: a track, or all of its tracks.", Run: func(m *Model, c command.Call) error { return m.add(c, true) }},
 		{Name: "play-this", Label: "play this now", Desc: "Play the row under the cursor now, keeping the rest of the queue after it.", Run: (*Model).playThis},
-		{Name: "play-row", Label: "play", Desc: "Play the queue row under the cursor.", Run: func(m *Model, _ command.Call) error {
-			m.event(app.PlayRow{Index: m.queueIndex(m.queueCur)})
+		{Name: "play-row", Label: "play", Desc: "Play the queue row under the cursor; on the row that plays, pause or resume it.", Run: func(m *Model, _ command.Call) error {
+			i := m.queueIndex(m.queueCur)
+			if _, row, playing := m.state.NowPlaying(); playing && row == i {
+				m.event(app.PlayPause{}) // not back to 0:00
+				return nil
+			}
+			m.event(app.PlayRow{Index: i})
 			return nil
 		}},
 		{Name: "play-pause", Label: "play/pause", Desc: "Pause or resume playback, or start the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.PlayPause{}); return nil }},
-		{Name: "next-track", Label: "next track", Desc: "Play the next track in the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.NextTrack{}); return nil }},
-		{Name: "prev-track", Label: "previous track", Desc: "Play the previous track, or restart this one after 3 seconds.", Run: func(m *Model, _ command.Call) error { m.event(app.PrevTrack{}); return nil }},
+		{Name: "next-track", Label: "next track", Desc: "Play the next track in the queue.", Run: func(m *Model, c command.Call) error { m.repeat(c, app.NextTrack{}); return nil }},
+		{Name: "prev-track", Label: "previous track", Desc: "Play the previous track, or restart this one after 3 seconds.", Run: func(m *Model, c command.Call) error { m.repeat(c, app.PrevTrack{}); return nil }},
 		{Name: "seek", Args: seekArgs, Label: "seek", Desc: "Seek by seconds (seek +10) or to a time (seek 1:30, seek 50%); a count multiplies a relative seek.", Run: seek},
 		{Name: "reconnect", Label: "reconnect", Desc: "Try the server now instead of waiting for the next retry.", Run: func(m *Model, _ command.Call) error { m.event(app.Reconnect{}); return nil }},
 		{Name: "sync", Label: "sync", Desc: "Sync the whole library from the server.", Run: func(m *Model, _ command.Call) error { m.event(app.SyncNow{}); return nil }},
@@ -111,8 +116,8 @@ func commands() *command.Registry[*Model] {
 		{Name: "paste-before", Label: "paste before", Desc: "Paste the register into the queue before the cursor row.", Run: func(m *Model, c command.Call) error { return m.paste(c, false) }},
 		{Name: "move-down", Label: "move down", Desc: "Move the queue row or the selection down.", Run: func(m *Model, c command.Call) error { return m.moveRows(c, true) }},
 		{Name: "move-up", Label: "move up", Desc: "Move the queue row or the selection up.", Run: func(m *Model, c command.Call) error { return m.moveRows(c, false) }},
-		{Name: "undo", Label: "undo", Desc: "Undo the last change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Undo{}); return nil }},
-		{Name: "redo", Label: "redo", Desc: "Redo the last undone change to the queue.", Run: func(m *Model, _ command.Call) error { m.event(app.Redo{}); return nil }},
+		{Name: "undo", Label: "undo", Desc: "Undo the last change to the queue, or N changes.", Run: (*Model).undo},
+		{Name: "redo", Label: "redo", Desc: "Redo the last undone change to the queue, or N.", Run: func(m *Model, c command.Call) error { m.repeat(c, app.Redo{}); return nil }},
 
 		{Name: "cmdline", Label: "command", Desc: "Type a command.", Run: func(m *Model, _ command.Call) error { m.enterLine(); return nil }},
 		{Name: "cancel", Label: "cancel", Desc: "Cancel pending keys and the selection, and clear the message.", Run: func(m *Model, _ command.Call) error {
@@ -187,6 +192,33 @@ func (m *Model) cancelOrBack(command.Call) error {
 	}
 	m.clearMsg()
 	m.back()
+	return nil
+}
+
+// repeat sends e to the core count times, as for 3> or 2u.
+func (m *Model) repeat(c command.Call, e app.Event) {
+	for range c.N() {
+		m.event(e)
+	}
+}
+
+// notQueue are commands that change something u can't undo: right after
+// one, u says so before it reaches back to an older queue edit.
+var notQueue = map[string]bool{
+	"star": true, "rate": true, "stop": true, "volume": true, "seek": true,
+	"repeat": true, "radio": true, "radio-more": true, "radio-less": true,
+	"replaygain": true, "playlist-add": true, "playlist-new": true,
+	"playlist-rename": true, "playlist-delete": true,
+}
+
+// undo is u: undo the last queue edit, or N. Right after a change that
+// isn't to the queue, the first u says it won't undo that one.
+func (m *Model) undo(c command.Call) error {
+	if notQueue[m.lastCmd] && m.state.CanUndo() {
+		m.setMsg("u undoes changes to the queue only · u again undoes the last one", false)
+		return nil
+	}
+	m.repeat(c, app.Undo{})
 	return nil
 }
 

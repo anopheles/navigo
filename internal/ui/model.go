@@ -187,6 +187,9 @@ type Model struct {
 	queueView  listView
 	queueShown shownRows
 	queueOff   int
+	// queueSaw is the entry that played when the queue last took the
+	// focus, so a new one brings the cursor to it.
+	queueSaw player.EntryID
 
 	mode     keymap.Mode
 	engine   *keymap.Engine

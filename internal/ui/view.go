@@ -77,7 +77,7 @@ func (m *Model) render() string {
 	case m.inColumns() && m.w < narrow && m.focus == libraryWindow:
 		m.paneAt[libraryWindow] = paneHit{0, m.w}
 		title := m.columnTitle() + "   " + m.keyHint("window", "queue")
-		lines = m.pane(title, m.columnRows(1, m.w-2, h, true), m.w, true)
+		lines = m.paneFooted(title, m.libFoot(h), m.columnRows(1, m.w-2, h, true), m.w, true)
 	case m.inColumns() && m.w < narrow:
 		m.paneAt[queueWindow] = paneHit{0, m.w}
 		title := m.queueTitle() + "   " + m.keyHint("window", "library")
@@ -87,7 +87,7 @@ func (m *Model) render() string {
 		m.paneAt[m.focus] = paneHit{0, m.w}
 		if m.focus == libraryWindow {
 			title := m.libTitle() + "   " + m.keyHint("window", "queue")
-			lines = m.pane(title, m.libraryRows(m.w-2, h, true), m.w, true)
+			lines = m.paneFooted(title, m.libFoot(h), m.libraryRows(m.w-2, h, true), m.w, true)
 		} else {
 			title := m.queueTitle() + "   " + m.keyHint("window", "library")
 			lines = m.queuePane(title, m.queueRows(m.w-2, h, true), h, m.w, true)
@@ -102,8 +102,9 @@ func (m *Model) render() string {
 		} else {
 			rows = m.libraryRows(lw-2, h, m.focus == libraryWindow)
 		}
-		left := m.pane(
+		left := m.paneFooted(
 			m.libTitle(),
+			m.libFoot(h),
 			rows,
 			lw,
 			m.focus == libraryWindow,
@@ -145,15 +146,11 @@ func (m *Model) render() string {
 	return strings.Join(lines, "\n")
 }
 
-// pane frames rows (w-2 wide) in a rounded border with the title in the top
+// paneFooted frames rows (w-2 wide) in a rounded border with the title in the top
 // edge. The focused window's border is plain and its title reversed; the
 // other's is faint. With the accent on, the focused border is the accent's
-// middle colour and its title fades across.
-func (m *Model) pane(title string, rows []string, w int, focused bool) []string {
-	return m.paneFooted(title, "", rows, w, focused)
-}
-
-// paneFooted is a pane with foot in its bottom edge, if there is any.
+// middle colour and its title fades across. foot, if any, goes in the
+// bottom edge.
 func (m *Model) paneFooted(title, foot string, rows []string, w int, focused bool) []string {
 	name := func(s string) string { return titleOff.Render(s) }
 	edge := dimStyle
@@ -186,6 +183,18 @@ func (m *Model) paneFooted(title, foot string, rows []string, w int, focused boo
 // can't look like nothing happened. queueRows has set the offset by now.
 func (m *Model) queuePane(title string, rows []string, h, w int, focused bool) []string {
 	return m.paneFooted(title, queueFoot(m.queueOff, h, m.queueLen()), rows, w, focused)
+}
+
+// libFoot is " 33/510 " on the library window's bottom edge, the cursor's
+// row and the rows there are, when its list is longer than the h rows it
+// shows; "" when all of it shows.
+func (m *Model) libFoot(h int) string {
+	f := m.top()
+	n := m.rows(f)
+	if n <= h {
+		return ""
+	}
+	return fmt.Sprintf(" %d/%d ", f.cur+1, n)
 }
 
 // queueFoot is " ↑ 4 · ↓ 10 more " for a list of n rows showing h from off,

@@ -256,7 +256,7 @@ func TestAccentFadesTheFocusedTitleAndFrame(t *testing.T) {
 
 func TestAccentTintsTheCursorAndFadesThePlayingRow(t *testing.T) {
 	h := accentHarness(t, "#c25bd8")
-	h.keys("<Tab>") // the queue is focused, its cursor on Dusk Signal
+	h.keys("<Tab>gg") // the queue is focused, its cursor on Dusk Signal
 	screen := h.m.render()
 	cursor := lineWith(t, screen, "Dusk Signal")
 	if has(cursor, 7) || !strings.Contains(cursor, "48;2;") {
@@ -307,7 +307,7 @@ func TestNoAccentFadesWithoutExactColours(t *testing.T) {
 		"playing is the terminal's magenta": accentHarness(t, "5"),
 		"not a true-colour terminal":        plain,
 	} {
-		h.keys("<Tab>")
+		h.keys("<Tab>gg")
 		screen := h.m.render()
 		if q := lineWith(t, screen, "Dusk Signal"); !has(q, 7) {
 			t.Errorf("%s: the cursor row lost its reverse: %q", name, q)

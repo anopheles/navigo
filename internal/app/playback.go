@@ -57,10 +57,14 @@ func (s State) applyPlayback(e Event) (State, []Effect) {
 			v = e.To
 		}
 		s.Player.Volume = min(max(v, 0), 100)
-		return s, []Effect{
-			SetVolume{Percent: s.Player.Volume},
-			Notice{Text: fmt.Sprintf("volume %d%%", s.Player.Volume)},
+		text := fmt.Sprintf("volume %d%%", s.Player.Volume)
+		switch {
+		case v > 100:
+			text += " (max)"
+		case v < 0:
+			text += " (muted)"
 		}
+		return s, []Effect{SetVolume{Percent: s.Player.Volume}, Notice{Text: text}}
 
 	case Shuffle:
 		if len(s.Queue) == 0 {

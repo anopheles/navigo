@@ -714,9 +714,11 @@ func (m *Model) hintLine() string {
 	case m.focus == queueWindow && len(m.state.Queue) == 0:
 		names = []string{"window", "albums", "key-menu"}
 	case m.focus == queueWindow:
-		names = []string{"play-row", "visual", "play-pause", "undo", "window", "key-menu"}
+		names = []string{"play-row", "remove", "visual", "play-pause", "undo", "window", "key-menu"}
 	case m.onTrack():
-		names = []string{"play-now", "add-end", "add-next", "visual", "back", "window", "key-menu"}
+		names = []string{
+			"play-now", "play-this", "add-end", "add-next", "visual", "back", "window", "key-menu",
+		}
 	case m.onAddable():
 		names = []string{"open", "add-end", "back", "window", "key-menu"}
 	default:
@@ -740,7 +742,12 @@ func (m *Model) hintLine() string {
 			parts = append(parts, hint(ks[0], label))
 		}
 	}
-	return " " + strings.Join(parts, "  ")
+	// :q quit closes the line whenever there is room for it.
+	line := " " + strings.Join(parts, "  ")
+	if q := "  " + hint(":q", "quit"); lipgloss.Width(line+q) <= m.w {
+		line += q
+	}
+	return line
 }
 
 func hint(key, label string) string { return keyStyle.Render(key) + " " + dimStyle.Render(label) }

@@ -24,7 +24,7 @@
 │                   │                         │  1-22 Mile 022             0:20│
 │                   │                         │  1-23 Mile 023             0:20│
 ╰──────────────────────────────────────────────────────────────────────────────╯
- <CR> open  h back  gm mix  <Tab> other window  ? keys                          
+ <CR> open  h back  gm mix  <Tab> other window  ? keys  :q quit                 
 ────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                          0 in queue 
                                                                                 

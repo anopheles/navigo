@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -37,7 +38,10 @@ var menuGroups = []struct {
 			"mix-add-end",
 			"mix-add-next",
 			"radio",
+			"radio-more",
+			"radio-less",
 			"repeat",
+			"cover",
 		},
 	},
 	{
@@ -66,6 +70,7 @@ var menuGroups = []struct {
 		[]string{
 			"open",
 			"back",
+			"go-playing",
 			"go-album",
 			"go-artist",
 			"window",
@@ -74,6 +79,7 @@ var menuGroups = []struct {
 			"albums",
 			"playlists",
 			"search",
+			"find",
 			"help-filter",
 		},
 	},
@@ -85,7 +91,16 @@ var menuGroups = []struct {
 func (m *Model) openKeyMenu() {
 	under := m.scopes()
 	bs := m.engine.Table().Effective(keymap.Normal, under)
-	type row struct{ key, label, desc string }
+	type row struct {
+		key, label, desc string
+		local            bool // bound here, not everywhere
+	}
+	global := m.engine.Table().Bindings(keymap.Normal, "global")
+	isLocal := func(b keymap.Binding) bool {
+		return !slices.ContainsFunc(global, func(g keymap.Binding) bool {
+			return g.Seq() == b.Seq() && g.Command == b.Command
+		})
+	}
 	var groups [][]row
 	width := 18 // the label column, widened for a long label up to 32
 	for _, g := range menuGroups {
@@ -108,15 +123,37 @@ func (m *Model) openKeyMenu() {
 					label += " " + args
 				}
 				width = max(width, min(lipgloss.Width(label), 32))
-				rows = append(rows, row{keyLabel(b.Seq()), label, c.Desc})
+				rows = append(rows, row{keyLabel(b.Seq()), label, c.Desc, isLocal(b)})
 			}
 		}
 		groups = append(groups, rows)
 	}
+	// What only works here comes first, in a group of its own, and not
+	// again under its usual heading.
+	var here []row
+	for i := range groups {
+		rest := groups[i][:0]
+		for _, r := range groups[i] {
+			if r.local {
+				here = append(here, r)
+			} else {
+				rest = append(rest, r)
+			}
+		}
+		groups[i] = rest
+	}
+	titles := make([]string, 0, len(menuGroups)+1)
+	if len(here) > 0 {
+		groups = append([][]row{here}, groups...)
+		titles = append(titles, "Here")
+	}
+	for _, g := range menuGroups {
+		titles = append(titles, g.title)
+	}
 	var lines []string
 	for i, rows := range groups {
 		if len(rows) > 0 {
-			lines = append(lines, accentStyle.Render(menuGroups[i].title))
+			lines = append(lines, accentStyle.Render(titles[i]))
 		}
 		for _, r := range rows {
 			lines = append(

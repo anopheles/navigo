@@ -917,6 +917,8 @@ func (m *Model) modeSegment() barSegment {
 	switch {
 	case m.mode == keymap.Cmdline:
 		name, bg = "COMMAND", keyColor
+	case m.mode == keymap.Search && (m.naming != nil || m.promptPick || m.promptHelp):
+		name, bg = "PROMPT", keyColor // a name or a filter, not a search
 	case m.mode == keymap.Search:
 		name, bg = "SEARCH", keyColor
 	case m.visual != nil:

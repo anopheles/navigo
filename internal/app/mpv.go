@@ -17,6 +17,8 @@ type (
 	PlayerChecked struct {
 		Err  error
 		Hint string
+		// Path is player.mpv_path, when the config sets one.
+		Path string
 	}
 	// Uncap ends the minute without restarts after repeated crashes.
 	Uncap struct{}
@@ -54,6 +56,10 @@ func (s State) applyMPV(e Event) (State, []Effect) {
 			return s, []Effect{Notice{Text: "mpv plays, but " + e.Err.Error()}}
 		case errors.Is(e.Err, player.ErrMPVTooOld):
 			s.PlayerProblem = "mpv too old · install mpv 0.38 or newer to play"
+		case errors.Is(e.Err, player.ErrMPVMissing) && e.Path != "":
+			// The configured path is wrong; installing won't help.
+			s.PlayerProblem = "mpv not found at " + e.Path + " · check player.mpv_path"
+			s.installHint = ""
 		case errors.Is(e.Err, player.ErrMPVMissing):
 			s.PlayerProblem = "mpv not found · install mpv 0.38 or newer to play"
 		default:

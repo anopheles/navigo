@@ -319,7 +319,10 @@ func (m *Model) SetSend(send func(tea.Msg)) { m.send = send }
 func (m *Model) Init() tea.Cmd {
 	s := m.deps.Config.Server
 	p, ctx := m.deps.Player, m.ctx
-	check := func() tea.Msg { return eventMsg{app.PlayerChecked{Err: p.Check(ctx), Hint: installHint()}} }
+	path := m.deps.Config.Player.MPVPath
+	check := func() tea.Msg {
+		return eventMsg{app.PlayerChecked{Err: p.Check(ctx), Hint: installHint(), Path: path}}
+	}
 	// The now-playing bar measures its colours against the terminal's 16
 	// and, with exact colours, its background, which a half-clear cover
 	// and the cursor tint blend against too.
@@ -1259,8 +1262,11 @@ func parseSeek(arg string) (seekTo, error) {
 	bad := fmt.Errorf("seek: %q is not seconds, a time like 1:30 or a percentage", arg)
 	if p, ok := strings.CutSuffix(arg, "%"); ok {
 		n, err := digits(p)
-		if err != nil || n > 100 {
+		if err != nil {
 			return seekTo{}, bad
+		}
+		if n > 100 {
+			return seekTo{}, fmt.Errorf("seek: %q is past the end · give 0%% to 100%%", arg)
 		}
 		return seekTo{pct: n, isPct: true}, nil
 	}

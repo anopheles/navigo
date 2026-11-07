@@ -2,6 +2,7 @@ package ui
 
 import (
 	"slices"
+	"strconv"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -60,9 +61,56 @@ func (m *Model) cmdKey(key string) (tea.Cmd, bool) {
 	return nil, false
 }
 
+// suggest is the command a mistyped name most likely meant: one whose
+// name or alias is a couple of edits away, or starts with it; "" if none.
+func (m *Model) suggest(name string) string {
+	best, bestD := "", 3
+	for _, c := range m.registry.All() {
+		for _, n := range append([]string{c.Name}, c.Aliases...) {
+			d := editDistance(name, n)
+			if len(name) >= 3 && strings.HasPrefix(n, name) {
+				d = 1
+			}
+			if d < bestD {
+				best, bestD = c.Name, d
+			}
+		}
+	}
+	return best
+}
+
+// editDistance is the Levenshtein distance between a and b.
+func editDistance(a, b string) int {
+	ra, rb := []rune(a), []rune(b)
+	prev := make([]int, len(rb)+1)
+	for j := range prev {
+		prev[j] = j
+	}
+	for i := 1; i <= len(ra); i++ {
+		cur := make([]int, len(rb)+1)
+		cur[0] = i
+		for j := 1; j <= len(rb); j++ {
+			cost := 1
+			if ra[i-1] == rb[j-1] {
+				cost = 0
+			}
+			cur[j] = min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost)
+		}
+		prev = cur
+	}
+	return prev[len(rb)]
+}
+
 // runTyped runs a typed command line. If a key runs the same command here, it
-// adds a tip naming it, after whatever the command said.
+// adds a tip naming it, after whatever the command said. A bare number goes
+// to that row, as in vim.
 func (m *Model) runTyped(line string) tea.Cmd {
+	if n, err := strconv.Atoi(
+		strings.TrimSpace(strings.TrimLeft(line, " :")),
+	); err == nil &&
+		n > 0 {
+		return m.exec("first", n)
+	}
 	key := m.keyFor(line)
 	seq := m.msgSeq
 	cmd := m.exec(line, 0)

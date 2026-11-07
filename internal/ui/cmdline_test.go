@@ -140,3 +140,33 @@ func TestCmdlineHistory(t *testing.T) {
 		t.Errorf("after a restart, <Up> = %q", v)
 	}
 }
+
+// The : line forgives: a typo gets a suggestion, vim's ways to quit quit,
+// :w explains, a number goes to that row, and a key tip names only a key
+// that does exactly what was typed (#150).
+func TestCmdlineForgives(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys(":shufle<CR>")
+	h.contains("not a command: shufle · did you mean shuffle?")
+	h.keys(":w<CR>")
+	h.contains("navigo saves as it goes · :q quits")
+	h.keys(":4<CR>")
+	h.cursorOn("Blue Hour")
+	h.keys(":1<CR>")
+	if h.m.top().cur != 0 {
+		t.Errorf(":1 left the cursor on row %d", h.m.top().cur)
+	}
+
+	h.keys("3j<CR><CR>:seek +30<CR>")
+	h.lacks("tip: next time press .")
+	h.keys(":seek +10<CR>")
+	h.contains("tip: next time press .")
+
+	for _, q := range []string{"wq", "x", "exit"} {
+		n := newHarness(t, 120, 40, nil)
+		n.keys(":" + q + "<CR>")
+		if !n.quit {
+			t.Errorf(":%s didn't quit", q)
+		}
+	}
+}

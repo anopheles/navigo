@@ -519,3 +519,76 @@ func (m *Model) editLine(action string) {
 	}
 	m.lineChanged(before)
 }
+
+// deadKeys says that keys typed in Normal or Visual mode run nothing
+// here, and where they would: a key that does nothing must not look like
+// one that worked. A sequence ended with <Esc> or <C-c> was cancelled on
+// purpose and says nothing.
+func (m *Model) deadKeys(typed []string) {
+	last := typed[len(typed)-1]
+	if last == "<Esc>" || last == "<C-c>" {
+		return
+	}
+	seq := keyLabel(strings.Join(typed, ""))
+	if hint, ok := vimHints[strings.Join(typed, "")]; ok {
+		m.setMsg(seq+" does nothing here · "+hint, false)
+		return
+	}
+	if where, label, ok := m.boundElsewhere(typed); ok {
+		m.setMsg(seq+" is "+label+" in "+where, false)
+		return
+	}
+	help := "? lists the keys here"
+	if ks := m.engine.Table().Keys(keymap.Normal, m.scopes(), "key-menu"); len(ks) > 0 {
+		help = ks[0] + " lists the keys here"
+	}
+	m.setMsg(seq+" does nothing here · "+help, false)
+}
+
+// vimHints answer keys a vim user tries that navigo leaves unbound.
+var vimHints = map[string]string{
+	"q":  ":q quits",
+	"m":  "navigo has no marks of its own; 'h 'a 'b 'p 'q go to sections",
+	"''": "<C-o> goes back to where you were",
+	"gv": "V selects again",
+	"o":  "V selects rows; there is no other end to go to",
+	"c":  "there is nothing to change; d removes, and p puts back",
+	"~":  "there is no case to change",
+	"#":  "/ finds in the list, and N goes back",
+}
+
+// scopeWhere names the scopes a message can send people to, the likeliest
+// first.
+var scopeWhere = []struct{ scope, where string }{
+	{"queue", "the queue ('q)"},
+	{"tracks", "a list of tracks"},
+	{"containers", "the library lists"},
+	{"playlist-tracks", "a playlist's tracks"},
+	{"playlists", "the Playlists list ('p)"},
+	{"album-tracks", "an album's tracks"},
+	{"albums", "the Albums list ('b)"},
+	{"artists", "the Artists list ('a)"},
+	{"home", "Home ('h)"},
+	{"search", "search results"},
+	{"help", "Help"},
+}
+
+// boundElsewhere finds typed keys bound in a scope other than the ones in
+// effect, for "dd is remove in the queue ('q)".
+func (m *Model) boundElsewhere(typed []string) (where, label string, ok bool) {
+	seq := strings.Join(typed, "")
+	for _, sw := range scopeWhere {
+		if slices.Contains(m.scopes(), sw.scope) {
+			continue
+		}
+		for _, b := range m.engine.Table().Bindings(keymap.Normal, sw.scope) {
+			if b.Seq() != seq {
+				continue
+			}
+			if c, found := m.registry.Get(b.Name()); found {
+				return sw.where, c.Label, true
+			}
+		}
+	}
+	return "", "", false
+}

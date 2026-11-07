@@ -114,7 +114,7 @@ func (s State) goOffline() (State, []Effect) {
 	if s.Offline {
 		return s, nil // a retry is already scheduled
 	}
-	s.Offline, s.retry, s.Sync, s.mixWait = true, 0, SyncStatus{}, nil
+	s.Offline, s.retry, s.Sync, s.mixWait, s.syncAsked = true, 0, SyncStatus{}, nil, false
 	s, out := s.scheduleRetry()
 	return s, append(out, Notice{Text: "can't reach the server · browsing from the cache"})
 }

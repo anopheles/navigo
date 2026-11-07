@@ -63,6 +63,9 @@ type State struct {
 	Home map[string]AlbumList
 
 	cacheChecked bool // the cache file has been tried
+	// syncAsked: the sync running was asked for with :sync, so its end is
+	// told.
+	syncAsked bool
 
 	// mixWait is a Mix asked for during the first sync; it runs once the
 	// library is there (see mix.go).
@@ -348,6 +351,7 @@ func apply(s State, e Event) (State, []Effect) {
 			return s, append(recs, Notice{Text: "already syncing"})
 		}
 		s, out := s.startSync(true)
+		s.syncAsked = true
 		return s, slices.Concat(out, recs, []Effect{Notice{Text: "syncing the whole library…"}})
 	case SyncProgress:
 		if s.Sync.Running {
@@ -358,6 +362,8 @@ func apply(s State, e Event) (State, []Effect) {
 		s.Sync = SyncStatus{}
 		wait := s.mixWait
 		s.mixWait = nil
+		asked := s.syncAsked
+		s.syncAsked = false
 		if e.Err != nil {
 			s.Sync.Failed = true
 			return s, []Effect{
@@ -372,6 +378,13 @@ func apply(s State, e Event) (State, []Effect) {
 		}
 		s.Library = e.Library
 		out := []Effect{SaveCache{Library: e.Library}}
+		if asked {
+			out = append(out, Notice{Text: fmt.Sprintf(
+				"library synced · %d %s, %s",
+				len(e.Library.Albums), plural(len(e.Library.Albums), "album"),
+				count(len(e.Library.Tracks)),
+			)})
+		}
 		if wait != nil && wait.still(s) {
 			s, more := s.applyMix(wait.mix)
 			return s, append(out, more...)

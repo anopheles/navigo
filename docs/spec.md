@@ -541,7 +541,7 @@ The `:` line has Tab completion for command names and arguments.
 - The now-playing bar shows `offline · next try in 8s`.
 
 **Three tiers:**
-- **Messages** (status line): info clears after 8 s, errors stay until replaced or `<Esc>`, and the newest always wins. `:messages` shows the last 100 with their times. Going offline and coming back each get one info message.
+- **Messages** (status line): info clears after 8 s, errors stay until replaced or `<Esc>`, and the newest always wins. An error a command returned (`not a command: nope`) also goes once the next command works; the server's and mpv's stay. A key or keys that run nothing where the cursor is say so as info, with where they would run or a vim user's answer: `x is remove in the queue ('q)`, `q does nothing here · :q quits`, `Y does nothing here · ? lists the keys here`; keys ended by `<Esc>` or `<C-c>` say nothing. `:sync` ends with `library synced · 12 albums, 140 tracks` ([#144](https://github.com/anopheles/navigo/issues/144)). `:messages` shows the last 100 with their times. Going offline and coming back each get one info message.
 - **Indicators** (now-playing bar): lasting states, joined with " · " in the order mpv problems, offline, syncing, ReplayGain. The least important are cut first on narrow terminals.
 - **Popups:** only when the user must act (bad bindings at startup, the can't-quit check). Never for the server or mpv.
 

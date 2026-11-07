@@ -1,7 +1,7 @@
 ╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
 │ Albums                       │ Blue Hour                             ││                                              │
 │ Ångström╭──────────────────────────────────────────────────────────────────────────────────────────────────╮         │
-│ Blue    │ Keys here 1–24 of 51                                                                             │         │
+│ Blue    │ Keys here 1–26 of 51                                                                             │         │
 │ Blue    │ Play                                                                                             │         │
 │▎★ Blue H│   <CR>     play                       Replace the queue with this list and play from the track … │         │
 │ The Long│   <Space>  play/pause                 Pause or resume playback, or start the queue.              │         │
@@ -26,9 +26,9 @@
 │         │   y        yank                       Yank the rows a motion covers (yy: this row) into the reg… │         │
 │         │   u        undo                       Undo the last change to the queue.                         │         │
 │         │   <C-r>    redo                       Redo the last undone change to the queue.                  │         │
+│         │   gl       add to playlist            Add the selection or the row under the cursor to the end … │         │
+│         │ Select                                                                                           │         │
 │         ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯         │
-│                              │                                       ││                                              │
-│                              │                                       ││                                              │
 │                              │                                       ││                                              │
 │                              │                                       ││                                              │
 │                              │                                       ││                                              │

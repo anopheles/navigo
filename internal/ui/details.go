@@ -180,6 +180,9 @@ func (m *Model) rate(c command.Call) error {
 // info is i and :info: details of the row under the cursor, or of the
 // track that plays.
 func (m *Model) info(command.Call) error {
+	if f := m.top(); m.focus == libraryWindow && f.kind == helpList {
+		return m.helpDetails(f)
+	}
 	lib := m.state.Library
 	items := m.chosenItems()
 	if len(items) == 0 || m.visual != nil {

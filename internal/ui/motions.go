@@ -143,6 +143,9 @@ func (m *Model) here() location {
 // recordJump puts where the cursor is on the jump list, before a jump;
 // anything ahead of it is dropped, as in vim.
 func (m *Model) recordJump() {
+	if m.focus == libraryWindow && m.top().kind == helpList {
+		return // Help is left with q, not walked back into
+	}
 	m.jumps = append(m.jumps[:m.jumpAt], m.here())
 	if over := len(m.jumps) - jumpListSize; over > 0 {
 		m.jumps = m.jumps[over:]

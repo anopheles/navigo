@@ -34,7 +34,7 @@
 │ >          next-track         Play the next track in the queue.      ││                                              │
 │ <          prev-track         Play the previous track, or restart th…││                                              │
 ╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
- h back  <Tab> other window  ? keys                                                                                     
+ q close  / filter  i all of it  Move the cursor down.                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                        RG track  0 in queue 
                                                                                                                         

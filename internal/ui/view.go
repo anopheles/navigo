@@ -677,6 +677,22 @@ func (m *Model) hintLine() string {
 	if m.visual != nil {
 		return m.visualHints()
 	}
+	if f := m.top(); m.focus == libraryWindow && f.kind == helpList && f.help != nil {
+		keys := hint(
+			"q",
+			"close",
+		) + "  " + hint(
+			"/",
+			"filter",
+		) + "  " + hint(
+			"i",
+			"all of it",
+		) + "  "
+		if f.cur < len(f.help.rows) {
+			keys += dimStyle.Render(f.help.rows[f.cur].desc)
+		}
+		return " " + keys
+	}
 	var names []string
 	switch {
 	case m.focus == queueWindow && len(m.state.Queue) == 0:

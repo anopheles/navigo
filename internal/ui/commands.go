@@ -140,6 +140,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "map", Label: "bindings", Desc: "List the bindings that differ from the defaults.", Run: (*Model).showMap},
 		{Name: "reload-config", Label: "reload config", Desc: "Read config.yaml again and rebuild the bindings, dropping this session's mappings.", Run: (*Model).reloadConfig},
 		{Name: "help", Jump: true, Label: "help", Desc: "Show every key and command, from the bindings in effect.", Run: func(m *Model, _ command.Call) error { m.showHelp(); return nil }},
+		{Name: "help-close", Label: "close", Desc: "Clear Help's filter, or close Help and go back to where it was opened.", Run: (*Model).closeHelp},
 		{Name: "help-filter", Label: "filter", Desc: "Filter Help to the keys and commands that match what you type.", Run: func(m *Model, _ command.Call) error { m.startHelpFilter(); return nil }},
 		{Name: "cover", Label: "cover", Desc: "Show the playing track's cover art large.", Run: func(m *Model, _ command.Call) error { return m.openCover() }},
 		{Name: "key-menu", Label: "keys", Desc: "Show the keys for what is under the cursor; press one to run it.", Run: func(m *Model, _ command.Call) error { m.openKeyMenu(); return nil }},

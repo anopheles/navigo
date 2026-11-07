@@ -466,7 +466,7 @@ func (m *Model) loggedIn(msg loginMsg) tea.Cmd {
 	}
 	if subsonic.IsCode(msg.err, subsonic.CodeWrongCredentials) {
 		s := m.deps.Config.Server
-		m.openLogin(s.URL, s.User, "the server rejected the saved username or password")
+		m.openLogin(s.URL, s.User, m.rejectedText())
 		return nil
 	}
 	if subsonic.IsUnreachable(msg.err) {
@@ -727,7 +727,7 @@ func (m *Model) run(e app.Effect) tea.Cmd {
 		}
 	case app.OpenLogin:
 		s := m.deps.Config.Server
-		m.openLogin(s.URL, s.User, "the server rejected the saved username or password")
+		m.openLogin(s.URL, s.User, m.rejectedText())
 		return nil
 	}
 

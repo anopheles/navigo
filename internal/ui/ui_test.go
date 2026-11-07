@@ -274,7 +274,7 @@ func TestRejectedSavedPasswordOpensForm(t *testing.T) {
 		40,
 		func(c *config.Config, _ *subsonictest.Server) { c.Server.Password = "stale" },
 	)
-	h.contains("the server rejected the saved username or password", "Password")
+	h.contains("the server rejected the username or password in", "Password")
 	if h.m.login.fields[fieldURL].Value() == "" ||
 		h.m.login.fields[fieldUser].Value() != subsonictest.Username {
 		t.Error("form not filled in with the saved URL and user")

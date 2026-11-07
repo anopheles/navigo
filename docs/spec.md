@@ -132,6 +132,8 @@ internal/ui/         Bubble Tea model, windows, lists, bars, login form
 **Login form:**
 - It's full-screen, and opens on first run, when the saved credentials are rejected, and on `:login`.
 - It asks for server URL, username and password, checks them with `ping`, shows errors in place, and saves only on success.
+- Errors are in words, not Go's error chain ([#145](https://github.com/anopheles/navigo/issues/145)): `nothing answers at host:port · is the server running?`, `can't find the host music.example · check the URL`, `the server didn't answer in time · …`, `that URL isn't a Subsonic server · check its path`; the full error goes to the log. Credentials the server rejects say where they came from: `… in ~/.config/navigo/config.yaml`, or `… the password saved for it`.
+- Every line wraps inside the box, at most 60 columns of text and never wider than the screen, and paths start with `~`. The footer says `<Esc> back` under `:login` and `<Esc> quit` on first run; while the keyring question is open it shows its answers, `y save it there  n only for this session`. Below the fields the form says the password goes to the system's keyring. The URL's placeholder reads `e.g. https://music.example.com`, so it can't be mistaken for a value without colour.
 - A URL without a scheme tries `https://`, then `http://`.
 
 **Password sources**, in order:

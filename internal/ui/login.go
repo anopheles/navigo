@@ -1,8 +1,15 @@
 package ui
 
 import (
+	"context"
 	"errors"
+	"log/slog"
+	"net"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
+	"syscall"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
@@ -34,7 +41,7 @@ const (
 
 func (m *Model) openLogin(url, user, errText string) {
 	var f loginForm
-	for i, ph := range []string{"https://music.example.com", "username", "password"} {
+	for i, ph := range []string{"e.g. https://music.example.com", "", ""} {
 		t := newInput()
 		t.Prompt = ""
 		t.Placeholder = ph
@@ -146,7 +153,8 @@ func (m *Model) loginResult(msg loginMsg) tea.Cmd {
 		f.err = "wrong username or password"
 		return nil
 	case msg.err != nil:
-		f.err = msg.err.Error()
+		f.err = loginErr(msg.err)
+		slog.Info("login failed", "err", msg.err)
 		return nil
 	}
 	f.client, f.url = msg.client, msg.url
@@ -188,4 +196,56 @@ func (m *Model) saved(msg savedMsg) tea.Cmd {
 		m.setMsg("logged in as "+s.User, false)
 	}
 	return cmd
+}
+
+// loginErr says why a login failed in words, not as Go's error chain.
+func loginErr(err error) string {
+	var dns *net.DNSError
+	var uerr *url.Error
+	host := ""
+	if errors.As(err, &uerr) {
+		if u, perr := url.Parse(uerr.URL); perr == nil {
+			host = u.Host
+		}
+	}
+	switch {
+	case errors.As(err, &dns):
+		return "can't find the host " + dns.Name + " · check the URL"
+	case errors.Is(err, syscall.ECONNREFUSED):
+		if host != "" {
+			return "nothing answers at " + host + " · is the server running?"
+		}
+		return "nothing answers at that address · is the server running?"
+	case errors.Is(err, context.DeadlineExceeded) || isTimeout(err):
+		return "the server didn't answer in time · check the URL and that it's running"
+	case errors.Is(err, subsonic.ErrNotSubsonic):
+		return "that URL isn't a Subsonic server · check its path"
+	}
+	return err.Error()
+}
+
+func isTimeout(err error) bool {
+	var ne net.Error
+	return errors.As(err, &ne) && ne.Timeout()
+}
+
+// rejectedText is what the login form says when the server turned down
+// the credentials navigo had kept.
+func (m *Model) rejectedText() string {
+	if m.deps.Config.Server.Password != "" {
+		return "the server rejected the username or password in " + shortPath(m.deps.ConfigPath)
+	}
+	return "the server rejected the username or the password saved for it"
+}
+
+// shortPath writes the home directory as ~.
+func shortPath(p string) string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return p
+	}
+	if rel, err := filepath.Rel(home, p); err == nil && !strings.HasPrefix(rel, "..") {
+		return filepath.Join("~", rel)
+	}
+	return p
 }

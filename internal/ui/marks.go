@@ -13,10 +13,14 @@ const queueMark = "•"
 // rowMarks are the queue's tracks and albums, for the library row being
 // drawn. They are off for the queue window, which is the queue itself.
 type rowMarks struct {
-	on     bool
-	tracks map[library.TrackID]bool
-	albums map[library.AlbumID]bool
+	on      bool
+	tracks  map[library.TrackID]bool
+	albums  map[library.AlbumID]bool
+	playing library.TrackID // what plays, marked ▶ instead
 }
+
+// playingMark says a library row is the track that plays.
+const playingMark = "▶"
 
 // markQueued collects what the queue holds, once per frame.
 func (m *Model) markQueued() {
@@ -28,6 +32,9 @@ func (m *Model) markQueued() {
 		m.marks.tracks[e.Track.ID] = true
 		m.marks.albums[e.Track.AlbumID] = true
 	}
+	if t, _, ok := m.state.NowPlaying(); ok {
+		m.marks.playing = t.ID
+	}
 }
 
 // trackMark puts the queue mark in a track row's gutter: in its second
@@ -37,11 +44,15 @@ func (m *Model) trackMark(mark string, t library.Track) string {
 	if !m.marks.on || !m.marks.tracks[t.ID] {
 		return mark
 	}
+	glyph := queueMark
+	if t.ID == m.marks.playing {
+		glyph = playingMark
+	}
 	if mark == " " {
-		return queueMark
+		return glyph
 	}
 	if strings.HasSuffix(mark, "  ") {
-		return strings.TrimSuffix(mark, " ") + queueMark // "  " is " •"
+		return strings.TrimSuffix(mark, " ") + glyph // "  " is " •"
 	}
 	return mark
 }

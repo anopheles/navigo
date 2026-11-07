@@ -565,13 +565,29 @@ func (m *Model) emptyQueue(w int) []string {
 }
 
 func (m *Model) styleRow(line string, cursor, focused, current, selected bool) string {
+	// With the accent, the cursor row is a tint; in the focused window it
+	// also has a ▎ in the accent in its blank first cell, so it shows
+	// without telling colours apart. The playing row keeps its colour under
+	// it.
+	marked := func(bg color.Color, bold bool) string {
+		mark := ""
+		if bold && strings.HasPrefix(line, " ") { // focused only
+			mark = lipgloss.NewStyle().Background(bg).Foreground(m.cursorInk()).Bold(true).
+				Render(cursorMark)
+			line = line[1:]
+		}
+		if current {
+			return mark + m.accentOver(line, bg)
+		}
+		return mark + lipgloss.NewStyle().Background(bg).Bold(bold).Render(line)
+	}
 	switch {
 	case cursor && focused && m.accentOn():
-		return lipgloss.NewStyle().Background(m.tint()).Bold(true).Render(line)
+		return marked(m.tint(), true)
 	case cursor && focused:
 		return cursorStyle.Render(line)
 	case cursor && m.accentOn():
-		return lipgloss.NewStyle().Background(m.restTint()).Render(line)
+		return marked(m.restTint(), false)
 	case cursor && strings.HasPrefix(line, " "):
 		// A mark in the row's blank first column, in any palette.
 		return cursorMark + line[1:]

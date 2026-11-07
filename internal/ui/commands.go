@@ -77,7 +77,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "queue", Jump: true, Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focus = queueWindow; return nil }},
 		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error { m.focus = 1 - m.focus; return nil }},
 
-		{Name: "play-now", Label: "play", Desc: "Replace the queue with this list and play from the track under the cursor.", Run: (*Model).playNow},
+		{Name: "play-now", Label: "play from here", Desc: "Replace the queue with this list and play from the track under the cursor.", Run: (*Model).playNow},
 		{Name: "add-end", Label: "add to queue", Desc: "Add the row under the cursor to the end of the queue: a track, or all of its tracks.", Run: func(m *Model, c command.Call) error { return m.add(c, false) }},
 		{Name: "add-next", Label: "play next", Desc: "Add the row under the cursor after the current track: a track, or all of its tracks.", Run: func(m *Model, c command.Call) error { return m.add(c, true) }},
 		{Name: "play-this", Label: "play this now", Desc: "Play the row under the cursor now, keeping the rest of the queue after it.", Run: (*Model).playThis},

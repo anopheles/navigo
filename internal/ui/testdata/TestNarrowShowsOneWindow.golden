@@ -34,7 +34,7 @@
 │                                  │                                           │
 │                                  │                                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
- <CR> open  A add to queue  h back  gm mix  <Tab> other window  ? keys          
+ <CR> open  A add to queue  h back  gm mix  <Tab> other window  ? keys  :q quit 
 ────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                          0 in queue 
                                                                                 

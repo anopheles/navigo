@@ -34,7 +34,7 @@
 │                              │                                       ││                                              │
 │                              │                                       ││                                              │
 ╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
- <CR> play  V select  <Space> play/pause  u undo  gm mix  <Tab> other window  ? keys                                    
+ <CR> play  x remove  V select  <Space> play/pause  u undo  gm mix  <Tab> other window  ? keys  :q quit                 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━─────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ▶  Low Tide — Aurora Lane · Blue Hour                                                         2/6  0:42 / 3:05 
  playing · 6 tracks in the queue                                                                                        

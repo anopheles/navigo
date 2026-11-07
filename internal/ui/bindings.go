@@ -161,11 +161,14 @@ var lineDefaults = []struct{ scope, keys, command string }{
 }
 
 // searchDefaults act on the results from the library search prompt. They
-// come before lineDefaults there, and no other prompt reads them.
+// come before lineDefaults there, and no other prompt reads them: the
+// arrows move through the results, and <C-p>/<C-n> keep the history.
 var searchDefaults = []struct{ scope, keys, command string }{
 	{"global", "<Tab>", "add-end"},
 	{"global", "<S-Tab>", "add-next"},
 	{"global", "<C-g>", "play-this"},
+	{"global", "<Down>", "down"},
+	{"global", "<Up>", "up"},
 	{"global", "<C-j>", "down"},
 	{"global", "<C-k>", "up"},
 	{"global", "<C-z>", "undo"},

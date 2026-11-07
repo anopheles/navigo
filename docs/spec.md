@@ -287,7 +287,7 @@ keys:
 **Modes:**
 - **Normal.**
 - **Visual:** `V`/`v`, whole rows. `:` applies a command to the selection.
-- **Command-line** (`:`), **Search** (`/`) and **Prompt** (text asked for by a popup). These three share one line-editing table: `<C-w>`, `<C-u>`, `<C-a>`/`<C-e>`, history on `<Up>`/`<Down>` and `<C-p>`/`<C-n>`, `<Esc>` cancels and `<CR>` accepts.
+- **Command-line** (`:`), **Search** (`/`) and **Prompt** (text asked for by a popup). These three share one line-editing table: `<C-w>`, `<C-u>`, `<C-a>`/`<C-e>`, history on `<Up>`/`<Down>` and `<C-p>`/`<C-n>` (in the library search prompt the arrows move through the results, so there the history is on `<C-p>`/`<C-n>` only), `<Esc>` cancels and `<CR>` accepts.
 
 **Grammar:** `[count] operator [count] motion | [count] operator operator | [count] command`.
 - **Operators:** `d` (remove) and `y` (yank) only. There is one unnamed register shared by every view. `"x` is parsed and rejected.
@@ -363,7 +363,7 @@ The `:` line has Tab completion for command names and arguments.
 **Typing:**
 - Results update **live** from the first character. `<CR>` moves into them; `<Esc>` restores the previous view.
 - `s` (or `'s`) reopens the prompt with the last query filled in and selected. Search history is saved.
-- **Acting from the prompt** ([#127](https://github.com/anopheles/navigo/issues/127)): `<Tab>` adds the row under the cursor to the end of the queue, `<S-Tab>` plays it next, `<C-g>` plays it now (`play-this`), `<C-j>`/`<C-k>` move the cursor, `<C-z>`/`<C-r>` undo and redo, and `<C-q>` closes the prompt as `<Esc>` does and moves to the queue window (`queue`). They act as `A`, `a`, `P`, `j`, `k`, `u` and `<C-r>` do, so an artist row gets a note. After an add, the prompt stays open with the query selected, so typing starts the next search, and the query goes in the history once. The result shows at the right end of the prompt line for 3 seconds. Only this prompt has these keys: `/`, Help's filter and the playlist picker don't. Rebind them under `keys: search:`.
+- **Acting from the prompt** ([#127](https://github.com/anopheles/navigo/issues/127)): `<Tab>` adds the row under the cursor to the end of the queue, `<S-Tab>` plays it next, `<C-g>` plays it now (`play-this`), `<Down>`/`<Up>` and `<C-j>`/`<C-k>` move the cursor (history stays on `<C-p>`/`<C-n>` there, [#143](https://github.com/anopheles/navigo/issues/143)), `<C-z>`/`<C-r>` undo and redo, and `<C-q>` closes the prompt as `<Esc>` does and moves to the queue window (`queue`). They act as `A`, `a`, `P`, `j`, `k`, `u` and `<C-r>` do, so an artist row gets a note. After an add, the prompt stays open with the query selected, so typing starts the next search, and the query goes in the history once. The result shows at the right end of the prompt line for 3 seconds. Only this prompt has these keys: `/`, Help's filter and the playlist picker don't. Rebind them under `keys: search:`.
 - **`--search-on-focus`:** for a navigo shown and hidden with a key, search opens the same way whenever the terminal window gains focus (focus reporting, mode 1004), but only from Normal mode with no popup or pending key, so nothing half done is lost. If this prompt is already open, its query is selected again.
 
 **Rows** behave as they do elsewhere:

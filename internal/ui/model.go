@@ -245,6 +245,7 @@ type Model struct {
 	jumpAt int
 
 	shown   message // in the status line; zero when empty
+	cmdErr  int     // the id of the last error a command returned
 	history []message
 	msgSeq  int
 	popup   *popup
@@ -875,7 +876,12 @@ func (m *Model) key(k tea.KeyPressMsg) tea.Cmd {
 			return m.exec("search "+q, 0)
 		}
 	}
-	return m.result(m.engine.Feed(m.keyMode(), m.scopes(), token))
+	typed := append(m.engine.PendingKeys(), token)
+	r := m.engine.Feed(m.keyMode(), m.scopes(), token)
+	if r.Kind == keymap.NoMatch && m.popup == nil {
+		m.deadKeys(typed)
+	}
+	return m.result(r)
 }
 
 // keyMode is the mode keys are read in: a popup takes Normal mode's keys
@@ -928,11 +934,18 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 			m.recordJump()
 		}
 	}
+	seq := m.msgSeq
 	err := m.registry.RunCall(m, line, with)
 	m.checkVisual()
 	if err != nil {
 		m.setMsg(err.Error(), true)
+		m.cmdErr = m.shown.id
 		return nil
+	}
+	// A command's error goes once the next command works; the server's
+	// and mpv's stay until something replaces them.
+	if m.msgSeq == seq && m.shown.err && m.shown.id == m.cmdErr {
+		m.clearMsg()
 	}
 	cmd := m.pendingCmd
 	m.pendingCmd = nil

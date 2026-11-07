@@ -134,6 +134,12 @@ func TestSyncNow(t *testing.T) {
 	if st := only[StartSync](out); len(st) != 1 || !st[0].Full || !s.Sync.Running {
 		t.Errorf(":sync = %#v", out)
 	}
+	// The sync :sync asked for says when it's done (#144); a background
+	// one doesn't.
+	_, out = run(s, Synced{Library: snap("y")})
+	if n := only[Notice](out); len(n) != 1 || n[0].Text != "library synced · 1 album, 0 tracks" {
+		t.Errorf("end of :sync = %#v", n)
+	}
 }
 
 func TestPlayNow(t *testing.T) {

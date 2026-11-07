@@ -108,7 +108,13 @@ func commands() *command.Registry[*Model] {
 		{Name: "star", Label: "star", Desc: "Star the track, album or artist under the cursor, or the selection; again unstars.", Run: (*Model).star},
 		{Name: "stop", Label: "stop", Desc: "Stop playback.", Run: func(m *Model, _ command.Call) error { m.event(app.StopPlayback{}); return nil }},
 		{Name: "queue-clear", Label: "clear queue", Desc: "Empty the queue; what plays plays on to its end. u brings it back.", Run: func(m *Model, _ command.Call) error { m.event(app.ClearQueue{}); return nil }},
-		{Name: "visual", Label: "select", Desc: "Select rows: start Visual mode, or end it.", Run: func(m *Model, _ command.Call) error { m.startVisual(); return nil }},
+		{Name: "visual", Label: "select", Desc: "Select rows: start Visual mode, or end it.", Run: func(m *Model, _ command.Call) error {
+			if m.visual == nil && m.listLen() == 0 {
+				return errEmptyList
+			}
+			m.startVisual()
+			return nil
+		}},
 		{Name: "yank", Label: "yank", Desc: "Yank the rows a motion covers (yy: this row) into the register.", Operator: true, Run: (*Model).yank},
 		{Name: "delete", Label: "remove", Desc: "Remove the queue rows a motion covers (dd: this row) into the register.", Operator: true, Run: (*Model).remove},
 		{Name: "remove", Label: "remove", Desc: "Remove the queue row under the cursor, or N rows, into the register.", Run: (*Model).remove},
@@ -364,6 +370,7 @@ func (m *Model) trackRow() ([]library.Track, int, error) {
 }
 
 var (
+	errEmptyList  = errors.New("this list is empty")
 	errNotOnTrack = errors.New("not on a track")
 	errNoRows     = errors.New("no rows yet")
 )
@@ -385,7 +392,7 @@ func (m *Model) add(c command.Call, next bool) error {
 		return errors.New("those are in the queue already · y and p copy them")
 	}
 	if _, _, err := m.trackRow(); errors.Is(err, errNoRows) {
-		return nil
+		return m.noRows()
 	}
 	one, artists, err := m.chosenTracks()
 	if err != nil {
@@ -412,7 +419,7 @@ func (m *Model) playThis(command.Call) error {
 		return errors.New("those are in the queue already · <CR> plays the row")
 	}
 	if _, _, err := m.trackRow(); errors.Is(err, errNoRows) {
-		return nil
+		return m.noRows()
 	}
 	tracks, artists, err := m.chosenTracks()
 	if err != nil {
@@ -421,6 +428,15 @@ func (m *Model) playThis(command.Call) error {
 	defer m.skippedArtists(artists)
 	m.event(app.PlayThis{Tracks: tracks})
 	return nil
+}
+
+// noRows is what a key on a list without rows says: nothing while the
+// library is still loading, else that the list is empty.
+func (m *Model) noRows() error {
+	if m.state.Library == nil {
+		return nil
+	}
+	return errEmptyList
 }
 
 // quiet drops errNoRows: a key pressed before the list has loaded does
@@ -445,6 +461,9 @@ func seek(m *Model, c command.Call) error {
 	case to.rel:
 		m.event(app.SeekBy{D: to.by * time.Duration(c.N())})
 	default:
+		if d := m.state.Player.Duration; m.state.Player.Playing && d > 0 && to.by >= d {
+			return fmt.Errorf("seek: %s is past the end of this track (%s)", long(to.by), long(d))
+		}
 		m.event(app.SeekAt{Pos: to.by})
 	}
 	return nil

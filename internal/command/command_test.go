@@ -12,8 +12,18 @@ func registry() *Registry[*target] {
 	r := NewRegistry[*target]()
 	record := func(t *target, c Call) error { t.got = append(t.got, c); return nil }
 	r.Add(Command[*target]{Name: "quit", Aliases: []string{"q", "qa"}, Label: "quit", Run: record})
-	r.Add(Command[*target]{Name: "seek", Label: "seek", Run: record})
+	r.Add(Command[*target]{
+		Name: "seek", Label: "seek", Args: func([]string) error { return nil }, Run: record,
+	})
 	return r
+}
+
+// A command that takes no arguments refuses them rather than drop them.
+func TestRunRefusesArgumentsToACommandWithout(t *testing.T) {
+	if err := registry().Run(&target{}, "quit now", 0); err == nil ||
+		err.Error() != "quit takes no arguments" {
+		t.Errorf("quit now: %v", err)
+	}
 }
 
 func TestRun(t *testing.T) {

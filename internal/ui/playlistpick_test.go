@@ -160,7 +160,7 @@ func TestPlaylistPickRefusesBeforeOpening(t *testing.T) {
 		setup            func(*harness)
 	}{
 		{"artist", "'agl", "an artist can't be added", nil},
-		{"empty list", "'p<CR>gl", "not on a track", nil},
+		{"empty list", "'p<CR>gl", "this list is empty", nil},
 		{"offline", "'b<CR>gl", "offline · playlists can be changed once the server is back", func(h *harness) {
 			h.srv.SetDown(true)
 			h.keys(":sync<CR>")

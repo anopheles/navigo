@@ -109,6 +109,9 @@ func (r *Registry[T]) RunCall(target T, line string, with Call) error {
 	if !ok {
 		return fmt.Errorf("%w: %s", ErrUnknown, call.Name)
 	}
+	if c.Args == nil && len(call.Args) > 0 {
+		return fmt.Errorf("%s takes no arguments", c.Name)
+	}
 	call.Name = c.Name
 	call.Count, call.Motion, call.Double = with.Count, with.Motion, with.Double
 	return c.Run(target, call)

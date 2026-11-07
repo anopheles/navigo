@@ -193,6 +193,9 @@ func (m *Model) peekTracks() (tracks []library.Track, artists int, err error) {
 		}
 	default:
 		f := m.top()
+		if m.rows(f) == 0 {
+			return nil, 0, errEmptyList
+		}
 		var artist bool
 		tracks, artist = m.rowTracks(f, f.cur)
 		if artist {

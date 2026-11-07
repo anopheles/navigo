@@ -504,6 +504,9 @@ func apply(s State, e Event) (State, []Effect) {
 		}
 		return s, []Effect{Notice{Text: "the queue is empty"}}
 	case NextTrack:
+		if len(s.Queue) == 0 {
+			return s, []Effect{Notice{Text: "the queue is empty"}}
+		}
 		next := s.Current + 1
 		if next >= len(s.Queue) && s.Repeat == RepeatAll && len(s.Queue) > 0 {
 			next = 0
@@ -515,6 +518,9 @@ func apply(s State, e Event) (State, []Effect) {
 		s.skips = 0
 		return s.play(s.Current)
 	case PrevTrack:
+		if len(s.Queue) == 0 {
+			return s, []Effect{Notice{Text: "the queue is empty"}}
+		}
 		first := s.Current <= 0 && s.Repeat != RepeatAll // nothing before it
 		if s.Player.Playing && (s.Player.Position > 3*time.Second || first) {
 			return s, []Effect{SeekTo{}}
@@ -523,7 +529,7 @@ func apply(s State, e Event) (State, []Effect) {
 			s.Current = len(s.Queue) // round to the last row
 		}
 		if s.Current <= 0 {
-			return s, nil
+			return s, []Effect{Notice{Text: "start of the queue"}}
 		}
 		s.Current--
 		s.skips = 0

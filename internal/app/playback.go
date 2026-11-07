@@ -63,6 +63,9 @@ func (s State) applyPlayback(e Event) (State, []Effect) {
 		}
 
 	case Shuffle:
+		if len(s.Queue) == 0 {
+			return s, []Effect{Notice{Text: "the queue is empty"}}
+		}
 		if len(s.Queue) < 2 {
 			return s, []Effect{Notice{Text: "nothing to shuffle"}}
 		}

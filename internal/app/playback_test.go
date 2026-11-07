@@ -37,7 +37,7 @@ func TestShuffleAndUndo(t *testing.T) {
 	if !sameIDs(ids(s), 1, 2, 3, 4) || s.Current != 1 {
 		t.Errorf("after undo: %v current %d", ids(s), s.Current)
 	}
-	if _, out = run(New(), Shuffle{Seed: 1}); only[Notice](out)[0].Text != "nothing to shuffle" {
+	if _, out = run(New(), Shuffle{Seed: 1}); only[Notice](out)[0].Text != "the queue is empty" {
 		t.Error("shuffling an empty queue")
 	}
 }

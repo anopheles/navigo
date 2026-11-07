@@ -939,7 +939,15 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 	err := m.registry.RunCall(m, line, with)
 	m.checkVisual()
 	if err != nil {
-		m.setMsg(err.Error(), true)
+		text := err.Error()
+		if errors.Is(err, command.ErrUnknown) {
+			if call, perr := command.Parse(line); perr == nil {
+				if s := m.suggest(call.Name); s != "" {
+					text += " · did you mean " + s + "?"
+				}
+			}
+		}
+		m.setMsg(text, true)
 		m.cmdErr = m.shown.id
 		return nil
 	}

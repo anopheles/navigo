@@ -320,7 +320,7 @@ keys:
 | Playlist tracks | as the queue, but edits go to the server: every removal asks y/n first; `u`/`<C-r>` explain that `P` puts the last removal back |
 | Playlist list | `dd` deletes the playlist after y/n |
 | Windows | `<C-w>h` `<C-w>l` `<C-w>w` `<Tab>` · `<C-w>o` |
-| Help and quit | `?` key menu · `<F1>` `:help` · `<Esc>` cancels the selection, a find's highlights or an error, else goes back · `<C-c>` cancels as `<Esc>` does and closes a popup, and pressed twice in a row quits ([#139](https://github.com/anopheles/navigo/issues/139)) · `q` closes a popup only · `:q` `:qa` `ZZ` `ZQ` quit |
+| Help and quit | `?` key menu · `<F1>` `:help` · `<Esc>` cancels the selection, a find's highlights or an error, else goes back · `<C-c>` cancels as `<Esc>` does and closes a popup, and pressed twice in a row quits ([#139](https://github.com/anopheles/navigo/issues/139)) · `q` closes a popup only · `:q` `:qa` `:wq` `:x` `:exit` `ZZ` `ZQ` quit |
 
 `s` and `r` are deliberately unbound, `\` is the leader and has no default bindings, and `<C-Space>` is never a default (because of a Windows console bug).
 
@@ -341,7 +341,7 @@ The `:` line has Tab completion for command names and arguments.
 - **Empty-queue message:** the empty queue window says what to press first, including `Or let navigo pick:  gm mix from the whole library`.
 - **Prefix menus:** these appear after a pure prefix (`g`, `'`, `<C-w>`, `d`, leader) has waited 500 ms.
 - **Key menu (`?`):** a popup with the keys for what's under the cursor, grouped as Play, Queue, Select, Go and Help, after a **Here** group of the keys bound for this row's scope alone (such as `<CR>`, `A`, `a`, `P` on tracks, or `x`, `J`, `K` in the queue), which then don't repeat under their usual group. It lists `gp`, `gc`, `g+`, `g-` and `/` too. Pressing a key runs it. The Play group names what `gm` would mix from: `mix from <name>`, or on a row that can't be a seed `mix from <what plays>` or `mix from the whole library`; `gM` and `gN` show as `add mix from <name>` and `add mix next from <name>`, and a binding with a count or `library` as `add mix next 5 from <name>` or `add mix next 5 from the whole library`. It scrolls past 24 rows, or two thirds of a tall screen.
-- **The `:` line teaches keys:** typing fuzzy-matches command names and descriptions, listing each match's key. Matches that apply here come first, then whole words, then scattered letters. Running a command that has a key shows `tip: next time press A`.
+- **The `:` line teaches keys:** typing fuzzy-matches command names and descriptions, listing each match's key. Matches that apply here come first, then whole words, then scattered letters. Running a command that has a key shows `tip: next time press A`. A name it doesn't know gets the likeliest one, `not a command: shufle · did you mean shuffle?`; `:wq`, `:x` and `:exit` quit like `:q`, `:w` says `navigo saves as it goes · :q quits`, and a bare number (`:12`) goes to that row, as in vim ([#150](https://github.com/anopheles/navigo/issues/150)).
 - **Every queue change says what it did** and how to undo it: "3 tracks added to the end of the queue (12 in queue) · u undoes".
 - **A `/` that finds nothing** offers `<CR>` to search the whole library with the same text.
 

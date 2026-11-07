@@ -150,7 +150,11 @@ func commands() *command.Registry[*Model] {
 			m.openLogin(s.URL, s.User, "")
 			return nil
 		}},
-		{Name: "quit", Aliases: []string{"q", "qa", "q!", "qa!"}, Label: "quit", Desc: "Quit navigo.", Run: func(m *Model, _ command.Call) error { m.then(tea.Quit); return nil }},
+		{Name: "write", Aliases: []string{"w"}, Label: "write", Desc: "Nothing to write: navigo saves as it goes. :q quits.", Run: func(m *Model, _ command.Call) error {
+			m.setMsg("navigo saves as it goes · :q quits", false)
+			return nil
+		}},
+		{Name: "quit", Aliases: []string{"q", "qa", "q!", "qa!", "wq", "wqa", "x", "xa", "exit"}, Label: "quit", Desc: "Quit navigo.", Run: func(m *Model, _ command.Call) error { m.then(tea.Quit); return nil }},
 	} {
 		r.Add(c)
 	}

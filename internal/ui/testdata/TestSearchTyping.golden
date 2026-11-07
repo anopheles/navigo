@@ -36,5 +36,5 @@
 ╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  <Tab> add  <S-Tab> play next  <C-g> play now  ↓/↑ move  <C-q> queue  <CR> go to the results  <Esc> cancel              
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- SEARCH  ■  nothing playing                                                                        RG track  0 in queue 
+ SEARCH  ■  nothing playing                                                                                  0 in queue 
 search: blue                                                                                                            

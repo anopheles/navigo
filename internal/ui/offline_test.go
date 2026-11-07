@@ -196,7 +196,10 @@ func TestNoAudioOutput(t *testing.T) {
 	}
 	h.fake.Tick(time.Second)
 	h.pump()
-	if ind := h.m.indicators(); slices.Contains(ind, "no audio output") {
-		t.Errorf("indicators while it plays = %q", ind)
+	if ind := h.m.indicators(); slices.ContainsFunc(
+		ind,
+		func(i indicator) bool { return i.long == "no audio output" },
+	) {
+		t.Errorf("indicators while it plays = %v", ind)
 	}
 }

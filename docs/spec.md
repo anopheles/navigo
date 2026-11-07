@@ -239,7 +239,7 @@ keys:
 - **Two windows** side by side. The **library window** (3/5 of the width) shows one list at a time, drilled into with `l`/`<CR>` and out with `h`; in Artists, Albums and Playlists it shows columns (see Sections) instead. The **queue window** (2/5) always shows the queue; its title gives the count and total length, `Queue (12) · 48:10` ([#61](https://github.com/anopheles/navigo/issues/61)). While rows are off screen, its bottom edge counts them, `↑ 4 · ↓ 10 more`, so that tracks added below the view still show.
 - **The hint line.**
 - **The progress rule**: a faint rule under the windows that fills as the track plays.
-- **The now-playing bar** (1 line, never focused), laid out like a Neovim status line: the mode (`NORMAL`, `VISUAL`, `COMMAND`, `SEARCH`) on a block of colour, ■/▶/⏸, then title — artist · album; on the right the indicators and the repeat and volume flags, the position in the queue (`2/6`, or `6 in queue` with nothing playing) and elapsed/total time. `powerline: true` joins its blocks with a Nerd Font's arrows.
+- **The now-playing bar** (1 line, never focused), laid out like a Neovim status line: the mode (`NORMAL`, `VISUAL`, `COMMAND`, `SEARCH`) on a block of colour, ■/▶/⏸, then title — artist · album; on the right the indicators and the repeat and volume flags, the position in the queue (`2/6`, or `6 in queue` with nothing playing) and elapsed/total time. `powerline: true` joins its blocks with a Nerd Font's arrows. When the bar is narrow, the indicators and flags take short forms, the least important first (`repeat all` → `rep all`, `offline · next try in 8s` → `offline`, `⟳ syncing` → `⟳`, a problem with mpv → its first part, `mpv not found`), then the least important go; a problem with mpv takes the track's room rather than go, and is cut only when nothing else fits ([#148](https://github.com/anopheles/navigo/issues/148)).
 - **The status line**, which shows messages, the `:` line and pending keys.
 
 **Windows:**
@@ -430,7 +430,7 @@ The `:` line has Tab completion for command names and arguments.
 - **Clipping and fallback** are mpv's defaults (the gain is capped at `1/peak` where a peak is known; untagged tracks play at their own level) and are not settings.
 - **Set** with `player.replaygain` and `player.replaygain_preamp`, or `:replaygain` for the session. A change is heard after about a second, once mpv's buffer drains, and the message confirms it at once.
 - **Volume** is separate: ReplayGain never changes it, and it can lift a track above unity.
-- **Shown** as a faint `RG track` or `RG album` in the now-playing bar when on, and the `i` popup shows the track and album gain the playing file is tagged with (mpv cannot report the gain it applies), or "no replaygain tags".
+- **Shown** as a faint `RG track`, `RG album` or `RG off` in the now-playing bar while `:replaygain` has changed it from the configured mode (the configured one needs no reminder, [#148](https://github.com/anopheles/navigo/issues/148)), and the `i` popup shows the track and album gain the playing file is tagged with (mpv cannot report the gain it applies), or "no replaygain tags".
 - **mpv 0.38** is still the minimum.
 
 ## Offline cache and sync

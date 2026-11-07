@@ -12,20 +12,21 @@ import (
 
 func TestReplayGainCommand(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
-	h.contains("RG track") // on by default
+	h.lacks("RG ") // track, as configured: nothing to remind of (#148)
 	h.keys(":replaygain album<CR>")
 	h.contains("replaygain album", "RG album")
 	if c := h.lastCall(); c != "SetReplayGain(album, 0)" {
 		t.Errorf("player call %q", c)
 	}
 	h.keys(":replaygain off<CR>")
-	h.lacks("RG ")
+	h.contains("RG off")
 	if c := h.lastCall(); c != "SetReplayGain(off, 0)" {
 		t.Errorf("player call %q", c)
 	}
 	// With no argument it moves to the next mode.
 	h.keys(":replaygain<CR>")
-	h.contains("replaygain track", "RG track")
+	h.contains("replaygain track")
+	h.lacks("RG track") // back to the configured mode
 	h.keys(":replaygain loud<CR>")
 	h.contains("replaygain: give off, track or album")
 }
@@ -42,8 +43,9 @@ func TestReplayGainFromConfig(t *testing.T) {
 	h := newHarness(t, 120, 40, func(c *config.Config, _ *subsonictest.Server) {
 		c.Player.ReplayGain, c.Player.ReplayGainPreamp = "album", 2.5
 	})
-	h.contains("RG album")
+	h.lacks("RG ") // album, as configured
 	h.keys(":replaygain off<CR>")
+	h.contains("RG off")
 	if c := h.lastCall(); c != "SetReplayGain(off, 2.5)" {
 		t.Errorf("the preamp was lost: %q", c)
 	}
@@ -72,9 +74,10 @@ func TestReloadConfigDropsTheReplayGainOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 	h.keys(":replaygain off<CR>")
-	h.lacks("RG ")
+	h.contains("RG off")
 	h.keys(":reload-config<CR>")
-	h.contains("config reloaded", "RG album")
+	h.contains("config reloaded")
+	h.lacks("RG ") // album now, as the file says
 	if c := h.lastCall(); c != "SetReplayGain(album, 1)" {
 		t.Errorf("player call %q", c)
 	}

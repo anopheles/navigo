@@ -79,13 +79,23 @@ func TestSyncingIndicator(t *testing.T) {
 	h.contains("■  nothing playing", "⟳ syncing")
 }
 
+// Narrow, the least important items take their short forms, then go; a
+// first item too long even short is cut, never dropped (#148).
 func TestFitIndicators(t *testing.T) {
-	items := []string{"mpv not found", "offline · next try in 8s", "⟳ syncing"}
+	items := []indicator{
+		{"mpv not found · install mpv 0.38 or newer", "mpv not found", true},
+		{long: "offline · next try in 8s", short: "offline"},
+		{long: "⟳ syncing", short: "⟳"},
+		{long: "repeat all", short: "rep all"},
+	}
 	for width, want := range map[int]string{
-		100: "mpv not found · offline · next try in 8s · ⟳ syncing",
-		45:  "mpv not found · offline · next try in 8s",
-		20:  "mpv not found",
-		5:   "",
+		100: "mpv not found · install mpv 0.38 or newer · offline · next try in 8s · ⟳ syncing · repeat all",
+		60:  "mpv not found · offline · next try in 8s · ⟳ · repeat all",
+		40:  "mpv not found · offline · ⟳ · repeat all",
+		25:  "mpv not found · offline",
+		15:  "mpv not found",
+		8:   "mpv not…",
+		0:   "",
 	} {
 		if got := fitIndicators(items, width); got != want {
 			t.Errorf("width %d: %q, want %q", width, got, want)

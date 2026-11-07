@@ -434,3 +434,26 @@ func TestScrobbledUpdatesTheCache(t *testing.T) {
 		t.Errorf("with no library: %#v", out)
 	}
 }
+
+// Tracks added with play next one after another play in the order they
+// were added; a new current track starts afresh (#152).
+func TestPlayNextKeepsTheOrder(t *testing.T) {
+	ts := tracks(5)
+	s, _ := run(New(), PlayNow{Tracks: ts[:2], Start: 0})
+	s, _ = run(s, AddNext{Tracks: ts[2:3]}, AddNext{Tracks: ts[3:4]})
+	if got := titles(s); got != "Track 1, Track 3, Track 4, Track 2" {
+		t.Errorf("queue = %s", got)
+	}
+	s, _ = run(s, NextTrack{}, AddNext{Tracks: ts[4:5]})
+	if got := titles(s); got != "Track 1, Track 3, Track 5, Track 4, Track 2" {
+		t.Errorf("after the track changed: %s", got)
+	}
+}
+
+func titles(s State) string {
+	var out []string
+	for _, q := range s.Queue {
+		out = append(out, q.Track.Title)
+	}
+	return strings.Join(out, ", ")
+}

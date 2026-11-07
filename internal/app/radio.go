@@ -71,7 +71,7 @@ type radioWait struct {
 func (s State) applyRadio(e Event) (State, []Effect) {
 	switch e := e.(type) {
 	case SetRadio:
-		s.Radio = e.On
+		s.Radio, s.radioByRepeat = e.On, false
 		var out []Effect
 		if e.On && s.Repeat == RepeatAll {
 			s.Repeat = RepeatOff
@@ -292,11 +292,18 @@ func cloneSet[K comparable](m map[K]bool) map[K]bool {
 
 // repeatEndsRadio turns the radio off when repeat all came on: the queue
 // never runs out then.
+// Repeat going back to off turns it on again (#152).
 func (s State) repeatEndsRadio(out []Effect) (State, []Effect) {
-	if s.Radio && s.Repeat == RepeatAll {
-		s.Radio = false
+	switch {
+	case s.Radio && s.Repeat == RepeatAll:
+		s.Radio, s.radioByRepeat = false, true
 		s.radio.seq, s.radio.lookup = 0, nil
-		out = append(out, Notice{Text: "repeat all · radio off"})
+		out = append(out, Notice{Text: "repeat all · radio paused until repeat is off"})
+	case s.radioByRepeat && s.Repeat == RepeatOff:
+		s.Radio, s.radioByRepeat = true, false
+		var more []Effect
+		s, more = s.topUp()
+		out = append(append(out, more...), Notice{Text: "repeat off · radio back on"})
 	}
 	return s, out
 }

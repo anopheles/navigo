@@ -63,6 +63,15 @@ type State struct {
 	Home map[string]AlbumList
 
 	cacheChecked bool // the cache file has been tried
+	// radioByRepeat: repeat all turned the radio off, and repeat off turns
+	// it on again.
+	radioByRepeat bool
+	// playNext is where a with nothing between puts the next tracks: after
+	// nextAfter, the last entry a added while nextFor was current.
+	playNext struct {
+		set                bool
+		nextFor, nextAfter player.EntryID
+	}
 	// syncAsked: the sync running was asked for with :sync, so its end is
 	// told.
 	syncAsked bool
@@ -433,10 +442,20 @@ func apply(s State, e Event) (State, []Effect) {
 		}
 		var added []QueueEntry
 		added, s.nextID = entries(s.nextID, e.Tracks)
+		// Tracks added with a one after another play in that order: after
+		// those a already put after the same current track.
+		cur := s.currentEntry()
 		at := s.Current + 1
+		if p := s.playNext; p.set && p.nextFor == cur {
+			if i := s.index(p.nextAfter); i > s.Current {
+				at = i + 1
+			}
+		}
 		s = s.edit(func(q []QueueEntry) ([]QueueEntry, int) {
 			return slices.Insert(slices.Clone(q), at, added...), s.Current
 		})
+		s.playNext.set, s.playNext.nextFor = true, cur
+		s.playNext.nextAfter = added[len(added)-1].ID
 		verb := "will play next"
 		if len(added) == 1 {
 			verb = "plays next"
@@ -814,6 +833,14 @@ func entries(last player.EntryID, tracks []library.Track) ([]QueueEntry, player.
 		out[i] = QueueEntry{ID: last, Track: t}
 	}
 	return out, last
+}
+
+// currentEntry is the current queue entry's ID, or 0 with none.
+func (s State) currentEntry() player.EntryID {
+	if s.Current >= 0 && s.Current < len(s.Queue) {
+		return s.Queue[s.Current].ID
+	}
+	return 0
 }
 
 // changeOf names what an undo or redo did to the queue by how many rows

@@ -165,3 +165,28 @@ func TestRadioAndRepeatAllExclude(t *testing.T) {
 		t.Errorf("radio on left repeat %v", s.Repeat)
 	}
 }
+
+// Repeat all only pauses the radio: repeat off turns it on again, unless
+// the radio was set by hand meanwhile (#152).
+func TestRepeatOffBringsTheRadioBack(t *testing.T) {
+	s, _ := radioPlaying(t)
+	s, out := run(s, CycleRepeat{}) // all
+	if s.Radio || only[Notice](out)[len(only[Notice](out))-1].Text !=
+		"repeat all · radio paused until repeat is off" {
+		t.Fatalf("repeat all: radio %v, %#v", s.Radio, out)
+	}
+	s, _ = run(s, CycleRepeat{}) // one
+	if s.Radio {
+		t.Error("repeat one turned the radio on")
+	}
+	s, out = run(s, CycleRepeat{}) // off
+	n := only[Notice](out)
+	if !s.Radio || n[len(n)-1].Text != "repeat off · radio back on" {
+		t.Errorf("repeat off: radio %v, %#v", s.Radio, n)
+	}
+
+	s, _ = run(s, CycleRepeat{}, SetRadio{On: false}, CycleRepeat{}, CycleRepeat{})
+	if s.Radio {
+		t.Error("the radio came back though it was turned off by hand")
+	}
+}

@@ -33,7 +33,7 @@
 │ <Space>    play-pause         Pause or resume playback, or start the…││                                              │
 │ >          next-track         Play the next track in the queue.      ││                                              │
 │ <          prev-track         Play the previous track, or restart th…││                                              │
-╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
+╰─ 2/197 ──────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  q close  / filter  i all of it  Move the cursor down.                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                                  0 in queue 

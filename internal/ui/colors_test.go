@@ -38,7 +38,7 @@ func playingScreen(t *testing.T) *harness {
 	h := newHarness(t, 120, 40, nil)
 	// Low Tide plays; the album opens again from Search, which shows the
 	// queue beside it, with the cursor on Blue Hour.
-	h.keys("3j<CR>j<CR>:search blue hour<CR><CR>3j<Tab>")
+	h.keys("3j<CR>j<CR>:search blue hour<CR><CR>3j<Tab>gg")
 	return h
 }
 

@@ -74,8 +74,15 @@ func commands() *command.Registry[*Model] {
 			slices.Reverse(s) // newest first
 			return s
 		}},
-		{Name: "queue", Jump: true, Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focus = queueWindow; return nil }},
-		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error { m.focus = 1 - m.focus; return nil }},
+		{Name: "queue", Jump: true, Label: "queue", Desc: "Move to the queue window.", Run: func(m *Model, _ command.Call) error { m.focusQueue(); return nil }},
+		{Name: "window", Label: "other window", Desc: "Move to the other window.", Run: func(m *Model, _ command.Call) error {
+			if m.focus == libraryWindow {
+				m.focusQueue()
+			} else {
+				m.focus = libraryWindow
+			}
+			return nil
+		}},
 
 		{Name: "play-now", Label: "play from here", Desc: "Replace the queue with this list and play from the track under the cursor.", Run: (*Model).playNow},
 		{Name: "add-end", Label: "add to queue", Desc: "Add the row under the cursor to the end of the queue: a track, or all of its tracks.", Run: func(m *Model, c command.Call) error { return m.add(c, false) }},
@@ -199,6 +206,19 @@ func (m *Model) cancelOrBack(command.Call) error {
 	m.clearMsg()
 	m.back()
 	return nil
+}
+
+// focusQueue moves to the queue window. When another track plays than
+// when the queue last had the focus, its cursor goes to that track;
+// otherwise it stays where the user left it.
+func (m *Model) focusQueue() {
+	m.focus = queueWindow
+	if _, row, ok := m.state.NowPlaying(); ok && row >= 0 {
+		if id := m.state.Queue[row].ID; id != m.queueSaw {
+			m.queueSaw = id
+			m.queueCur = m.shownRow(row)
+		}
+	}
 }
 
 // repeat sends e to the core count times, as for 3> or 2u.

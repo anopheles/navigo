@@ -333,3 +333,16 @@ func TestSortQueueAndUndo(t *testing.T) {
 		t.Error("sorting an empty queue")
 	}
 }
+
+// Pushing past the ends says so (#154).
+func TestVolumeSaysAtTheEnds(t *testing.T) {
+	s := New()
+	s.Player.Volume = 100
+	if _, out := run(s, ChangeVolume{By: 5}); only[Notice](out)[0].Text != "volume 100% (max)" {
+		t.Errorf("volume past 100: %#v", out)
+	}
+	s.Player.Volume = 0
+	if _, out := run(s, ChangeVolume{By: -5}); only[Notice](out)[0].Text != "volume 0% (muted)" {
+		t.Errorf("volume below 0: %#v", out)
+	}
+}

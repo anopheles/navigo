@@ -644,7 +644,7 @@ func (m *Model) hintLine() string {
 			"  a capital letter matches case",
 		)
 	}
-	if m.promptHelp || m.promptPick {
+	if m.promptHelp || m.promptPick || m.promptKeys {
 		return " " + hint("<CR>", "keep the filter") + "  " + hint("<Esc>", "put it back")
 	}
 	if m.naming != nil {
@@ -681,6 +681,9 @@ func (m *Model) hintLine() string {
 		) + "  " + hint(
 			"j/k",
 			"scroll",
+		) + "  " + hint(
+			"/",
+			"filter",
 		) + "  " + hint(
 			"<F1>",
 			"help",
@@ -929,7 +932,7 @@ func (m *Model) modeSegment() barSegment {
 	switch {
 	case m.mode == keymap.Cmdline:
 		name, bg = "COMMAND", keyColor
-	case m.mode == keymap.Search && (m.naming != nil || m.promptPick || m.promptHelp):
+	case m.mode == keymap.Search && (m.naming != nil || m.promptPick || m.promptHelp || m.promptKeys):
 		name, bg = "PROMPT", keyColor // a name or a filter, not a search
 	case m.mode == keymap.Search:
 		name, bg = "SEARCH", keyColor

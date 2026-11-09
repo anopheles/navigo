@@ -116,6 +116,7 @@ type popup struct {
 	// keyMenu makes it the key menu: the scopes it was opened in, where
 	// its keys run.
 	keyMenu []string
+	menu    *keyMenu
 	// cover makes it the large cover; live then makes its lines on every
 	// draw, as the image may arrive while it is open.
 	cover bool

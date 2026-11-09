@@ -47,6 +47,8 @@ var lineCommands = map[string]string{
 	"kill-word":       "Delete the word before the cursor.",
 	"kill-to-start":   "Delete everything before the cursor.",
 	"kill-to-end":     "Delete everything after the cursor.",
+	"match-next":      "While / is typed, go to the next match (<Tab> too).",
+	"match-prev":      "While / is typed, go to the match before (<S-Tab> too).",
 	"nop":             "Do nothing: a dead key.",
 }
 

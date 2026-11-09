@@ -75,6 +75,8 @@ func TestBindingProblems(t *testing.T) {
 				"kill-word",
 				"line-end",
 				"line-start",
+				"match-next",
+				"match-prev",
 				"nop",
 			},
 			", ",

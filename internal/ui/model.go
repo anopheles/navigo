@@ -998,6 +998,8 @@ func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
 			key = "up"
 		case "history-forward":
 			key = "down"
+		case "match-next", "match-prev":
+			key = a
 		default:
 			m.editLine(a)
 			return nil
@@ -1042,10 +1044,13 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-// lineChanged filters Help or searches again when a prompt's text changed.
+// lineChanged filters Help, searches again or finds again when a
+// prompt's text changed.
 func (m *Model) lineChanged(before string) {
 	switch {
-	case m.line.Value() == before, m.finding.prompting:
+	case m.line.Value() == before:
+	case m.finding.prompting:
+		m.liveFind()
 	case m.promptHelp:
 		m.filterHelp(m.line.Value())
 	case m.promptKeys:

@@ -302,7 +302,7 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		m.marks.on = false
 		m.dress = false
 		if focused {
-			row = m.highlight(row)
+			row = m.highlight(row, i == f.cur)
 		}
 		out = append(
 			out,
@@ -511,7 +511,7 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 			line = dimStyle.Render(line)
 		}
 		if focused {
-			line = m.highlight(line)
+			line = m.highlight(line, r == m.queueCur)
 		}
 		out = append(
 			out,
@@ -637,6 +637,9 @@ func (m *Model) hintLine() string {
 		return " " + hint(
 			"<CR>",
 			"find",
+		) + "  " + hint(
+			"<Tab>",
+			"next match",
 		) + "  " + hint(
 			"<Esc>",
 			"cancel",
@@ -1026,6 +1029,9 @@ func (m *Model) status() string {
 	if s, ok := m.promptWithMsg(); ok {
 		return s
 	}
+	if s, ok := m.promptWith(dimStyle, m.findStatus()); ok {
+		return s
+	}
 	if m.mode == keymap.Search && m.selected {
 		return fit(m.line.Prompt+cursorStyle.Render(m.line.Value()), m.w)
 	}
@@ -1044,22 +1050,28 @@ func (m *Model) status() string {
 }
 
 // promptWithMsg is the library search prompt with a message from since it
-// opened at the right end, cut short so the query stays readable. It does not
-// apply when there is no message or no room for one.
+// opened at the right end. It does not apply when there is no message or no
+// room for one.
 func (m *Model) promptWithMsg() (string, bool) {
 	if !m.libraryPrompt() || m.shown.text == "" || m.shown.id <= m.promptFloor {
 		return "", false
 	}
-	const minRoom, gap = 12, 2
-	room := m.w - lipgloss.Width(m.line.Prompt) - lipgloss.Width(m.line.Value()) - gap - 1
-	if room < minRoom {
-		return "", false
-	}
-	n := min(lipgloss.Width(m.shown.text), room)
 	style := dimStyle
 	if m.shown.err {
 		style = errStyle
 	}
+	return m.promptWith(style, m.shown.text)
+}
+
+// promptWith is the prompt with text at its right end, cut short so the
+// typed text stays readable; false when there is no text or no room for it.
+func (m *Model) promptWith(style lipgloss.Style, text string) (string, bool) {
+	const minRoom, gap = 12, 2
+	room := m.w - lipgloss.Width(m.line.Prompt) - lipgloss.Width(m.line.Value()) - gap - 1
+	if text == "" || room < minRoom {
+		return "", false
+	}
+	n := min(lipgloss.Width(text), room)
 	left := m.line.Prompt + cursorStyle.Render(m.line.Value())
 	if !m.selected {
 		l := m.line
@@ -1073,7 +1085,7 @@ func (m *Model) promptWithMsg() (string, bool) {
 		" ",
 		gap,
 	) + style.Render(
-		fit(m.shown.text, n),
+		fit(text, n),
 	), true
 }
 

@@ -139,28 +139,104 @@ func TestFindWrapping(t *testing.T) {
 	h.typeText("Blue")
 	h.keys("<CR>")
 	h.cursorOn("2019")
+	// With no match, the prompt says so, and <CR> searches the library
+	// with the same text.
 	h.keys("/")
 	h.typeText("BLUE")
-	h.keys("<CR>")
-	h.contains(`no match for "BLUE" here · <CR> searches the whole library`)
-	// The offer: <CR> searches the library with the same text.
+	h.contains("no match · <CR> searches the whole library")
 	h.keys("<CR>")
 	h.contains("Search “BLUE”", "── Albums")
+}
+
+func TestFindShowsMatchesAsTyped(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.cursorOn("Ångström Days")
+
+	// Typing lights every match and puts the cursor on the one <CR> finds,
+	// marked more strongly, with the count at the end of the prompt.
+	h.keys("/")
+	h.contains("<Tab> next match")
+	h.typeText("blu")
+	h.cursorOn("Aurora Lane")
+	h.contains("[1/3]")
+	screen := h.m.render()
+	if !strings.Contains(screen, curFindStyle.Render("Blu")) ||
+		!strings.Contains(screen, findStyle.Render("Blu")) {
+		t.Error("the matches aren't lit while typing")
+	}
+
+	// <Tab> and <C-g> go on, <S-Tab> and <C-t> back, wrapping.
+	h.keys("<Tab>")
+	h.cursorOn("The Quiet Ones")
+	h.contains("[2/3]")
+	h.keys("<C-g>")
+	h.cursorOn("Blue Hour")
+	h.keys("<Tab>")
+	h.cursorOn("Aurora Lane")
+	h.keys("<S-Tab><C-t>")
+	h.cursorOn("The Quiet Ones")
+
+	// Typing on finds again from where the prompt opened.
+	h.typeText("e h")
+	h.cursorOn("Blue Hour")
+	h.contains("[1/1]")
+
+	// With nothing typed, the cursor is back and nothing is lit.
+	h.keys("<C-u>")
+	h.cursorOn("Ångström Days")
+	h.lacks("[1/1]")
+
+	// <Esc> puts the cursor back.
+	h.typeText("blue")
+	h.keys("<Tab><Esc>")
+	h.cursorOn("Ångström Days")
+	if strings.Contains(h.m.render(), findStyle.Render("Blue")) {
+		t.Error("<Esc> left the matches lit")
+	}
+
+	// <CR> stays on the match shown, n goes on from there, and <C-o>
+	// goes back to where the find started.
+	h.keys("/")
+	h.typeText("blue")
+	h.keys("<Tab><CR>")
+	h.cursorOn("The Quiet Ones")
+	h.contains("/blue [2/3]")
+	h.keys("<C-o>")
+	h.cursorOn("Ångström Days")
+	h.keys("<C-i>")
+	h.cursorOn("The Quiet Ones")
+	h.keys("n")
+	h.cursorOn("Blue Hour")
+	h.contains("/blue [3/3]")
+	h.keys("n")
+	h.contains("/blue [1/3] · went on from the top")
+
+	// :find-back shows the match above.
+	h.keys("G:find-back<CR>")
+	h.typeText("blue")
+	h.cursorOn("Blue Hour")
+	h.keys("<Tab>")
+	h.cursorOn("The Quiet Ones")
+	h.keys("<CR>")
+	h.contains("/blue [2/3]")
 }
 
 func TestFindOfferGoesAway(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("/")
-	h.typeText("zzz")
-	h.keys("<CR>j<CR>")
-	h.lacks("Search “zzz”")
-	h.onPath("Albums › Blue") // j moved, <CR> opened the album
+	h.typeText("blue")
+	h.keys("<CR>'an") // no Blue among the artists
+	h.contains(`no match for "blue" here · <CR> searches the whole library`)
+	h.keys("j<CR>")
+	h.lacks("Search “blue”")
+	h.onPath("Artists › Long Haul Orchestra") // j moved, <CR> opened the artist
 }
 
 func TestFindInTheQueue(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("3j<CR>VGA<Tab>/")
 	h.typeText("low")
+	h.cursorOn("Low Tide") // while typing, in the queue too
 	h.keys("<CR>")
 	h.cursorOn("Low Tide")
 }

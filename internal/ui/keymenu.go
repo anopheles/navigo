@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -86,14 +87,29 @@ var menuGroups = []struct {
 	{"Help", []string{"info", "key-menu", "help", "messages", "cmdline", "quit"}},
 }
 
+// keyMenu is the key menu's rows, by group, and the filter typed after /.
+type keyMenu struct {
+	rows   []keyMenuRow
+	width  int // the label column
+	filter string
+	before string // the filter <Esc> at the prompt puts back
+}
+
+// keyMenuRow is one row of the key menu: a group's title, or a key with
+// its label, command line and what it does.
+type keyMenuRow struct {
+	title                  string
+	key, label, line, desc string
+}
+
 // openKeyMenu is ?: the keys for what is under the cursor, by group.
 // While it is open, keys run in the scopes it was opened in.
 func (m *Model) openKeyMenu() {
 	under := m.scopes()
 	bs := m.engine.Table().Effective(keymap.Normal, under)
 	type row struct {
-		key, label, desc string
-		local            bool // bound here, not everywhere
+		keyMenuRow
+		local bool // bound here, not everywhere
 	}
 	global := m.engine.Table().Bindings(keymap.Normal, "global")
 	isLocal := func(b keymap.Binding) bool {
@@ -107,7 +123,7 @@ func (m *Model) openKeyMenu() {
 		var rows []row
 		for _, name := range g.names {
 			for _, b := range bs {
-				if b.Name() != name {
+				if b.Name() != name || b.Seq() == "/" { // / filters the menu
 					continue
 				}
 				c, ok := m.registry.Get(name)
@@ -123,7 +139,8 @@ func (m *Model) openKeyMenu() {
 					label += " " + args
 				}
 				width = max(width, min(lipgloss.Width(label), 32))
-				rows = append(rows, row{keyLabel(b.Seq()), label, c.Desc, isLocal(b)})
+				r := keyMenuRow{key: keyLabel(b.Seq()), label: label, line: b.Command, desc: c.Desc}
+				rows = append(rows, row{r, isLocal(b)})
 			}
 		}
 		groups = append(groups, rows)
@@ -150,30 +167,108 @@ func (m *Model) openKeyMenu() {
 	for _, g := range menuGroups {
 		titles = append(titles, g.title)
 	}
-	lines := make([]string, 0, len(keyLegend)+1)
-	for _, l := range keyLegend {
-		lines = append(lines, dimStyle.Render(l))
-	}
+	menu := &keyMenu{width: width}
 	for i, rows := range groups {
-		if len(rows) > 0 {
-			lines = append(lines, accentStyle.Render(titles[i]))
-		}
+		menu.rows = append(menu.rows, keyMenuRow{title: titles[i]})
 		for _, r := range rows {
-			lines = append(
-				lines,
-				"  "+keyStyle.Render(
-					fit(r.key, 8),
-				)+" "+fit(
-					r.label,
-					width,
-				)+" "+dimStyle.Render(
-					r.desc,
-				),
-			)
+			menu.rows = append(menu.rows, r.keyMenuRow)
 		}
 	}
-	m.openPopup("Keys here", lines)
+	m.openPopup("Keys here", menu.lines())
 	m.popup.keyMenu = under
+	m.popup.menu = menu
+}
+
+// lines draws the key menu's rows that match its filter, each group's
+// title over the rows it still has; the legend shows only unfiltered.
+func (k *keyMenu) lines() []string {
+	words := filterWords(k.filter)
+	var lines []string
+	if len(words) == 0 {
+		for _, l := range keyLegend {
+			lines = append(lines, dimStyle.Render(l))
+		}
+	}
+	title := ""
+	for _, r := range k.rows {
+		if r.title != "" {
+			title = r.title
+			continue
+		}
+		if !matchesWords(words, r.key, r.label, r.line, r.desc) {
+			continue
+		}
+		if title != "" {
+			lines = append(lines, accentStyle.Render(title))
+			title = ""
+		}
+		lines = append(
+			lines,
+			"  "+keyStyle.Render(
+				fit(r.key, 8),
+			)+" "+fit(
+				r.label,
+				k.width,
+			)+" "+dimStyle.Render(
+				r.desc,
+			),
+		)
+	}
+	if len(lines) == 0 {
+		lines = append(lines, dimStyle.Render(
+			fmt.Sprintf("nothing here matches %q · <F1> searches all keys", k.filter),
+		))
+	}
+	return lines
+}
+
+// filterKeyMenu shows the key menu's rows that match filter.
+func (m *Model) filterKeyMenu(filter string) {
+	p := m.popup
+	if p == nil || p.menu == nil {
+		return
+	}
+	p.menu.filter = filter
+	p.lines = p.menu.lines()
+	p.off = 0
+	p.title = "Keys here"
+	if filter != "" {
+		p.title += " /" + filter
+	}
+}
+
+// startKeyMenuFilter is / in the key menu: a prompt that filters it as
+// you type.
+func (m *Model) startKeyMenuFilter() {
+	k := m.popup.menu
+	k.before = k.filter
+	m.promptKeys = true
+	m.mode = keymap.Search
+	m.line.Reset()
+	m.line.Prompt = "filter keys: "
+	m.fitLine()
+	m.line.SetValue(k.filter)
+	m.line.CursorEnd()
+	m.then(m.line.Focus())
+}
+
+// keyMenuFilterKey handles the filter prompt's keys other than editing:
+// <Esc> puts the old filter back, <CR> keeps the new one.
+func (m *Model) keyMenuFilterKey(key string) (tea.Cmd, bool) {
+	switch key {
+	case "esc", "ctrl+c":
+		before := ""
+		if m.popup != nil && m.popup.menu != nil {
+			before = m.popup.menu.before
+		}
+		m.leaveLine()
+		m.filterKeyMenu(before)
+		return nil, true
+	case "enter":
+		m.leaveLine()
+		return nil, true
+	}
+	return nil, false
 }
 
 // keyMenuKey handles the keys the key menu keeps for itself; it reports
@@ -182,13 +277,30 @@ func (m *Model) keyMenuKey(token string) (tea.Cmd, bool) {
 	if m.engine.Pending() != "" {
 		return nil, false
 	}
+	filter := ""
+	if m.popup.menu != nil {
+		filter = m.popup.menu.filter
+	}
 	switch token {
 	case "q", "<Esc>":
+		if filter != "" { // a filter goes first, then the menu
+			m.filterKeyMenu("")
+			return nil, true
+		}
 		m.closePopup()
 		return nil, true
-	case "<F1>":
+	case "/":
+		if m.popup.menu != nil {
+			m.startKeyMenuFilter()
+			return nil, true
+		}
+	case "<F1>": // Help, filtered as the menu was
 		m.closePopup()
-		return m.exec("help", 0), true
+		cmd := m.exec("help", 0)
+		if filter != "" {
+			m.filterHelp(filter)
+		}
+		return cmd, true
 	}
 	return nil, false
 }

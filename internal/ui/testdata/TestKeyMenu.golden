@@ -1,7 +1,7 @@
 ╭ Albums › Blue Hour ──────────────────────────────────────────────────╮╭ Queue (0) ───────────────────────────────────╮
 │ Albums                       │ Blue Hour                             ││                                              │
 │ Ångström╭──────────────────────────────────────────────────────────────────────────────────────────────────╮         │
-│ Blue    │ Keys here 1–26 of 59                                                                             │         │
+│ Blue    │ Keys here 1–26 of 58                                                                             │         │
 │ Blue    │ <CR> Enter · <C-x> Ctrl+x · <S-Tab> Shift+Tab · 'b ' then b                                      │         │
 │▎★ Blue H│ in lists: • in the queue · ▶ playing · ★ starred                                                 │         │
 │ The Long│ Here                                                                                             │         │
@@ -34,7 +34,7 @@
 │                              │                                       ││                                              │
 │                              │                                       ││                                              │
 ╰──────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
- press a key to run it  j/k scroll  <F1> help  q close                                                                  
+ press a key to run it  j/k scroll  / filter  <F1> help  q close                                                        
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                                  0 in queue 
                                                                                                                         

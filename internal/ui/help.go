@@ -136,7 +136,7 @@ func (m *Model) buildHelp() *helpView {
 // description. Headings stay over the rows they still have.
 func (v *helpView) apply(filter string) {
 	v.filter = filter
-	words := strings.Fields(strings.ToLower(filter))
+	words := filterWords(filter)
 	v.rows = v.rows[:0]
 	var heading *helpRow
 	for i := range v.all {
@@ -151,8 +151,7 @@ func (v *helpView) apply(filter string) {
 			heading = r
 			continue
 		}
-		text := strings.ToLower(r.key + " " + r.line + " " + r.desc)
-		if !slices.ContainsFunc(words, func(w string) bool { return !strings.Contains(text, w) }) {
+		if matchesWords(words, r.key, r.line, r.desc) {
 			if heading != nil {
 				v.rows = append(v.rows, *heading)
 				heading = nil
@@ -160,6 +159,16 @@ func (v *helpView) apply(filter string) {
 			v.rows = append(v.rows, *r)
 		}
 	}
+}
+
+// filterWords splits a Help or key menu filter into the words to match.
+func filterWords(filter string) []string { return strings.Fields(strings.ToLower(filter)) }
+
+// matchesWords reports whether every word is somewhere in fields, ignoring
+// case.
+func matchesWords(words []string, fields ...string) bool {
+	text := strings.ToLower(strings.Join(fields, " "))
+	return !slices.ContainsFunc(words, func(w string) bool { return !strings.Contains(text, w) })
 }
 
 // helpReturn is where Help was opened from, for q, h and <Esc> to go

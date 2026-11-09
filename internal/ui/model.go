@@ -230,6 +230,8 @@ type Model struct {
 	promptHelp bool
 	helpBefore string
 	helpFrom   *helpReturn // where Help was opened from
+	// promptKeys: the key menu's / filter prompt is open.
+	promptKeys bool
 	// The playlist popup (gl): its state while open, its / filter prompt,
 	// the new playlist's name prompt, and the playlists added to this
 	// session, the most recent first.
@@ -1010,6 +1012,8 @@ func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
 		cmd, done = m.findKey(key)
 	case m.promptHelp:
 		cmd, done = m.helpKey(key)
+	case m.promptKeys:
+		cmd, done = m.keyMenuFilterKey(key)
 	case m.promptPick:
 		cmd, done = m.pickFilterKey(key)
 	case m.naming != nil:
@@ -1044,6 +1048,8 @@ func (m *Model) lineChanged(before string) {
 	case m.line.Value() == before, m.finding.prompting:
 	case m.promptHelp:
 		m.filterHelp(m.line.Value())
+	case m.promptKeys:
+		m.filterKeyMenu(m.line.Value())
 	case m.promptPick:
 		m.filterPick(m.line.Value())
 	case m.naming != nil:
@@ -1059,7 +1065,7 @@ func (m *Model) leaveLine() {
 		m.mode = keymap.Visual
 	}
 	m.selected, m.compl, m.promptHelp, m.finding.prompting = false, nil, false, false
-	m.promptPick, m.naming = false, nil
+	m.promptPick, m.promptKeys, m.naming = false, false, nil
 	m.line.Reset()
 	m.line.Blur()
 }

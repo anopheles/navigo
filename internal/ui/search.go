@@ -275,7 +275,7 @@ func (m *Model) liveSearch(q string) {
 // one of the other prompts that share its mode.
 func (m *Model) libraryPrompt() bool {
 	return m.mode == keymap.Search && !m.finding.prompting && !m.promptHelp &&
-		!m.promptPick && m.naming == nil
+		!m.promptPick && !m.promptKeys && m.naming == nil
 }
 
 // searchBound finds the command bound to k in the library search prompt.

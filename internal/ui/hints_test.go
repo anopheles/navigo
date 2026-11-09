@@ -27,11 +27,14 @@ func TestKeyMenuStartsWithWhatWorksHere(t *testing.T) {
 	}
 	for _, want := range []string{
 		"gp       playing", "gc       cover", "g+       more like this",
-		"g-       less like this", "/        find",
+		"g-       less like this",
 	} {
 		if !strings.Contains(menu, want) {
 			t.Errorf("the key menu lacks %q", want)
 		}
+	}
+	if strings.Contains(menu, "/        find") {
+		t.Error("the key menu lists / as find, but / filters it")
 	}
 	h.keys("q<Tab>?")
 	h.contains("Here", "<CR>     play from here", "P        play this now")

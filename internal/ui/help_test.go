@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/exp/golden"
 
 	"github.com/anopheles/navigo/internal/keymap"
@@ -81,6 +82,56 @@ func TestKeyMenu(t *testing.T) {
 	h.lacks("Keys here")
 	h.keys("?<F1>")
 	h.contains(" Help ")
+}
+
+// / in the key menu filters it as you type, by key, label, command or
+// description, rather than starting a find.
+func TestKeyMenuFilter(t *testing.T) {
+	h := newHarness(t, 120, 40, nil)
+	h.keys("3j<CR>j?")
+	h.contains("/ filter")
+	h.keys("/")
+	h.contains("filter keys: ", "PROMPT")
+	h.typeText("seek")
+	h.contains("Keys here /seek", "seek +10", "seek -10")
+	menu := ansi.Strip(strings.Join(h.m.popup.lines, "\n"))
+	for _, gone := range []string{"<C-x> Ctrl+x", "Queue", "add to queue"} {
+		if strings.Contains(menu, gone) { // nor the legend, nor empty groups
+			t.Errorf("filtered by seek, the key menu still has %q:\n%s", gone, menu)
+		}
+	}
+
+	// <Esc> at the prompt puts the old filter back; <CR> keeps the new one.
+	h.keys("<Esc>")
+	h.contains("add to queue")
+	h.lacks("Keys here /")
+	h.keys("/")
+	h.typeText("shuffle")
+	h.keys("<CR>")
+	h.contains("Keys here /shuffle", "S        shuffle")
+	h.lacks("seek +10")
+
+	// A listed key still runs; q clears the filter before closing.
+	h.keys("q")
+	h.contains("Keys here", "add to queue")
+	h.lacks("Keys here /")
+	h.keys("/")
+	h.typeText("add to")
+	h.keys("<CR>A")
+	h.lacks("Keys here")
+	h.contains("1 track added to the end of the queue")
+
+	// The filter starts empty each time.
+	h.keys("?")
+	h.lacks("Keys here /")
+
+	// Nothing here matches: <F1> takes the filter to Help.
+	h.keys("/")
+	h.typeText("queue-clear")
+	h.keys("<CR>")
+	h.contains(`nothing here matches "queue-clear" · <F1> searches all keys`)
+	h.keys("<F1>")
+	h.contains("Help /queue-clear", ":queue-clear")
 }
 
 func TestPrefixMenu(t *testing.T) {

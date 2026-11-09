@@ -289,7 +289,7 @@ func (m *Model) columnBlock(c column, w, h int, windowFocused bool) []string {
 		m.marks.on = false
 		m.dress = false
 		if live {
-			row = m.highlight(row)
+			row = m.highlight(row, cursor)
 		}
 		out = append(out, m.styleRow(row, cursor, live, false, selected))
 	}

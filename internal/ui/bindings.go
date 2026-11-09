@@ -165,6 +165,8 @@ var lineDefaults = []struct{ scope, keys, command string }{
 	{"global", "<C-w>", "kill-word"},
 	{"global", "<C-u>", "kill-to-start"},
 	{"global", "<C-k>", "kill-to-end"},
+	{"global", "<C-g>", "match-next"},
+	{"global", "<C-t>", "match-prev"},
 }
 
 // searchDefaults act on the results from the library search prompt. They

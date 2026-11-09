@@ -61,6 +61,8 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "<C-r>", "redo"},
 	{"global", "<Tab>", "window"},
 	{"global", "<C-w>w", "window"},
+	{"global", "<C-w>h", "window-left"},
+	{"global", "<C-w>l", "window-right"},
 	{"global", "'h", "home"},
 	{"global", "'a", "artists"},
 	{"global", "'b", "albums"},

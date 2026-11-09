@@ -33,7 +33,7 @@
 │ gr         go-artist          Go to the artist of the track or album…││                                              │
 │ h          back               Go back out to the list you came from;…││                                              │
 │ <Space>    play-pause         Pause or resume playback, or start the…││                                              │
-╰─ 4/199 ──────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
+╰─ 4/201 ──────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  q close  / filter  i all of it  Move the cursor down.                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                                  0 in queue 

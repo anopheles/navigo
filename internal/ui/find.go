@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -38,6 +39,7 @@ func (m *Model) startFind(back bool) {
 	}
 	m.fitLine()
 	m.then(m.line.Focus())
+	m.protoStart()
 }
 
 // findKey handles the find prompt's keys other than editing; it reports
@@ -45,10 +47,12 @@ func (m *Model) startFind(back bool) {
 func (m *Model) findKey(key string) (tea.Cmd, bool) {
 	switch key {
 	case "esc":
+		m.protoRestore()
 		m.leaveLine()
 		return nil, true
 	case "enter":
 		p, back := m.line.Value(), m.finding.backward
+		m.protoRestore()
 		m.leaveLine()
 		if p == "" {
 			p = m.finding.pattern // / alone finds the last pattern again
@@ -138,11 +142,13 @@ func matches(text, p string) bool {
 
 // highlight marks the pattern's matches in a row that has no styles of
 // its own.
-func (m *Model) highlight(row string) string {
-	p := m.finding.pattern
-	if !m.finding.highlight || p == "" || strings.Contains(row, "\x1b") {
+func (m *Model) highlight(i int, row string) string {
+	p, on := m.livePattern()
+	if !on || strings.Contains(row, "\x1b") {
 		return row
 	}
+	style := m.protoMatchStyle(i)
+	label, labelled := m.protoLabelFor(i)
 	hay, needle := row, p
 	if strings.IndexFunc(p, unicode.IsUpper) < 0 {
 		hay, needle = strings.ToLower(row), strings.ToLower(p)
@@ -157,7 +163,15 @@ func (m *Model) highlight(row string) string {
 			out.WriteString(row)
 			return out.String()
 		}
-		out.WriteString(row[:i] + findStyle.Render(row[i:i+len(needle)]))
+		out.WriteString(row[:i] + style.Render(row[i:i+len(needle)]))
 		row, hay = row[i+len(needle):], hay[i+len(needle):]
+		if labelled { // C: the label covers the next character
+			labelled = false
+			_, size := utf8.DecodeRuneInString(row)
+			if size > 0 {
+				out.WriteString(protoLabelStyle.Render(string(label)))
+				row, hay = row[size:], hay[size:]
+			}
+		}
 	}
 }

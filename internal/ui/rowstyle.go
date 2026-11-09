@@ -21,7 +21,8 @@ var starStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#e5c07b"))
 
 // highlighting reports whether find matches are marked in the focused window.
 func (m *Model) highlighting() bool {
-	return m.finding.highlight && m.finding.pattern != ""
+	_, on := m.livePattern()
+	return on
 }
 
 // name is a starred name's text with the ★ in gold; fit it to w cells.

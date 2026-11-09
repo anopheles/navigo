@@ -242,6 +242,7 @@ type Model struct {
 	// prefixShown: a pure prefix has waited long enough for its menu.
 	prefixShown bool
 	finding     finder
+	proto       findProto // PROTOTYPE
 	// offerSearch is a pattern / didn't find: <CR> next searches the
 	// library for it.
 	offerSearch string
@@ -282,6 +283,7 @@ func New(deps Deps) (*Model, error) {
 	line.Prompt = ":"
 	m := &Model{
 		push:     newQueuePush(),
+		proto:    newFindProto(),
 		deps:     deps,
 		state:    newState(deps.Config),
 		ctx:      context.Background(),
@@ -978,6 +980,9 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 // lineKey handles a key on the ":" line or a prompt. Keys bound in the
 // cmdline table run their line command and never type; others edit.
 func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
+	if cmd, ok := m.protoKey(k); ok {
+		return cmd
+	}
 	if a, ok := m.searchBound(k); ok {
 		return m.searchAction(a)
 	}
@@ -1045,7 +1050,9 @@ func (m *Model) edit(msg tea.Msg) tea.Cmd {
 // lineChanged filters Help or searches again when a prompt's text changed.
 func (m *Model) lineChanged(before string) {
 	switch {
-	case m.line.Value() == before, m.finding.prompting:
+	case m.line.Value() == before:
+	case m.finding.prompting:
+		m.protoChanged()
 	case m.promptHelp:
 		m.filterHelp(m.line.Value())
 	case m.promptKeys:

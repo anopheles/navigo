@@ -302,7 +302,7 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		m.marks.on = false
 		m.dress = false
 		if focused {
-			row = m.highlight(row)
+			row = m.protoRow(i, m.highlight(i, row))
 		}
 		out = append(
 			out,
@@ -511,7 +511,7 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 			line = dimStyle.Render(line)
 		}
 		if focused {
-			line = m.highlight(line)
+			line = m.protoRow(r, m.highlight(r, line))
 		}
 		out = append(
 			out,
@@ -1028,6 +1028,10 @@ func (m *Model) status() string {
 	}
 	if m.mode == keymap.Search && m.selected {
 		return fit(m.line.Prompt+cursorStyle.Render(m.line.Value()), m.w)
+	}
+	if s := m.protoStatus(); s != "" {
+		w := lipgloss.Width(s) + 1
+		return fit(strings.TrimRight(m.line.View(), " "), m.w-w) + s + " "
 	}
 	if m.mode == keymap.Cmdline || m.mode == keymap.Search {
 		return fit(m.line.View(), m.w)

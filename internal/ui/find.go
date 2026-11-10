@@ -260,7 +260,7 @@ func matches(text, p string) bool {
 // the last find until :noh.
 func (m *Model) litPattern() string {
 	switch {
-	case m.finding.prompting:
+	case m.finding.prompting, m.labeling.prompting:
 		return m.line.Value()
 	case m.finding.highlight:
 		return m.finding.pattern

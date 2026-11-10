@@ -14,7 +14,7 @@ import (
 func TestHelp(t *testing.T) {
 	h := newHarness(t, 120, 40, nil)
 	h.keys("<F1>")
-	h.contains(" Help ", "── Everywhere ──", "<Space>", "play-pause", "Pause or resume playback")
+	h.contains(" Help ", "── Everywhere ──", "label-jump", "Type part of a row on screen")
 	golden.RequireEqual(t, h.screen())
 	var headings []string
 	for _, r := range h.m.top().help.all {
@@ -42,7 +42,7 @@ func TestHelp(t *testing.T) {
 	h.keys("<Esc>")
 	h.contains("Shuffle the queue once")
 	h.keys("/<C-u><CR>")
-	h.contains("play-pause")
+	h.contains("label-jump")
 
 	// Help follows the table: a key changed there shows.
 	if err := h.m.engine.Table().Bind(keymap.Normal, "global", "<C-p>", "play-pause"); err != nil {

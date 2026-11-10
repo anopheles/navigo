@@ -51,6 +51,10 @@ A y/n question asked before a destructive server change; its keys are fixed and 
 **Jump list**:
 The history of where the user has navigated, walked back and forth with `<C-o>`/`<C-i>`.
 
+**Jump label**:
+A letter shown in the first column of a row on screen that matches the text typed after `f`; typing it moves the cursor to that row.
+_Avoid_: hint, tag
+
 ## Lists
 
 **Container list**:

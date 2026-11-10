@@ -41,6 +41,7 @@ func commands() *command.Registry[*Model] {
 		{Name: "scroll-top", Label: "cursor to top", Desc: "Scroll so the cursor row is at the top of the screen.", Run: func(m *Model, _ command.Call) error { m.scrollTo(-1); return nil }},
 		{Name: "scroll-bottom", Label: "cursor to bottom", Desc: "Scroll so the cursor row is at the bottom of the screen.", Run: func(m *Model, _ command.Call) error { m.scrollTo(1); return nil }},
 		{Name: "percent", Label: "percent", Desc: "Go to the row N percent of the way down: 50%.", Motion: true, Run: (*Model).percent},
+		{Name: "label-jump", Label: "jump to a row", Desc: "Type part of a row on screen, then the jump label it gets, to go there; <CR> goes to the nearest. A motion: V and df work with it.", Motion: true, Run: (*Model).labelJump},
 		{Name: "find", Label: "find", Desc: "Find a row in this list by its text; a capital letter matches case.", Run: func(m *Model, _ command.Call) error { m.startFind(false); return nil }},
 		{Name: "find-back", Label: "find back", Desc: "Find a row by its text, searching up the list.", Run: func(m *Model, _ command.Call) error { m.startFind(true); return nil }},
 		{Name: "find-next", Jump: true, Label: "next match", Desc: "Go to the next match of the last find.", Motion: true, Run: func(m *Model, c command.Call) error { return m.findAgain(c, false) }},

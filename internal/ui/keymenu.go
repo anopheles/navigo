@@ -17,8 +17,8 @@ const keyMenuRows = 24
 
 type prefixMsg struct{ seq int }
 
-// menuGroups sort the key menu's commands. Motions aren't listed: they
-// scroll the menu.
+// menuGroups sort the key menu's commands. Motions aren't listed, as they
+// scroll the menu, except f, which closes it.
 var menuGroups = []struct {
 	title string
 	names []string
@@ -81,6 +81,7 @@ var menuGroups = []struct {
 			"playlists",
 			"search",
 			"find",
+			"label-jump",
 			"help-filter",
 		},
 	},

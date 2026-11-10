@@ -22,6 +22,7 @@
 │ zb         scroll-bottom      Scroll so the cursor row is at the bot…││                                              │
 │ %          percent            Go to the row N percent of the way dow…││                                              │
 │ /          find               Find a row in this list by its text; a…││                                              │
+│ f          label-jump         Type part of a row on screen, then the…││                                              │
 │ n          find-next          Go to the next match of the last find. ││                                              │
 │ N          find-prev          Go to the previous match of the last f…││                                              │
 │ <C-o>      jump-back          Go back to where you were before the l…││                                              │
@@ -32,8 +33,7 @@
 │ ga         go-album           Go to the album of the track or album …││                                              │
 │ gr         go-artist          Go to the artist of the track or album…││                                              │
 │ h          back               Go back out to the list you came from;…││                                              │
-│ <Space>    play-pause         Pause or resume playback, or start the…││                                              │
-╰─ 4/203 ──────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
+╰─ 4/204 ──────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  q close  / filter  i all of it  Move the cursor down.                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                                  0 in queue 

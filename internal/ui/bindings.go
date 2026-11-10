@@ -26,6 +26,7 @@ var defaults = []struct{ scope, keys, command string }{
 	{"global", "zb", "scroll-bottom"},
 	{"global", "%", "percent"},
 	{"global", "/", "find"},
+	{"global", "f", "label-jump"},
 	{"global", "n", "find-next"},
 	{"global", "N", "find-prev"},
 	{"global", "<C-o>", "jump-back"},

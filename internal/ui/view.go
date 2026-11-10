@@ -302,7 +302,7 @@ func (m *Model) libraryRows(w, h int, focused bool) []string {
 		m.marks.on = false
 		m.dress = false
 		if focused {
-			row = m.highlight(row, i == f.cur)
+			row = m.labelRow(i, m.highlight(row, i == f.cur))
 		}
 		out = append(
 			out,
@@ -511,7 +511,7 @@ func (m *Model) queueRows(w, h int, focused bool) []string {
 			line = dimStyle.Render(line)
 		}
 		if focused {
-			line = m.highlight(line, r == m.queueCur)
+			line = m.labelRow(r, m.highlight(line, r == m.queueCur))
 		}
 		out = append(
 			out,
@@ -646,6 +646,10 @@ func (m *Model) hintLine() string {
 		) + dimStyle.Render(
 			"  a capital letter matches case",
 		)
+	}
+	if m.labeling.prompting {
+		return dimStyle.Render(" type a label to jump") + "  " + hint("<CR>", "nearest") +
+			"  " + hint("<Esc>", "cancel")
 	}
 	if m.promptHelp || m.promptPick || m.promptKeys {
 		return " " + hint("<CR>", "keep the filter") + "  " + hint("<Esc>", "put it back")
@@ -1029,7 +1033,7 @@ func (m *Model) status() string {
 	if s, ok := m.promptWithMsg(); ok {
 		return s
 	}
-	if s, ok := m.promptWith(dimStyle, m.findStatus()); ok {
+	if s, ok := m.promptWith(dimStyle, m.findStatus()+m.labelStatus()); ok {
 		return s
 	}
 	if m.mode == keymap.Search && m.selected {

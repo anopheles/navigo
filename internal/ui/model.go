@@ -242,6 +242,7 @@ type Model struct {
 	// prefixShown: a pure prefix has waited long enough for its menu.
 	prefixShown bool
 	finding     finder
+	labeling    labeler
 	// offerSearch is a pattern / didn't find: <CR> next searches the
 	// library for it.
 	offerSearch string
@@ -915,6 +916,9 @@ func (m *Model) result(r keymap.Result) tea.Cmd {
 				m.closePopup() // a listed key runs where the menu was opened
 			}
 		}
+		if m.labelOperator(r) {
+			return nil
+		}
 		return m.execCall(
 			r.Command,
 			command.Call{Count: r.Count, Motion: r.Motion, Double: r.Double},
@@ -978,6 +982,11 @@ func (m *Model) execCall(line string, with command.Call) tea.Cmd {
 // lineKey handles a key on the ":" line or a prompt. Keys bound in the
 // cmdline table run their line command and never type; others edit.
 func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
+	if m.labeling.prompting {
+		if cmd, ok := m.labelLetter(k); ok {
+			return cmd
+		}
+	}
 	if a, ok := m.searchBound(k); ok {
 		return m.searchAction(a)
 	}
@@ -1012,6 +1021,8 @@ func (m *Model) lineKey(k tea.KeyPressMsg) tea.Cmd {
 	switch {
 	case m.finding.prompting:
 		cmd, done = m.findKey(key)
+	case m.labeling.prompting:
+		cmd, done = m.labelKey(key)
 	case m.promptHelp:
 		cmd, done = m.helpKey(key)
 	case m.promptKeys:
@@ -1051,6 +1062,8 @@ func (m *Model) lineChanged(before string) {
 	case m.line.Value() == before:
 	case m.finding.prompting:
 		m.liveFind()
+	case m.labeling.prompting:
+		m.relabel()
 	case m.promptHelp:
 		m.filterHelp(m.line.Value())
 	case m.promptKeys:
@@ -1071,6 +1084,7 @@ func (m *Model) leaveLine() {
 	}
 	m.selected, m.compl, m.promptHelp, m.finding.prompting = false, nil, false, false
 	m.promptPick, m.promptKeys, m.naming = false, false, nil
+	m.labeling.prompting, m.labeling.op = false, nil
 	m.line.Reset()
 	m.line.Blur()
 }

@@ -84,6 +84,7 @@ func commands() *command.Registry[*Model] {
 			}
 			return nil
 		}},
+		{Name: "queue-close", Label: "close queue window", Desc: "Close the queue window, so the library takes the whole width; going to the queue opens it again.", Run: (*Model).closeQueue},
 		{Name: "window-left", Label: "library window", Desc: "Move to the library window.", Run: func(m *Model, _ command.Call) error {
 			m.focus = libraryWindow
 			return nil
@@ -230,6 +231,18 @@ func (m *Model) focusQueue() {
 			m.queueCur = m.shownRow(row)
 		}
 	}
+}
+
+// closeQueue is <C-w>o: the queue window closes, from either window, until
+// the focus goes to it again. Unlike Vim's <C-w>o it never closes the library.
+func (m *Model) closeQueue(command.Call) error {
+	m.queueClosed, m.focus = true, libraryWindow
+	hint := m.keyHint("window", "opens it")
+	if hint == "" {
+		hint = ":queue opens it"
+	}
+	m.setMsg("queue closed · "+hint, false)
+	return nil
 }
 
 // repeat sends e to the core count times, as for 3> or 2u.

@@ -190,6 +190,9 @@ type Model struct {
 	// queueSaw is the entry that played when the queue last took the
 	// focus, so a new one brings the cursor to it.
 	queueSaw player.EntryID
+	// queueClosed is set by <C-w>o: the library shows alone until the
+	// focus goes to the queue again (#176). It lasts for the session.
+	queueClosed bool
 
 	mode     keymap.Mode
 	engine   *keymap.Engine
@@ -350,6 +353,9 @@ func (m *Model) Init() tea.Cmd {
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	_, cmd := m.update(msg)
+	if m.focus == queueWindow { // every way to the queue opens it
+		m.queueClosed = false
+	}
 	m.syncAccent()
 	cmd = tea.Batch(cmd, m.coverPost())
 	if len(m.timers) > 0 {

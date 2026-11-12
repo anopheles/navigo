@@ -177,11 +177,12 @@ func sameView(a, b listView) bool {
 		a.yearFrom == b.yearFrom && a.yearTo == b.yearTo
 }
 
-// shownColumns are the columns that fit in w. Beside the queue, those around
+// shownColumns are the columns that fit in w. Alone, all of them; beside
+// the queue, those around
 // the focus, keeping one preview right of it while there is one.
 func (m *Model) shownColumns(cols []column, w int) []column {
 	n := max((w+1)/(columnShared+1), 2)
-	if m.w < narrow || len(cols) <= n {
+	if m.oneWindow() || len(cols) <= n {
 		return cols
 	}
 	focus := 0

@@ -94,10 +94,11 @@ func (m *Model) coverMode() string {
 }
 
 // cardOn reports whether the queue window can head with the card: cover
-// art is on, the terminal is big enough, and the main screen shows.
+// art is on, the terminal is big enough, the main screen shows, and the
+// queue window isn't closed.
 func (m *Model) cardOn() bool {
 	return m.coverMode() != "" && m.screen != screenLogin && m.w >= coverMinW &&
-		m.h >= coverMinH
+		m.h >= coverMinH && !m.queueClosed
 }
 
 // cardHeight is how many rows the card takes from the queue window: the

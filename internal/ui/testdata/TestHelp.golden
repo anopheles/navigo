@@ -33,7 +33,7 @@
 │ ga         go-album           Go to the album of the track or album …││                                              │
 │ gr         go-artist          Go to the artist of the track or album…││                                              │
 │ h          back               Go back out to the list you came from;…││                                              │
-╰─ 4/204 ──────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
+╰─ 4/205 ──────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  q close  / filter  i all of it  Move the cursor down.                                                                  
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  NORMAL  ■  nothing playing                                                                                  0 in queue 

@@ -1,9 +1,12 @@
 package ui
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/anopheles/navigo/internal/library"
 )
 
 func TestVolumeKeys(t *testing.T) {
@@ -65,6 +68,8 @@ func TestInfoPopup(t *testing.T) {
 		"Year       2021",
 		"Track      2 on disc 1",
 		"Length     3:05",
+		"Format     MP3 · 22.05 kHz · 16 kbps",
+		"Path       Aurora Lane/Blue Hour/01-02 - Low Tide.mp3",
 		"Starred    no",
 	)
 	h.keys("q")
@@ -79,6 +84,41 @@ func TestInfoPopup(t *testing.T) {
 	// With nothing under the cursor, it shows what plays.
 	h.keys("'b'bgg4j<CR><CR>'pi")
 	h.contains("Mile 001")
+}
+
+func TestFileFormat(t *testing.T) {
+	for _, c := range []struct {
+		f    library.File
+		want string
+	}{
+		{library.File{Suffix: "flac", BitDepth: 24, SampleRate: 96000, BitRate: 2304},
+			"FLAC · 24-bit / 96 kHz · 2304 kbps"},
+		{library.File{Suffix: "mp3", SampleRate: 44100, BitRate: 320}, "MP3 · 44.1 kHz · 320 kbps"},
+		{library.File{Suffix: "ogg"}, "OGG"},
+		{library.File{}, ""},
+	} {
+		if got := format(c.f); got != c.want {
+			t.Errorf("format(%+v) = %q, want %q", c.f, got, c.want)
+		}
+	}
+}
+
+func TestWrapPath(t *testing.T) {
+	for _, c := range []struct {
+		path string
+		w    int
+		want []string
+	}{
+		{"a/b.flac", 20, []string{"a/b.flac"}},
+		{"Artist/Album/01 - Song.flac", 14, []string{"Artist/Album/", "01 - Song.flac"}},
+		{"Artist/Album/01 - Song.flac", 8, []string{"Artist/", "Album/", "01 - Son", "g.flac"}},
+		{"Zoë/Ångström.mp3", 6, []string{"Zoë/", "Ångstr", "öm.mp3"}},
+		{"", 10, nil},
+	} {
+		if got := wrapPath(c.path, c.w); !slices.Equal(got, c.want) {
+			t.Errorf("wrapPath(%q, %d) = %q, want %q", c.path, c.w, got, c.want)
+		}
+	}
 }
 
 func TestStarring(t *testing.T) {

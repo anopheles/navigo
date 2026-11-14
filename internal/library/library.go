@@ -65,6 +65,16 @@ type Track struct {
 	PlayCount int
 	Played    time.Time // last played; zero if never
 	Rating    int       // the user's 1–5 stars; 0 if unrated
+	File      File
+}
+
+// File is what the server says about a track's audio file.
+type File struct {
+	Path       string // under the music folder, as the server reports it
+	Suffix     string // flac, mp3, …
+	BitRate    int    // kbps
+	SampleRate int    // Hz
+	BitDepth   int    // bits per sample; 0 for lossy files
 }
 
 // Credits reports whether a track credits an artist.
@@ -130,6 +140,13 @@ func TrackFrom(s subsonic.Song) Track {
 		Played:    s.Played,
 		Rating:    s.UserRating,
 		Artists:   artists,
+		File: File{
+			Path:       s.Path,
+			Suffix:     s.Suffix,
+			BitRate:    s.BitRate,
+			SampleRate: s.SampleRate,
+			BitDepth:   s.BitDepth,
+		},
 	}
 }
 

@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/anopheles/navigo/internal/app"
 	"github.com/anopheles/navigo/internal/command"
 	"github.com/anopheles/navigo/internal/library"
@@ -233,6 +236,14 @@ func (m *Model) info(command.Call) error {
 			add("Track", fmt.Sprintf("%d on disc %d", t.Number, max(t.Disc, 1)))
 		}
 		add("Length", clock(t.Duration))
+		add("Format", format(t.File))
+		for i, l := range wrapPath(t.File.Path, m.popupWidth()-4-11) {
+			if i == 0 {
+				add("Path", l)
+			} else {
+				lines = append(lines, strings.Repeat(" ", 11)+l)
+			}
+		}
 		add("Played", times(t.PlayCount))
 		add("Rating", stars(t.Rating))
 		if m.state.Recommended(t.ID) {
@@ -268,6 +279,57 @@ func (m *Model) queueTrack(id string) library.Track {
 		}
 	}
 	return library.Track{}
+}
+
+// format is a file's type and quality, as FLAC · 24-bit / 96 kHz · 2304 kbps.
+func format(f library.File) string {
+	var parts []string
+	if f.Suffix != "" {
+		parts = append(parts, strings.ToUpper(f.Suffix))
+	}
+	var q []string
+	if f.BitDepth > 0 {
+		q = append(q, fmt.Sprintf("%d-bit", f.BitDepth))
+	}
+	if f.SampleRate > 0 {
+		q = append(q, strconv.FormatFloat(float64(f.SampleRate)/1000, 'f', -1, 64)+" kHz")
+	}
+	if len(q) > 0 {
+		parts = append(parts, strings.Join(q, " / "))
+	}
+	if f.BitRate > 0 {
+		parts = append(parts, fmt.Sprintf("%d kbps", f.BitRate))
+	}
+	return strings.Join(parts, " · ")
+}
+
+// wrapPath breaks a path into lines of at most w cells, after a / where it
+// can, so all of it shows.
+func wrapPath(p string, w int) []string {
+	if p == "" {
+		return nil
+	}
+	if w < 1 {
+		return []string{p}
+	}
+	var lines []string
+	line := ""
+	for _, seg := range strings.SplitAfter(p, "/") {
+		if line != "" && lipgloss.Width(line+seg) > w {
+			lines = append(lines, line)
+			line = ""
+		}
+		line += seg
+		for lipgloss.Width(line) > w { // one name wider than the popup
+			head := ansi.Truncate(line, w, "")
+			lines = append(lines, head)
+			line = line[len(head):]
+		}
+	}
+	if line != "" {
+		lines = append(lines, line)
+	}
+	return lines
 }
 
 // stars is a rating as ★★★★☆, or "not rated".

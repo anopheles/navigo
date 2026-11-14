@@ -198,6 +198,13 @@ type Song struct {
 	// Artists is every artist credited on the song, as the server splits
 	// them (OpenSubsonic); empty on plain Subsonic servers.
 	Artists []ArtistRef `json:"artists"`
+	// Path is the file's path under the music folder. Navidrome makes one
+	// up from the tags unless the player reports real paths.
+	Path       string `json:"path"`
+	Suffix     string `json:"suffix"`       // file type: flac, mp3, …
+	BitRate    int    `json:"bitRate"`      // kbps
+	SampleRate int    `json:"samplingRate"` // Hz (OpenSubsonic)
+	BitDepth   int    `json:"bitDepth"`     // bits per sample (OpenSubsonic)
 }
 
 // ListType orders an album list.

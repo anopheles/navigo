@@ -46,14 +46,12 @@ func (r Results) Len(g Group) int {
 	return len(r.Tracks)
 }
 
-// Match tiers, best first.
+// Match tiers, best first. Typos, when forgiven, keep the tiers.
 const (
-	exact       = iota // the name is the query
-	namePrefix         // the name starts with the query
-	nameWords          // every query word starts a word of the name
-	spread             // ... or of the name, artist and album together
-	fuzzyName          // every query word is a few edits off a word's start in the name
-	fuzzySpread        // ... or in the name, artist and album together
+	exact      = iota // the name is the query
+	namePrefix        // the name starts with the query
+	nameWords         // every query word starts a word of the name
+	spread            // ... or of the name, artist and album together
 )
 
 // rank orders matches: tier, then edits, then play count, then name.
@@ -292,13 +290,36 @@ func (m *matcher) match(name, extra keys) (how, bool) {
 	case !m.typosOK:
 		return how{}, false
 	}
+	if e, ok := m.inOrder(name); ok {
+		if len(name.words) == len(q.words) {
+			return how{exact, e}, true
+		}
+		return how{namePrefix, e}, true
+	}
 	if e, ok := m.edits(name, keys{}); ok {
-		return how{fuzzyName, e}, true
+		return how{nameWords, e}, true
 	}
 	if e, ok := m.edits(name, extra); ok {
-		return how{fuzzySpread, e}, true
+		return how{spread, e}, true
 	}
 	return how{}, false
+}
+
+// inOrder is the fewest typing mistakes that make the query words start
+// the name's first words, in order, if each word is within its budget.
+func (m *matcher) inOrder(name keys) (int, bool) {
+	if len(name.words) < len(m.q.words) {
+		return 0, false
+	}
+	total := 0
+	for i := range m.q.words {
+		d := m.distance(i, name, i, name.words[i])
+		if d > m.budget[i] {
+			return 0, false
+		}
+		total += d
+	}
+	return total, true
 }
 
 // edits is the fewest typing mistakes that make every query word start

@@ -254,3 +254,18 @@ func TestSearchForgivesTyposOnlyWhenNothingElseMatches(t *testing.T) {
 		t.Errorf("blid tracks = %q", got)
 	}
 }
+
+func TestSearchTyposKeepTheTiers(t *testing.T) {
+	s := &Snapshot{
+		Artists: []Artist{{ID: "a1", Name: "Nightwish"}},
+		Albums: []Album{
+			{ID: "al1", Name: "The Sounds Of Nightwish Reborn", Artist: "Nightwish", PlayCount: 50},
+		},
+	}
+	s.buildSearch()
+	// The artist's whole name is one edit off; the album, played more, only
+	// has the word.
+	if r := s.Search("nightwihs"); r.Best != ArtistGroup {
+		t.Errorf("nightwihs best = %d, want the artist", r.Best)
+	}
+}

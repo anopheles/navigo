@@ -79,6 +79,8 @@ func TestWords(t *testing.T) {
 		"Don't Stop":       "dont stop",
 		"Straße/Ørsted":    "strasse orsted",
 		"Mile 042":         "mile 042",
+		"Demons & Wizards": "demons and wizards",
+		"Rock&Roll":        "rock and roll",
 	} {
 		if got := strings.Join(words(in), " "); got != want {
 			t.Errorf("words(%q) = %q, want %q", in, got, want)
@@ -267,5 +269,26 @@ func TestSearchTyposKeepTheTiers(t *testing.T) {
 	// has the word.
 	if r := s.Search("nightwihs"); r.Best != ArtistGroup {
 		t.Errorf("nightwihs best = %d, want the artist", r.Best)
+	}
+}
+
+// "&" and "and" are the same word, whichever the name or the query has.
+func TestSearchAmpersandIsAnd(t *testing.T) {
+	s := &Snapshot{Tracks: []Track{
+		{ID: "t1", Title: "Amen & Attack", Artist: "Powerwolf"},
+		{ID: "t2", Title: "Salt and Sea", Artist: "Someone"},
+	}}
+	s.buildSearch()
+	for q, want := range map[string]string{
+		"amen and attack": "Amen & Attack",
+		"amen & attack":   "Amen & Attack",
+		"salt & sea":      "Salt and Sea",
+	} {
+		if r := s.Search(
+			q,
+		); len(r.Tracks) != 1 || r.Tracks[0].Title != want ||
+			r.Best != TrackGroup {
+			t.Errorf("%q found %v, want %q", q, r.Tracks, want)
+		}
 	}
 }

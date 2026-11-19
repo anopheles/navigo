@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
@@ -47,35 +48,41 @@ func (r Results) Len(g Group) int {
 
 // Match tiers, best first.
 const (
-	exact      = iota // the name is the query
-	namePrefix        // the name starts with the query
-	nameWords         // every query word starts a word of the name
-	spread            // ... or of the name, artist and album together
+	exact       = iota // the name is the query
+	namePrefix         // the name starts with the query
+	nameWords          // every query word starts a word of the name
+	spread             // ... or of the name, artist and album together
+	fuzzyName          // every query word is a few edits off a word's start in the name
+	fuzzySpread        // ... or in the name, artist and album together
 )
 
-// rank orders matches: tier, then play count, then name.
+// rank orders matches: tier, then edits, then play count, then name.
 type rank struct {
-	tier, plays int
-	name        string
+	tier, edits, plays int
+	name               string
 }
 
 func (a rank) compare(b rank) int {
 	return cmp.Or(
 		cmp.Compare(a.tier, b.tier),
+		cmp.Compare(a.edits, b.edits),
 		cmp.Compare(b.plays, a.plays),
 		cmp.Compare(a.name, b.name),
 	)
 }
 
 // keys is a name prepared for matching: folded words, and them joined.
+// ids number the words in the index's vocabulary; playlists, reindexed on
+// their own, have none.
 type keys struct {
 	words  []string
 	joined string
+	ids    []int32
 }
 
 func newKeys(s string) keys {
 	w := words(s)
-	return keys{w, strings.Join(w, " ")}
+	return keys{words: w, joined: strings.Join(w, " ")}
 }
 
 // searchIndex holds every artist, album, playlist and track prepared for
@@ -87,10 +94,28 @@ type searchIndex struct {
 	albums, albumExtra []keys
 	tracks, trackExtra []keys
 	playlists          []keys
+	// vocab is every distinct word of the artists, albums and tracks, so a
+	// search works out a word's typos once however often it recurs.
+	vocab []string
 }
 
 func (s *Snapshot) buildSearch() {
 	x := &searchIndex{}
+	ids := map[string]int32{}
+	newKeys := func(s string) keys {
+		k := newKeys(s)
+		k.ids = make([]int32, len(k.words))
+		for i, w := range k.words {
+			id, ok := ids[w]
+			if !ok {
+				id = int32(len(x.vocab))
+				ids[w] = id
+				x.vocab = append(x.vocab, w)
+			}
+			k.ids[i] = id
+		}
+		return k
+	}
 	for _, a := range s.Artists {
 		x.artists = append(x.artists, newKeys(a.Name))
 	}
@@ -128,14 +153,27 @@ func (s *Snapshot) reindexPlaylists() {
 }
 
 // Search finds artists by name, albums by name and album artist,
-// playlists by name, and tracks by title, artist and album, ignoring case and accents. Every
-// query word must start a word. An empty query finds nothing.
+// playlists by name, and tracks by title, artist and album, ignoring case
+// and accents. Every query word must start a word; only when that finds
+// nothing may each be a few typing mistakes off one (see [typoBudget]).
+// An empty query finds nothing.
 func (s *Snapshot) Search(query string) Results {
 	q := newKeys(query)
-	res := Results{Best: -1}
 	if len(q.words) == 0 {
-		return res
+		return Results{Best: -1}
 	}
+	m := newMatcher(q, len(s.search.vocab))
+	res := s.searchWith(m.match)
+	if res.Best < 0 && m.fuzzy {
+		m.typosOK = true
+		res = s.searchWith(m.match)
+	}
+	return res
+}
+
+// searchWith finds what match accepts, ranked.
+func (s *Snapshot) searchWith(match func(name, extra keys) (how, bool)) Results {
+	res := Results{Best: -1}
 	x := s.search
 	var best rank
 	found := func(g Group, r rank) {
@@ -146,9 +184,9 @@ func (s *Snapshot) Search(query string) Results {
 
 	var ar []rank
 	for i, k := range x.artists {
-		if t, ok := match(q, k, keys{}); ok {
+		if t, ok := match(k, keys{}); ok {
 			res.Artists = append(res.Artists, s.Artists[i])
-			ar = append(ar, rank{t, 0, k.joined})
+			ar = append(ar, rank{t.tier, t.edits, 0, k.joined})
 		}
 	}
 	sortBy(res.Artists, ar)
@@ -158,9 +196,9 @@ func (s *Snapshot) Search(query string) Results {
 
 	var al []rank
 	for i, k := range x.albums {
-		if t, ok := match(q, k, x.albumExtra[i]); ok {
+		if t, ok := match(k, x.albumExtra[i]); ok {
 			res.Albums = append(res.Albums, s.Albums[i])
-			al = append(al, rank{t, s.Albums[i].PlayCount, k.joined})
+			al = append(al, rank{t.tier, t.edits, s.Albums[i].PlayCount, k.joined})
 		}
 	}
 	sortBy(res.Albums, al)
@@ -170,9 +208,9 @@ func (s *Snapshot) Search(query string) Results {
 
 	var pl []rank
 	for i, k := range x.playlists {
-		if t, ok := match(q, k, keys{}); ok {
+		if t, ok := match(k, keys{}); ok {
 			res.Playlists = append(res.Playlists, s.Playlists[i])
-			pl = append(pl, rank{t, 0, k.joined})
+			pl = append(pl, rank{t.tier, t.edits, 0, k.joined})
 		}
 	}
 	sortBy(res.Playlists, pl)
@@ -182,9 +220,9 @@ func (s *Snapshot) Search(query string) Results {
 
 	var tr []rank
 	for i, k := range x.tracks {
-		if t, ok := match(q, k, x.trackExtra[i]); ok {
+		if t, ok := match(k, x.trackExtra[i]); ok {
 			res.Tracks = append(res.Tracks, s.Tracks[i])
-			tr = append(tr, rank{t, s.Tracks[i].PlayCount, k.joined})
+			tr = append(tr, rank{t.tier, t.edits, s.Tracks[i].PlayCount, k.joined})
 		}
 	}
 	sortBy(res.Tracks, tr)
@@ -209,19 +247,148 @@ func sortBy[T any](items []T, ranks []rank) {
 	copy(items, sorted)
 }
 
-// match reports whether q matches a name (with extra words), and how well.
-func match(q, name, extra keys) (int, bool) {
+// how is how well a name matched: its tier, and the typing mistakes
+// forgiven.
+type how struct{ tier, edits int }
+
+// matcher matches one query against names, remembering each vocabulary
+// word's distance from each query word, since the same words recur across
+// a library.
+type matcher struct {
+	q       keys
+	fuzzy   bool   // some query word could have typos
+	typosOK bool   // and typos are forgiven
+	budget  []int  // the edits each query word may be off by
+	dist    []int8 // per query word and vocabulary word: typos+1, 0 if not yet known
+	nvocab  int
+	typos   typoTable
+}
+
+func newMatcher(q keys, nvocab int) *matcher {
+	m := &matcher{q: q, budget: make([]int, len(q.words)), nvocab: nvocab}
+	for i, w := range q.words {
+		m.budget[i] = typoBudget(w)
+		m.fuzzy = m.fuzzy || m.budget[i] > 0
+	}
+	if m.fuzzy {
+		m.dist = make([]int8, len(q.words)*nvocab)
+	}
+	return m
+}
+
+// match reports whether the query matches a name (with extra words), and
+// how well.
+func (m *matcher) match(name, extra keys) (how, bool) {
+	q := m.q
 	switch {
 	case name.joined == q.joined:
-		return exact, true
+		return how{exact, 0}, true
 	case strings.HasPrefix(name.joined, q.joined):
-		return namePrefix, true
+		return how{namePrefix, 0}, true
 	case allStart(q.words, name.words, nil):
-		return nameWords, true
+		return how{nameWords, 0}, true
 	case allStart(q.words, name.words, extra.words):
-		return spread, true
+		return how{spread, 0}, true
+	case !m.typosOK:
+		return how{}, false
 	}
-	return 0, false
+	if e, ok := m.edits(name, keys{}); ok {
+		return how{fuzzyName, e}, true
+	}
+	if e, ok := m.edits(name, extra); ok {
+		return how{fuzzySpread, e}, true
+	}
+	return how{}, false
+}
+
+// edits is the fewest typing mistakes that make every query word start
+// one of the words, if each word is within its budget.
+func (m *matcher) edits(a, b keys) (int, bool) {
+	total := 0
+	for i := range m.q.words {
+		best := m.budget[i] + 1
+		for _, k := range [2]keys{a, b} {
+			for j, x := range k.words {
+				best = min(best, m.distance(i, k, j, x))
+			}
+		}
+		if best > m.budget[i] {
+			return 0, false
+		}
+		total += best
+	}
+	return total, true
+}
+
+// distance is query word i's typos from x, word j of k.
+func (m *matcher) distance(i int, k keys, j int, x string) int {
+	if k.ids == nil {
+		return m.typos.distance(m.q.words[i], x, m.budget[i])
+	}
+	at := i*m.nvocab + int(k.ids[j])
+	if d := m.dist[at]; d > 0 {
+		return int(d) - 1
+	}
+	d := m.typos.distance(m.q.words[i], x, m.budget[i])
+	m.dist[at] = int8(d + 1)
+	return d
+}
+
+// typoBudget is how many typing mistakes a query word may have: none up
+// to three letters, two from four on.
+func typoBudget(w string) int {
+	if utf8.RuneCountInString(w) <= 3 {
+		return 0
+	}
+	return 2
+}
+
+// typoTable works out typos, reusing its buffers from call to call.
+type typoTable struct {
+	a, b          []rune
+	pp, prev, cur []int
+}
+
+// distance is the fewest typos that turn w into the start of x: a letter
+// added, dropped or changed, or two neighbours swapped, each counts one
+// (optimal string alignment distance against x's prefixes). Anything over
+// limit comes back as limit+1.
+func (t *typoTable) distance(w, x string, limit int) int {
+	t.a, t.b = append(t.a[:0], []rune(w)...), append(t.b[:0], []rune(x)...)
+	a, b := t.a, t.b
+	if len(b) > len(a)+limit {
+		b = b[:len(a)+limit] // a longer prefix needs more than limit drops
+	}
+	// rows i-2, i-1 and i of the table of distances between a[:i] and b[:j]
+	n := len(b) + 1
+	if cap(t.cur) < n {
+		t.pp, t.prev, t.cur = make([]int, n), make([]int, n), make([]int, n)
+	}
+	pp, prev, cur := t.pp[:n], t.prev[:n], t.cur[:n]
+	for j := range prev {
+		prev[j] = j
+	}
+	for i := 1; i <= len(a); i++ {
+		cur[0] = i
+		low := cur[0]
+		for j := 1; j <= len(b); j++ {
+			sub := 1
+			if a[i-1] == b[j-1] {
+				sub = 0
+			}
+			d := min(prev[j]+1, cur[j-1]+1, prev[j-1]+sub)
+			if i > 1 && j > 1 && a[i-1] == b[j-2] && a[i-2] == b[j-1] {
+				d = min(d, pp[j-2]+1)
+			}
+			cur[j] = d
+			low = min(low, d)
+		}
+		if low > limit {
+			return limit + 1
+		}
+		pp, prev, cur = prev, cur, pp
+	}
+	return min(slices.Min(prev), limit+1) // w against the best prefix of x
 }
 
 // allStart reports whether every query word starts one of the words.

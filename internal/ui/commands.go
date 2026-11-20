@@ -84,7 +84,8 @@ func commands() *command.Registry[*Model] {
 			}
 			return nil
 		}},
-		{Name: "queue-close", Label: "close queue window", Desc: "Close the queue window, so the library takes the whole width; going to the queue opens it again.", Run: (*Model).closeQueue},
+		{Name: "window-only", Label: "close the other window", Desc: "Close the window that doesn't have the focus, so this one takes the whole width; going to the other window opens it again.", Run: (*Model).windowOnly},
+		{Name: "window-both", Label: "show both windows", Desc: "Open the closed window again, keeping the focus where it is.", Run: (*Model).windowBoth},
 		{Name: "window-left", Label: "library window", Desc: "Move to the library window.", Run: func(m *Model, _ command.Call) error {
 			m.focus = libraryWindow
 			return nil
@@ -233,15 +234,30 @@ func (m *Model) focusQueue() {
 	}
 }
 
-// closeQueue is <C-w>o: the queue window closes, from either window, until
-// the focus goes to it again. Unlike Vim's <C-w>o it never closes the library.
-func (m *Model) closeQueue(command.Call) error {
-	m.queueClosed, m.focus = true, libraryWindow
+// windowOnly is <C-w>o: the window with the focus shows alone, and the
+// other closes until the focus goes to it, or <C-w>=. It is not a toggle:
+// pressed again it repeats how to open the other window.
+func (m *Model) windowOnly(command.Call) error {
+	m.alone = true
+	closed, opener := "queue", ":queue"
+	if m.focus == queueWindow {
+		closed, opener = "library", ":window-left"
+	}
 	hint := m.keyHint("window", "opens it")
 	if hint == "" {
-		hint = ":queue opens it"
+		hint = opener + " opens it"
 	}
-	m.setMsg("queue closed · "+hint, false)
+	m.setMsg(closed+" closed · "+hint, false)
+	return nil
+}
+
+// windowBoth is <C-w>=: the closed window opens again, and the focus
+// stays. A narrow terminal has no room for both, and says so.
+func (m *Model) windowBoth(command.Call) error {
+	m.alone = false
+	if m.w < narrow {
+		m.setMsg("too narrow for both windows", false)
+	}
 	return nil
 }
 

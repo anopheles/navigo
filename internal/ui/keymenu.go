@@ -127,6 +127,11 @@ func (m *Model) openKeyMenu() {
 				if b.Name() != name || b.Seq() == "/" { // / filters the menu
 					continue
 				}
+				// <C-w><C-w> and the like are Vim's spellings of <C-w>w;
+				// Help lists them.
+				if strings.HasPrefix(b.Seq(), "<C-w><C-") {
+					continue
+				}
 				c, ok := m.registry.Get(name)
 				if !ok {
 					continue

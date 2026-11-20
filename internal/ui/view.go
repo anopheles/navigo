@@ -22,8 +22,8 @@ import (
 const narrow = 100
 
 // oneWindow reports whether one window shows at a time: on a narrow
-// terminal, or with the queue window closed.
-func (m *Model) oneWindow() bool { return m.w < narrow || m.queueClosed }
+// terminal, or with the other window closed.
+func (m *Model) oneWindow() bool { return m.w < narrow || m.alone }
 
 // Styles use the terminal's 16 colours and text attributes, so navigo
 // follows the terminal's theme; colors.go lets the config recolour the
@@ -78,24 +78,20 @@ func (m *Model) render() string {
 	m.paneAt = [2]paneHit{}
 	m.colAt = m.colAt[:0]
 	switch {
-	case m.inColumns() && m.oneWindow() && m.focus == libraryWindow:
+	case m.oneWindow() && m.focus == libraryWindow:
 		m.paneAt[libraryWindow] = paneHit{0, m.w}
-		title := m.columnTitle() + "   " + m.keyHint("window", "queue")
-		lines = m.paneFooted(title, m.libFoot(h), m.columnRows(1, m.w-2, h, true), m.w, true)
-	case m.inColumns() && m.oneWindow():
+		if m.inColumns() {
+			title := m.columnTitle() + "   " + m.keyHint("window", "queue")
+			lines = m.paneFooted(title, m.libFoot(h), m.columnRows(1, m.w-2, h, true), m.w, true)
+		} else {
+			title := m.libTitle() + "   " + m.keyHint("window", "queue")
+			lines = m.paneFooted(title, m.libFoot(h), m.libraryRows(m.w-2, h, true), m.w, true)
+		}
+	case m.oneWindow():
 		m.paneAt[queueWindow] = paneHit{0, m.w}
 		title := m.queueTitle() + "   " + m.keyHint("window", "library")
 		rows := append(m.queueCard(m.w-2), m.queueRows(m.w-2, m.listHeight(queueWindow), true)...)
 		lines = m.queuePane(title, rows, m.listHeight(queueWindow), m.w, true)
-	case m.oneWindow():
-		m.paneAt[m.focus] = paneHit{0, m.w}
-		if m.focus == libraryWindow {
-			title := m.libTitle() + "   " + m.keyHint("window", "queue")
-			lines = m.paneFooted(title, m.libFoot(h), m.libraryRows(m.w-2, h, true), m.w, true)
-		} else {
-			title := m.queueTitle() + "   " + m.keyHint("window", "library")
-			lines = m.queuePane(title, m.queueRows(m.w-2, h, true), h, m.w, true)
-		}
 	default:
 		lw := m.w * 3 / 5
 		rw := m.w - lw

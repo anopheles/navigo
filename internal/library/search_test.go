@@ -178,3 +178,94 @@ func TestSearchSeesPlaylistChanges(t *testing.T) {
 		t.Error("playlists from a refresh aren't what is searched")
 	}
 }
+
+// typoLib is a small library for typo-tolerant search.
+func typoLib() *Snapshot {
+	s := &Snapshot{
+		Artists: []Artist{
+			{ID: "a1", Name: "Blind Guardian"},
+			{ID: "a2", Name: "Gear Daddies"},
+		},
+		Albums: []Album{{ID: "al1", Name: "Fly", Artist: "Blind Guardian"}},
+		Tracks: []Track{
+			{ID: "t1", Title: "Fly", Artist: "Blind Guardian", Album: "Fly"},
+			{ID: "t2", Title: "Bald", Artist: "Gear Daddies", Album: "Zero"},
+			{ID: "t3", Title: "Blind", Artist: "Gear Daddies", Album: "Zero"},
+			{ID: "t4", Title: "Gear", Artist: "Gear Daddies", Album: "Zero"},
+			{ID: "t5", Title: "Guardian", Artist: "Gear Daddies", Album: "Zero"},
+		},
+		Playlists: []Playlist{{ID: "p1", Name: "Gardening"}},
+	}
+	s.buildSearch()
+	return s
+}
+
+func TestSearchForgivesTypos(t *testing.T) {
+	s := typoLib()
+	tracks := func(q string) []string { _, _, tr := found(s.Search(q)); return tr }
+	artists := func(q string) []string { a, _, _ := found(s.Search(q)); return a }
+
+	// Two edits off a word's start: "gaer" is "guar" with two letters wrong.
+	if got := tracks("blind gaer fly"); !slices.Equal(got, []string{"Fly"}) {
+		t.Errorf("blind gaer fly tracks = %q", got)
+	}
+	if _, al, _ := found(
+		s.Search("blind gaer fly"),
+	); !slices.Equal(
+		al,
+		[]string{"Fly (Blind Guardian)"},
+	) {
+		t.Errorf("blind gaer fly albums = %q", al)
+	}
+	// A swap of two letters is one edit, and so is a missing letter.
+	for _, q := range []string{"gaurdian", "blnd guardian"} { //nolint:misspell // the typo is the test
+		if got := artists(q); len(got) == 0 || got[0] != "Blind Guardian" {
+			t.Errorf("%q artists = %q", q, got)
+		}
+	}
+	// Playlists forgive typos too.
+	if got := names(s.Search("gardneing").Playlists); !slices.Equal(got, []string{"Gardening"}) {
+		t.Errorf("gardneing = %q", got)
+	}
+	// Words of three letters or fewer must be typed right.
+	for _, q := range []string{"fyl", "gau", "blind fyl"} {
+		if a, al, tr := found(s.Search(q)); len(a)+len(al)+len(tr) > 0 {
+			t.Errorf("%q found %q %q %q", q, a, al, tr)
+		}
+	}
+	// More than two edits is no match.
+	if got := tracks("gxxxdian"); len(got) != 0 {
+		t.Errorf("gxxxdian = %q", got)
+	}
+}
+
+func TestSearchForgivesTyposOnlyWhenNothingElseMatches(t *testing.T) {
+	s := typoLib()
+	// "guard" matches as typed, so the playlist one edit off isn't shown.
+	if r := s.Search("guard"); len(r.Tracks) == 0 || len(r.Playlists) != 0 {
+		t.Errorf("guard: %d tracks, playlists %q", len(r.Tracks), names(r.Playlists))
+	}
+	// With typos, the fewest edits first: "blid" is one edit from "blin(d)"
+	// and two from "bald"; alphabetical order alone would put Bald first.
+	if _, _, got := found(
+		s.Search("blid"),
+	); len(got) < 2 ||
+		!slices.Equal(got[:2], []string{"Blind", "Bald"}) {
+		t.Errorf("blid tracks = %q", got)
+	}
+}
+
+func TestSearchTyposKeepTheTiers(t *testing.T) {
+	s := &Snapshot{
+		Artists: []Artist{{ID: "a1", Name: "Nightwish"}},
+		Albums: []Album{
+			{ID: "al1", Name: "The Sounds Of Nightwish Reborn", Artist: "Nightwish", PlayCount: 50},
+		},
+	}
+	s.buildSearch()
+	// The artist's whole name is one edit off; the album, played more, only
+	// has the word.
+	if r := s.Search("nightwihs"); r.Best != ArtistGroup {
+		t.Errorf("nightwihs best = %d, want the artist", r.Best)
+	}
+}

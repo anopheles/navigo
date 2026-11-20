@@ -425,7 +425,7 @@ func allStart(q []string, a, b []string) bool {
 
 // words folds s (lower case, accents dropped) and splits it into words
 // at anything that isn't a letter or digit. Apostrophes join: "don't"
-// is "dont".
+// is "dont"; "&" is "and".
 func words(s string) []string {
 	return strings.FieldsFunc(
 		fold(s),
@@ -433,7 +433,8 @@ func words(s string) []string {
 	)
 }
 
-// letters that don't decompose into a base letter and an accent.
+// letters that don't decompose into a base letter and an accent, and "&",
+// which is the word "and".
 var special = strings.NewReplacer(
 	"ß",
 	"ss",
@@ -455,6 +456,8 @@ var special = strings.NewReplacer(
 	"",
 	"’",
 	"",
+	"&",
+	" and ",
 )
 
 func fold(s string) string {

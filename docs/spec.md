@@ -365,6 +365,7 @@ The `:` line has Tab completion for command names and arguments.
 **Matching:**
 - Every query word must match the start of a word: "blu ho" finds Blue Hour.
 - **Typos are forgiven when nothing else matches:** if the query finds nothing as typed, a query word of four letters or more may be up to two edits off the start of a word (a letter added, dropped or changed, or two neighbours swapped), so "blind gaer fly" finds Fly by Blind Guardian. Shorter words must be typed right. Only then, because two edits on a short word find much else too ("blue" would find "Alles"). Navidrome's `search3` forgives no typos, so this is navigo's own.
+- **"&" is "and"**, in names and queries alike: "amen and attack" finds Amen & Attack.
 - **Tracks** match on title + artist + album, **albums** on name + album artist, **playlists** and **artists** on name.
 - **Rank:** exact name, then name starting with the query, then all words in the name, then words spread over artist or album. With typos the tiers are the same, fewest typos first within each. Ties go to play count, then alphabetical order.
 

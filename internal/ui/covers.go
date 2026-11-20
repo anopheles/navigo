@@ -98,7 +98,7 @@ func (m *Model) coverMode() string {
 // queue window isn't closed.
 func (m *Model) cardOn() bool {
 	return m.coverMode() != "" && m.screen != screenLogin && m.w >= coverMinW &&
-		m.h >= coverMinH && !m.queueClosed
+		m.h >= coverMinH && (!m.alone || m.focus == queueWindow)
 }
 
 // cardHeight is how many rows the card takes from the queue window: the

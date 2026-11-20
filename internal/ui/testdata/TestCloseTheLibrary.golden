@@ -1,0 +1,40 @@
+╭ Queue (0)   <Tab> library ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                      │
+│ The queue is empty.                                                                                                  │
+│                                                                                                                      │
+│ Find something to play:                                                                                              │
+│   'b albums   j/k move                                                                                               │
+│   <CR> open   h back                                                                                                 │
+│                                                                                                                      │
+│ On a track:                                                                                                          │
+│   <CR> play it   A add to queue                                                                                      │
+│                                                                                                                      │
+│ Or let navigo pick:                                                                                                  │
+│   gm mix from the whole library                                                                                      │
+│                                                                                                                      │
+│   :q quit                                                                                                            │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+ <Tab> other window  'b albums  ? keys  :q quit                                                                         
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ NORMAL  ■  nothing playing                                                                                  0 in queue 
+ library closed · <Tab> opens it                                                                                        
